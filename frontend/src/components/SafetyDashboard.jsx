@@ -66,7 +66,7 @@ export const SafetyDashboard = ({
       {/* Connection Status */}
       {!isConnected && (
         <div className="connection-warning">
-          ⚠️ ROS connection required for live safety monitoring
+          WARNING: ROS connection required for live safety monitoring
         </div>
       )}
 
@@ -118,7 +118,7 @@ export const SafetyDashboard = ({
 
         {/* Active Alerts Panel */}
         <div className="safety-panel">
-          <h3>⚠️ Active Alerts ({activeAlerts?.length || 0})</h3>
+          <h3>Active Alerts ({activeAlerts?.length || 0})</h3>
           <div className="alerts-container">
             {activeAlerts && activeAlerts.length > 0 ? (
               activeAlerts.slice(0, 10).map((alert) => (
@@ -204,7 +204,7 @@ export const SafetyDashboard = ({
               </div>
             ) : (
               <div className="emergency-normal">
-                <div className="emergency-indicator normal">✅ Normal Operation</div>
+                <div className="emergency-indicator normal">Normal Operation</div>
                 <p>All systems operating within safety parameters</p>
               </div>
             )}

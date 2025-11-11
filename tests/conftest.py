@@ -270,3 +270,4 @@ def simulate_time_passing(seconds):
             return time.time() - self.start_time
 
     return TimeSimulator()
+

@@ -235,9 +235,9 @@ export default function ThreeDVisualization({ isConnected }) {
           borderRadius: '0.375rem',
           fontSize: '0.75rem'
         }}>
-          <div>🖱️ Mouse: Orbit • Scroll: Zoom</div>
-          <div>🎮 WASD: Move • Shift: Run</div>
-          <div>🚀 Space: Jump</div>
+          <div>Mouse: Orbit • Scroll: Zoom</div>
+          <div>WASD: Move • Shift: Run</div>
+          <div>Space: Jump</div>
         </div>
       </div>
     </div>

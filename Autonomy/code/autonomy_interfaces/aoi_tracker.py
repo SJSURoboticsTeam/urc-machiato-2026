@@ -247,12 +247,44 @@ class SharedAOIBuffer:
         }
 
 
-class AOIQualityAssessor:
+class NetworkAwareAOIAssessor:
     """
-    AoI-based quality assessment for different sensor types.
+    Network-aware AOI assessment with transport-specific characteristics.
     """
 
     def __init__(self):
+        # Transport characteristics
+        self.transport_profiles = {
+            'SERIAL': {
+                'base_latency': 0.030,    # 30ms serial base
+                'jitter_range': (0.005, 0.020),  # 5-20ms jitter
+                'congestion_threshold': 0.100,   # 100ms indicates congestion
+                'bandwidth_mbps': 1.0,           # 1 Mbps typical
+                'reliability': 0.95              # 95% reliable
+            },
+            'CAN': {
+                'base_latency': 0.010,    # 10ms CAN base
+                'jitter_range': (0.001, 0.005),  # 1-5ms jitter
+                'congestion_threshold': 0.050,   # 50ms indicates congestion
+                'bandwidth_mbps': 1.0,           # 1 Mbps typical
+                'reliability': 0.98              # 98% reliable
+            },
+            'ETHERNET': {
+                'base_latency': 0.005,    # 5ms ethernet base
+                'jitter_range': (0.001, 0.003),  # 1-3ms jitter
+                'congestion_threshold': 0.020,   # 20ms indicates congestion
+                'bandwidth_mbps': 100.0,         # 100 Mbps typical
+                'reliability': 0.999             # 99.9% reliable
+            },
+            'LOCAL': {
+                'base_latency': 0.001,    # 1ms local base
+                'jitter_range': (0.0001, 0.001), # 0.1-1ms jitter
+                'congestion_threshold': 0.010,   # 10ms indicates congestion
+                'bandwidth_mbps': 1000.0,        # Local bus speeds
+                'reliability': 0.9999            # Near 100% reliable
+            }
+        }
+
         # Quality profiles per sensor type
         self.quality_profiles = {
             'imu': {
@@ -287,6 +319,60 @@ class AOIQualityAssessor:
             }
         }
 
+        # Network health tracking
+        self.network_history = {}
+        self.congestion_events = []
+
+    def get_transport_type(self, sensor_name: str) -> str:
+        """Determine transport type based on sensor name."""
+        sensor_lower = sensor_name.lower()
+
+        if 'camera' in sensor_lower or 'depth' in sensor_lower:
+            return 'SERIAL'
+        elif 'imu' in sensor_lower or 'motor' in sensor_lower or 'can' in sensor_lower:
+            return 'CAN'
+        elif 'gps' in sensor_lower or 'network' in sensor_lower:
+            return 'ETHERNET'
+        else:
+            return 'LOCAL'
+
+    def assess_network_health(self, sensor_name: str, measured_aoi: float) -> dict:
+        """Assess network health for a sensor."""
+        transport = self.get_transport_type(sensor_name)
+        profile = self.transport_profiles[transport]
+
+        # Calculate expected vs measured latency
+        expected_latency = profile['base_latency'] + sum(profile['jitter_range']) / 2
+        network_latency = max(0, measured_aoi - 0.001)  # Subtract local processing
+
+        # Detect congestion
+        congestion_detected = network_latency > profile['congestion_threshold']
+        congestion_factor = network_latency / expected_latency if expected_latency > 0 else 1.0
+
+        # Track congestion events
+        if congestion_detected:
+            self.congestion_events.append({
+                'sensor': sensor_name,
+                'transport': transport,
+                'timestamp': time.time(),
+                'latency': network_latency,
+                'factor': congestion_factor
+            })
+
+            # Keep only recent events (last 100)
+            self.congestion_events = self.congestion_events[-100:]
+
+        return {
+            'transport_type': transport,
+            'network_latency': network_latency,
+            'transport_latency': profile['base_latency'],
+            'congestion_detected': congestion_detected,
+            'congestion_factor': min(congestion_factor, 5.0),  # Cap at 5x
+            'expected_latency': expected_latency,
+            'bandwidth_efficiency': profile['bandwidth_mbps'],
+            'transport_reliability': profile['reliability']
+        }
+
     def assess_quality(self, sensor_type: str, aoi: float) -> Tuple[float, str]:
         """
         Assess measurement quality based on AoI.
@@ -306,3 +392,4 @@ class AOIQualityAssessor:
             return 0.2, "POOR"
         else:
             return 0.0, "UNUSABLE"
+

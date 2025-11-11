@@ -7,6 +7,7 @@ import { StateTransitions, SystemState } from './config/stateDefinitions';
 import StateTree, { StateControls } from './components/StateTree';
 import { SafetyDashboard } from './components/SafetyDashboard';
 import { SafetyTestPanel } from './components/SafetyTestPanel';
+import { AOITesting } from './components/AOITesting';
 
 /**
  * Main Application Component - URC 2026 Mars Rover Control Interface
@@ -70,6 +71,7 @@ function App() {
     activeAlerts,
     systemHealth,
     emergencyStatus,
+    demoMode,
     runSafetyTest
   } = useSafetySystem(ros);
 
@@ -91,7 +93,7 @@ function App() {
       const isValidTransition = StateTransitions[currentState]?.includes(targetState);
 
       if (!isValidTransition) {
-        addResult(`Testing ${currentState} → ${targetState}`, false, `❌ Invalid transition: ${currentState} cannot go to ${targetState}`);
+        addResult(`Testing ${currentState} → ${targetState}`, false, `ERROR: Invalid transition: ${currentState} cannot go to ${targetState}`);
         setTestRunning(false);
         return;
       }
@@ -106,11 +108,11 @@ function App() {
       addResult(
         `Testing ${currentState} → ${targetState}`,
         true,
-        `✅ ${isDemoMode ? 'Demo mode' : 'ROS'} transition successful: ${currentState} → ${targetState}`
+        `SUCCESS: ${isDemoMode ? 'Demo mode' : 'ROS'} transition successful: ${currentState} → ${targetState}`
       );
 
     } catch (error) {
-      addResult(`Testing ${currentState} → ${targetState}`, false, `❌ Transition failed: ${error.message}`);
+      addResult(`Testing ${currentState} → ${targetState}`, false, `ERROR: Transition failed: ${error.message}`);
     } finally {
       setTestRunning(false);
     }
@@ -220,7 +222,7 @@ function App() {
                 borderBottom: activeTab === 'state-machine' ? '2px solid #60a5fa' : 'none'
               }}
             >
-              🎯 State Machine
+              State Machine
             </button>
             <button
               onClick={() => setActiveTab('camera-feed')}
@@ -256,7 +258,7 @@ function App() {
                 borderBottom: activeTab === '3d-visualization' ? '2px solid #60a5fa' : 'none'
               }}
             >
-              🌐 3D Visualization
+              3D Visualization
             </button>
             <button
               onClick={() => setActiveTab('safety')}
@@ -267,7 +269,6 @@ function App() {
                 backgroundColor: activeTab === 'safety' ? '#1a1a1a' : 'transparent',
                 color: activeTab === 'safety' ? '#60a5fa' : '#9ca3af',
                 border: 'none',
-                borderRadius: activeTab === 'safety' ? '0 0.5rem 0 0' : '0',
                 cursor: 'pointer',
                 fontSize: '1rem',
                 fontWeight: activeTab === 'safety' ? '600' : '500',
@@ -275,7 +276,26 @@ function App() {
                 borderBottom: activeTab === 'safety' ? '2px solid #60a5fa' : 'none'
               }}
             >
-              🛡️ Safety Testing
+              Safety Testing
+            </button>
+            <button
+              onClick={() => setActiveTab('aoi-testing')}
+              className={`tab-button ${activeTab === 'aoi-testing' ? 'active' : ''}`}
+              style={{
+                flex: 1,
+                padding: '1rem',
+                backgroundColor: activeTab === 'aoi-testing' ? '#1a1a1a' : 'transparent',
+                color: activeTab === 'aoi-testing' ? '#60a5fa' : '#9ca3af',
+                border: 'none',
+                borderRadius: activeTab === 'aoi-testing' ? '0 0.5rem 0 0' : '0',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: activeTab === 'aoi-testing' ? '600' : '500',
+                transition: 'all 0.2s ease',
+                borderBottom: activeTab === 'aoi-testing' ? '2px solid #60a5fa' : 'none'
+              }}
+            >
+              AOI Testing
             </button>
           </div>
 
@@ -368,12 +388,12 @@ function App() {
                       <small>Adaptive quality, bandwidth monitoring</small>
                       <br />
                       <small style={{ marginTop: '1rem', display: 'block', color: '#60a5fa' }}>
-                        📡 Connect to ROS for live camera feed
+                        Connect to ROS for live camera feed
                       </small>
                     </div>
                   </div>
                   <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#1a1a1a', borderRadius: '0.5rem' }}>
-                    <h3 style={{ color: '#60a5fa', marginBottom: '0.5rem' }}>📊 Stream Statistics</h3>
+                    <h3 style={{ color: '#60a5fa', marginBottom: '0.5rem' }}>Stream Statistics</h3>
                     <div className="camera-stats-grid">
                       <div className="camera-stat-item">
                         <div className="camera-stat-label">Resolution</div>
@@ -417,12 +437,12 @@ function App() {
                       <small>Map, navigation paths, robot pose</small>
                       <br />
                       <small style={{ marginTop: '1rem', display: 'block', color: '#60a5fa' }}>
-                        🌐 Interactive 3D environment for mission planning
+                        Interactive 3D environment for mission planning
                       </small>
                     </div>
                   </div>
                   <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#1a1a1a', borderRadius: '0.5rem' }}>
-                    <h3 style={{ color: '#60a5fa', marginBottom: '0.5rem' }}>🎮 3D Controls</h3>
+                    <h3 style={{ color: '#60a5fa', marginBottom: '0.5rem' }}>3D Controls</h3>
                     <div className="viz-controls-grid">
                       <div className="viz-control-item">
                         <div className="viz-control-label">Navigation</div>
@@ -460,11 +480,22 @@ function App() {
                   <div className="safety-test-panel">
                     <SafetyTestPanel
                       onRunTest={runSafetyTest}
+                      onStateTransition={requestStateTransition}
                       isConnected={isConnected}
+                      demoMode={demoMode}
                       currentState={currentState}
                     />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'aoi-testing' && (
+              <div style={{ padding: '1.5rem', height: '100%' }}>
+                <AOITesting
+                  isConnected={isConnected}
+                  ros={ros}
+                />
               </div>
             )}
           </div>
@@ -535,7 +566,7 @@ function App() {
                       opacity: testRunning ? 0.6 : 1
                     }}
                   >
-                    🚀 Go to IDLE first
+                    Go to IDLE first
                   </button>
                 </div>
               )}
@@ -560,13 +591,13 @@ function App() {
                     }}
                   >
                     <div className="test-button-title">
-                      {targetState === SystemState.BOOT && '🔄 Boot'}
-                      {targetState === SystemState.CALIBRATION && '📐 Calibration'}
-                      {targetState === SystemState.IDLE && '⏸️ Idle'}
-                      {targetState === SystemState.TELEOPERATION && '🎮 Teleop'}
-                      {targetState === SystemState.AUTONOMOUS && '🤖 Autonomous'}
-                      {targetState === SystemState.SAFETY && '⚠️ Safety'}
-                      {targetState === SystemState.SHUTDOWN && '🛑 Shutdown'}
+                      {targetState === SystemState.BOOT && 'Boot'}
+                      {targetState === SystemState.CALIBRATION && 'Calibration'}
+                      {targetState === SystemState.IDLE && 'Idle'}
+                      {targetState === SystemState.TELEOPERATION && 'Teleop'}
+                      {targetState === SystemState.AUTONOMOUS && 'Autonomous'}
+                      {targetState === SystemState.SAFETY && 'Safety'}
+                      {targetState === SystemState.SHUTDOWN && 'Shutdown'}
                       {isCurrentState && ' (Current)'}
                     </div>
                     <div className="test-button-desc">
@@ -589,7 +620,7 @@ function App() {
                 borderRadius: '0.5rem'
               }}>
                 <h3 style={{ color: '#60a5fa', marginBottom: '0.75rem', fontSize: '1rem' }}>
-                  🧪 Latest Test Result
+                  Latest Test Result
                 </h3>
                 {(() => {
                   const latestResult = testResults[testResults.length - 1];
@@ -610,7 +641,7 @@ function App() {
                         fontSize: '1.25rem',
                         color: latestResult.success ? '#10b981' : '#ef4444'
                       }}>
-                        {latestResult.success ? '✅' : '❌'}
+                        {latestResult.success ? 'SUCCESS' : 'ERROR'}
                       </span>
                       <div style={{ flex: 1 }}>
                         <div style={{

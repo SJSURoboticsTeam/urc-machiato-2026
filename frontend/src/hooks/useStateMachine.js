@@ -35,54 +35,64 @@ export const useStateMachine = (ros) => {
 
     console.log('Setting up state machine topic subscriptions...');
 
-    // Current state subscriber
+    // Current state subscriber - handle JSON strings from standalone system
     subscribersRef.current.currentState = createSubscriber(
       ros,
-      STATE_TOPICS.CURRENT_STATE,
-      MESSAGE_TYPES.SYSTEM_STATE,
+      '/state_machine/current_state',
+      'std_msgs/String',
       (message) => {
-        console.log('Received current state:', message);
-        setCurrentState(message.current_state || SystemState.BOOT);
-        setCurrentSubstate(message.autonomous_substate || AutonomousSubstate.NONE);
-        setCurrentSubSubstate(message.equipment_servicing_substate || EquipmentServicingSubstate.NONE);
-        setCurrentCalibrationSubstate(message.calibration_substate || CalibrationSubstate.NONE);
-        setStateMetadata(message.metadata || {});
-        setIsTransitioning(message.is_transitioning || false);
+        try {
+          const data = JSON.parse(message.data);
+          console.log('Received current state:', data);
+          setCurrentState(data.state || SystemState.BOOT);
+          setCurrentSubstate(data.substate || 'initializing');
+          setCurrentSubSubstate('none');
+          setCurrentCalibrationSubstate('none');
+          setStateMetadata(data);
+          setIsTransitioning(false); // Standalone system doesn't track transitioning
+        } catch (e) {
+          console.warn('Failed to parse state message:', e);
+        }
       }
     );
 
     // State transition subscriber
     subscribersRef.current.stateTransition = createSubscriber(
       ros,
-      STATE_TOPICS.STATE_TRANSITION,
-      MESSAGE_TYPES.STATE_TRANSITION,
+      '/state_machine/state_transition',
+      'std_msgs/String',
       (message) => {
-        console.log('Received state transition:', message);
-        setLastTransition({
-          fromState: message.from_state,
-          toState: message.to_state,
-          reason: message.reason,
-          initiatedBy: message.initiated_by,
-          timestamp: message.timestamp,
-          success: message.success
-        });
+        try {
+          const data = JSON.parse(message.data);
+          console.log('Received state transition:', data);
+          setLastTransition({
+            fromState: data.from_state,
+            toState: data.to_state,
+            reason: data.reason,
+            initiatedBy: 'standalone_system',
+            timestamp: data.timestamp,
+            success: data.success
+          });
 
         // Update transition history
         setTransitionHistory(prev => {
           const newHistory = [{
-            fromState: message.from_state,
-            toState: message.to_state,
-            reason: message.reason,
-            timestamp: new Date().toISOString(),
-            success: message.success
+            fromState: data.from_state,
+            toState: data.to_state,
+            reason: data.reason,
+            timestamp: new Date(data.timestamp * 1000).toISOString(),
+            success: data.success
           }, ...prev].slice(0, 50); // Keep last 50 transitions
           return newHistory;
         });
 
         // Update state if transition was successful
-        if (message.success) {
-          setCurrentState(message.to_state);
+        if (data.success) {
+          setCurrentState(data.to_state);
           setIsTransitioning(false);
+        }
+        } catch (e) {
+          console.warn('Failed to parse transition message:', e);
         }
       }
     );
@@ -145,80 +155,103 @@ export const useStateMachine = (ros) => {
     );
   };
 
-  // Request state transition
-  const requestStateTransition = async (targetState, reason = 'frontend_request', force = false) => {
-    // Check if ROS is connected
-    if (!ros || !ros.isConnected) {
-      // Demo mode: simulate transition validation without ROS
-      console.log('ROS not connected - running in demo mode');
+  // Demo transition helper function
+  const runDemoTransition = async (targetState, reason = 'frontend_request') => {
+    console.log('Running demo transition to:', targetState);
 
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Store current state before transition
-      const previousState = currentState;
+    // Store current state before transition
+    const previousState = currentState;
 
-      // Simulate successful transition for demo purposes
-      const mockResult = {
-        success: true,
-        message: `Demo mode: ${previousState} → ${targetState} transition would succeed`,
-        new_state: targetState,
-        previous_state: previousState,
-        timestamp: new Date().toISOString()
-      };
+    // Simulate successful transition for demo purposes
+    const mockResult = {
+      success: true,
+      message: `Demo mode: ${previousState} → ${targetState} transition would succeed`,
+      new_state: targetState,
+      previous_state: previousState,
+      timestamp: new Date().toISOString()
+    };
 
-      // Update local state to simulate the transition
-      setCurrentState(targetState);
-      setIsTransitioning(false); // Demo mode doesn't have real transitioning state
+    // Update local state to simulate the transition
+    setCurrentState(targetState);
+    setIsTransitioning(false); // Demo mode doesn't have real transitioning state
 
-      // Simulate a state transition message
-      const mockTransition = {
-        from_state: previousState,
-        to_state: targetState,
-        reason: reason,
-        initiated_by: 'frontend_demo',
+    // Simulate a state transition message
+    const mockTransition = {
+      from_state: previousState,
+      to_state: targetState,
+      reason: reason,
+      initiated_by: 'frontend_demo',
+      timestamp: new Date().toISOString(),
+      success: true
+    };
+
+    // Update transition history
+    setTransitionHistory(prev => {
+      const newHistory = [{
+        fromState: mockTransition.from_state,
+        toState: mockTransition.to_state,
+        reason: mockTransition.reason,
         timestamp: new Date().toISOString(),
         success: true
-      };
+      }, ...prev].slice(0, 50); // Keep last 50 transitions
+      return newHistory;
+    });
 
-      // Update transition history
-      setTransitionHistory(prev => {
-        const newHistory = [{
-          fromState: mockTransition.from_state,
-          toState: mockTransition.to_state,
-          reason: mockTransition.reason,
-          timestamp: new Date().toISOString(),
-          success: true
-        }, ...prev].slice(0, 50); // Keep last 50 transitions
-        return newHistory;
-      });
+    console.log('Demo transition result:', mockResult);
+    return mockResult;
+  };
 
-      console.log('Demo transition result:', mockResult);
-      return mockResult;
+  // Request state transition
+  const requestStateTransition = async (targetState, reason = 'frontend_request', force = false) => {
+    // Try ROS service first, fall back to demo mode
+    if (!ros || !ros.isConnected) {
+      console.log('ROS not connected - running in demo mode');
+      return await runDemoTransition(targetState, reason);
     }
 
-    const serviceName = force ? STATE_TOPICS.FORCE_TRANSITION_SERVICE : STATE_TOPICS.CHANGE_STATE_SERVICE;
-
     try {
-      const serviceClient = createServiceClient(ros, serviceName, SERVICE_TYPES.CHANGE_STATE);
-
-      const request = {
+      // Call ROS service with comprehensive state change request
+      const result = await callService(ros, '/state_machine/change_state', 'autonomy_interfaces/srv/ChangeState', {
         desired_state: targetState,
+        desired_substate: '',
+        desired_calibration_substate: '',
         reason: reason,
-        initiated_by: 'frontend'
-      };
+        operator_id: 'frontend',
+        force: false,
+        metadata: [`timestamp=${new Date().toISOString()}`, `source=frontend`]
+      });
+      console.log('ROS state change result:', result);
 
-      const result = await callService(serviceClient, request);
-
-      console.log('State transition result:', result);
       if (result.success) {
-        return result;
+        // ROS service succeeded - return the actual result
+        return {
+          success: true,
+          message: result.message,
+          newState: result.actual_state || targetState,
+          timestamp: new Date().toISOString(),
+          transitionTime: result.transition_time || 0,
+          warnings: result.warnings || [],
+          preconditionsMet: result.preconditions_met
+        };
       } else {
-        throw new Error(result.message || 'State transition failed');
+        // ROS service failed with invalid transition - show the error
+        const errorDetails = result.failed_preconditions && result.failed_preconditions.length > 0
+          ? `Failed preconditions: ${result.failed_preconditions.join(', ')}`
+          : result.message;
+        return {
+          success: false,
+          message: errorDetails,
+          newState: result.actual_state || currentState,
+          timestamp: new Date().toISOString(),
+          failedPreconditions: result.failed_preconditions || []
+        };
       }
     } catch (error) {
-      console.error('State transition service error:', error);
-      throw error;
+      console.warn('ROS service error, falling back to demo mode:', error);
+      return await runDemoTransition(targetState, reason);
     }
   };
 

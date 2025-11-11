@@ -306,3 +306,4 @@ if __name__ == '__main__':
         print("No test result files found. Run tests first:")
         print("  pytest --junitxml=tests/reports/junit.xml --cov-report=xml:tests/reports/coverage.xml")
         print("  python tests/reports/generate_test_report.py")
+
