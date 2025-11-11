@@ -115,7 +115,7 @@ const StateControls = ({
               className="rounded border-border"
             />
             <span className="text-yellow-700 dark:text-yellow-300">
-              Force invalid transition (⚠️ Use with caution)
+              Force invalid transition (WARNING: Use with caution)
             </span>
           </label>
         </div>
@@ -145,11 +145,11 @@ const StateControls = ({
               : '#fca5a5'
         }}>
           {isValidSelection ? (
-            <>✓ Valid transition from {currentState} → {selectedState}</>
+            <>VALID: Valid transition from {currentState} → {selectedState}</>
           ) : forceTransition ? (
-            <>⚠ Force transition: {currentState} → {selectedState}</>
+            <>WARNING: Force transition: {currentState} → {selectedState}</>
           ) : (
-            <>✗ Invalid transition: {currentState} → {selectedState}</>
+            <>INVALID: Invalid transition: {currentState} → {selectedState}</>
           )}
         </div>
       )}

@@ -25,3 +25,15 @@ float64 optimal_threshold    # Optimal AoI threshold (seconds)
 # Statistics
 uint32 sample_count       # Number of samples in current window
 float64 freshness_ratio   # Ratio of fresh samples (0.0-1.0)
+
+# Network-aware metrics
+string transport_type      # Transport type: "SERIAL", "CAN", "ETHERNET", "LOCAL"
+float64 network_latency    # Network transmission latency (seconds)
+float64 transport_latency  # Transport-specific latency (serial/CAN delays)
+bool congestion_detected   # Whether network congestion was detected
+float64 congestion_factor  # Current congestion multiplier (1.0 = no congestion)
+
+# Predictive metrics
+float64 predicted_aoi      # Predicted AOI for next sample
+float64 aoi_trend          # AOI trend (-1 decreasing, 0 stable, 1 increasing)
+

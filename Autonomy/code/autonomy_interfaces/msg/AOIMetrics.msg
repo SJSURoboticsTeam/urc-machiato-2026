@@ -30,3 +30,18 @@ float64 processing_latency  # Average processing latency (seconds)
 string[] active_alerts      # List of active AoI alerts
 uint32 alert_count          # Number of active alerts
 builtin_interfaces/Time last_alert_time  # Time of last alert
+
+# Network health metrics
+uint32 serial_sensors       # Number of sensors using serial transport
+uint32 can_sensors         # Number of sensors using CAN transport
+uint32 ethernet_sensors    # Number of sensors using ethernet transport
+uint32 local_sensors       # Number of sensors using local transport
+
+float64 avg_network_latency # Average network latency across all sensors
+float64 max_network_latency # Maximum network latency observed
+uint32 congested_links     # Number of transport links with congestion
+
+# System recommendations
+string[] network_recommendations # Recommendations for network optimization
+float64 network_health_score    # 0.0-1.0 network health score
+

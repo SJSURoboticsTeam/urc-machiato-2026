@@ -63,6 +63,11 @@ export const SYSTEM_TOPICS = {
   MEMORY_USAGE: '/system/memory',
   NETWORK_STATS: '/system/network',
 
+  // AOI monitoring
+  AOI_STATUS: '/system/aoi_status',
+  AOI_METRICS: '/system/aoi_metrics',
+  AOI_SERVICE: '/system/get_aoi_status',
+
   // LED status
   LED_STATUS: '/led/status',
   LED_COMMAND: '/led/command'
@@ -152,7 +157,10 @@ export const MESSAGE_TYPES = {
   STATE_TRANSITION: 'autonomy_interfaces/msg/StateTransition',
   VISION_DETECTION: 'autonomy_interfaces/msg/VisionDetection',
   LED_COMMAND: 'autonomy_interfaces/msg/LedCommand',
-  SAFETY_STATUS: 'autonomy_interfaces/msg/SafetyStatus'
+  SAFETY_STATUS: 'autonomy_interfaces/msg/SafetyStatus',
+  AOI_STATUS: 'autonomy_interfaces/msg/AOIStatus',
+  AOI_METRICS: 'autonomy_interfaces/msg/AOIMetrics',
+  NETWORK_STATUS: 'autonomy_interfaces/msg/NetworkStatus'
 };
 
 // Service types
@@ -163,7 +171,9 @@ export const SERVICE_TYPES = {
   CANCEL_GOAL: 'nav2_msgs/srv/CancelGoal',
   SOFTWARE_ESTOP: 'autonomy_interfaces/srv/SoftwareEstop',
   RECOVER_FROM_SAFETY: 'autonomy_interfaces/srv/RecoverFromSafety',
-  SAFESTOP_CONTROL: 'autonomy_interfaces/srv/SafestopControl'
+  SAFESTOP_CONTROL: 'autonomy_interfaces/srv/SafestopControl',
+  GET_AOI_STATUS: 'autonomy_interfaces/srv/GetAOIStatus',
+  CHANGE_STATE: 'autonomy_interfaces/srv/ChangeState'
 };
 
 // Quality of Service (QoS) profiles for different data types

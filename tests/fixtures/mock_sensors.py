@@ -391,3 +391,4 @@ def generate_test_waypoints(count: int = 5) -> List[Dict]:
             'accuracy_required': 3.0
         })
     return waypoints
+
