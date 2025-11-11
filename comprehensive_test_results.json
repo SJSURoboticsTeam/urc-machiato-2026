@@ -1,0 +1,108 @@
+{
+  "environment_check": {
+    "python_version": "3.10.12 (main, Aug 15 2025, 14:32:43) [GCC 11.4.0]",
+    "python_path": [
+      "/home/ubuntu/urc-machiato-2026/tests",
+      "/home/ubuntu/urc-machiato-2026/Autonomy/ros2_ws/install/autonomy_state_management/local/lib/python3.10/dist-packages",
+      "/home/ubuntu/urc-machiato-2026/Autonomy/ros2_ws/install/autonomy_safety_system/local/lib/python3.10/dist-packages"
+    ],
+    "ros2_available": true,
+    "ros2_version": "ROS 2 Humble",
+    "ros2_ws_exists": true,
+    "ros2_ws_built": true,
+    "test_directory_exists": true,
+    "automated_platform_exists": true,
+    "cpu_count": 8,
+    "memory_gb": 7.741981506347656
+  },
+  "core_functionality": {
+    "required_files": {
+      "tests/run_tests.py": true,
+      "tests/automated_test_platform.py": true,
+      "tests/aoi_automated_test.py": true,
+      "Autonomy/scripts/system_launch.sh": true,
+      "Autonomy/scripts/system_stop.sh": true
+    },
+    "executable_scripts": {
+      "Autonomy/scripts/system_launch.sh": true,
+      "Autonomy/scripts/system_stop.sh": true
+    },
+    "python_modules": {
+      "pathlib": true,
+      "subprocess": true,
+      "json": true,
+      "psutil": true
+    }
+  },
+  "aoi_system": {
+    "platform_executable": true,
+    "platform_help_output": "usage: automated_test_platform.py [-h] [--output-dir OUTPUT_DIR] [--parallel]\n                                  [--ci-mode]\n                                  {aoi_tests,full_system_tests,performance_t...",
+    "core_components": {
+      "autonomy_aoi_core.aoi_tracker": true,
+      "autonomy_aoi_core.aoi_monitor": true
+    },
+    "automated_tests_executable": true
+  },
+  "safety_system": {
+    "components": {
+      "autonomy_safety_system.proximity_monitor": true,
+      "autonomy_safety_system.emergency_response_coordinator": true
+    },
+    "scripts": {
+      "Autonomy/scripts/start_safety_testing.sh": true,
+      "Autonomy/scripts/stop_safety_testing.sh": true
+    },
+    "aoi_integration": true
+  },
+  "state_management": {
+    "components": {
+      "autonomy_state_machine.state_machine_core": true,
+      "autonomy_state_machine.states": true
+    },
+    "configurations": {
+      "Autonomy/code/state_management/config/state_machine_config.yaml": true,
+      "Autonomy/code/state_management/QUICKSTART.md": true
+    }
+  },
+  "integration_tests": {
+    "test_files": {
+      "tests/integration/test_full_system_integration.py": true,
+      "tests/integration/test_safety_navigation_integration.py": true,
+      "tests/integration/test_vision_control_integration.py": true
+    },
+    "mock_infrastructure": {
+      "tests/conftest.py": true,
+      "tests/fixtures/mock_sensors.py": true
+    },
+    "integration_scripts": {
+      "Autonomy/scripts/system_test.sh": {
+        "exists": true,
+        "executable": true
+      },
+      "Autonomy/scripts/health_check.sh": {
+        "exists": true,
+        "executable": true
+      }
+    }
+  },
+  "performance_metrics": {
+    "resource_monitoring": {
+      "cpu_percent": 37.2,
+      "memory_percent": 47.4,
+      "disk_usage_percent": 49.3,
+      "within_limits": true
+    },
+    "component_import_performance": {
+      "execution_time_seconds": 0.33477210998535156,
+      "success": true,
+      "performance_acceptable": true
+    },
+    "integration_tests_available": true
+  },
+  "summary": {
+    "total_tests": 42,
+    "passed_tests": 42,
+    "success_rate": 1.0,
+    "overall_status": "PASS"
+  }
+}

@@ -7,6 +7,11 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 
 # Define the interface files
 set(msg_files
@@ -21,6 +26,8 @@ set(msg_files
   "msg/SafetyStatus.msg"
   "msg/FollowMeStatus.msg"
   "msg/ArmAlignmentCommand.msg"
+  "msg/AOIStatus.msg"
+  "msg/AOIMetrics.msg"
 )
 
 set(srv_files
@@ -40,6 +47,7 @@ set(srv_files
   "srv/SoftwareEstop.srv"
   "srv/NavigationIntegrityCheck.srv"
   "srv/TimingSafetyCheck.srv"
+  "srv/GetAOIStatus.srv"
 )
 
 set(action_files

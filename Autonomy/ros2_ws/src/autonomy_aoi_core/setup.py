@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'autonomy_state_machine'
+package_name = 'autonomy_aoi_core'
 
 setup(
     name=package_name,
@@ -19,12 +19,12 @@ setup(
     zip_safe=True,
     maintainer='URC 2026 Team',
     maintainer_email='team@urc2026.edu',
-    description='Hierarchical state machine for URC 2026 rover autonomy',
+    description='AoI (Age of Information) core utilities for URC 2026 autonomy',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'state_machine_director = autonomy_state_management.state_machine_director:main',
+            'aoi_monitor = autonomy_aoi_core.aoi_monitor:main',
         ],
     },
 )

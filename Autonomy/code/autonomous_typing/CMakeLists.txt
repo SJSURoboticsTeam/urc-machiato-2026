@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(autonomy_PKG)
+project(autonomy_autonomous_typing)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -11,7 +11,7 @@ find_package(ament_cmake_python REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/PKG_node.py
+  autonomy_autonomous_typing/autonomous_typing_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

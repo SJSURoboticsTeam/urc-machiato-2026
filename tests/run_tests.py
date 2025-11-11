@@ -21,7 +21,7 @@ class TestRunner:
 
     def run_unit_tests(self, coverage=True, verbose=True):
         """Run unit tests."""
-        cmd = ["python", "-m", "pytest", "tests/unit/"]
+        cmd = ["python3", "-m", "pytest", "tests/unit/"]
 
         if verbose:
             cmd.append("-v")
@@ -32,7 +32,7 @@ class TestRunner:
 
     def run_integration_tests(self, coverage=True, verbose=True):
         """Run integration tests."""
-        cmd = ["python", "-m", "pytest", "tests/integration/", "-m", "integration"]
+        cmd = ["python3", "-m", "pytest", "tests/integration/", "-m", "integration"]
 
         if verbose:
             cmd.append("-v")
@@ -43,7 +43,7 @@ class TestRunner:
 
     def run_system_tests(self, coverage=True, verbose=True):
         """Run system tests."""
-        cmd = ["python", "-m", "pytest", "tests/system/", "-m", "system"]
+        cmd = ["python3", "-m", "pytest", "tests/system/", "-m", "system"]
 
         if verbose:
             cmd.append("-v")
@@ -54,7 +54,7 @@ class TestRunner:
 
     def run_performance_tests(self, verbose=True):
         """Run performance tests."""
-        cmd = ["python", "-m", "pytest", "tests/performance/", "-m", "performance"]
+        cmd = ["python3", "-m", "pytest", "tests/performance/", "-m", "performance"]
 
         if verbose:
             cmd.append("-v")
@@ -70,9 +70,33 @@ class TestRunner:
 
         return self._run_command(cmd, "Safety Tests")
 
+    def run_aoi_tests(self, coverage=True, verbose=True):
+        """Run automated AoI tests."""
+        print("🧪 Running Automated AoI Tests...")
+        print("This will spin up the system, run tests, and spin down automatically")
+
+        cmd = ["python3", "tests/automated_test_platform.py", "aoi_tests"]
+
+        if verbose:
+            cmd.append("--ci-mode")
+
+        return self._run_command(cmd, "AoI Tests")
+
+    def run_all_automated_tests(self, coverage=True, verbose=True):
+        """Run all tests using automated platform."""
+        print("🤖 Running Complete Automated Test Suite...")
+        print("This will run all test suites with full lifecycle management")
+
+        cmd = ["python", "tests/automated_test_platform.py", "all"]
+
+        if verbose:
+            cmd.append("--ci-mode")
+
+        return self._run_command(cmd, "Automated Test Suite")
+
     def run_all_tests(self, coverage=True, verbose=True):
         """Run all tests with coverage."""
-        cmd = ["python", "-m", "pytest"]
+        cmd = ["python3", "-m", "pytest"]
 
         if verbose:
             cmd.append("-v")
@@ -91,7 +115,7 @@ class TestRunner:
         """Generate test reports."""
         print("📊 Generating Test Reports...")
 
-        cmd = ["python", "tests/reports/generate_test_report.py"]
+        cmd = ["python3", "tests/reports/generate_test_report.py"]
         result = self._run_command(cmd, "Report Generation")
 
         if result == 0:
@@ -136,9 +160,11 @@ class TestRunner:
             print(f"  ... and {len(test_files) - 5} more")
 
         print("\n💡 Next Steps:")
-        print("1. Run unit tests: python tests/run_tests.py --unit")
-        print("2. Run all tests: python tests/run_tests.py --all")
-        print("3. Generate reports: python tests/run_tests.py --reports")
+        print("1. Run automated AoI tests: python tests/run_tests.py --aoi")
+        print("2. Run complete automated suite: python tests/run_tests.py --automated")
+        print("3. Run traditional unit tests: python tests/run_tests.py --unit")
+        print("4. Run all tests: python tests/run_tests.py --all")
+        print("5. Generate reports: python tests/run_tests.py --reports")
 
         return len(test_files) > 0
 
@@ -174,6 +200,8 @@ def main():
     parser.add_argument("--system", action="store_true", help="Run system tests")
     parser.add_argument("--performance", action="store_true", help="Run performance tests")
     parser.add_argument("--safety", action="store_true", help="Run safety tests")
+    parser.add_argument("--aoi", action="store_true", help="Run automated AoI tests")
+    parser.add_argument("--automated", action="store_true", help="Run complete automated test suite")
     parser.add_argument("--all", action="store_true", help="Run all tests")
     parser.add_argument("--reports", action="store_true", help="Generate test reports")
     parser.add_argument("--status", action="store_true", help="Check test status")
@@ -201,6 +229,10 @@ def main():
         return runner.run_performance_tests(verbose) == 0
     elif args.safety:
         return runner.run_safety_tests(verbose) == 0
+    elif args.aoi:
+        return runner.run_aoi_tests(coverage, verbose) == 0
+    elif args.automated:
+        return runner.run_all_automated_tests(coverage, verbose) == 0
     elif args.all:
         success = runner.run_all_tests(coverage, verbose) == 0
         if success:
@@ -217,6 +249,8 @@ def main():
         print("  --system         Run system tests")
         print("  --performance    Run performance tests")
         print("  --safety         Run safety-critical tests")
+        print("  --aoi            Run automated AoI tests (spin-up → test → spin-down)")
+        print("  --automated      Run complete automated test suite")
         print("  --all            Run all tests with coverage")
         print("  --reports        Generate test reports")
         print("  --no-coverage    Skip coverage reporting")
@@ -225,6 +259,8 @@ def main():
         print("Examples:")
         print("  python tests/run_tests.py --status")
         print("  python tests/run_tests.py --unit")
+        print("  python tests/run_tests.py --aoi              # Automated AoI testing")
+        print("  python tests/run_tests.py --automated        # Complete automated suite")
         print("  python tests/run_tests.py --all --reports")
         return runner.check_test_status()
 
