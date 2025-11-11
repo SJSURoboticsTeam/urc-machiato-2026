@@ -72,6 +72,19 @@ launch_safety_system() {
     fi
 }
 
+launch_aoi_monitor() {
+    print_info "Launching AoI monitor..."
+    ros2 run autonomy_safety_system aoi_monitor_node &
+    echo $! > /tmp/system_aoi.pid
+    sleep 2
+
+    if ros2 node list 2>/dev/null | grep -q aoi_monitor; then
+        print_success "AoI monitor running"
+    else
+        print_warning "AoI monitor failed to start"
+    fi
+}
+
 launch_navigation() {
     print_info "Launching navigation..."
     ros2 launch autonomy_navigation navigation.launch.py &
@@ -122,6 +135,7 @@ show_status() {
     echo "Running components:"
     [ -f /tmp/system_state.pid ] && echo "  • State Management (PID: $(cat /tmp/system_state.pid))"
     [ -f /tmp/system_safety.pid ] && echo "  • Safety System (PID: $(cat /tmp/system_safety.pid))"
+    [ -f /tmp/system_aoi.pid ] && echo "  • AoI Monitor (PID: $(cat /tmp/system_aoi.pid))"
     [ -f /tmp/system_nav.pid ] && echo "  • Navigation (PID: $(cat /tmp/system_nav.pid))"
     [ -f /tmp/system_vision.pid ] && echo "  • Computer Vision (PID: $(cat /tmp/system_vision.pid))"
     [ -f /tmp/system_slam.pid ] && echo "  • SLAM (PID: $(cat /tmp/system_slam.pid))"
@@ -188,6 +202,7 @@ main() {
     # Launch core systems (always)
     launch_state_management
     launch_safety_system
+    launch_aoi_monitor
 
     # Launch main systems
     if [ "$launch_mode" = "full" ]; then

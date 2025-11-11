@@ -22,7 +22,10 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 
 from autonomy_interfaces.msg import SafetyStatus
-from autonomy_interfaces.aoi_tracker import AOITracker, AOIConfig
+import sys
+import os
+# Import AoI tracker from the proper ROS2 package
+from autonomy_aoi_core.aoi_tracker import AOITracker, AOIConfig
 
 
 class ProximitySensorType(Enum):

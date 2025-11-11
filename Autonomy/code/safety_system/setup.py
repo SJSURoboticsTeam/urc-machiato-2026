@@ -30,6 +30,7 @@ setup(
             'emergency_response_coordinator = autonomy_safety_system.emergency_response_coordinator:main',
             'safety_dashboard = autonomy_safety_system.safety_dashboard:main',
             'safety_integration_tester = autonomy_safety_system.safety_integration_tester:main',
+            'aoi_monitor_node = autonomy_interfaces.aoi_monitor_node:main',
         ],
     },
 )

@@ -1,0 +1,81 @@
+{
+  "summary": {
+    "passed": 1,
+    "total": 10,
+    "success_rate": 0.1
+  },
+  "tests": [
+    {
+      "name": "aoi_tracker_unit",
+      "passed": false,
+      "duration": 0.00011682510375976562,
+      "error": "AoI tracker import failed: No module named 'autonomy_interfaces.aoi_tracker'",
+      "metrics": {}
+    },
+    {
+      "name": "shared_buffer_unit",
+      "passed": false,
+      "duration": 1.1682510375976562e-05,
+      "error": "Shared buffer import failed: No module named 'autonomy_interfaces.aoi_tracker'",
+      "metrics": {}
+    },
+    {
+      "name": "aoi_monitor_integration",
+      "passed": false,
+      "duration": 0.19307470321655273,
+      "error": "Expected >=2 AoI topics, got 0",
+      "metrics": {}
+    },
+    {
+      "name": "safety_aoi_integration",
+      "passed": false,
+      "duration": 0.20053648948669434,
+      "error": "Failed to get AoI status from safety system",
+      "metrics": {}
+    },
+    {
+      "name": "full_system_aoi",
+      "passed": false,
+      "duration": 0.19390344619750977,
+      "error": "Expected >=2 nodes running, got 0",
+      "metrics": {}
+    },
+    {
+      "name": "aoi_service_functionality",
+      "passed": false,
+      "duration": 10.017144441604614,
+      "error": "Command '['ros2', 'service', 'call', '/system/get_aoi_status', 'autonomy_interfaces/srv/GetAOIStatus', \"{sensor_name: '', include_history: false, history_samples: 0}\"]' timed out after 10 seconds",
+      "metrics": {}
+    },
+    {
+      "name": "resource_usage_performance",
+      "passed": false,
+      "duration": 7.037775039672852,
+      "error": "CPU overhead too high: 14.8%",
+      "metrics": {}
+    },
+    {
+      "name": "data_volume_performance",
+      "passed": true,
+      "duration": 10.199616432189941,
+      "error": null,
+      "metrics": {
+        "aoi_bandwidth_kb_per_sec": 0.1
+      }
+    },
+    {
+      "name": "safety_system_integrity",
+      "passed": false,
+      "duration": 5.004048824310303,
+      "error": "Command '['ros2', 'topic', 'pub', '/emergency_stop', 'std_msgs/Bool', '{data: true}', '--once']' timed out after 4.9999912909997875 seconds",
+      "metrics": {}
+    },
+    {
+      "name": "aoi_failure_modes",
+      "passed": false,
+      "duration": 2.302826166152954,
+      "error": "Safety system failed when AoI monitor crashed",
+      "metrics": {}
+    }
+  ]
+}
