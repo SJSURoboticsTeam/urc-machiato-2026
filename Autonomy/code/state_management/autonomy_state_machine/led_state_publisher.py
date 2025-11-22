@@ -6,11 +6,12 @@ requirements. The LED controller subscribes to this and decides actual colors.
 """
 
 from typing import Optional
+
 import structlog
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from .states import SystemState, AutonomousSubstate
+from .states import AutonomousMode, SystemState
 
 logger = structlog.get_logger(__name__)
 
@@ -47,7 +48,7 @@ class LEDStatePublisher:
     def update_state(
         self,
         state: SystemState,
-        substate: Optional[AutonomousSubstate] = None,
+        substate: Optional[AutonomousMode] = None,
     ) -> None:
         """
         Update LED information based on state.
@@ -76,7 +77,7 @@ class LEDStatePublisher:
     def _determine_led_info(
         self,
         state: SystemState,
-        substate: Optional[AutonomousSubstate] = None,
+        substate: Optional[AutonomousMode] = None,
     ) -> str:
         """
         Determine LED information string based on state.
@@ -168,4 +169,3 @@ class LEDStatePublisher:
         self._publish_led_info(led_info)
 
         logger.info("Success signaled", success_type=success_type)
-

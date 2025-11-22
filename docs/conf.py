@@ -41,9 +41,14 @@ extensions = [
     # Diagram and visualization extensions
     'sphinx.ext.graphviz',
     'sphinx.ext.inheritance_diagram',
+    'sphinxcontrib.plantuml',
 
     # C++ documentation with Doxygen
     'breathe',
+
+    # Custom extensions
+    '_extensions.ros2_graphs',
+    '_extensions.code_analysis',
 
     # Note: Additional extensions require separate installation
     # 'sphinx_js',        # For JavaScript/TypeScript docs
@@ -84,6 +89,14 @@ breathe_default_members = ('members', 'undoc-members', 'protected-members', 'pri
 # sphinx-js configuration for JavaScript/TypeScript (requires sphinx-js package)
 # js_source_path = '../frontend/src'
 # jsdoc_config_path = 'jsdoc.json'
+
+# PlantUML configuration (requires sphinxcontrib-plantuml package)
+plantuml = 'plantuml'
+plantuml_output_format = 'svg'
+plantuml_latex_output_format = 'pdf'
+
+# Fallback to online service if local PlantUML not available
+# plantuml = 'http://www.plantuml.com/plantuml'
 
 # MyST Parser configuration for Markdown
 myst_enable_extensions = [

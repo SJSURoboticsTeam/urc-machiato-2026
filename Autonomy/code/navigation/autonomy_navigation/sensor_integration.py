@@ -13,15 +13,15 @@ be replaced with actual hardware interfaces later. It provides:
 All sensors publish at appropriate frequencies for navigation algorithms.
 """
 
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix, Imu, Image
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Header
 import math
-import time
 import random
+
+import rclpy
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from sensor_msgs.msg import Image, Imu, NavSatFix
+from std_msgs.msg import Header
 
 
 class SensorIntegrationNode(Node):
@@ -33,16 +33,16 @@ class SensorIntegrationNode(Node):
     """
 
     def __init__(self):
-        super().__init__('sensor_integration_node')
+        super().__init__("sensor_integration_node")
 
         # Publishers for sensor data
-        self.gps_publisher = self.create_publisher(NavSatFix, 'gps/fix', 10)
-        self.imu_publisher = self.create_publisher(Imu, 'imu/data', 10)
-        self.image_publisher = self.create_publisher(Image, 'camera/image_raw', 10)
-        self.odom_publisher = self.create_publisher(Odometry, 'wheel/odom', 10)
+        self.gps_publisher = self.create_publisher(NavSatFix, "gps/fix", 10)
+        self.imu_publisher = self.create_publisher(Imu, "imu/data", 10)
+        self.image_publisher = self.create_publisher(Image, "camera/image_raw", 10)
+        self.odom_publisher = self.create_publisher(Odometry, "wheel/odom", 10)
 
         # Publishers for navigation inputs
-        self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.cmd_vel_publisher = self.create_publisher(Twist, "cmd_vel", 10)
 
         # Simulation state
         self.sim_time = 0.0
@@ -58,16 +58,19 @@ class SensorIntegrationNode(Node):
         self.gps_noise_std = 1.0  # meters
 
         # Timers for different sensor update rates
-        self.gps_timer = self.create_timer(1.0, self.publish_gps_data)      # 1 Hz
-        self.imu_timer = self.create_timer(0.1, self.publish_imu_data)      # 10 Hz
+        self.gps_timer = self.create_timer(1.0, self.publish_gps_data)  # 1 Hz
+        self.imu_timer = self.create_timer(0.1, self.publish_imu_data)  # 10 Hz
         self.camera_timer = self.create_timer(0.033, self.publish_camera_data)  # ~30 Hz
-        self.odom_timer = self.create_timer(0.05, self.publish_odometry)    # 20 Hz
+        self.odom_timer = self.create_timer(0.05, self.publish_odometry)  # 20 Hz
 
         # Subscribe to velocity commands to update simulation
         self.cmd_vel_subscription = self.create_subscription(
-            Twist, 'cmd_vel', self.cmd_vel_callback, 10)
+            Twist, "cmd_vel", self.cmd_vel_callback, 10
+        )
 
-        self.get_logger().info('Sensor integration node initialized with simulated sensors')
+        self.get_logger().info(
+            "Sensor integration node initialized with simulated sensors"
+        )
 
     def cmd_vel_callback(self, msg: Twist):
         """Update robot velocity from navigation commands"""
@@ -85,14 +88,20 @@ class SensorIntegrationNode(Node):
         # Convert to GPS coordinates (rough approximation)
         # 1 degree lat/lon ≈ 111 km, so small displacements in meters
         lat_offset = self.robot_y / 111000.0  # Convert meters to degrees latitude
-        lon_offset = self.robot_x / (111000.0 * math.cos(math.radians(self.base_latitude)))
+        lon_offset = self.robot_x / (
+            111000.0 * math.cos(math.radians(self.base_latitude))
+        )
 
         # Add noise
         lat_noise = random.gauss(0, self.gps_noise_std / 111000.0)
-        lon_noise = random.gauss(0, self.gps_noise_std / (111000.0 * math.cos(math.radians(self.base_latitude))))
+        lon_noise = random.gauss(
+            0,
+            self.gps_noise_std
+            / (111000.0 * math.cos(math.radians(self.base_latitude))),
+        )
 
         gps_msg = NavSatFix()
-        gps_msg.header = self.create_header('gps')
+        gps_msg.header = self.create_header("gps")
         gps_msg.latitude = self.base_latitude + lat_offset + lat_noise
         gps_msg.longitude = self.base_longitude + lon_offset + lon_noise
         gps_msg.altitude = 10.0  # Assume we're at 10m elevation
@@ -110,7 +119,7 @@ class SensorIntegrationNode(Node):
     def publish_imu_data(self):
         """Publish simulated IMU data"""
         imu_msg = Imu()
-        imu_msg.header = self.create_header('imu')
+        imu_msg.header = self.create_header("imu")
 
         # Orientation (simulated)
         imu_msg.orientation.x = 0.0
@@ -129,9 +138,39 @@ class SensorIntegrationNode(Node):
         imu_msg.linear_acceleration.z = 9.81 + random.gauss(0, 0.1)  # Gravity
 
         # Covariances (simplified diagonal)
-        imu_msg.orientation_covariance = [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01]
-        imu_msg.angular_velocity_covariance = [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01]
-        imu_msg.linear_acceleration_covariance = [0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1]
+        imu_msg.orientation_covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
+        imu_msg.angular_velocity_covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
+        imu_msg.linear_acceleration_covariance = [
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+        ]
 
         self.imu_publisher.publish(imu_msg)
 
@@ -149,10 +188,10 @@ class SensorIntegrationNode(Node):
                 image_data.extend([intensity, intensity, intensity])  # RGB
 
         image_msg = Image()
-        image_msg.header = self.create_header('camera')
+        image_msg.header = self.create_header("camera")
         image_msg.height = height
         image_msg.width = width
-        image_msg.encoding = 'rgb8'
+        image_msg.encoding = "rgb8"
         image_msg.is_bigendian = False
         image_msg.step = width * 3
         image_msg.data = image_data
@@ -162,7 +201,7 @@ class SensorIntegrationNode(Node):
     def publish_odometry(self):
         """Publish simulated wheel odometry"""
         odom_msg = Odometry()
-        odom_msg.header = self.create_header('odom')
+        odom_msg.header = self.create_header("odom")
 
         # Position
         odom_msg.pose.pose.position.x = self.robot_x
@@ -184,12 +223,44 @@ class SensorIntegrationNode(Node):
         odom_msg.twist.twist.angular.z = self.angular_velocity
 
         # Covariances (simplified)
-        odom_msg.pose.covariance = [0.1, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                   0.0, 0.1, 0.0, 0.0, 0.0, 0.0,
-                                   0.0, 0.0, 0.1, 0.0, 0.0, 0.0,
-                                   0.0, 0.0, 0.0, 0.1, 0.0, 0.0,
-                                   0.0, 0.0, 0.0, 0.0, 0.1, 0.0,
-                                   0.0, 0.0, 0.0, 0.0, 0.0, 0.1]
+        odom_msg.pose.covariance = [
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+        ]
 
         odom_msg.twist.covariance = odom_msg.pose.covariance.copy()
 
@@ -216,5 +287,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

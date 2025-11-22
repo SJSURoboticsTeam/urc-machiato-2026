@@ -11,15 +11,15 @@ Implements:
 Author: URC 2026 Autonomy Team
 """
 
-import numpy as np
-import heapq
-from typing import List, Tuple, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
+from typing import List, Optional, Tuple
+
 
 
 class PathPlanningAlgorithm(Enum):
     """Available path planning algorithms"""
+
     ASTAR = "astar"
     DIJKSTRA = "dijkstra"
     RRT = "rrt"
@@ -28,11 +28,12 @@ class PathPlanningAlgorithm(Enum):
 @dataclass
 class Node:
     """A* search node"""
+
     position: Tuple[int, int]
     g_cost: float  # Cost from start
     h_cost: float  # Heuristic cost to goal
     f_cost: float  # Total cost
-    parent: Optional['Node'] = None
+    parent: Optional["Node"] = None
 
     @property
     def x(self) -> int:
@@ -46,6 +47,7 @@ class Node:
 @dataclass
 class PathSegment:
     """Path segment with properties"""
+
     start: Tuple[float, float]
     end: Tuple[float, float]
     length: float
@@ -85,10 +87,13 @@ class PathPlanner:
         # TODO: Load map data
         # Initialize cost maps
         # Set up algorithm parameters
-        pass
 
-    def plan_path(self, start: Tuple[float, float], goal: Tuple[float, float],
-                  constraints: Optional[dict] = None) -> List[Tuple[float, float]]:
+    def plan_path(
+        self,
+        start: Tuple[float, float],
+        goal: Tuple[float, float],
+        constraints: Optional[dict] = None,
+    ) -> List[Tuple[float, float]]:
         """
         Plan path from start to goal
 
@@ -108,8 +113,12 @@ class PathPlanner:
             # TODO: Implement other algorithms
             return []
 
-    def _plan_astar(self, start: Tuple[float, float], goal: Tuple[float, float],
-                   constraints: Optional[dict] = None) -> List[Tuple[float, float]]:
+    def _plan_astar(
+        self,
+        start: Tuple[float, float],
+        goal: Tuple[float, float],
+        constraints: Optional[dict] = None,
+    ) -> List[Tuple[float, float]]:
         """A* path planning implementation"""
         # TODO: Implement A* algorithm
         # - Grid discretization
@@ -120,8 +129,12 @@ class PathPlanner:
         # Placeholder implementation
         return [start, goal]
 
-    def _plan_dijkstra(self, start: Tuple[float, float], goal: Tuple[float, float],
-                      constraints: Optional[dict] = None) -> List[Tuple[float, float]]:
+    def _plan_dijkstra(
+        self,
+        start: Tuple[float, float],
+        goal: Tuple[float, float],
+        constraints: Optional[dict] = None,
+    ) -> List[Tuple[float, float]]:
         """Dijkstra path planning implementation"""
         # TODO: Implement Dijkstra algorithm
         return [start, goal]
@@ -150,11 +163,12 @@ class PathPlanner:
         # - Maintain safety margins
         return path  # Placeholder
 
-    def optimize_path(self, path: List[Tuple[float, float]],
-                     criteria: List[str] = None) -> List[Tuple[float, float]]:
+    def optimize_path(
+        self, path: List[Tuple[float, float]], criteria: List[str] = None
+    ) -> List[Tuple[float, float]]:
         """Optimize path based on multiple criteria"""
         if not criteria:
-            criteria = ['distance', 'terrain', 'safety']
+            criteria = ["distance", "terrain", "safety"]
 
         # TODO: Implement multi-objective optimization
         # - Distance minimization
@@ -169,21 +183,22 @@ class PathPlanner:
 
         total_length = 0.0
         for i in range(len(path) - 1):
-            dx = path[i+1][0] - path[i][0]
-            dy = path[i+1][1] - path[i][1]
-            total_length += math.sqrt(dx*dx + dy*dy)
+            dx = path[i + 1][0] - path[i][0]
+            dy = path[i + 1][1] - path[i][1]
+            total_length += math.sqrt(dx * dx + dy * dy)
 
         return total_length
 
-    def estimate_traversal_time(self, path: List[Tuple[float, float]],
-                               speed_profile: dict = None) -> float:
+    def estimate_traversal_time(
+        self, path: List[Tuple[float, float]], speed_profile: dict = None
+    ) -> float:
         """Estimate time to traverse path"""
         # TODO: Implement time estimation
         # - Consider terrain types
         # - Account for speed limits
         # - Factor in acceleration/deceleration
         length = self.get_path_length(path)
-        avg_speed = speed_profile.get('average', 1.0) if speed_profile else 1.0
+        avg_speed = speed_profile.get("average", 1.0) if speed_profile else 1.0
         return length / avg_speed
 
     def update_costmap(self, new_obstacles: List[Tuple[float, float, float]]):
@@ -192,18 +207,15 @@ class PathPlanner:
         # - Add new obstacles
         # - Update inflation zones
         # - Replan affected paths if needed
-        pass
 
     def reset_planner(self):
         """Reset planner state"""
         # TODO: Clear internal state
         # Reset costmaps
         # Clear cached paths
-        pass
 
     def shutdown(self):
         """Shutdown path planner"""
         # TODO: Clean shutdown
         # Save state if needed
         # Release resources
-        pass

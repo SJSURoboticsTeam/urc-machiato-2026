@@ -5,13 +5,17 @@ Simple test script for core state machine functionality.
 Tests state definitions, transitions, and validation logic without ROS2 dependencies.
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'autonomy_state_machine'))
+import sys
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "autonomy_state_machine")
+)
+
 
 def test_state_definitions():
     """Test that all states are properly defined."""
-    from states import SystemState, AutonomousSubstate, EquipmentServicingSubstate
+    from states import AutonomousSubstate, EquipmentServicingSubstate, SystemState
 
     print("Testing state definitions...")
 
@@ -66,16 +70,22 @@ def test_state_transitions():
     assert is_valid_transition(SystemState.IDLE, SystemState.SHUTDOWN)
 
     # Test invalid transitions (should return False)
-    assert not is_valid_transition(SystemState.SHUTDOWN, SystemState.IDLE)  # Can't go back from shutdown (terminal state)
-    assert not is_valid_transition(SystemState.SAFETY, SystemState.AUTONOMOUS)  # Can't go directly to autonomous from safety
-    assert not is_valid_transition(SystemState.CALIBRATION, SystemState.TELEOPERATION)  # Can't skip IDLE
+    assert not is_valid_transition(
+        SystemState.SHUTDOWN, SystemState.IDLE
+    )  # Can't go back from shutdown (terminal state)
+    assert not is_valid_transition(
+        SystemState.SAFETY, SystemState.AUTONOMOUS
+    )  # Can't go directly to autonomous from safety
+    assert not is_valid_transition(
+        SystemState.CALIBRATION, SystemState.TELEOPERATION
+    )  # Can't skip IDLE
 
     print("✓ State transition validation works correctly")
 
 
 def test_state_metadata():
     """Test state metadata retrieval."""
-    from states import get_state_metadata, get_required_subsystems, SystemState
+    from states import SystemState, get_required_subsystems, get_state_metadata
 
     print("Testing state metadata...")
 
@@ -136,6 +146,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

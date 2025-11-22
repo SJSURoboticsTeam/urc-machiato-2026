@@ -11,18 +11,16 @@ Handles:
 Author: URC 2026 Autonomy Team
 """
 
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix
-from geometry_msgs.msg import PoseStamped
-import math
-from typing import Optional, Tuple
 from dataclasses import dataclass
+from typing import Optional, Tuple
+
+from sensor_msgs.msg import NavSatFix
 
 
 @dataclass
 class GNSSData:
     """GNSS position data structure"""
+
     latitude: float
     longitude: float
     altitude: float
@@ -59,7 +57,6 @@ class GNSSProcessor:
         # - Serial port setup
         # - RTK correction streams
         # - Filter initialization
-        pass
 
     def update_position(self, gnss_msg: NavSatFix):
         """Update current GNSS position"""
@@ -75,7 +72,7 @@ class GNSSProcessor:
             altitude=gnss_msg.altitude,
             covariance=gnss_msg.position_covariance,
             timestamp=gnss_msg.header.stamp.sec + gnss_msg.header.stamp.nanosec * 1e-9,
-            accuracy=self.calculate_accuracy(gnss_msg.position_covariance)
+            accuracy=self.calculate_accuracy(gnss_msg.position_covariance),
         )
 
         self.current_position = position
@@ -109,17 +106,24 @@ class GNSSProcessor:
         # - Verify timestamp
         return True  # Placeholder
 
-    def convert_to_local_frame(self, latitude: float, longitude: float,
-                              altitude: float, origin_lat: float,
-                              origin_lon: float, origin_alt: float) -> Tuple[float, float, float]:
+    def convert_to_local_frame(
+        self,
+        latitude: float,
+        longitude: float,
+        altitude: float,
+        origin_lat: float,
+        origin_lon: float,
+        origin_alt: float,
+    ) -> Tuple[float, float, float]:
         """Convert WGS84 coordinates to local ENU frame"""
         # TODO: Implement coordinate conversion
         # Use GeographicLib or similar
         # Return east, north, up coordinates
         return (0.0, 0.0, 0.0)  # Placeholder
 
-    def get_local_position(self, origin_lat: float, origin_lon: float,
-                          origin_alt: float) -> Tuple[float, float, float]:
+    def get_local_position(
+        self, origin_lat: float, origin_lon: float, origin_alt: float
+    ) -> Tuple[float, float, float]:
         """Get current position in local ENU frame"""
         if not self.current_position:
             return (0.0, 0.0, 0.0)
@@ -128,7 +132,9 @@ class GNSSProcessor:
             self.current_position.latitude,
             self.current_position.longitude,
             self.current_position.altitude,
-            origin_lat, origin_lon, origin_alt
+            origin_lat,
+            origin_lon,
+            origin_alt,
         )
 
     def is_rtk_active(self) -> bool:
@@ -150,11 +156,9 @@ class GNSSProcessor:
         # TODO: Reset filter states
         # Clear accumulated data
         # Reinitialize filter parameters
-        pass
 
     def shutdown(self):
         """Shutdown GNSS processor"""
         # TODO: Clean shutdown
         # Close connections
         # Save state if needed
-        pass

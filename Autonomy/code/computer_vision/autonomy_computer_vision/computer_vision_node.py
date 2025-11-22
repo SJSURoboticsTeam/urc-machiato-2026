@@ -11,11 +11,9 @@ from typing import List, Optional, Tuple
 import cv2
 import numpy as np
 import rclpy
+from autonomy_interfaces.msg import VisionDetection
 from cv_bridge import CvBridge
 from rclpy.node import Node
-
-from autonomy_interfaces.msg import VisionDetection
-from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Header, String
 
@@ -30,31 +28,40 @@ class ComputerVisionNode(Node):
 
     def __init__(self) -> None:
         """Initialize computer vision node with camera interfaces."""
-        super().__init__('computer_vision_node')
+        super().__init__("computer_vision_node")
 
         # Publishers
         self.detection_publisher = self.create_publisher(
-            VisionDetection, 'vision/detections', 10)
+            VisionDetection, "vision/detections", 10
+        )
         self.status_publisher = self.create_publisher(
-            String, 'computer_vision/status', 10)
+            String, "computer_vision/status", 10
+        )
         self.debug_image_publisher = self.create_publisher(
-            Image, 'vision/debug_image', 10)
+            Image, "vision/debug_image", 10
+        )
 
         # Camera data republishers (for data flow and monitoring)
         self.camera_image_republisher = self.create_publisher(
-            Image, 'camera/image_raw', 10)
+            Image, "camera/image_raw", 10
+        )
         self.camera_depth_republisher = self.create_publisher(
-            Image, 'camera/depth/image_raw', 10)
+            Image, "camera/depth/image_raw", 10
+        )
         self.camera_info_republisher = self.create_publisher(
-            CameraInfo, 'camera/camera_info', 10)
+            CameraInfo, "camera/camera_info", 10
+        )
 
         # Subscribers
         self.image_subscription = self.create_subscription(
-            Image, 'camera/image_raw', self.image_callback, 10)
+            Image, "camera/image_raw", self.image_callback, 10
+        )
         self.depth_subscription = self.create_subscription(
-            Image, 'camera/depth/image_raw', self.depth_callback, 10)
+            Image, "camera/depth/image_raw", self.depth_callback, 10
+        )
         self.camera_info_subscription = self.create_subscription(
-            CameraInfo, 'camera/camera_info', self.camera_info_callback, 10)
+            CameraInfo, "camera/camera_info", self.camera_info_callback, 10
+        )
 
         # CV Bridge for ROS/OpenCV conversion
         self.bridge = CvBridge()
@@ -65,13 +72,15 @@ class ComputerVisionNode(Node):
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.aruco_params)
 
         # Camera parameters (placeholder - would be calibrated)
-        self.camera_matrix = np.array([[600, 0, 320], [0, 600, 240], [0, 0, 1]], dtype=np.float32)
+        self.camera_matrix = np.array(
+            [[600, 0, 320], [0, 600, 240], [0, 0, 1]], dtype=np.float32
+        )
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float32)
 
         # Competition targets
         self.target_objects = {
-            'mallet': {'color': 'orange', 'shape': 'cylindrical'},
-            'water_bottle': {'color': 'various', 'shape': 'cylindrical'}
+            "mallet": {"color": "orange", "shape": "cylindrical"},
+            "water_bottle": {"color": "various", "shape": "cylindrical"},
         }
 
         # Processing state
@@ -82,12 +91,12 @@ class ComputerVisionNode(Node):
         self.processing_timer = self.create_timer(0.1, self.process_image)  # 10 Hz
         self.status_timer = self.create_timer(1.0, self.status_callback)
 
-        self.get_logger().info('Computer Vision node initialized')
+        self.get_logger().info("Computer Vision node initialized")
 
     def image_callback(self, msg: Image):
         """Handle incoming camera images."""
         try:
-            self.last_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            self.last_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
             # Republish camera image for other nodes
             self.camera_image_republisher.publish(msg)
@@ -99,14 +108,47 @@ class ComputerVisionNode(Node):
             camera_info.height = msg.height
             camera_info.distortion_model = "plumb_bob"
             camera_info.d = [0.0, 0.0, 0.0, 0.0, 0.0]  # No distortion
-            camera_info.k = [600.0, 0.0, 320.0, 0.0, 600.0, 240.0, 0.0, 0.0, 1.0]  # Camera matrix
-            camera_info.r = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]  # Rectification matrix
-            camera_info.p = [600.0, 0.0, 320.0, 0.0, 0.0, 600.0, 240.0, 0.0, 0.0, 0.0, 1.0, 0.0]  # Projection matrix
+            camera_info.k = [
+                600.0,
+                0.0,
+                320.0,
+                0.0,
+                600.0,
+                240.0,
+                0.0,
+                0.0,
+                1.0,
+            ]  # Camera matrix
+            camera_info.r = [
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+            ]  # Rectification matrix
+            camera_info.p = [
+                600.0,
+                0.0,
+                320.0,
+                0.0,
+                0.0,
+                600.0,
+                240.0,
+                0.0,
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+            ]  # Projection matrix
 
             self.camera_info_republisher.publish(camera_info)
 
         except Exception as e:
-            self.get_logger().error(f'Failed to convert image: {e}')
+            self.get_logger().error(f"Failed to convert image: {e}")
 
     def depth_callback(self, msg: Image):
         """Handle incoming depth images."""
@@ -156,7 +198,8 @@ class ComputerVisionNode(Node):
             for i, marker_id in enumerate(ids.flatten()):
                 # Pose estimation
                 rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
-                    corners[i], 0.05, self.camera_matrix, self.dist_coeffs)
+                    corners[i], 0.05, self.camera_matrix, self.dist_coeffs
+                )
 
                 if rvecs is not None and tvecs is not None:
                     # Convert rotation vector to quaternion
@@ -166,7 +209,7 @@ class ComputerVisionNode(Node):
                     # Create detection message
                     detection = VisionDetection()
                     detection.header = self.create_header()
-                    detection.object_type = f'aruco_{marker_id}'
+                    detection.object_type = f"aruco_{marker_id}"
                     detection.confidence = 0.95
                     detection.position.x = tvecs[0][0][0]
                     detection.position.y = tvecs[0][0][1]
@@ -179,9 +222,17 @@ class ComputerVisionNode(Node):
                     self.current_detections.append(detection)
 
                     # Draw marker on debug image
-                    cv2.aruco.drawDetectedMarkers(self.last_image, [corners[i]], ids[i:i+1])
-                    cv2.aruco.drawAxis(self.last_image, self.camera_matrix, self.dist_coeffs,
-                                     rvecs[0], tvecs[0], 0.1)
+                    cv2.aruco.drawDetectedMarkers(
+                        self.last_image, [corners[i]], ids[i : i + 1]
+                    )
+                    cv2.aruco.drawAxis(
+                        self.last_image,
+                        self.camera_matrix,
+                        self.dist_coeffs,
+                        rvecs[0],
+                        tvecs[0],
+                        0.1,
+                    )
 
     def detect_competition_objects(self):
         """Detect competition objects (mallet, water bottle)."""
@@ -198,7 +249,9 @@ class ComputerVisionNode(Node):
         orange_mask = cv2.inRange(hsv, orange_lower, orange_upper)
 
         # Find contours in mask
-        contours, _ = cv2.findContours(orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            orange_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         for contour in contours:
             area = cv2.contourArea(contour)
@@ -208,12 +261,14 @@ class ComputerVisionNode(Node):
 
                 # Estimate position (simplified - would use depth sensing in practice)
                 distance = 2.0  # Placeholder distance estimate
-                angle = ((x + w/2) - self.last_image.shape[1]/2) * 0.002  # Rough angle estimate
+                angle = (
+                    (x + w / 2) - self.last_image.shape[1] / 2
+                ) * 0.002  # Rough angle estimate
 
                 # Create detection message
                 detection = VisionDetection()
                 detection.header = self.create_header()
-                detection.object_type = 'mallet'
+                detection.object_type = "mallet"
                 detection.confidence = 0.7  # Lower confidence for color-based detection
                 detection.position.x = distance * math.sin(angle)
                 detection.position.y = 0.0
@@ -223,11 +278,20 @@ class ComputerVisionNode(Node):
                 self.current_detections.append(detection)
 
                 # Draw bounding box on debug image
-                cv2.rectangle(self.last_image, (x, y), (x+w, y+h), (0, 255, 255), 2)
-                cv2.putText(self.last_image, 'Mallet', (x, y-10),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+                cv2.rectangle(self.last_image, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                cv2.putText(
+                    self.last_image,
+                    "Mallet",
+                    (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 255, 255),
+                    2,
+                )
 
-    def rotation_matrix_to_quaternion(self, R: np.ndarray) -> Tuple[float, float, float, float]:
+    def rotation_matrix_to_quaternion(
+        self, R: np.ndarray
+    ) -> Tuple[float, float, float, float]:
         """Convert rotation matrix to quaternion."""
         q = np.zeros(4)
         trace = np.trace(R)
@@ -261,7 +325,7 @@ class ComputerVisionNode(Node):
     def publish_debug_image(self):
         """Publish debug image with detections overlaid."""
         if self.last_image is not None:
-            debug_msg = self.bridge.cv2_to_imgmsg(self.last_image, encoding='bgr8')
+            debug_msg = self.bridge.cv2_to_imgmsg(self.last_image, encoding="bgr8")
             debug_msg.header = self.create_header()
             self.debug_image_publisher.publish(debug_msg)
 
@@ -269,14 +333,14 @@ class ComputerVisionNode(Node):
         """Create a standard ROS2 header."""
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
-        header.frame_id = 'camera'
+        header.frame_id = "camera"
         return header
 
     def status_callback(self):
         """Publish vision system status."""
         status_msg = String()
         num_detections = len(self.current_detections)
-        status_msg.data = f'Vision operational - {num_detections} detections'
+        status_msg.data = f"Vision operational - {num_detections} detections"
         self.status_publisher.publish(status_msg)
 
 
@@ -289,5 +353,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

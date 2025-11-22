@@ -5,21 +5,20 @@ Validates state transitions based on transition matrix, preconditions,
 and mission-specific requirements.
 """
 
-from typing import List, Tuple, Dict, Optional, Set
+from typing import Dict, List, Optional, Tuple
 
 from .states import (
+    AutonomousMode,
     SystemState,
-    AutonomousSubstate,
+    get_required_subsystems,
     get_state_metadata,
     is_valid_transition,
-    get_required_subsystems,
 )
 
 
 class ValidationError(Exception):
     """Raised when state transition validation fails."""
 
-    pass
 
 
 class TransitionValidator:
@@ -33,7 +32,9 @@ class TransitionValidator:
     def __init__(self, logger=None, state_machine_ref=None):
         """Initialize the transition validator."""
         self.logger = logger  # Will be set by state machine director
-        self.state_machine_ref = state_machine_ref  # Reference to state machine for live state
+        self.state_machine_ref = (
+            state_machine_ref  # Reference to state machine for live state
+        )
 
     def set_calibration_complete(self, complete: bool) -> None:
         """Set calibration completion status."""
@@ -58,7 +59,9 @@ class TransitionValidator:
         self._safety_cleared = cleared
         self._manual_verification = verified
         if self.logger:
-            self.logger.info(f"Safety status updated: cleared={cleared}, verified={verified}")
+            self.logger.info(
+                f"Safety status updated: cleared={cleared}, verified={verified}"
+            )
 
     def update_active_subsystems(self, subsystems: List[str]) -> None:
         """Update the set of active subsystems."""
@@ -94,7 +97,7 @@ class TransitionValidator:
         self,
         from_state: SystemState,
         to_state: SystemState,
-        to_substate: Optional[AutonomousSubstate] = None,
+        to_substate: Optional[AutonomousMode] = None,
         force: bool = False,
     ) -> Tuple[bool, str, List[str]]:
         """
@@ -221,7 +224,7 @@ class TransitionValidator:
         return False
 
     def _check_mission_requirements(
-        self, substate: AutonomousSubstate, failed: List[str]
+        self, substate: AutonomousMode, failed: List[str]
     ) -> List[str]:
         """
         Check mission-specific requirements for autonomous substates.
@@ -236,20 +239,12 @@ class TransitionValidator:
         mission_failed = []
 
         # AUTONOMOUS_NAVIGATION requires GNSS
-        if (
-            substate == AutonomousSubstate.AUTONOMOUS_NAVIGATION
-            and not self._gnss_available
-        ):
+        if substate == AutonomousMode.NAVIGATION and not self._gnss_available:
             mission_failed.append("gnss_required")
-            logger.warning(
-                "GNSS required for autonomous navigation but not available"
-            )
-            
+            logger.warning("GNSS required for autonomous navigation but not available")
+
         # FOLLOW_ME requires ArUco detection
-        if (
-            substate == AutonomousSubstate.FOLLOW_ME
-            and not self._aruco_detection_available
-        ):
+        if substate == AutonomousMode.FOLLOW_ME and not self._aruco_detection_available:
             mission_failed.append("aruco_detection_required")
             logger.warning(
                 "ArUco detection required for follow me mode but not available"
@@ -274,4 +269,3 @@ class TransitionValidator:
             "aruco_detection_available": self._aruco_detection_available,
             "active_subsystems": list(self._active_subsystems),
         }
-

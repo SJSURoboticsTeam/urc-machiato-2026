@@ -5,12 +5,12 @@ Coordinates subsystem activation, monitors subsystem status,
 and ensures subsystems are properly configured for each state.
 """
 
-from typing import List, Set, Optional, Dict
+from typing import Dict, List, Optional, Set
+
 import structlog
 from rclpy.node import Node
-from autonomy_interfaces.srv import GetSubsystemStatus
 
-from .states import AutonomousSubstate
+from .states import AutonomousMode
 
 logger = structlog.get_logger(__name__)
 
@@ -59,7 +59,9 @@ class SubsystemCoordinator:
 
         # For now, assume basic subsystems are available
         self._active_subsystems = {"camera", "navigation"}
-        logger.info("Basic subsystems initialized", subsystems=list(self._active_subsystems))
+        logger.info(
+            "Basic subsystems initialized", subsystems=list(self._active_subsystems)
+        )
 
     def start_calibration(self) -> None:
         """Start calibration process for sensors."""
@@ -90,34 +92,40 @@ class SubsystemCoordinator:
             "Teleoperation enabled", active_subsystems=list(self._active_subsystems)
         )
 
-    def enable_autonomous(self, substate: Optional[AutonomousSubstate] = None) -> None:
+    def enable_autonomous(self, substate: Optional[AutonomousMode] = None) -> None:
         """
         Enable subsystems for autonomous mode.
 
         Args:
             substate: Specific autonomous mission substate
         """
-        logger.info("Enabling autonomous mode", substate=str(substate) if substate else None)
+        logger.info(
+            "Enabling autonomous mode", substate=str(substate) if substate else None
+        )
 
         # Core autonomous subsystems
         self._active_subsystems.update(["navigation", "computer_vision", "slam"])
 
         # Mission-specific subsystems
-        if substate == AutonomousSubstate.SCIENCE:
-            self._active_subsystems.add("science_instruments")
+        if substate == AutonomousMode.SCIENCE:
+            self._active_subsystems.update(["science_instruments", "manipulation"])
             logger.info("Science mission subsystems enabled")
 
-        elif substate == AutonomousSubstate.DELIVERY:
-            self._active_subsystems.add("manipulation")
-            logger.info("Delivery mission subsystems enabled")
+        elif substate == AutonomousMode.NAVIGATION:
+            # Navigation uses core subsystems
+            logger.info("Navigation mission subsystems enabled")
 
-        elif substate == AutonomousSubstate.EQUIPMENT_SERVICING:
+        elif substate == AutonomousMode.EQUIPMENT:
             self._active_subsystems.update(["manipulation", "autonomous_typing"])
             logger.info("Equipment servicing subsystems enabled")
 
-        elif substate == AutonomousSubstate.AUTONOMOUS_NAVIGATION:
-            # Autonomous navigation uses core subsystems only
-            logger.info("Autonomous navigation subsystems enabled")
+        elif substate == AutonomousMode.ARM_CONTROL:
+            self._active_subsystems.add("manipulation")
+            logger.info("Arm control subsystems enabled")
+
+        elif substate == AutonomousMode.FOLLOW_ME:
+            self._active_subsystems.add("aruco_detection")
+            logger.info("Follow-me subsystems enabled")
 
         logger.info(
             "Autonomous mode enabled", active_subsystems=list(self._active_subsystems)
@@ -147,7 +155,10 @@ class SubsystemCoordinator:
         safe_subsystems = {"camera", "communication"}
         self._active_subsystems = safe_subsystems
 
-        logger.warning("All systems set to safe values", active_subsystems=list(self._active_subsystems))
+        logger.warning(
+            "All systems set to safe values",
+            active_subsystems=list(self._active_subsystems),
+        )
 
     def _set_navigation_safe(self) -> None:
         """Set navigation system to safe state (zero velocity)."""
@@ -165,7 +176,9 @@ class SubsystemCoordinator:
             logger.info("Manipulation: Holding current position (safe state)")
             # self._manipulation_client.call_hold_position()
         except Exception as e:
-            logger.warning("Failed to set manipulation safe (may not be present)", error=str(e))
+            logger.warning(
+                "Failed to set manipulation safe (may not be present)", error=str(e)
+            )
 
     def _set_science_safe(self) -> None:
         """Set science system to safe state (graceful stop)."""
@@ -174,7 +187,9 @@ class SubsystemCoordinator:
             logger.info("Science: Completing current operation gracefully (safe state)")
             # self._science_client.call_safe_stop()
         except Exception as e:
-            logger.warning("Failed to set science safe (may not be present)", error=str(e))
+            logger.warning(
+                "Failed to set science safe (may not be present)", error=str(e)
+            )
 
     def _set_autonomous_typing_safe(self) -> None:
         """Set autonomous typing system to safe state (controlled stop)."""
@@ -183,7 +198,10 @@ class SubsystemCoordinator:
             logger.info("Autonomous typing: Controlled stop and park (safe state)")
             # self._typing_client.call_safe_stop()
         except Exception as e:
-            logger.warning("Failed to set autonomous typing safe (may not be present)", error=str(e))
+            logger.warning(
+                "Failed to set autonomous typing safe (may not be present)",
+                error=str(e),
+            )
 
     def disengage_safety_mode(self) -> None:
         """Resume normal subsystem operation after safety mode."""
@@ -204,7 +222,9 @@ class SubsystemCoordinator:
         if self._subsystem_exists("autonomous_typing"):
             self._active_subsystems.add("autonomous_typing")
 
-        logger.info("Normal operation resumed", active_subsystems=list(self._active_subsystems))
+        logger.info(
+            "Normal operation resumed", active_subsystems=list(self._active_subsystems)
+        )
 
     def _subsystem_exists(self, subsystem: str) -> bool:
         """Check if a subsystem is available in this configuration."""
@@ -345,7 +365,8 @@ class SubsystemCoordinator:
             "active_list": list(self._active_subsystems),
             "failed_list": list(self._failed_subsystems),
             "inactive_list": list(
-                set(self._known_subsystems) - self._active_subsystems - self._failed_subsystems
+                set(self._known_subsystems)
+                - self._active_subsystems
+                - self._failed_subsystems
             ),
         }
-

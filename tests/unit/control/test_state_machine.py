@@ -7,7 +7,7 @@ Tests state transitions, safety triggers, and mission coordination.
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
-from autonomy_state_machine.states import SystemState, AutonomousSubstate
+from autonomy_state_machine.states import SystemState, AutonomousMode
 
 
 class TestStateMachine(unittest.TestCase):
@@ -39,15 +39,15 @@ class TestStateMachine(unittest.TestCase):
     def test_autonomous_substates(self):
         """Test autonomous substate transitions."""
         substates = [
-            AutonomousSubstate.EXPLORATION,
-            AutonomousSubstate.SAMPLE_COLLECTION,
-            AutonomousSubstate.NAVIGATION_TO_SITE,
-            AutonomousSubstate.EQUIPMENT_SERVICING
+            AutonomousMode.SCIENCE,
+            AutonomousMode.ARM_CONTROL,
+            AutonomousMode.NAVIGATION,
+            AutonomousMode.EQUIPMENT
         ]
 
         for substate in substates:
             with self.subTest(substate=substate):
-                self.assertIsInstance(substate, AutonomousSubstate)
+                self.assertIsInstance(substate, AutonomousMode)
 
     def test_emergency_stop_transitions(self):
         """Test emergency stop transitions from any state."""
@@ -349,4 +349,7 @@ class TestSafetyIntegration(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
 

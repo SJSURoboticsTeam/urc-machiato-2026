@@ -6,19 +6,19 @@ and state machine logic.
 """
 
 import pytest
-from autonomy_state_machine.states import (
-    SystemState,
-    AutonomousSubstate,
-    is_valid_transition,
-    get_state_metadata,
-    get_required_subsystems,
-)
-from autonomy_state_machine.transition_validator import TransitionValidator
 from autonomy_state_machine.safety_manager import (
     SafetyManager,
-    SafetyTriggerType,
     SafetySeverity,
+    SafetyTriggerType,
 )
+from autonomy_state_machine.states import (
+    AutonomousSubstate,
+    SystemState,
+    get_required_subsystems,
+    get_state_metadata,
+    is_valid_transition,
+)
+from autonomy_state_machine.transition_validator import TransitionValidator
 
 
 class TestStates:
@@ -331,4 +331,3 @@ class TestSafetyManager:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -11,7 +11,7 @@ find_package(ament_cmake_python REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/slam_node.py
+  autonomy_slam/slam_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

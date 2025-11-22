@@ -17,3 +17,7 @@ string[] affected_subsystems # Subsystems that were affected
 float64 timestamp           # When command was processed
 string operator_id          # Operator who executed the command
 
+
+
+
+

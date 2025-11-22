@@ -6,24 +6,26 @@ Simulates realistic state transitions for the URC 2026 rover state machine,
 demonstrating hierarchical state management with proper logging.
 """
 
-import time
 import logging
-from datetime import datetime
-from typing import Optional, Dict, List
-from enum import Enum
+import os
 
 # Import core state management components
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'autonomy_state_machine'))
+import time
+from datetime import datetime
+from typing import Optional
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "autonomy_state_machine")
+)
 
 from states import (
-    SystemState,
     AutonomousSubstate,
     EquipmentServicingSubstate,
-    is_valid_transition,
-    get_state_metadata,
+    SystemState,
     get_required_subsystems,
+    get_state_metadata,
+    is_valid_transition,
 )
 
 
@@ -46,22 +48,29 @@ class StateTransitionSimulator:
         # Set up logging
         self.setup_logging()
 
-        self.logger.info(f"[INIT] State Machine Simulator Initialized - Starting in {self.current_state.value} state")
+        self.logger.info(
+            f"[INIT] State Machine Simulator Initialized - Starting in {self.current_state.value} state"
+        )
 
     def setup_logging(self):
         """Configure structured logging for state transitions."""
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s [%(levelname)s] %(message)s',
-            datefmt='%H:%M:%S'
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            datefmt="%H:%M:%S",
         )
 
         # Create a custom logger that formats state transition events nicely
-        self.logger = logging.getLogger('StateMachine')
+        self.logger = logging.getLogger("StateMachine")
         self.logger.setLevel(logging.INFO)
 
-    def log_state_transition(self, from_state: SystemState, to_state: SystemState,
-                           reason: str = "", initiated_by: str = "simulator"):
+    def log_state_transition(
+        self,
+        from_state: SystemState,
+        to_state: SystemState,
+        reason: str = "",
+        initiated_by: str = "simulator",
+    ):
         """Log a state transition with detailed information."""
         self.transition_count += 1
 
@@ -69,7 +78,9 @@ class StateTransitionSimulator:
         from_meta = get_state_metadata(from_state)
         to_meta = get_state_metadata(to_state)
 
-        self.logger.info(f"[TRANSITION #{self.transition_count}] {from_state.value} -> {to_state.value} | Reason: {reason} | By: {initiated_by}")
+        self.logger.info(
+            f"[TRANSITION #{self.transition_count}] {from_state.value} -> {to_state.value} | Reason: {reason} | By: {initiated_by}"
+        )
         self.logger.info(f"   From: {from_meta.description}")
         self.logger.info(f"   To: {to_meta.description}")
 
@@ -78,14 +89,22 @@ class StateTransitionSimulator:
         to_subsystems = get_required_subsystems(to_state)
 
         if from_subsystems:
-            self.logger.info(f"[EXIT] Deactivating subsystems for {from_state.value}: {', '.join(from_subsystems)}")
+            self.logger.info(
+                f"[EXIT] Deactivating subsystems for {from_state.value}: {', '.join(from_subsystems)}"
+            )
 
         if to_subsystems:
-            self.logger.info(f"[ENTER] Activating subsystems for {to_state.value}: {', '.join(to_subsystems)}")
+            self.logger.info(
+                f"[ENTER] Activating subsystems for {to_state.value}: {', '.join(to_subsystems)}"
+            )
 
-    def execute_transition(self, to_state: SystemState,
-                          to_substate: Optional[AutonomousSubstate] = None,
-                          reason: str = "", initiated_by: str = "simulator") -> bool:
+    def execute_transition(
+        self,
+        to_state: SystemState,
+        to_substate: Optional[AutonomousSubstate] = None,
+        reason: str = "",
+        initiated_by: str = "simulator",
+    ) -> bool:
         """
         Execute a state transition with validation and logging.
 
@@ -102,7 +121,9 @@ class StateTransitionSimulator:
 
         # Validate transition
         if not is_valid_transition(from_state, to_state):
-            self.logger.error(f"[BLOCKED] INVALID TRANSITION: {from_state.value} -> {to_state.value} (Invalid transition attempt)")
+            self.logger.error(
+                f"[BLOCKED] INVALID TRANSITION: {from_state.value} -> {to_state.value} (Invalid transition attempt)"
+            )
             return False
 
         # Log the transition
@@ -124,7 +145,9 @@ class StateTransitionSimulator:
         # Simulate transition timing
         time.sleep(0.5)  # Simulate transition time
 
-        self.logger.info(f"[COMPLETE] Transition completed: Now in {to_state.value} state (substate: {self.current_substate.value})")
+        self.logger.info(
+            f"[COMPLETE] Transition completed: Now in {to_state.value} state (substate: {self.current_substate.value})"
+        )
 
         return True
 
@@ -140,7 +163,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.CALIBRATION,
             reason="System boot complete, starting calibration",
-            initiated_by="system_boot"
+            initiated_by="system_boot",
         )
 
         # 2. Calibration to Idle (calibration complete)
@@ -148,7 +171,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.IDLE,
             reason="Calibration completed successfully",
-            initiated_by="calibration_service"
+            initiated_by="calibration_service",
         )
 
         # 3. Idle to Autonomous (Science mission)
@@ -157,7 +180,7 @@ class StateTransitionSimulator:
             SystemState.AUTONOMOUS,
             to_substate=AutonomousSubstate.SCIENCE,
             reason="Operator initiated science mission",
-            initiated_by="operator_command"
+            initiated_by="operator_command",
         )
 
         # Simulate science mission activities
@@ -168,7 +191,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.IDLE,
             reason="Science mission completed successfully",
-            initiated_by="mission_controller"
+            initiated_by="mission_controller",
         )
 
         # 5. Idle to Autonomous (Equipment Servicing mission)
@@ -177,7 +200,7 @@ class StateTransitionSimulator:
             SystemState.AUTONOMOUS,
             to_substate=AutonomousSubstate.EQUIPMENT_SERVICING,
             reason="Operator initiated equipment servicing mission",
-            initiated_by="operator_command"
+            initiated_by="operator_command",
         )
 
         # Simulate equipment servicing mission
@@ -188,7 +211,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.IDLE,
             reason="Equipment servicing mission completed",
-            initiated_by="mission_controller"
+            initiated_by="mission_controller",
         )
 
         # 7. Idle to Teleoperation (operator takeover)
@@ -196,7 +219,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.TELEOPERATION,
             reason="Operator taking manual control",
-            initiated_by="operator_command"
+            initiated_by="operator_command",
         )
 
         # Simulate teleoperation
@@ -207,7 +230,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.SAFETY,
             reason="Obstacle detected in path - safety trigger",
-            initiated_by="safety_monitor"
+            initiated_by="safety_monitor",
         )
 
         # 9. Safety to Idle (safety cleared)
@@ -215,7 +238,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.IDLE,
             reason="Safety condition cleared by operator",
-            initiated_by="operator_command"
+            initiated_by="operator_command",
         )
 
         # 10. Idle to Shutdown (mission complete)
@@ -223,7 +246,7 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.SHUTDOWN,
             reason="Mission complete, initiating graceful shutdown",
-            initiated_by="operator_command"
+            initiated_by="operator_command",
         )
 
         self.logger.info("=" * 60)
@@ -232,7 +255,9 @@ class StateTransitionSimulator:
 
     def simulate_error_conditions(self):
         """Simulate error conditions and invalid transitions."""
-        self.logger.info("[ERROR_TEST] Testing Error Conditions and Invalid Transitions")
+        self.logger.info(
+            "[ERROR_TEST] Testing Error Conditions and Invalid Transitions"
+        )
         self.logger.info("-" * 50)
 
         # Reset to a known state
@@ -241,16 +266,30 @@ class StateTransitionSimulator:
 
         # Try invalid transitions
         invalid_transitions = [
-            (SystemState.IDLE, SystemState.AUTONOMOUS, "Direct to autonomous (missing calibration)"),
-            (SystemState.SHUTDOWN, SystemState.IDLE, "Back from shutdown (terminal state)"),
-            (SystemState.SAFETY, SystemState.AUTONOMOUS, "Direct from safety to autonomous"),
+            (
+                SystemState.IDLE,
+                SystemState.AUTONOMOUS,
+                "Direct to autonomous (missing calibration)",
+            ),
+            (
+                SystemState.SHUTDOWN,
+                SystemState.IDLE,
+                "Back from shutdown (terminal state)",
+            ),
+            (
+                SystemState.SAFETY,
+                SystemState.AUTONOMOUS,
+                "Direct from safety to autonomous",
+            ),
             (SystemState.CALIBRATION, SystemState.TELEOPERATION, "Skip idle state"),
         ]
 
         for from_state, to_state, description in invalid_transitions:
             self.current_state = from_state
             self.logger.info(f"Testing invalid transition: {description}")
-            success = self.execute_transition(to_state, reason="Testing invalid transition")
+            success = self.execute_transition(
+                to_state, reason="Testing invalid transition"
+            )
             if not success:
                 self.logger.info("[VALIDATED] Invalid transition correctly blocked")
             time.sleep(0.5)
@@ -261,13 +300,13 @@ class StateTransitionSimulator:
         self.execute_transition(
             SystemState.SAFETY,
             reason="Emergency stop triggered",
-            initiated_by="e_stop_button"
+            initiated_by="e_stop_button",
         )
 
         self.execute_transition(
             SystemState.IDLE,
             reason="Safety condition resolved",
-            initiated_by="operator_clearance"
+            initiated_by="operator_clearance",
         )
 
         self.logger.info("-" * 50)
@@ -285,7 +324,11 @@ class StateTransitionSimulator:
             (SystemState.IDLE, None, None),
             (SystemState.TELEOPERATION, None, None),
             (SystemState.AUTONOMOUS, AutonomousSubstate.SCIENCE, None),
-            (SystemState.AUTONOMOUS, AutonomousSubstate.EQUIPMENT_SERVICING, EquipmentServicingSubstate.TRAVELING),
+            (
+                SystemState.AUTONOMOUS,
+                AutonomousSubstate.EQUIPMENT_SERVICING,
+                EquipmentServicingSubstate.TRAVELING,
+            ),
             (SystemState.AUTONOMOUS, AutonomousSubstate.FOLLOW_ME, None),
             (SystemState.SAFETY, None, None),
             (SystemState.SHUTDOWN, None, None),
@@ -304,7 +347,9 @@ class StateTransitionSimulator:
             # Show required subsystems
             subsystems = get_required_subsystems(state, substate)
             if subsystems:
-                self.logger.info(f"   [SUBSYSTEMS] Required subsystems: {', '.join(subsystems)}")
+                self.logger.info(
+                    f"   [SUBSYSTEMS] Required subsystems: {', '.join(subsystems)}"
+                )
             else:
                 self.logger.info("   [SUBSYSTEMS] No specific subsystems required")
 
@@ -331,7 +376,9 @@ def main():
     simulator.simulate_mission_sequence()
     print()
 
-    print("[SIMULATOR] Simulation complete! Check the logs above for detailed state transitions.")
+    print(
+        "[SIMULATOR] Simulation complete! Check the logs above for detailed state transitions."
+    )
 
 
 if __name__ == "__main__":

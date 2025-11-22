@@ -11,18 +11,11 @@ find_package(ament_cmake_python REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/navigation_node.py
-  scripts/gnss_processor.py
-  scripts/path_planner.py
-  scripts/motion_controller.py
+  autonomy_navigation/navigation_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY
-  launch
-  config
-  DESTINATION share/${PROJECT_NAME}
-)
+# No launch or config directories to install
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
