@@ -7,20 +7,19 @@ Author: [Your Name]
 Date: [Date]
 """
 
-import rclpy
-from rclpy.node import Node
-from rclpy.action import ActionServer, CancelResponse, GoalResponse
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
-
-# Import your action types
-from your_package.action import YourAction
-from your_package.msg import YourFeedback
 
 # Standard imports
 import time
-import threading
 from typing import Optional
+
+import rclpy
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+
+# Import your action types
+from your_package.action import YourAction
 
 
 class YourActionServer(Node):
@@ -32,7 +31,7 @@ class YourActionServer(Node):
     """
 
     def __init__(self):
-        super().__init__('your_action_server')
+        super().__init__("your_action_server")
 
         # Use ReentrantCallbackGroup for action servers
         self.callback_group = ReentrantCallbackGroup()
@@ -41,51 +40,51 @@ class YourActionServer(Node):
         self.action_server = ActionServer(
             self,
             YourAction,
-            'your_action',
+            "your_action",
             execute_callback=self.execute_callback,
             goal_callback=self.goal_callback,
             cancel_callback=self.cancel_callback,
-            callback_group=self.callback_group
+            callback_group=self.callback_group,
         )
 
         # State tracking
         self.current_goal_handle: Optional[ActionServer.GoalHandle] = None
         self.is_executing = False
 
-        self.get_logger().info('Action server initialized')
+        self.get_logger().info("Action server initialized")
 
     def goal_callback(self, goal_request):
         """Handle incoming goal requests."""
-        self.get_logger().info('Received goal request')
+        self.get_logger().info("Received goal request")
 
         # Validate goal
         if not self._validate_goal(goal_request):
-            self.get_logger().warn('Goal validation failed')
+            self.get_logger().warn("Goal validation failed")
             return GoalResponse.REJECT
 
         # Check if we can accept the goal
         if self.is_executing:
-            self.get_logger().warn('Already executing a goal, rejecting')
+            self.get_logger().warn("Already executing a goal, rejecting")
             return GoalResponse.REJECT
 
-        self.get_logger().info('Goal accepted')
+        self.get_logger().info("Goal accepted")
         return GoalResponse.ACCEPT
 
     def cancel_callback(self, goal_handle):
         """Handle goal cancellation requests."""
-        self.get_logger().info('Received cancel request')
+        self.get_logger().info("Received cancel request")
 
         # Check if we can cancel
         if goal_handle != self.current_goal_handle:
-            self.get_logger().warn('Cancel request for unknown goal')
+            self.get_logger().warn("Cancel request for unknown goal")
             return CancelResponse.REJECT
 
-        self.get_logger().info('Cancel request accepted')
+        self.get_logger().info("Cancel request accepted")
         return CancelResponse.ACCEPT
 
     def execute_callback(self, goal_handle):
         """Execute the accepted goal."""
-        self.get_logger().info('Executing goal')
+        self.get_logger().info("Executing goal")
 
         self.current_goal_handle = goal_handle
         self.is_executing = True
@@ -103,13 +102,13 @@ class YourActionServer(Node):
 
             if success:
                 goal_handle.succeed()
-                self.get_logger().info('Goal succeeded')
+                self.get_logger().info("Goal succeeded")
             else:
                 goal_handle.abort()
-                self.get_logger().warn('Goal aborted')
+                self.get_logger().warn("Goal aborted")
 
         except Exception as e:
-            self.get_logger().error(f'Goal execution failed: {e}')
+            self.get_logger().error(f"Goal execution failed: {e}")
             goal_handle.abort()
             result.error_message = str(e)
 
@@ -146,7 +145,7 @@ class YourActionServer(Node):
             while current_step < total_steps:
                 # Check for cancellation
                 if goal_handle.is_cancel_requested:
-                    self.get_logger().info('Goal cancelled during execution')
+                    self.get_logger().info("Goal cancelled during execution")
                     result.error_message = "Goal was cancelled"
                     return False
 
@@ -179,7 +178,7 @@ class YourActionServer(Node):
             return True
 
         except Exception as e:
-            self.get_logger().error(f'Task execution error: {e}')
+            self.get_logger().error(f"Task execution error: {e}")
             result.error_message = str(e)
             return False
 
@@ -200,7 +199,7 @@ class YourActionServer(Node):
             return True
 
         except Exception as e:
-            self.get_logger().error(f'Work step {step} failed: {e}')
+            self.get_logger().error(f"Work step {step} failed: {e}")
             return False
 
 
@@ -218,15 +217,15 @@ def main(args=None):
         try:
             executor.spin()
         except KeyboardInterrupt:
-            node.get_logger().info('Action server shutting down')
+            node.get_logger().info("Action server shutting down")
         finally:
             executor.shutdown()
 
     except Exception as e:
-        print(f'Failed to start action server: {e}')
+        print(f"Failed to start action server: {e}")
     finally:
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

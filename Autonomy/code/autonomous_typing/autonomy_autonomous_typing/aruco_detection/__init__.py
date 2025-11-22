@@ -9,6 +9,6 @@ from .typing_alignment_calculator import TypingAlignmentCalculator
 from .typing_aruco_detector import TypingArUcoDetector
 
 __all__ = [
-    'TypingAlignmentCalculator',
-    'TypingArUcoDetector',
+    "TypingAlignmentCalculator",
+    "TypingArUcoDetector",
 ]

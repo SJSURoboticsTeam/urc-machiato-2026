@@ -28,7 +28,6 @@ install(DIRECTORY
   worlds
   config
   rviz
-  models
   digitaltwins
   DESTINATION share/${PROJECT_NAME}/
 )

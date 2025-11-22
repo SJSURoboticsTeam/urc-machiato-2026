@@ -12,11 +12,11 @@ Comprehensive safety system for URC 2026 Mars Rover with:
 __version__ = "0.1.0"
 __author__ = "URC Machiato Safety Team"
 
-from .safety_watchdog import SafetyWatchdog
-from .redundant_safety_monitor import RedundantSafetyMonitor
 from .emergency_response_coordinator import EmergencyResponseCoordinator
+from .redundant_safety_monitor import RedundantSafetyMonitor
 from .safety_dashboard import SafetyDashboard
 from .safety_integration_tester import SafetyIntegrationTester
+from .safety_watchdog import SafetyWatchdog
 
 __all__ = [
     "SafetyWatchdog",

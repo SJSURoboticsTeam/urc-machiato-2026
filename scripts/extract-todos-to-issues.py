@@ -14,8 +14,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Optional
-import json
+from typing import List
 
 try:
     import requests
@@ -48,7 +47,7 @@ class TodoExtractor:
             "led_status": "area:led-status",
             "simulation": "area:simulation",
         }
-        
+
         for key, label in area_map.items():
             if key in str(filepath):
                 return label
@@ -81,7 +80,7 @@ class TodoExtractor:
             if re.match(r"^\s*-\s+\[\s*\]\s+", line):
                 # This is an unchecked item
                 title = re.sub(r"^\s*-\s+\[\s*\]\s+", "", line).strip()
-                
+
                 # Skip empty or metadata lines
                 if title and not title.startswith("**") and len(title) > 3:
                     todo_item = {
@@ -100,9 +99,9 @@ class TodoExtractor:
         """Extract all TODOs from all files."""
         all_todos = []
         files = self.find_todo_files()
-        
+
         print(f"📋 Found {len(files)} TODO files")
-        
+
         for filepath in files:
             print(f"   Parsing: {filepath.relative_to(self.base_path)}")
             todos = self.parse_todo_file(filepath)
@@ -142,7 +141,7 @@ class GitHubIssueCreator:
             "q": f'repo:{self.owner}/{self.repo} is:issue "{title}"',
             "per_page": 1
         }
-        
+
         try:
             resp = requests.get(search_url, headers=search_headers, params=params, timeout=5)
             return resp.json().get("total_count", 0) > 0
@@ -161,7 +160,7 @@ class GitHubIssueCreator:
           }
         }
         """
-        
+
         # First, get the project ID
         project_query = """
         query($owner: String!, $number: Int!) {
@@ -172,7 +171,7 @@ class GitHubIssueCreator:
           }
         }
         """
-        
+
         try:
             # Get project ID
             proj_resp = requests.post(
@@ -181,18 +180,18 @@ class GitHubIssueCreator:
                 json={"query": project_query, "variables": {"owner": self.owner, "number": self.project_number}},
                 timeout=10
             )
-            
+
             if proj_resp.status_code != 200:
                 print(f"      ⚠️ Failed to get project ID: {proj_resp.text}")
                 return False
-            
+
             proj_data = proj_resp.json()
             if "errors" in proj_data or not proj_data.get("data", {}).get("user", {}).get("projectV2"):
                 print(f"      ⚠️ Project not found or access denied")
                 return False
-            
+
             project_id = proj_data["data"]["user"]["projectV2"]["id"]
-            
+
             # Add issue to project
             add_resp = requests.post(
                 self.graphql_url,
@@ -200,13 +199,13 @@ class GitHubIssueCreator:
                 json={"query": query, "variables": {"projectId": project_id, "contentId": issue_id}},
                 timeout=10
             )
-            
+
             if add_resp.status_code == 200:
                 add_data = add_resp.json()
                 if "errors" not in add_data:
                     self.added_to_project_count += 1
                     return True
-            
+
             return False
         except Exception as e:
             print(f"      ⚠️ Error adding to project: {e}")
@@ -220,7 +219,7 @@ class GitHubIssueCreator:
             return False
 
         url = f"{self.base_url}/issues"
-        
+
         payload = {
             "title": f"[TODO] {todo['title'][:100]}",
             "body": f"{todo['body']}\n\n**Status:** To Do\n**Auto-generated from:** {todo['file']}",
@@ -235,11 +234,11 @@ class GitHubIssueCreator:
                 issue_id = issue['node_id']
                 print(f"   ✅ Created issue #{issue_num}: {todo['title'][:60]}...")
                 self.created_count += 1
-                
+
                 # Try to add to project
                 if self.add_issue_to_project(issue_id):
                     print(f"      → Added to project board")
-                
+
                 return True
             else:
                 print(f"   ❌ Failed to create issue: {resp.status_code} - {resp.text}")

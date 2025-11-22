@@ -5,12 +5,13 @@ Tests state machine integration with ROS2, subsystem coordination,
 and frontend communication.
 """
 
-import pytest
 import time
+
+import pytest
 import rclpy
-from rclpy.node import Node
-from autonomy_interfaces.srv import ChangeState, GetSystemState
 from autonomy_interfaces.msg import SystemState as SystemStateMsg
+from autonomy_interfaces.srv import ChangeState
+from rclpy.node import Node
 
 
 @pytest.fixture
@@ -152,8 +153,8 @@ class TestSubsystemCoordination:
 
     def test_subsystem_activation(self, ros_context):
         """Test subsystem activation for different states."""
-        from autonomy_state_machine.subsystem_coordinator import SubsystemCoordinator
         from autonomy_state_machine.states import AutonomousSubstate
+        from autonomy_state_machine.subsystem_coordinator import SubsystemCoordinator
 
         node = Node("test_node")
         coordinator = SubsystemCoordinator(node)
@@ -172,8 +173,8 @@ class TestSafetyIntegration:
 
     def test_safety_status_publishing(self, ros_context):
         """Test that safety status is published."""
-        from autonomy_state_machine.state_machine_director import StateMachineDirector
         from autonomy_interfaces.msg import SafetyStatus as SafetyStatusMsg
+        from autonomy_state_machine.state_machine_director import StateMachineDirector
 
         director = StateMachineDirector()
 
@@ -209,4 +210,3 @@ class TestSafetyIntegration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

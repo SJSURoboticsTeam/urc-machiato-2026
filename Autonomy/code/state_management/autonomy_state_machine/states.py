@@ -5,37 +5,34 @@ Defines the hierarchical state structure with top-level states, substates,
 and sub-substates, along with metadata for each state.
 """
 
-from enum import Enum, auto
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class SystemState(Enum):
-    """Top-level system states for the rover."""
+    """Simplified state machine - user-friendly and maintainable"""
 
-    BOOT = "BOOT"  # Initial startup and system initialization
-    CALIBRATION = "CALIBRATION"  # Sensor and system calibration
-    IDLE = "IDLE"  # Ready but not operating
-    TELEOPERATION = "TELEOPERATION"  # Manual remote control
-    AUTONOMOUS = "AUTONOMOUS"  # Autonomous operation with substates
-    ESTOP = "ESTOP"  # Hardware emergency stop (power cut)
-    SAFESTOP = "SAFESTOP"  # Software graceful pause (toggle-able)
-    SAFETY = "SAFETY"  # Legacy safety state (deprecated, use ESTOP/SAFESTOP)
-    SHUTDOWN = "SHUTDOWN"  # Graceful shutdown sequence
+    BOOT = "BOOT"  # System startup and validation
+    IDLE = "IDLE"  # Ready for commands
+    TELEOPERATION = "TELEOPERATION"  # Manual control
+    SAFESTOP = "SAFESTOP"  # Context-aware pause (freeze arm, decelerate motion)
+    AUTONOMOUS = "AUTONOMOUS"  # Mission execution with sub-modes
+    ESTOP = "ESTOP"  # Emergency stop
+    SHUTDOWN = "SHUTDOWN"  # System shutdown
 
     def __str__(self) -> str:
         return self.value
 
 
-class AutonomousSubstate(Enum):
-    """Substates for autonomous operations (competition missions)."""
+class AutonomousMode(Enum):
+    """Autonomous operation modes - context determines behavior"""
 
-    NONE = "NONE"  # No specific mission active
-    SCIENCE = "SCIENCE"  # Science mission
-    DELIVERY = "DELIVERY"  # Delivery mission
-    EQUIPMENT_SERVICING = "EQUIPMENT_SERVICING"  # Equipment servicing mission
-    AUTONOMOUS_NAVIGATION = "AUTONOMOUS_NAVIGATION"  # Autonomous navigation mission
-    FOLLOW_ME = "FOLLOW_ME"  # Follow me mode using ArUco tag detection
+    NAVIGATION = "NAVIGATION"  # GPS waypoint navigation
+    ARM_CONTROL = "ARM_CONTROL"  # Robotic arm manipulation
+    SCIENCE = "SCIENCE"  # Sample collection/analysis
+    EQUIPMENT = "EQUIPMENT"  # Equipment servicing
+    FOLLOW_ME = "FOLLOW_ME"  # Person following
 
     def __str__(self) -> str:
         return self.value
@@ -72,7 +69,9 @@ class CalibrationSubstate(Enum):
     SETUP = "SETUP"  # Environment setup and target preparation
     INTRINSIC_CAPTURE = "INTRINSIC_CAPTURE"  # Capture images for intrinsic calibration
     INTRINSIC_CALIBRATION = "INTRINSIC_CALIBRATION"  # Compute intrinsic parameters
-    INTRINSIC_VALIDATION = "INTRINSIC_VALIDATION"  # Validate intrinsic calibration quality
+    INTRINSIC_VALIDATION = (
+        "INTRINSIC_VALIDATION"  # Validate intrinsic calibration quality
+    )
     EXTRINSIC_SETUP = "EXTRINSIC_SETUP"  # Prepare for hand-eye calibration
     EXTRINSIC_CAPTURE = "EXTRINSIC_CAPTURE"  # Capture robot-camera pose pairs
     EXTRINSIC_CALIBRATION = "EXTRINSIC_CALIBRATION"  # Compute hand-eye transformation
@@ -117,35 +116,21 @@ STATE_METADATA: Dict[SystemState, StateMetadata] = {
     SystemState.BOOT: StateMetadata(
         state=SystemState.BOOT,
         allowed_transitions=[
-            SystemState.CALIBRATION,
             SystemState.IDLE,
-            SystemState.SAFETY,
+            SystemState.SAFESTOP,
             SystemState.SHUTDOWN,
         ],
         entry_requirements=[],
         timeout_seconds=30.0,
         auto_transition=SystemState.IDLE,
-        description="Initial system boot and initialization",
-    ),
-    SystemState.CALIBRATION: StateMetadata(
-        state=SystemState.CALIBRATION,
-        allowed_transitions=[
-            SystemState.IDLE,
-            SystemState.SAFETY,
-            SystemState.SHUTDOWN,
-        ],
-        entry_requirements=["boot_complete"],
-        requires_subsystems=["camera", "navigation"],
-        timeout_seconds=300.0,  # 5 minutes max for calibration
-        description="Sensor and system calibration",
+        description="Initial system boot and validation",
     ),
     SystemState.IDLE: StateMetadata(
         state=SystemState.IDLE,
         allowed_transitions=[
-            SystemState.CALIBRATION,
             SystemState.TELEOPERATION,
             SystemState.AUTONOMOUS,
-            SystemState.SAFETY,
+            SystemState.SAFESTOP,
             SystemState.SHUTDOWN,
         ],
         entry_requirements=["boot_complete"],
@@ -156,7 +141,7 @@ STATE_METADATA: Dict[SystemState, StateMetadata] = {
         allowed_transitions=[
             SystemState.IDLE,
             SystemState.AUTONOMOUS,
-            SystemState.SAFETY,
+            SystemState.SAFESTOP,
             SystemState.SHUTDOWN,
         ],
         entry_requirements=["boot_complete", "communication_ok"],
@@ -169,7 +154,7 @@ STATE_METADATA: Dict[SystemState, StateMetadata] = {
         allowed_transitions=[
             SystemState.IDLE,
             SystemState.TELEOPERATION,
-            SystemState.SAFETY,
+            SystemState.SAFESTOP,
             SystemState.SHUTDOWN,
         ],
         entry_requirements=[
@@ -206,17 +191,6 @@ STATE_METADATA: Dict[SystemState, StateMetadata] = {
         auto_transition=SystemState.IDLE,  # Auto-resume if operator doesn't respond
         description="Software graceful pause - toggle-able by operator",
     ),
-    SystemState.SAFETY: StateMetadata(
-        state=SystemState.SAFETY,
-        allowed_transitions=[
-            SystemState.IDLE,
-            SystemState.TELEOPERATION,
-            SystemState.SHUTDOWN,
-        ],
-        entry_requirements=[],  # Can enter from any state
-        exit_requirements=["safety_cleared", "manual_verification"],
-        description="Legacy safety state - deprecated, use ESTOP/SAFESTOP",
-    ),
     SystemState.SHUTDOWN: StateMetadata(
         state=SystemState.SHUTDOWN,
         allowed_transitions=[],  # Terminal state
@@ -227,45 +201,46 @@ STATE_METADATA: Dict[SystemState, StateMetadata] = {
 }
 
 
-# Autonomous substate metadata
-AUTONOMOUS_SUBSTATE_METADATA: Dict[AutonomousSubstate, Dict[str, Any]] = {
-    AutonomousSubstate.NONE: {
-        "description": "No mission active",
-        "requires_subsystems": [],
+# Autonomous mode metadata
+AUTONOMOUS_MODE_METADATA: Dict[AutonomousMode, Dict[str, Any]] = {
+    AutonomousMode.NAVIGATION: {
+        "description": "GPS waypoint navigation to specified locations",
+        "requires_subsystems": ["navigation", "localization"],
+        "context": "motion_active",
+        "max_duration_seconds": 3600,
+        "safety_behavior": "decelerate_motion",
     },
-    AutonomousSubstate.SCIENCE: {
-        "description": "Science mission - sample collection and analysis",
-        "requires_subsystems": ["computer_vision", "navigation", "science_instruments"],
-        "max_duration_seconds": 1800,  # 30 minutes
+    AutonomousMode.ARM_CONTROL: {
+        "description": "Robotic arm manipulation for sample handling",
+        "requires_subsystems": ["arm_controller", "computer_vision"],
+        "context": "arm_active",
+        "max_duration_seconds": 1800,
+        "safety_behavior": "freeze_arm",
     },
-    AutonomousSubstate.DELIVERY: {
-        "description": "Delivery mission - object pickup and delivery",
-        "requires_subsystems": ["computer_vision", "navigation", "manipulation"],
-        "max_duration_seconds": 3600,  # 60 minutes
-    },
-    AutonomousSubstate.EQUIPMENT_SERVICING: {
-        "description": "Equipment servicing mission",
+    AutonomousMode.SCIENCE: {
+        "description": "Sample collection and onboard analysis",
         "requires_subsystems": [
+            "science_instruments",
+            "arm_controller",
             "computer_vision",
-            "navigation",
-            "manipulation",
-            "autonomous_typing",
         ],
-        "max_duration_seconds": 1800,  # 30 minutes
+        "context": "science_active",
+        "max_duration_seconds": 1800,
+        "safety_behavior": "pause_analysis",
     },
-    AutonomousSubstate.AUTONOMOUS_NAVIGATION: {
-        "description": "Autonomous navigation mission",
-        "requires_subsystems": ["computer_vision", "navigation", "slam"],
-        "requires_gnss": True,
-        "max_duration_seconds": 1800,  # 30 minutes
+    AutonomousMode.EQUIPMENT: {
+        "description": "Equipment servicing and autonomous typing",
+        "requires_subsystems": ["arm_controller", "computer_vision", "typing_system"],
+        "context": "equipment_active",
+        "max_duration_seconds": 1800,
+        "safety_behavior": "freeze_arm",
     },
-    AutonomousSubstate.FOLLOW_ME: {
-        "description": "Follow me mode - follows person with ArUco tag at safe distance",
-        "requires_subsystems": ["computer_vision", "navigation", "aruco_detection"],
-        "requires_aruco_detection": True,
-        "max_duration_seconds": 3600,  # 60 minutes (longer for follow mode)
-        "safety_distance_meters": 2.0,  # Safe following distance
-        "max_speed_ms": 1.0,  # Maximum following speed
+    AutonomousMode.FOLLOW_ME: {
+        "description": "Follow person with ArUco tag at safe distance",
+        "requires_subsystems": ["computer_vision", "aruco_detection", "navigation"],
+        "context": "follow_active",
+        "max_duration_seconds": 3600,
+        "safety_behavior": "stop_following",
     },
 }
 
@@ -291,7 +266,7 @@ def is_valid_transition(from_state: SystemState, to_state: SystemState) -> bool:
 
 
 def get_required_subsystems(
-    state: SystemState, substate: Optional[AutonomousSubstate] = None
+    state: SystemState, substate: Optional[AutonomousMode] = None
 ) -> List[str]:
     """
     Get list of required subsystems for a state/substate combination.
@@ -306,8 +281,7 @@ def get_required_subsystems(
     subsystems = STATE_METADATA[state].requires_subsystems.copy()
 
     if state == SystemState.AUTONOMOUS and substate:
-        substate_info = AUTONOMOUS_SUBSTATE_METADATA.get(substate, {})
+        substate_info = AUTONOMOUS_MODE_METADATA.get(substate, {})
         subsystems.extend(substate_info.get("requires_subsystems", []))
 
     return list(set(subsystems))  # Remove duplicates
-

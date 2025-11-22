@@ -9,14 +9,16 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
 
-from .states import AutonomousSubstate, SystemState
+from .states import AutonomousMode, SystemState
 
 
 class SafetyTriggerType(Enum):
     """Types of safety triggers."""
 
     EMERGENCY_STOP = "EMERGENCY_STOP"  # Physical E-stop pressed (hardware power cut)
-    SOFTWARE_ESTOP = "SOFTWARE_ESTOP"  # Software-triggered emergency stop (full shutdown)
+    SOFTWARE_ESTOP = (
+        "SOFTWARE_ESTOP"  # Software-triggered emergency stop (full shutdown)
+    )
     SAFESTOP_REQUEST = "SAFESTOP_REQUEST"  # Operator-requested safestop (toggle-able)
     PROXIMITY_VIOLATION = "PROXIMITY_VIOLATION"  # Auto-safe: object too close
     COMMUNICATION_LOSS = "COMMUNICATION_LOSS"  # Lost communication link
@@ -109,8 +111,8 @@ class SafetyManager:
         }
         self._trigger_history.append(trigger_info)
 
-        if self.logger:
-            self.logger.warning(
+        if self._logger:
+            self._logger.warning(
                 f"Safety triggered: {trigger_type.value} ({severity.value}) - {description} "
                 f"(source: {source})"
             )
@@ -119,14 +121,14 @@ class SafetyManager:
         """Clear a specific safety trigger."""
         if trigger_type in self._active_triggers:
             del self._active_triggers[trigger_type]
-            if self.logger:
-                self.logger.info(f"Safety trigger cleared: {trigger_type.value}")
+            if self._logger:
+                self._logger.info(f"Safety trigger cleared: {trigger_type.value}")
 
     def clear_all_triggers(self) -> None:
         """Clear all active safety triggers."""
         self._active_triggers.clear()
-        if self.logger:
-            self.logger.info("All safety triggers cleared")
+        if self._logger:
+            self._logger.info("All safety triggers cleared")
 
     def get_active_triggers(self) -> List[SafetyTriggerType]:
         """Get list of currently active safety triggers."""
@@ -156,7 +158,7 @@ class SafetyManager:
         self,
         trigger_type: SafetyTriggerType,
         current_state: SystemState,
-        mission_phase: Optional[AutonomousSubstate] = None,
+        mission_phase: Optional[AutonomousMode] = None,
     ) -> RecoveryBehavior:
         """
         Determine appropriate recovery behavior based on context.
@@ -169,9 +171,10 @@ class SafetyManager:
         Returns:
             RecoveryBehavior object describing recovery procedure
         """
-        if self.logger:
-            self.logger.info(
-                f"Determining recovery behavior for {trigger_type.value} in {current_state.value} state"
+        if self._logger:
+            state_str = current_state.value if current_state else "unknown"
+            self._logger.info(
+                f"Determining recovery behavior for {trigger_type.value} in {state_str} state"
             )
 
         # Emergency stop (ESTOP) - hardware power cut, requires full recovery
@@ -226,7 +229,10 @@ class SafetyManager:
                     "Verify proximity sensors",
                     "Resume when safe distance maintained",
                 ],
-                safe_mode_config={"max_velocity": 0.1, "require_sensor_clearance": True},
+                safe_mode_config={
+                    "max_velocity": 0.1,
+                    "require_sensor_clearance": True,
+                },
                 estimated_recovery_time=30.0,
             )
 
@@ -376,7 +382,10 @@ class SafetyManager:
                     "Plan alternative path",
                     "Resume navigation",
                 ],
-                safe_mode_config={"max_velocity": 0.1, "increase_obstacle_margin": True},
+                safe_mode_config={
+                    "max_velocity": 0.1,
+                    "increase_obstacle_margin": True,
+                },
                 estimated_recovery_time=60.0,
             )
 
@@ -471,15 +480,12 @@ class SafetyManager:
         """
         return {
             "is_safe": len(self._active_triggers) == 0,
-            "active_triggers": [str(t) for t in self._active_triggers.keys()],
+            "active_triggers": list(self._active_triggers.keys()),
             "highest_severity": (
-                str(self.get_highest_severity())
-                if self.get_highest_severity()
-                else "NONE"
+                self.get_highest_severity() if self.get_highest_severity() else None
             ),
             "battery_level": self._battery_level,
             "temperature": self._temperature,
             "communication_ok": self._communication_ok,
             "sensors_ok": self._sensors_ok,
         }
-

@@ -5,14 +5,14 @@ Provides helper utilities for frontend integration with the state machine,
 including service clients, state update subscribers, and acknowledgment mechanism.
 """
 
-from typing import Callable, Optional, Dict
-import structlog
-from rclpy.node import Node
-from rclpy.client import Client
-from rclpy.task import Future
+from typing import Callable, Dict, Optional
 
+import structlog
 from autonomy_interfaces.msg import SystemState as SystemStateMsg
 from autonomy_interfaces.srv import ChangeState, GetSystemState, RecoverFromSafety
+from rclpy.client import Client
+from rclpy.node import Node
+from rclpy.task import Future
 from std_msgs.msg import String
 
 logger = structlog.get_logger(__name__)
@@ -237,7 +237,9 @@ class FrontendInterface:
             msg: State message being acknowledged
         """
         ack_msg = String()
-        ack_msg.data = f"ACK:{msg.current_state}:{msg.header.stamp.sec}.{msg.header.stamp.nanosec}"
+        ack_msg.data = (
+            f"ACK:{msg.current_state}:{msg.header.stamp.sec}.{msg.header.stamp.nanosec}"
+        )
         self.ack_publisher.publish(ack_msg)
 
         logger.debug("State update acknowledged", state=msg.current_state)
@@ -255,7 +257,9 @@ class FrontendInterface:
                 self._last_state_update.header.stamp.sec
                 + self._last_state_update.header.stamp.nanosec * 1e-9
             )
-            current_time = now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
+            current_time = (
+                now.seconds_nanoseconds()[0] + now.seconds_nanoseconds()[1] * 1e-9
+            )
 
             # If no update in last 2 seconds, consider connection lost
             if current_time - last_update_time > 2.0:
@@ -346,4 +350,3 @@ def main():
     rclpy.shutdown()
 ```
 """
-

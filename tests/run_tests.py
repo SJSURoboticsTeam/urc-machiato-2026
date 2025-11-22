@@ -63,7 +63,7 @@ class TestRunner:
 
     def run_safety_tests(self, verbose=True):
         """Run safety-critical tests."""
-        cmd = ["python", "-m", "pytest", "-m", "safety"]
+        cmd = ["python3", "-m", "pytest", "-m", "safety"]
 
         if verbose:
             cmd.append("-v")
@@ -87,7 +87,7 @@ class TestRunner:
         print("🤖 Running Complete Automated Test Suite...")
         print("This will run all test suites with full lifecycle management")
 
-        cmd = ["python", "tests/automated_test_platform.py", "all"]
+        cmd = ["python3", "tests/automated_test_platform.py", "all"]
 
         if verbose:
             cmd.append("--ci-mode")

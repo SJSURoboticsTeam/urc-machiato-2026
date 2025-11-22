@@ -199,7 +199,9 @@ class DocsBuilder:
         duration = end_time - start_time
 
         if success:
-            print("🎉 All documentation built successfully!"            print(".2f"        else:
+            print("🎉 All documentation built successfully!")
+            print(".2f")
+        else:
             print("❌ Some documentation builds failed")
             return False
 

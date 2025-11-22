@@ -11,13 +11,14 @@ Provides:
 Author: URC 2026 Autonomy Team
 """
 
-from typing import Dict, List, Tuple, Optional
 from enum import Enum
-import numpy as np
+from typing import List, Tuple
+
 
 
 class TerrainType(Enum):
     """Terrain classification types"""
+
     SAND = "sand"
     ROCK = "rock"
     GRAVEL = "gravel"
@@ -29,6 +30,7 @@ class TerrainType(Enum):
 @dataclass
 class TerrainProperties:
     """Terrain physical properties"""
+
     type: TerrainType
     traversability: float  # 0.0 (impassable) to 1.0 (easy)
     max_speed: float  # m/s
@@ -58,7 +60,7 @@ class TerrainClassifier:
                 max_speed=1.0,
                 traction_coefficient=0.7,
                 roughness=0.3,
-                risk_level="medium"
+                risk_level="medium",
             ),
             TerrainType.ROCK: TerrainProperties(
                 type=TerrainType.ROCK,
@@ -66,7 +68,7 @@ class TerrainClassifier:
                 max_speed=0.5,
                 traction_coefficient=0.9,
                 roughness=0.8,
-                risk_level="high"
+                risk_level="high",
             ),
             TerrainType.GRAVEL: TerrainProperties(
                 type=TerrainType.GRAVEL,
@@ -74,7 +76,7 @@ class TerrainClassifier:
                 max_speed=1.5,
                 traction_coefficient=0.8,
                 roughness=0.2,
-                risk_level="low"
+                risk_level="low",
             ),
             TerrainType.SLOPE: TerrainProperties(
                 type=TerrainType.SLOPE,
@@ -82,8 +84,8 @@ class TerrainClassifier:
                 max_speed=0.8,
                 traction_coefficient=0.6,
                 roughness=0.1,
-                risk_level="medium"
-            )
+                risk_level="medium",
+            ),
         }
 
         # TODO: Initialize classification parameters
@@ -96,7 +98,6 @@ class TerrainClassifier:
         # TODO: Initialize sensor interfaces
         # Load classification models
         # Set up processing pipelines
-        pass
 
     def classify_terrain(self, sensor_data: dict) -> TerrainType:
         """Classify terrain type from sensor data"""
@@ -108,10 +109,13 @@ class TerrainClassifier:
 
     def get_terrain_properties(self, terrain_type: TerrainType) -> TerrainProperties:
         """Get properties for terrain type"""
-        return self.terrain_properties.get(terrain_type, self.terrain_properties[TerrainType.UNKNOWN])
+        return self.terrain_properties.get(
+            terrain_type, self.terrain_properties[TerrainType.UNKNOWN]
+        )
 
-    def assess_traversability(self, position: Tuple[float, float],
-                            lookahead_distance: float = 2.0) -> float:
+    def assess_traversability(
+        self, position: Tuple[float, float], lookahead_distance: float = 2.0
+    ) -> float:
         """Assess terrain traversability ahead"""
         # TODO: Implement traversability assessment
         # - Analyze terrain ahead
@@ -119,8 +123,7 @@ class TerrainClassifier:
         # - Return confidence score
         return 0.8  # Placeholder
 
-    def recommend_speed(self, terrain_type: TerrainType,
-                       current_speed: float) -> float:
+    def recommend_speed(self, terrain_type: TerrainType, current_speed: float) -> float:
         """Recommend appropriate speed for terrain"""
         properties = self.get_terrain_properties(terrain_type)
         recommended_speed = min(current_speed, properties.max_speed)
@@ -132,8 +135,9 @@ class TerrainClassifier:
 
         return recommended_speed
 
-    def calculate_terrain_cost(self, terrain_type: TerrainType,
-                              distance: float) -> float:
+    def calculate_terrain_cost(
+        self, terrain_type: TerrainType, distance: float
+    ) -> float:
         """Calculate path cost for terrain segment"""
         properties = self.get_terrain_properties(terrain_type)
         base_cost = 1.0 / properties.traversability
@@ -154,25 +158,23 @@ class TerrainClassifier:
         # - Return hazard information
         return []  # Placeholder
 
-    def update_terrain_map(self, position: Tuple[float, float],
-                          terrain_type: TerrainType):
+    def update_terrain_map(
+        self, position: Tuple[float, float], terrain_type: TerrainType
+    ):
         """Update internal terrain map"""
         # TODO: Implement terrain map updates
         # - Store terrain classifications
         # - Maintain spatial database
         # - Update with new information
-        pass
 
     def reset_classifier(self):
         """Reset classifier state"""
         # TODO: Clear internal state
         # Reset classification models
         # Clear cached data
-        pass
 
     def shutdown(self):
         """Shutdown terrain classifier"""
         # TODO: Clean shutdown
         # Save state if needed
         # Release resources
-        pass

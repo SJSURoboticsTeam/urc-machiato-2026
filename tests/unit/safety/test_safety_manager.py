@@ -102,10 +102,10 @@ class TestSafetyManager(unittest.TestCase):
 
         # Verify history entry
         history_entry = self.safety_manager._trigger_history[0]
-        self.assertEqual(history_entry['trigger_type'], SafetyTriggerType.EMERGENCY_STOP)
+        self.assertEqual(history_entry['type'], SafetyTriggerType.EMERGENCY_STOP)
         self.assertEqual(history_entry['severity'], SafetySeverity.EMERGENCY)
         self.assertEqual(history_entry['description'], "Test emergency stop")
-        self.assertEqual(history_entry['operator_id'], "test_operator")
+        self.assertEqual(history_entry['source'], "test_operator")
 
     def test_clear_trigger(self):
         """Test clearing a specific trigger."""
@@ -165,4 +165,7 @@ class TestSafetyManager(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
 

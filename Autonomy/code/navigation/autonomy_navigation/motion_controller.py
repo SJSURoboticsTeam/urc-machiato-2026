@@ -11,13 +11,9 @@ Handles:
 Author: URC 2026 Autonomy Team
 """
 
-import rclpy
-from rclpy.node import Node
+from typing import Tuple
+
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
-from std_msgs.msg import Bool
-import math
-from typing import Tuple, Optional
 
 
 class MotionController:
@@ -57,15 +53,12 @@ class MotionController:
         # Set up motor controllers
         # Configure encoder interfaces
         # Test motor functionality
-        pass
 
     def set_velocity(self, linear_x: float, angular_z: float):
         """Set target velocity"""
         # Limit velocities to safe ranges
-        linear_x = max(-self.max_linear_speed,
-                      min(self.max_linear_speed, linear_x))
-        angular_z = max(-self.max_angular_speed,
-                       min(self.max_angular_speed, angular_z))
+        linear_x = max(-self.max_linear_speed, min(self.max_linear_speed, linear_x))
+        angular_z = max(-self.max_angular_speed, min(self.max_angular_speed, angular_z))
 
         self.target_velocity.linear.x = linear_x
         self.target_velocity.angular.z = angular_z
@@ -94,7 +87,9 @@ class MotionController:
         self.current_velocity = Twist()
         self.target_velocity = Twist()
 
-    def calculate_wheel_velocities(self, linear_x: float, angular_z: float) -> Tuple[float, float]:
+    def calculate_wheel_velocities(
+        self, linear_x: float, angular_z: float
+    ) -> Tuple[float, float]:
         """Calculate individual wheel velocities for differential drive"""
         # Differential drive kinematics
         v_left = linear_x - (angular_z * self.wheel_separation / 2.0)
@@ -102,14 +97,14 @@ class MotionController:
 
         return v_left, v_right
 
-    def update_odometry(self, left_wheel_velocity: float,
-                       right_wheel_velocity: float, dt: float):
+    def update_odometry(
+        self, left_wheel_velocity: float, right_wheel_velocity: float, dt: float
+    ):
         """Update odometry from wheel encoders"""
         # TODO: Implement odometry calculation
         # - Calculate linear and angular velocity
         # - Integrate position over time
         # - Account for wheel slip
-        pass
 
     def get_current_velocity(self) -> Twist:
         """Get current velocity"""
@@ -121,8 +116,12 @@ class MotionController:
 
     def is_at_target_velocity(self, tolerance: float = 0.1) -> bool:
         """Check if current velocity matches target"""
-        linear_diff = abs(self.current_velocity.linear.x - self.target_velocity.linear.x)
-        angular_diff = abs(self.current_velocity.angular.z - self.target_velocity.angular.z)
+        linear_diff = abs(
+            self.current_velocity.linear.x - self.target_velocity.linear.x
+        )
+        angular_diff = abs(
+            self.current_velocity.angular.z - self.target_velocity.angular.z
+        )
 
         return linear_diff < tolerance and angular_diff < tolerance
 
@@ -141,8 +140,8 @@ class MotionController:
         # - Encoder values
 
         return {
-            'left_motor': {'current': 0.0, 'temperature': 25.0, 'status': 'ok'},
-            'right_motor': {'current': 0.0, 'temperature': 25.0, 'status': 'ok'}
+            "left_motor": {"current": 0.0, "temperature": 25.0, "status": "ok"},
+            "right_motor": {"current": 0.0, "temperature": 25.0, "status": "ok"},
         }
 
     def calibrate_motors(self):
@@ -152,7 +151,6 @@ class MotionController:
         # - Calibrate PID gains
         # - Test full range of motion
         # - Validate encoder accuracy
-        pass
 
     def reset_controller(self):
         """Reset controller state"""
@@ -170,4 +168,3 @@ class MotionController:
         # Save calibration data
         # Close interfaces
         self.stop_motors()
-        pass

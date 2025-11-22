@@ -6,34 +6,26 @@ event-driven state management with frontend integration and subsystem coordinati
 """
 
 import time
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from autonomy_interfaces.msg import SafetyStatus as SafetyStatusMsg
+from autonomy_interfaces.msg import StateTransition as StateTransitionMsg
+from autonomy_interfaces.msg import SystemState as SystemStateMsg
+from autonomy_interfaces.srv import ChangeState
+from autonomy_interfaces.srv import GetSystemState as GetSystemStateSrv
+from autonomy_interfaces.srv import RecoverFromSafety, SafestopControl, SoftwareEstop
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
+from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 
-from autonomy_interfaces.msg import (
-    SafetyStatus as SafetyStatusMsg,
-    StateTransition as StateTransitionMsg,
-    SystemState as SystemStateMsg,
-)
-from autonomy_interfaces.srv import (
-    ChangeState,
-    GetSystemState as GetSystemStateSrv,
-    RecoverFromSafety,
-    SafestopControl,
-    SoftwareEstop,
-)
-from std_msgs.msg import String
-
+from .context_safestop import BootValidator, ContextSafestop
 from .follow_me_behavior import FollowMeBehavior
 from .led_state_publisher import LEDStatePublisher
 from .safety_manager import SafetyManager, SafetySeverity, SafetyTriggerType
 from .states import (
-    AutonomousSubstate,
-    CalibrationSubstate,
-    EquipmentServicingSubstate,
+    AUTONOMOUS_MODE_METADATA,
+    AutonomousMode,
     SystemState,
     get_state_metadata,
 )
@@ -53,17 +45,16 @@ class StateMachineDirector(Node):
         """Initialize state machine director with all subsystems."""
         super().__init__("state_machine_director")
 
-
         self.get_logger().info("Initializing State Machine Director")
 
-        # State variables
+        # State variables - simplified state machine
         self._current_state = SystemState.BOOT
-        self._current_substate = AutonomousSubstate.NONE
-        self._current_sub_substate = EquipmentServicingSubstate.NONE
-        self._current_calibration_substate = CalibrationSubstate.NONE
+        self._current_autonomous_mode = None  # AutonomousMode when in AUTONOMOUS state
+        self._active_contexts = []  # List of active system contexts
         self._previous_state = SystemState.BOOT
         self._state_entry_time = self.get_clock().now()
         self._is_transitioning = False
+        self._current_calibration_substate = None  # Removed but kept for compatibility
 
         # Transition history
         self._transition_history: List[Dict] = []
@@ -78,7 +69,11 @@ class StateMachineDirector(Node):
 
         # Initialize components
         self.safety_manager = SafetyManager(logger=self.get_logger())
-        self.transition_validator = TransitionValidator(logger=self.get_logger(), state_machine_ref=self)
+        self.context_safestop = ContextSafestop()
+        self.boot_validator = BootValidator()
+        self.transition_validator = TransitionValidator(
+            logger=self.get_logger(), state_machine_ref=self
+        )
         self.subsystem_coordinator = SubsystemCoordinator(self)
         self.led_publisher = LEDStatePublisher(self)
         self.follow_me_behavior = FollowMeBehavior(self)
@@ -112,34 +107,36 @@ class StateMachineDirector(Node):
 
         # Service servers
         self.change_state_service = self.create_service(
-            ChangeState, "/state_machine/change_state", self._handle_change_state,
-            callback_group=self.state_transition_group  # Ensures serialized transitions
+            ChangeState,
+            "/state_machine/change_state",
+            self._handle_change_state,
+            callback_group=self.state_transition_group,  # Ensures serialized transitions
         )
         self.get_state_service = self.create_service(
             GetSystemStateSrv,
             "/state_machine/get_system_state",
             self._handle_get_system_state,
-            callback_group=self.query_group  # Allows concurrent queries
+            callback_group=self.query_group,  # Allows concurrent queries
         )
         self.recover_safety_service = self.create_service(
             RecoverFromSafety,
             "/state_machine/recover_from_safety",
             self._handle_recover_from_safety,
-            callback_group=self.state_transition_group  # Safety operations are critical
+            callback_group=self.state_transition_group,  # Safety operations are critical
         )
 
         self.safestop_control_service = self.create_service(
             SafestopControl,
             "/state_machine/safestop_control",
             self._handle_safestop_control,
-            callback_group=self.state_transition_group
+            callback_group=self.state_transition_group,
         )
 
         self.software_estop_service = self.create_service(
             SoftwareEstop,
             "/state_machine/software_estop",
             self._handle_software_estop,
-            callback_group=self.state_transition_group
+            callback_group=self.state_transition_group,
         )
 
         # Timers
@@ -170,7 +167,9 @@ class StateMachineDirector(Node):
         # Auto-transition to IDLE if configured
         if self.get_parameter("auto_transition_boot").value:
             self._execute_transition(
-                SystemState.IDLE, reason="Boot sequence completed", initiated_by="system"
+                SystemState.IDLE,
+                reason="Boot sequence completed",
+                initiated_by="system",
             )
 
     def _handle_change_state(
@@ -192,25 +191,20 @@ class StateMachineDirector(Node):
         )
 
         try:
-            # Parse desired state
+            # Parse desired state - simplified state machine
             desired_state = SystemState(request.desired_state)
-            desired_substate = (
-                AutonomousSubstate(request.desired_substate)
-                if request.desired_substate
-                else None
-            )
-            desired_calibration_substate = (
-                CalibrationSubstate(request.desired_calibration_substate)
-                if hasattr(request, 'desired_calibration_substate') and request.desired_calibration_substate
+            desired_autonomous_mode = (
+                AutonomousMode(request.desired_substate)
+                if request.desired_substate and desired_state == SystemState.AUTONOMOUS
                 else None
             )
 
-            # Validate transition
+            # Validate transition - simplified state machine
             is_valid, message, failed_preconditions = (
                 self.transition_validator.validate_transition(
                     self._current_state,
                     desired_state,
-                    desired_substate,
+                    desired_autonomous_mode,
                     force=request.force,
                 )
             )
@@ -232,8 +226,10 @@ class StateMachineDirector(Node):
                     response.message = message
                     response.actual_state = str(self._current_state)
                     response.actual_substate = str(self._current_substate)
-                    if hasattr(response, 'actual_calibration_substate'):
-                        response.actual_calibration_substate = str(self._current_calibration_substate)
+                    if hasattr(response, "actual_calibration_substate"):
+                        response.actual_calibration_substate = str(
+                            self._current_calibration_substate
+                        )
                     response.preconditions_met = False
                     response.failed_preconditions = failed_preconditions
                     self.get_logger().warning(f"State change rejected: {message}")
@@ -244,7 +240,6 @@ class StateMachineDirector(Node):
             success = self._execute_transition(
                 desired_state,
                 desired_substate,
-                desired_calibration_substate,
                 request.reason,
                 request.operator_id,
             )
@@ -253,8 +248,10 @@ class StateMachineDirector(Node):
             response.success = success
             response.actual_state = str(self._current_state)
             response.actual_substate = str(self._current_substate)
-            if hasattr(response, 'actual_calibration_substate'):
-                response.actual_calibration_substate = str(self._current_calibration_substate)
+            if hasattr(response, "actual_calibration_substate"):
+                response.actual_calibration_substate = str(
+                    self._current_calibration_substate
+                )
             response.transition_time = transition_time
             response.preconditions_met = is_valid
             response.failed_preconditions = []
@@ -273,8 +270,10 @@ class StateMachineDirector(Node):
             response.message = f"Invalid state: {str(e)}"
             response.actual_state = str(self._current_state)
             response.actual_substate = str(self._current_substate)
-            if hasattr(response, 'actual_calibration_substate'):
-                response.actual_calibration_substate = str(self._current_calibration_substate)
+            if hasattr(response, "actual_calibration_substate"):
+                response.actual_calibration_substate = str(
+                    self._current_calibration_substate
+                )
             self.get_logger().error(f"Invalid state requested: {str(e)}")
 
         return response
@@ -282,8 +281,7 @@ class StateMachineDirector(Node):
     def _execute_transition(
         self,
         to_state: SystemState,
-        to_substate: Optional[AutonomousSubstate] = None,
-        to_calibration_substate: Optional[CalibrationSubstate] = None,
+        to_substate: Optional[AutonomousMode] = None,
         reason: str = "",
         initiated_by: str = "unknown",
     ) -> bool:
@@ -299,10 +297,10 @@ class StateMachineDirector(Node):
         Returns:
             True if transition successful
         """
-        # SAVE COMPLETE STATE SNAPSHOT FOR ROLLBACK
+        # SAVE COMPLETE STATE SNAPSHOT FOR ROLLBACK - simplified state machine
         saved_state = self._current_state
-        saved_substate = self._current_substate
-        saved_sub_substate = self._current_sub_substate
+        saved_autonomous_mode = self._current_autonomous_mode
+        saved_active_contexts = self._active_contexts.copy()
         saved_calibration_substate = self._current_calibration_substate
         saved_previous_state = self._previous_state
         saved_state_entry_time = self._state_entry_time
@@ -319,24 +317,27 @@ class StateMachineDirector(Node):
             # Execute exit actions for current state
             exit_actions = self._exit_state(from_state)
 
-            # Update state
+            # Update state - simplified state machine
             self._previous_state = from_state
             self._current_state = to_state
             self._state_entry_time = self.get_clock().now()
             self._state_reason = reason
             self._operator_id = initiated_by
 
-            # Update substates
-            if to_substate:
-                self._current_substate = to_substate
+            # Update autonomous mode (if transitioning to autonomous)
+            if to_state == SystemState.AUTONOMOUS and to_substate:
+                self._current_autonomous_mode = to_substate
+                # Update active contexts based on autonomous mode
+                mode_metadata = AUTONOMOUS_MODE_METADATA.get(to_substate, {})
+                self._active_contexts = (
+                    [mode_metadata.get("context", "")]
+                    if mode_metadata.get("context")
+                    else []
+                )
             elif to_state != SystemState.AUTONOMOUS:
-                self._current_substate = AutonomousSubstate.NONE
-                self._current_sub_substate = EquipmentServicingSubstate.NONE
-
-            if to_calibration_substate:
-                self._current_calibration_substate = to_calibration_substate
-            elif to_state != SystemState.CALIBRATION:
-                self._current_calibration_substate = CalibrationSubstate.NONE
+                self._current_autonomous_mode = None
+                self._active_contexts = []
+                self._current_calibration_substate = None
 
             # Execute entry actions for new state
             entry_actions = self._enter_state(to_state, to_substate)
@@ -402,12 +403,12 @@ class StateMachineDirector(Node):
     def _audit_force_transition(self, request) -> None:
         """Audit force transitions for security review."""
         audit_entry = {
-            'timestamp': self.get_clock().now().to_msg(),
-            'operator_id': request.operator_id,
-            'from_state': str(self._current_state),
-            'to_state': request.desired_state,
-            'reason': request.reason,
-            'force_used': True
+            "timestamp": self.get_clock().now().to_msg(),
+            "operator_id": request.operator_id,
+            "from_state": str(self._current_state),
+            "to_state": request.desired_state,
+            "reason": request.reason,
+            "force_used": True,
         }
         # Store in separate force_transition history
         self._force_transition_log.append(audit_entry)
@@ -416,10 +417,12 @@ class StateMachineDirector(Node):
         if len(self._force_transition_log) > 50:
             self._force_transition_log.pop(0)
 
-        self.get_logger().info(f"Force transition audited: {len(self._force_transition_log)} total force transitions logged")
+        self.get_logger().info(
+            f"Force transition audited: {len(self._force_transition_log)} total force transitions logged"
+        )
 
     def _enter_state(
-        self, state: SystemState, substate: Optional[AutonomousSubstate] = None
+        self, state: SystemState, substate: Optional[AutonomousMode] = None
     ) -> List[str]:
         """
         Execute entry actions for a state.
@@ -463,9 +466,9 @@ class StateMachineDirector(Node):
             actions.append("activate_red_led")
             self.subsystem_coordinator.enable_autonomous(substate)
             self.led_publisher.update_state(state, substate)
-            
+
             # Handle follow me substate
-            if substate == AutonomousSubstate.FOLLOW_ME:
+            if substate == AutonomousMode.FOLLOW_ME:
                 actions.append("enable_follow_me_mode")
                 # Follow me behavior will be started via service call
 
@@ -507,7 +510,7 @@ class StateMachineDirector(Node):
         elif state == SystemState.AUTONOMOUS:
             actions.append("disable_autonomous_mode")
             # Stop follow me behavior if active
-            if self._current_substate == AutonomousSubstate.FOLLOW_ME:
+            if self._current_autonomous_mode == AutonomousMode.FOLLOW_ME:
                 actions.append("disable_follow_me_mode")
                 self.follow_me_behavior.stop_following()
 
@@ -608,12 +611,18 @@ class StateMachineDirector(Node):
         self._publish_safety_status()
 
         # If safety triggered and not in safety state, transition
-        if not safety_status["is_safe"] and self._current_state not in [SystemState.SAFETY, SystemState.ESTOP, SystemState.SAFESTOP]:
+        if not safety_status["is_safe"] and self._current_state not in [
+            SystemState.SAFETY,
+            SystemState.ESTOP,
+            SystemState.SAFESTOP,
+        ]:
             highest_severity = self.safety_manager.get_highest_severity()
             active_triggers = self.safety_manager.get_active_triggers()
 
             # Determine appropriate safety state based on trigger type
-            target_state = self._determine_safety_state(active_triggers, highest_severity)
+            target_state = self._determine_safety_state(
+                active_triggers, highest_severity
+            )
 
             if target_state:
                 self.get_logger().warning(
@@ -625,19 +634,26 @@ class StateMachineDirector(Node):
                     initiated_by="safety_manager",
                 )
 
-    def _determine_safety_state(self, active_triggers: List[SafetyTriggerType],
-                               highest_severity: Optional[SafetySeverity]) -> Optional[SystemState]:
+    def _determine_safety_state(
+        self,
+        active_triggers: List[SafetyTriggerType],
+        highest_severity: Optional[SafetySeverity],
+    ) -> Optional[SystemState]:
         """Determine which safety state to transition to based on active triggers."""
         from .safety_manager import SafetyTriggerType
 
         # Emergency stops take highest priority - both hardware and software
-        if (SafetyTriggerType.EMERGENCY_STOP in active_triggers or
-            SafetyTriggerType.SOFTWARE_ESTOP in active_triggers):
+        if (
+            SafetyTriggerType.EMERGENCY_STOP in active_triggers
+            or SafetyTriggerType.SOFTWARE_ESTOP in active_triggers
+        ):
             return SystemState.ESTOP
 
         # Proximity violation or operator safestop request
-        if (SafetyTriggerType.PROXIMITY_VIOLATION in active_triggers or
-            SafetyTriggerType.SAFESTOP_REQUEST in active_triggers):
+        if (
+            SafetyTriggerType.PROXIMITY_VIOLATION in active_triggers
+            or SafetyTriggerType.SAFESTOP_REQUEST in active_triggers
+        ):
             return SystemState.SAFESTOP
 
         # Other critical/emergency triggers default to legacy safety state
@@ -813,7 +829,9 @@ class StateMachineDirector(Node):
         valid_commands = ["ENGAGE", "DISENGAGE", "TOGGLE"]
         if request.command not in valid_commands:
             response.success = False
-            response.message = f"Invalid command: {request.command}. Valid: {valid_commands}"
+            response.message = (
+                f"Invalid command: {request.command}. Valid: {valid_commands}"
+            )
             response.current_state = "FAILED"
             return response
 
@@ -828,12 +846,16 @@ class StateMachineDirector(Node):
             target_is_safestop = False
         elif request.command == "TOGGLE":
             target_is_safestop = not current_is_safestop
-            target_state = SystemState.SAFESTOP if target_is_safestop else SystemState.IDLE
+            target_state = (
+                SystemState.SAFESTOP if target_is_safestop else SystemState.IDLE
+            )
 
         # Check if already in desired state
         if current_is_safestop == target_is_safestop:
             response.success = True
-            response.message = f"Already {'in' if current_is_safestop else 'not in'} safestop"
+            response.message = (
+                f"Already {'in' if current_is_safestop else 'not in'} safestop"
+            )
             response.current_state = "ENGAGED" if current_is_safestop else "DISENGAGED"
             response.affected_subsystems = []
             response.timestamp = self.get_clock().now().nanoseconds / 1e9
@@ -890,19 +912,22 @@ class StateMachineDirector(Node):
                 SafetyTriggerType.SOFTWARE_ESTOP,
                 SafetySeverity.EMERGENCY,
                 f"Software ESTOP triggered by {request.operator_id}: {request.reason}",
-                request.operator_id
+                request.operator_id,
             )
 
             # If force_immediate is True, immediately publish emergency stop signal
             if request.force_immediate:
                 # Publish emergency stop signal to trigger immediate coordination
                 from std_msgs.msg import Bool
+
                 emergency_msg = Bool()
                 emergency_msg.data = True
 
                 # This will trigger the emergency response coordinator
                 # In a real implementation, you'd have a dedicated publisher for this
-                self.get_logger().critical("FORCE IMMEDIATE: Broadcasting emergency stop signal")
+                self.get_logger().critical(
+                    "FORCE IMMEDIATE: Broadcasting emergency stop signal"
+                )
 
             response.success = True
             response.message = f"Software ESTOP triggered successfully: {estop_id}"
@@ -911,7 +936,9 @@ class StateMachineDirector(Node):
             response.timestamp = self.get_clock().now().nanoseconds / 1e9
             response.coordination_started = True
 
-            self.get_logger().critical(f"Software ESTOP {estop_id} activated - full emergency shutdown initiated")
+            self.get_logger().critical(
+                f"Software ESTOP {estop_id} activated - full emergency shutdown initiated"
+            )
 
         except Exception as e:
             self.get_logger().error(f"Failed to trigger software ESTOP: {e}")
@@ -924,7 +951,11 @@ class StateMachineDirector(Node):
         return response
 
     def _add_to_history(
-        self, from_state: SystemState, to_state: SystemState, reason: str, initiated_by: str
+        self,
+        from_state: SystemState,
+        to_state: SystemState,
+        reason: str,
+        initiated_by: str,
     ) -> None:
         """Add transition to history."""
         self._transition_history.append(
@@ -941,7 +972,9 @@ class StateMachineDirector(Node):
         if len(self._transition_history) > self._max_history_length:
             self._transition_history.pop(0)  # Remove oldest entry
 
-        self.get_logger().debug(f"History size: {len(self._transition_history)}/{self._max_history_length}")
+        self.get_logger().debug(
+            f"History size: {len(self._transition_history)}/{self._max_history_length}"
+        )
 
 
 def main(args=None):
@@ -956,7 +989,9 @@ def main(args=None):
     executor.add_node(node)
 
     try:
-        node.get_logger().info("Starting state machine director with MultiThreadedExecutor (4 threads)")
+        node.get_logger().info(
+            "Starting state machine director with MultiThreadedExecutor (4 threads)"
+        )
         executor.spin()
     except KeyboardInterrupt:
         node.get_logger().info("Keyboard interrupt, shutting down")
@@ -967,4 +1002,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-

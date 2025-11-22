@@ -34,6 +34,9 @@ This comprehensive documentation covers all aspects of our autonomous rover plat
    :caption: 📚 System Architecture
 
    architecture/overview
+   architecture/communication_patterns
+   architecture/ros2_system_graphs
+   architecture/code_relationships
    architecture/state_machine
    architecture/ros2_interfaces
    architecture/hardware

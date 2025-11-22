@@ -10,14 +10,15 @@ Tests:
 5. Performance metrics
 """
 
-import unittest
-import numpy as np
-from typing import Tuple
 import sys
-sys.path.insert(0, '/Users/ahmadkaddoura/robotics2025/Autonomy/code/slam/autonomy_slam')
+import unittest
 
-from gps_fusion_node import ExtendedKalmanFilter
+import numpy as np
+
+sys.path.insert(0, "/Users/ahmadkaddoura/robotics2025/Autonomy/code/slam/autonomy_slam")
+
 from depth_processor import DepthProcessor
+from gps_fusion_node import ExtendedKalmanFilter
 
 
 class TestDepthProcessing(unittest.TestCase):
@@ -33,7 +34,7 @@ class TestDepthProcessing(unittest.TestCase):
         """Test range-based depth filtering."""
         # Create depth image with outliers
         depth = np.full((self.height, self.width), 1000, dtype=np.uint16)
-        depth[100:150, 100:150] = 50    # Out of range (too close)
+        depth[100:150, 100:150] = 50  # Out of range (too close)
         depth[200:250, 200:250] = 6000  # Out of range (too far)
 
         processor = DepthProcessor()
@@ -49,9 +50,9 @@ class TestDepthProcessing(unittest.TestCase):
         """Test dust particle detection and removal."""
         # Create depth map with isolated dust (high variance regions)
         depth = np.full((self.height, self.width), 1000, dtype=np.uint16)
-        
+
         # Add isolated dust speckles
-        depth[100, 100] = 500   # Isolated point
+        depth[100, 100] = 500  # Isolated point
         depth[200, 200] = 1500  # Another isolated point
 
         processor = DepthProcessor()
@@ -113,7 +114,7 @@ class TestGPSFusion(unittest.TestCase):
         """Test SLAM measurement update."""
         # Set reference GPS point
         self.ekf.gps_reference = (0.0, 0.0)
-        
+
         # Initial state
         initial_state = self.ekf.state.copy()
 
@@ -134,7 +135,7 @@ class TestGPSFusion(unittest.TestCase):
         # Set reference GPS point
         ref_lat, ref_lon = 0.0, 0.0
         self.ekf.gps_reference = (ref_lat, ref_lon)
-        
+
         # First GPS fix (reference)
         self.ekf.update_gps(ref_lat, ref_lon)
 
@@ -162,7 +163,7 @@ class TestGPSFusion(unittest.TestCase):
         offset_lat = 0.01  # ~1111 meters north
         offset_lon = 0.01  # ~1111 meters east
         local = self.ekf._gps_to_local(ref_lat + offset_lat, ref_lon + offset_lon)
-        
+
         self.assertGreater(local[0], 1000)  # East offset
         self.assertGreater(local[1], 1000)  # North offset
 
@@ -170,19 +171,13 @@ class TestGPSFusion(unittest.TestCase):
         """Test angle normalization to [-pi, pi]."""
         # Test various angles
         self.assertAlmostEqual(
-            ExtendedKalmanFilter._normalize_angle(4 * np.pi),
-            0.0,
-            places=5
+            ExtendedKalmanFilter._normalize_angle(4 * np.pi), 0.0, places=5
         )
         self.assertAlmostEqual(
-            ExtendedKalmanFilter._normalize_angle(3 * np.pi),
-            -np.pi,
-            places=5
+            ExtendedKalmanFilter._normalize_angle(3 * np.pi), -np.pi, places=5
         )
         self.assertAlmostEqual(
-            ExtendedKalmanFilter._normalize_angle(-3 * np.pi),
-            np.pi,
-            places=5
+            ExtendedKalmanFilter._normalize_angle(-3 * np.pi), np.pi, places=5
         )
 
     def test_fusion_modes(self):
@@ -190,11 +185,11 @@ class TestGPSFusion(unittest.TestCase):
         # Scenario 1: Good SLAM confidence, GPS available
         self.ekf.state[0] = 1.0  # Has pose
         slam_position = np.array([1.0, 2.0, 0.0])
-        
+
         # Should fuse both
         self.ekf.gps_reference = (0.0, 0.0)
         self.ekf.update_slam(slam_position, 0.0)  # SLAM update
-        self.ekf.update_gps(0.00001, 0.00001)    # GPS update
+        self.ekf.update_gps(0.00001, 0.00001)  # GPS update
 
         # Both should have influenced state
         self.assertNotEqual(self.ekf.state[0], 1.0)
@@ -227,10 +222,10 @@ class TestSystemIntegration(unittest.TestCase):
         for i in range(5):
             slam_pos = np.array([float(i), float(i) * 0.5, 0.0])
             slam_yaw = float(i) * 0.05
-            
+
             # Predict motion
             ekf.predict(0.1)
-            
+
             # Update with SLAM
             ekf.update_slam(slam_pos, slam_yaw)
 
@@ -244,19 +239,21 @@ class TestSystemIntegration(unittest.TestCase):
         # Memory: EKF state should be small
         ekf = ExtendedKalmanFilter()
         import sys
+
         ekf_size = sys.getsizeof(ekf.state) + sys.getsizeof(ekf.P)
         self.assertLess(ekf_size, 10000)  # < 10KB for core EKF
 
         # Update rate: should be < 1ms per update
         import time
+
         slam_pos = np.array([1.0, 2.0, 0.5])
-        
+
         start = time.time()
         for _ in range(100):
             ekf.predict(0.01)
             ekf.update_slam(slam_pos, 0.0)
         elapsed = (time.time() - start) / 100.0
-        
+
         self.assertLess(elapsed, 0.001)  # < 1ms per update
 
 
@@ -266,7 +263,7 @@ class TestErrorHandling(unittest.TestCase):
     def test_invalid_depth(self):
         """Test handling of invalid depth values."""
         processor = DepthProcessor()
-        
+
         # Depth with NaN and Inf values
         depth = np.full((100, 100), 1000.0, dtype=np.float32)
         depth[10:20, 10:20] = np.nan
@@ -279,7 +276,7 @@ class TestErrorHandling(unittest.TestCase):
     def test_gps_without_reference(self):
         """Test GPS update before reference is set."""
         ekf = ExtendedKalmanFilter()
-        
+
         # GPS update without reference should set reference
         ekf.update_gps(0.0, 0.0)
         self.assertIsNotNone(ekf.gps_reference)
@@ -288,10 +285,10 @@ class TestErrorHandling(unittest.TestCase):
     def test_matrix_inversion_robustness(self):
         """Test that EKF handles near-singular matrices."""
         ekf = ExtendedKalmanFilter()
-        
+
         # Create covariance near singular but not quite
         ekf.P = np.eye(6) * 1e-10
-        
+
         # Should not crash when inverting
         try:
             slam_pos = np.array([1.0, 2.0, 0.0])
@@ -302,6 +299,5 @@ class TestErrorHandling(unittest.TestCase):
             self.fail("EKF should handle near-singular matrices gracefully")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-

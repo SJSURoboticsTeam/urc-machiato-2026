@@ -3,4 +3,4 @@
 
 from .websocket_bridge import WebSocketSensorBridgeNode
 
-__all__ = ['WebSocketSensorBridgeNode']
+__all__ = ["WebSocketSensorBridgeNode"]
