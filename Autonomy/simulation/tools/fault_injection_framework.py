@@ -8,6 +8,7 @@ Supports hardware failures, software bugs, and environmental disturbances.
 
 import json
 import random
+import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
