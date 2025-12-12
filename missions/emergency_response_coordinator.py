@@ -1,350 +1,308 @@
-#!/usr/bin/env python3
 """
-Emergency Response Coordinator
-Handles emergency situations and safety responses
+Emergency Response Coordinator for URC 2026 Mission System
+
+Handles emergency situations, coordinates responses, and manages system safety
+during critical events.
 """
 
-import uuid
+import threading
+import time
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-import structlog
-
-from .exceptions import EmergencyError
-
-# Configure structured logging
-logger = structlog.get_logger(__name__)
-
-
-class EmergencySeverity(Enum):
-    LOW = 1
-    MEDIUM = 2
-    HIGH = 3
-    CRITICAL = 4
-
 
 class EmergencyType(Enum):
+    """Types of emergency situations."""
     THERMAL_OVERLOAD = "thermal_overload"
     BATTERY_CRITICAL = "battery_critical"
-    MOTOR_FAILURE = "motor_failure"
     COMMUNICATION_LOSS = "communication_loss"
+    MOTOR_FAILURE = "motor_failure"
+    SENSOR_FAILURE = "sensor_failure"
     OBSTACLE_COLLISION = "obstacle_collision"
     SYSTEM_FREEZE = "system_freeze"
 
 
+class EmergencySeverity(Enum):
+    """Emergency severity levels."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+@dataclass
+class EmergencyRecord:
+    """Record of an emergency event."""
+    emergency_type: EmergencyType
+    severity: EmergencySeverity
+    description: str
+    timestamp: float
+    source: str
+    system_state: Dict[str, Any]
+    response_actions: List[str]
+    resolved: bool = False
+    resolution_time: Optional[float] = None
+
+
 class EmergencyResponseCoordinator:
-    """
-    Coordinates emergency responses and safety protocols.
-    Manages different types of emergencies with appropriate responses.
-    """
+    """Coordinates emergency responses across the system."""
 
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
-        self.active_emergencies: List[Dict[str, Any]] = []
-        self.emergency_callbacks: Dict[EmergencyType, Callable] = {}
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        self.emergency_callbacks: Dict[EmergencyType, List[Callable]] = {}
+        self.active_emergencies: List[EmergencyRecord] = []
+        self.emergency_history: List[EmergencyRecord] = []
+        self.lock = threading.Lock()
+        self.max_history_size = 100
 
-        # Emergency response configuration
-        self.emergency_config = config.get("emergency", {})
+        # Default emergency responses
+        self._setup_default_responses()
 
-        # Response state
-        self.emergency_mode = False
-        self.last_emergency_time = None
+    def _setup_default_responses(self):
+        """Setup default emergency response procedures."""
+
+        # Thermal overload response
+        self.register_emergency_callback(
+            EmergencyType.THERMAL_OVERLOAD,
+            self._handle_thermal_emergency
+        )
+
+        # Battery critical response
+        self.register_emergency_callback(
+            EmergencyType.BATTERY_CRITICAL,
+            self._handle_battery_emergency
+        )
+
+        # Communication loss response
+        self.register_emergency_callback(
+            EmergencyType.COMMUNICATION_LOSS,
+            self._handle_communication_loss
+        )
+
+        # Motor failure response
+        self.register_emergency_callback(
+            EmergencyType.MOTOR_FAILURE,
+            self._handle_motor_failure
+        )
 
     def register_emergency_callback(
-        self, emergency_type: EmergencyType, callback: Callable
+        self,
+        emergency_type: EmergencyType,
+        callback: Callable[[EmergencyRecord], None]
     ):
-        """Register callback for specific emergency types"""
-        self.emergency_callbacks[emergency_type] = callback
+        """Register a callback for a specific emergency type."""
+        if emergency_type not in self.emergency_callbacks:
+            self.emergency_callbacks[emergency_type] = []
+        self.emergency_callbacks[emergency_type].append(callback)
 
-    def handle_emergency(
-        self, emergency_type: EmergencyType, context: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
-        """
-        Handle emergency situation with appropriate response.
-        Returns response actions and status.
-        """
-        severity = self._assess_severity(emergency_type, context or {})
-        response_actions = self._determine_response_actions(emergency_type, severity)
+    def trigger_emergency(
+        self,
+        emergency_type: EmergencyType,
+        severity: EmergencySeverity,
+        description: str,
+        source: str,
+        system_state: Dict[str, Any]
+    ) -> EmergencyRecord:
+        """Trigger an emergency response."""
 
-        # Record emergency
-        emergency_record = {
-            "type": emergency_type,
-            "severity": severity,
-            "timestamp": self._get_current_time(),
-            "context": context or {},
-            "response_actions": response_actions,
-            "resolved": False,
+        # Create emergency record
+        emergency = EmergencyRecord(
+            emergency_type=emergency_type,
+            severity=severity,
+            description=description,
+            timestamp=time.time(),
+            source=source,
+            system_state=system_state.copy(),
+            response_actions=[]
+        )
+
+        with self.lock:
+            self.active_emergencies.append(emergency)
+
+            # Trigger callbacks
+            if emergency_type in self.emergency_callbacks:
+                for callback in self.emergency_callbacks[emergency_type]:
+                    try:
+                        callback(emergency)
+                    except Exception as e:
+                        # Log callback error but continue
+                        print(f"Emergency callback error: {e}")
+
+        return emergency
+
+    def resolve_emergency(self, emergency: EmergencyRecord, resolution_note: str = ""):
+        """Resolve an emergency situation."""
+        with self.lock:
+            emergency.resolved = True
+            emergency.resolution_time = time.time()
+
+            if emergency in self.active_emergencies:
+                self.active_emergencies.remove(emergency)
+
+            emergency.response_actions.append(f"RESOLVED: {resolution_note}")
+
+            # Move to history
+            self.emergency_history.append(emergency)
+
+            # Maintain history size
+            if len(self.emergency_history) > self.max_history_size:
+                self.emergency_history.pop(0)
+
+    def get_active_emergencies(self) -> List[EmergencyRecord]:
+        """Get list of active emergencies."""
+        with self.lock:
+            return self.active_emergencies.copy()
+
+    def get_emergency_history(self, limit: int = 50) -> List[EmergencyRecord]:
+        """Get emergency history."""
+        with self.lock:
+            return self.emergency_history[-limit:].copy()
+
+    def get_emergency_stats(self) -> Dict[str, Any]:
+        """Get emergency statistics."""
+        with self.lock:
+            total_emergencies = len(self.emergency_history)
+            resolved_emergencies = len([
+                e for e in self.emergency_history if e.resolved
+            ])
+            active_emergencies = len(self.active_emergencies)
+
+            # Count by type
+            type_counts: Dict[str, int] = {}
+            for emergency in self.emergency_history:
+                emergency_type = emergency.emergency_type.value
+                type_counts[emergency_type] = type_counts.get(emergency_type, 0) + 1
+
+            # Count by severity
+            severity_counts: Dict[str, int] = {}
+            for emergency in self.emergency_history:
+                severity = emergency.severity.value
+                severity_counts[severity] = severity_counts.get(severity, 0) + 1
+
+            return {
+                'total_emergencies': total_emergencies,
+                'active_emergencies': active_emergencies,
+                'resolved_emergencies': resolved_emergencies,
+                'resolution_rate': (
+                    resolved_emergencies / total_emergencies * 100
+                    if total_emergencies > 0 else 0
+                ),
+                'by_type': type_counts,
+                'by_severity': severity_counts
+            }
+
+    def _handle_thermal_emergency(self, emergency: EmergencyRecord):
+        """Handle thermal overload emergency."""
+        emergency.response_actions.extend([
+            "Reduce system load",
+            "Increase cooling if available",
+            "Monitor temperature sensors",
+            "Prepare for graceful shutdown if temperature continues rising"
+        ])
+
+        # In a real system, this would trigger:
+        # - CPU frequency reduction
+        # - Non-critical process suspension
+        # - Cooling system activation
+        # - Temperature monitoring escalation
+
+    def _handle_battery_emergency(self, emergency: EmergencyRecord):
+        """Handle battery critical emergency."""
+        emergency.response_actions.extend([
+            "Reduce power consumption",
+            "Return to base if possible",
+            "Disable non-essential systems",
+            "Monitor battery voltage and current"
+        ])
+
+        # In a real system, this would trigger:
+        # - Motor power reduction
+        # - Sensor sampling rate reduction
+        # - Navigation to nearest charging station
+        # - Low-power mode activation
+
+    def _handle_communication_loss(self, emergency: EmergencyRecord):
+        """Handle communication loss emergency."""
+        emergency.response_actions.extend([
+            "Switch to autonomous mode",
+            "Attempt communication recovery",
+            "Use cached mission data",
+            "Prepare for manual override if communication restored"
+        ])
+
+        # In a real system, this would trigger:
+        # - Autonomous operation mode
+        # - Communication retry attempts
+        # - Mission state preservation
+        # - Emergency beacon activation
+
+    def _handle_motor_failure(self, emergency: EmergencyRecord):
+        """Handle motor failure emergency."""
+        emergency.response_actions.extend([
+            "Stop affected motor(s)",
+            "Redistribute power to remaining motors",
+            "Attempt motor restart",
+            "Switch to reduced mobility mode"
+        ])
+
+        # In a real system, this would trigger:
+        # - Motor controller reset
+        # - Power redistribution
+        # - Alternative locomotion mode
+        # - Diagnostic data collection
+
+    def check_system_health(self) -> List[EmergencyRecord]:
+        """Check system health and trigger emergencies if needed."""
+        # Placeholder for system health monitoring
+        # In a real implementation, this would monitor:
+        # - Temperature sensors
+        # - Battery voltage/current
+        # - Motor status
+        # - Communication links
+        # - CPU/memory usage
+
+        emergencies_triggered = []
+
+        # Example health checks (placeholder values)
+        system_metrics = {
+            'temperature_celsius': 65.0,  # Normal
+            'battery_voltage': 11.5,      # Normal
+            'cpu_usage': 45.0,           # Normal
+            'communication_ok': True     # Normal
         }
 
-        self.active_emergencies.append(emergency_record)
-        self.emergency_mode = True
-        self.last_emergency_time = self._get_current_time()
-
-        # Execute response actions
-        self._execute_response_actions(response_actions)
-
-        # Notify registered callbacks
-        if emergency_type in self.emergency_callbacks:
-            self.emergency_callbacks[emergency_type](emergency_record)
-
-        return {
-            "emergency_record": emergency_record,
-            "response_actions": response_actions,
-            "severity": severity,
-        }
-
-    def _assess_severity(
-        self, emergency_type: EmergencyType, context: Dict[str, Any]
-    ) -> EmergencySeverity:
-        """Assess the severity of an emergency situation"""
-        if emergency_type == EmergencyType.BATTERY_CRITICAL:
-            battery_pct = context.get("battery_percentage", 100.0)
-            if battery_pct < 5.0:
-                return EmergencySeverity.CRITICAL
-            elif battery_pct < 10.0:
-                return EmergencySeverity.HIGH
-            else:
-                return EmergencySeverity.MEDIUM
-
-        elif emergency_type == EmergencyType.THERMAL_OVERLOAD:
-            max_temp = context.get("max_temperature", 0.0)
-            if max_temp > 85.0:  # Emergency temp
-                return EmergencySeverity.CRITICAL
-            elif max_temp > 70.0:  # Critical temp
-                return EmergencySeverity.HIGH
-            else:
-                return EmergencySeverity.MEDIUM
-
-        elif emergency_type == EmergencyType.MOTOR_FAILURE:
-            failed_motors = context.get("failed_motor_count", 0)
-            total_motors = context.get("total_motors", 4)
-            failure_rate = failed_motors / total_motors
-
-            if failure_rate > 0.5:  # More than half motors failed
-                return EmergencySeverity.CRITICAL
-            elif failure_rate > 0.25:  # Quarter motors failed
-                return EmergencySeverity.HIGH
-            else:
-                return EmergencySeverity.MEDIUM
-
-        elif emergency_type == EmergencyType.COMMUNICATION_LOSS:
-            duration = context.get("duration_seconds", 0)
-            if duration > 30:  # Lost comm for 30+ seconds
-                return EmergencySeverity.CRITICAL
-            elif duration > 10:  # Lost comm for 10+ seconds
-                return EmergencySeverity.HIGH
-            else:
-                return EmergencySeverity.MEDIUM
-
-        elif emergency_type == EmergencyType.OBSTACLE_COLLISION:
-            speed = context.get("collision_speed", 0.0)
-            if speed > 1.0:  # High speed collision
-                return EmergencySeverity.HIGH
-            else:
-                return EmergencySeverity.MEDIUM
-
-        elif emergency_type == EmergencyType.SYSTEM_FREEZE:
-            return EmergencySeverity.CRITICAL
-
-        return EmergencySeverity.MEDIUM  # Default
-
-    def _determine_response_actions(
-        self, emergency_type: EmergencyType, severity: EmergencySeverity
-    ) -> List[Dict[str, Any]]:
-        """Determine appropriate response actions for emergency"""
-        actions = []
-
-        if severity == EmergencySeverity.CRITICAL:
-            actions.extend(
-                [
-                    {
-                        "action": "immediate_stop",
-                        "description": "Stop all motors immediately",
-                    },
-                    {
-                        "action": "emergency_beacon",
-                        "description": "Activate emergency signaling",
-                    },
-                    {
-                        "action": "notify_operators",
-                        "description": "Send emergency notification",
-                    },
-                    {
-                        "action": "enter_safe_mode",
-                        "description": "Enter safe operational mode",
-                    },
-                ]
+        # Check temperature
+        if system_metrics['temperature_celsius'] > 80.0:
+            emergency = self.trigger_emergency(
+                EmergencyType.THERMAL_OVERLOAD,
+                EmergencySeverity.HIGH,
+                f"Temperature too high: {system_metrics['temperature_celsius']}°C",
+                "system_monitor",
+                system_metrics
             )
+            emergencies_triggered.append(emergency)
 
-        if emergency_type == EmergencyType.THERMAL_OVERLOAD:
-            actions.extend(
-                [
-                    {
-                        "action": "thermal_shutdown",
-                        "description": "Initiate thermal shutdown sequence",
-                    },
-                    {
-                        "action": "cooling_protocol",
-                        "description": "Activate cooling systems if available",
-                    },
-                ]
+        # Check battery
+        if system_metrics['battery_voltage'] < 10.0:
+            emergency = self.trigger_emergency(
+                EmergencyType.BATTERY_CRITICAL,
+                EmergencySeverity.CRITICAL,
+                f"Battery voltage critical: {system_metrics['battery_voltage']}V",
+                "system_monitor",
+                system_metrics
             )
+            emergencies_triggered.append(emergency)
 
-        elif emergency_type == EmergencyType.BATTERY_CRITICAL:
-            actions.extend(
-                [
-                    {
-                        "action": "return_to_base",
-                        "description": "Initiate return to base protocol",
-                    },
-                    {
-                        "action": "power_conservation",
-                        "description": "Enter power conservation mode",
-                    },
-                    {
-                        "action": "simplify_mission",
-                        "description": "Simplify mission to essential tasks",
-                    },
-                ]
+        # Check communication
+        if not system_metrics['communication_ok']:
+            emergency = self.trigger_emergency(
+                EmergencyType.COMMUNICATION_LOSS,
+                EmergencySeverity.HIGH,
+                "Communication link lost",
+                "system_monitor",
+                system_metrics
             )
+            emergencies_triggered.append(emergency)
 
-        elif emergency_type == EmergencyType.MOTOR_FAILURE:
-            actions.extend(
-                [
-                    {
-                        "action": "motor_diagnostics",
-                        "description": "Run motor diagnostics",
-                    },
-                    {
-                        "action": "redundant_systems",
-                        "description": "Activate redundant motor systems",
-                    },
-                    {
-                        "action": "reduced_performance",
-                        "description": "Reduce performance to safe levels",
-                    },
-                ]
-            )
-
-        elif emergency_type == EmergencyType.COMMUNICATION_LOSS:
-            actions.extend(
-                [
-                    {
-                        "action": "autonomous_mode",
-                        "description": "Switch to autonomous operation",
-                    },
-                    {
-                        "action": "reduced_speed",
-                        "description": "Reduce speed for safety",
-                    },
-                    {
-                        "action": "attempt_reconnection",
-                        "description": "Attempt to reestablish communication",
-                    },
-                ]
-            )
-
-        return actions
-
-    def _execute_response_actions(self, actions: List[Dict[str, Any]]):
-        """Execute the determined response actions"""
-        correlation_id = str(uuid.uuid4())
-        logger.info(
-            "Executing emergency response actions",
-            action_count=len(actions),
-            correlation_id=correlation_id,
-        )
-
-        for action in actions:
-            action_type = action["action"]
-            description = action["description"]
-
-            logger.info(
-                "Executing emergency action",
-                action_type=action_type,
-                description=description,
-                correlation_id=correlation_id,
-            )
-
-            # Here you would implement the actual action execution
-            # For now, just log the actions
-            if action_type == "immediate_stop":
-                self._execute_immediate_stop()
-            elif action_type == "return_to_base":
-                self._execute_return_to_base()
-            elif action_type == "thermal_shutdown":
-                self._execute_thermal_shutdown()
-            # Add other action implementations...
-
-    def resolve_emergency(self, emergency_id: Optional[int] = None):
-        """Resolve an emergency situation"""
-        if emergency_id is None and self.active_emergencies:
-            # Resolve most recent emergency
-            emergency_id = len(self.active_emergencies) - 1
-
-        if 0 <= emergency_id < len(self.active_emergencies):
-            self.active_emergencies[emergency_id]["resolved"] = True
-            self.active_emergencies[emergency_id][
-                "resolved_time"
-            ] = self._get_current_time()
-
-            # Check if all emergencies are resolved
-            active_count = sum(1 for e in self.active_emergencies if not e["resolved"])
-            if active_count == 0:
-                self.emergency_mode = False
-                correlation_id = str(uuid.uuid4())
-                logger.info("All emergencies resolved", correlation_id=correlation_id)
-
-    def get_emergency_status(self) -> Dict[str, Any]:
-        """Get current emergency status"""
-        active_emergencies = [e for e in self.active_emergencies if not e["resolved"]]
-
-        return {
-            "emergency_mode": self.emergency_mode,
-            "active_emergencies": active_emergencies,
-            "emergency_count": len(active_emergencies),
-            "last_emergency_time": self.last_emergency_time,
-            "total_emergencies": len(self.active_emergencies),
-        }
-
-    def _execute_immediate_stop(self):
-        """Execute immediate stop action"""
-        correlation_id = str(uuid.uuid4())
-        logger.warning(
-            "Executing immediate stop - all motors halted",
-            correlation_id=correlation_id,
-        )
-        # Implement actual motor stop logic
-
-    def _execute_return_to_base(self):
-        """Execute return to base action"""
-        correlation_id = str(uuid.uuid4())
-        logger.warning(
-            "Executing return to base protocol", correlation_id=correlation_id
-        )
-        # Implement return to base logic
-
-    def _execute_thermal_shutdown(self):
-        """Execute thermal shutdown action"""
-        correlation_id = str(uuid.uuid4())
-        logger.critical(
-            "Executing thermal shutdown sequence", correlation_id=correlation_id
-        )
-        # Implement thermal shutdown logic
-
-    def _get_current_time(self):
-        """Get current timestamp"""
-        import time
-
-        return time.time()
-
-    def reset_all_emergencies(self):
-        """Reset all emergency states (use with caution)"""
-        self.active_emergencies.clear()
-        self.emergency_mode = False
-        self.last_emergency_time = None
-        correlation_id = str(uuid.uuid4())
-        logger.warning(
-            "Emergency reset executed - all emergencies cleared",
-            correlation_id=correlation_id,
-        )
+        return emergencies_triggered
