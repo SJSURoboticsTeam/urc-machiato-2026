@@ -200,14 +200,21 @@ class IntegratedStressTest:
     def run_integrated_stress_test(self) -> Dict:
         """Run the complete integrated stress test."""
 
-        print("🔥 Running Integrated System Stress Test"        print("=" * 50)
+        print("🔥 Running Integrated System Stress Test")
+        print("=" * 50)
 
         # Display test configuration
-        print("   Test Configuration:"        print(f"   • Duration: {self.config.test_duration}s"        print(f"   • Network: {self.config.network_packet_loss*100:.1f}% loss, {self.config.network_latency_ms}ms latency"        print(f"   • CAN Bus: {self.config.can_message_frequency}Hz, {self.config.can_fault_rate*100:.1f}% faults"        print(f"   • Movement: {self.config.movement_command_frequency}Hz, {self.config.movement_fault_rate*100:.1f}% faults"        print(f"   • Cross-system conflicts: {self.config.cross_system_conflicts}"        print(f"   • Resource contention: {self.config.resource_contention}"
+        print("   Test Configuration:")
+        print(f"   • Duration: {self.config.test_duration}s")
+        print(f"   • Network: {self.config.network_packet_loss*100:.1f}% loss, {self.config.network_latency_ms}ms latency")
+        print(f"   • CAN Bus: {self.config.can_message_frequency}Hz, {self.config.can_fault_rate*100:.1f}% faults")
+        print(f"   • Movement: {self.config.movement_command_frequency}Hz, {self.config.movement_fault_rate*100:.1f}% faults")
+        print(f"   • Cross-system conflicts: {self.config.cross_system_conflicts}")
+        print(f"   • Resource contention: {self.config.resource_contention}")
 
         # Apply network stress
-        print("
-   Applying network stress..."        self.network_emulator.apply_network_stress()
+        print("\n   Applying network stress...")
+        self.network_emulator.apply_network_stress()
 
         # Start resource monitoring
         self.resource_monitor.start_monitoring()
@@ -367,8 +374,8 @@ class IntegratedStressTest:
     def _display_integrated_results(self, results: Dict):
         """Display comprehensive integrated test results."""
 
-        print("
-📊 INTEGRATED SYSTEM STRESS TEST RESULTS"        print("=" * 50)
+        print("\n📊 INTEGRATED SYSTEM STRESS TEST RESULTS")
+        print("=" * 50)
 
         print(f"   Overall System Health Score: {results['overall_health_score']:.1f}/100")
 
@@ -382,25 +389,23 @@ class IntegratedStressTest:
         print(f"   Health Status: {health_status}")
 
         # Component breakdown
-        print("
-   Component Performance:")
+        print("\n   Component Performance:")
 
         if 'avg_latency_ms' in results['network_performance']:
             network_latency = results['network_performance']['avg_latency_ms']
-            print(".1f"
+            print(".1f")
         if 'bus_availability_percent' in results['can_performance']:
             can_availability = results['can_performance']['bus_availability_percent']
-            print(".1f"
+            print(".1f")
         if 'command_success_rate' in results['movement_performance']:
             movement_success = results['movement_performance']['command_success_rate']
-            print(".1f"
-        print(".1f"
-        print(".1f"
+            print(".1f")
+        print(".1f")
+        print(".1f")
         print(f"   Cross-system conflicts: {results['cross_system_conflicts']}")
 
         # Recommendations
-        print("
-🛠️ SYSTEM RECOMMENDATIONS:")
+        print("\n🛠️ SYSTEM RECOMMENDATIONS:")
 
         issues = []
 
@@ -422,8 +427,7 @@ class IntegratedStressTest:
         for issue in issues:
             print(issue)
 
-        print("
-🎯 MISSION IMPACT ASSESSMENT:")
+        print("\n🎯 MISSION IMPACT ASSESSMENT:")
         if results['overall_health_score'] > 75:
             print("   ✅ System should maintain basic functionality in extreme conditions")
         elif results['overall_health_score'] > 50:
@@ -463,8 +467,7 @@ def run_integrated_stress_test_suite():
     print("📈 INTEGRATED STRESS ANALYSIS")
     print("=" * 35)
 
-    print("
-Performance by Stress Level:")
+    print("\nPerformance by Stress Level:")
     print("Level       | Health | Network | CAN Bus | Movement | Resources")
     print("-" * 70)
 
@@ -486,8 +489,7 @@ Performance by Stress Level:")
     # Final assessment
     extreme_results = results.get('extreme', {})
     if 'error' not in extreme_results:
-        print("
-🎯 FINAL SYSTEM ASSESSMENT")
+        print("\n🎯 FINAL SYSTEM ASSESSMENT")
 
         if extreme_results['overall_health_score'] > 70:
             print("✅ System demonstrates good resilience under extreme integrated stress")
@@ -511,5 +513,4 @@ if __name__ == '__main__':
     # Run integrated stress test suite
     integrated_results = run_integrated_stress_test_suite()
 
-    print("
-✨ Integrated communication stress testing completed!")
+    print("\n✨ Integrated communication stress testing completed!")

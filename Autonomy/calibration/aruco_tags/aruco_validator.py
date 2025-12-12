@@ -15,20 +15,21 @@ Usage:
 Author: URC 2026 Autonomy Team
 """
 
-import cv2
-import numpy as np
 import argparse
 import json
+import logging
+import os
 import sys
 import time
-import os
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
-import logging
+from typing import Tuple
+
+import cv2
+import numpy as np
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 
 class ArucoValidator:
     """Real-time ArUco tag validation system for Raspberry Pi."""
@@ -179,7 +180,7 @@ class ArucoValidator:
 
                 # Calculate confidence based on reprojection error
                 projected_points, _ = cv2.projectPoints(obj_points, rvec, tvec,
-                                                       self.camera_matrix, self.dist_coeffs)
+                                                         self.camera_matrix, self.dist_coeffs)
                 reprojection_error = np.mean(np.linalg.norm(corners - projected_points.squeeze(), axis=1))
 
                 # Confidence decreases with reprojection error (lower error = higher confidence)
@@ -267,8 +268,7 @@ class ArucoValidator:
             if distance_cm > 0:
                 self.detection_stats['avg_distance'] = (
                     (self.detection_stats['avg_distance'] * (self.detection_stats['tags_detected'] - 1)) +
-                    distance_cm
-                ) / self.detection_stats['tags_detected']
+                    distance_cm) / self.detection_stats['tags_detected']
 
         return frame
 
@@ -305,7 +305,7 @@ class ArucoValidator:
         calib_status = "Calibrated" if self.calibration_loaded else "No Calibration"
         calib_color = (0, 255, 0) if self.calibration_loaded else (0, 0, 255)
         cv2.putText(frame, f"Camera: {calib_status}", (10, y_offset),
-                   font, font_scale, calib_color, thickness)
+                     font, font_scale, calib_color, thickness)
 
         # Performance stats
         y_offset += 20
@@ -329,7 +329,7 @@ class ArucoValidator:
         # Instructions
         y_offset += 25
         cv2.putText(frame, "Press 'q' to quit, 'c' to clear stats", (10, y_offset),
-                   font, 0.5, (200, 200, 200), 1)
+                     font, 0.5, (200, 200, 200), 1)
 
         return frame
 
@@ -475,21 +475,21 @@ Examples:
                        help='Path to camera calibration JSON file (default: ../camera/camera_calibration.json)')
 
     parser.add_argument('--tag-size', '-s', type=float, default=10.0,
-                       help='Physical size of ArUco tags in millimeters (default: 10.0)')
+                         help='Physical size of ArUco tags in millimeters (default: 10.0)')
 
     parser.add_argument('--camera', type=int, default=0,
-                       help='Camera device index (default: 0)')
+                         help='Camera device index (default: 0)')
 
     parser.add_argument('--dict', '-d', default='DICT_4X4_50',
-                       help='ArUco dictionary name (default: DICT_4X4_50)')
+                         help='ArUco dictionary name (default: DICT_4X4_50)')
 
     parser.add_argument('--save-video', help='Save output to video file')
 
     parser.add_argument('--no-display', action='store_true',
-                       help='Run without display (useful for headless operation)')
+                         help='Run without display (useful for headless operation)')
 
     parser.add_argument('--test-mode', type=int, metavar='SECONDS',
-                       help='Test mode: run for N seconds and exit (useful for CI/testing)')
+                         help='Test mode: run for N seconds and exit (useful for CI/testing)')
 
     args = parser.parse_args()
 

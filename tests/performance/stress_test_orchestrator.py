@@ -391,12 +391,11 @@ class StressTestOrchestrator:
     def _display_analysis_summary(self, analysis: Dict):
         """Display comprehensive analysis summary."""
 
-        print("
-🎯 COMPREHENSIVE STRESS TEST ANALYSIS")
+        print("\n🎯 COMPREHENSIVE STRESS TEST ANALYSIS")
         print("=" * 45)
 
         overall_health = analysis.get('overall_system_health', 0)
-        print(".1f"
+        print(".1f")
         if overall_health > 80:
             status = "✅ EXCELLENT - System handles extreme stress well"
         elif overall_health > 60:
@@ -407,8 +406,7 @@ class StressTestOrchestrator:
         print(f"   Status: {status}")
 
         # Component breakdown
-        print("
-   Critical Findings:")
+        print("\n   Critical Findings:")
 
         for finding_type in ['network_findings', 'can_findings', 'movement_findings', 'integrated_findings']:
             findings = analysis.get(finding_type, [])
@@ -420,8 +418,7 @@ class StressTestOrchestrator:
                     print(f"     {severity_icon} {finding['issue']}: {finding['value']}")
 
         # Recommendations
-        print("
-   Top Recommendations:")
+        print("\n   Top Recommendations:")
         recommendations = analysis.get('recommendations', [])[:5]  # Top 5
         for i, rec in enumerate(recommendations, 1):
             print(f"     {i}. {rec}")
@@ -492,8 +489,7 @@ class StressTestOrchestrator:
                         f.write(f"  {level.title()}: Failed\n")
 
             # Critical findings
-            f.write("
-CRITICAL FINDINGS\n")
+            f.write("\nCRITICAL FINDINGS\n")
             f.write("-" * 20 + "\n")
 
             for finding_type in ['network_findings', 'can_findings', 'movement_findings', 'integrated_findings']:
@@ -506,8 +502,7 @@ CRITICAL FINDINGS\n")
                         f.write(f"  - {severity}: {finding['issue']} ({finding['value']})\n")
 
             # Recommendations
-            f.write("
-RECOMMENDATIONS\n")
+            f.write("\nRECOMMENDATIONS\n")
             f.write("-" * 15 + "\n")
 
             recommendations = analysis.get('recommendations', [])

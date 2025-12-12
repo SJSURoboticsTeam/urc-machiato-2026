@@ -239,12 +239,14 @@ def run_can_stress_test_level(level: CANStressLevel) -> Dict:
     results = run_can_stress_test_worker(config)
     actual_duration = time.time() - start_time
 
-    print("
-   Test Results:")
+    print("\n   Test Results:")
     print(f"   • Messages Processed: {results['messages_processed']}")
-    print(".1f"    print(f"   • Arbitration Collisions: {results['arbitration_collisions']}")
+    print(".1f")
+    print(f"   • Arbitration Collisions: {results['arbitration_collisions']}")
     print(f"   • Bus Off Events: {results['bus_off_events']}")
-    print(".1f"    print(".3f"    print(".1f"
+    print(".1f")
+    print(".3f")
+    print(".1f")
     # Performance assessment
     if results['error_rate_percent'] < 5 and results['bus_availability_percent'] > 95:
         assessment = "✅ EXCELLENT - Handles stress well"
@@ -281,8 +283,7 @@ def run_comprehensive_can_stress_test():
     print("📊 CAN BUS STRESS ANALYSIS")
     print("=" * 35)
 
-    print("
-Performance by Stress Level:")
+    print("\nPerformance by Stress Level:")
     print("Level       | Error Rate | Bus Avail | Latency | Assessment")
     print("-" * 65)
 
@@ -304,8 +305,7 @@ Performance by Stress Level:")
     # Overall assessment
     extreme_results = results['extreme']
 
-    print("
-🎯 CAN BUS STRESS TEST ASSESSMENT")
+    print("\n🎯 CAN BUS STRESS TEST ASSESSMENT")
 
     if extreme_results['bus_availability_percent'] > 80:
         print("✅ CAN bus maintains good reliability under extreme stress")
@@ -322,16 +322,14 @@ Performance by Stress Level:")
     else:
         print("⚠️ High latency may affect real-time control")
 
-    print("
-🛠️ MITIGATION STRATEGIES:")
+    print("\n🛠️ MITIGATION STRATEGIES:")
     print("   • Implement CAN message prioritization")
     print("   • Add redundancy for critical sensors")
     print("   • Use error detection and retransmission")
     print("   • Monitor bus loading and implement rate limiting")
     print("   • Add electrical noise filtering")
 
-    print("
-📋 SYSTEM IMPACT:")
+    print("\n📋 SYSTEM IMPACT:")
     print("   • Motor control reliability under electrical interference")
     print("   • Sensor data integrity during high bus utilization")
     print("   • Emergency stop responsiveness during faults")
@@ -367,10 +365,11 @@ def simulate_can_bus_failure_recovery():
     recovery_time = simulator.bus_recovery_time - time.time()
     print(f"   Messages sent during failure: {messages_during_failure}")
     print(f"   Messages lost: {messages_lost}")
-    print(".1f"
+    print(".1f")
     # Wait for recovery
     if recovery_time > 0:
-        print(".1f"        time.sleep(recovery_time + 0.1)
+        print(".1f")
+        time.sleep(recovery_time + 0.1)
 
     # Test recovery
     print("   Testing recovery...")
@@ -384,7 +383,7 @@ def simulate_can_bus_failure_recovery():
     print(f"   Messages after recovery: {messages_after_recovery}")
 
     recovery_stats = simulator.get_stress_stats()
-    print(".1f"
+    print(".1f")
     if messages_after_recovery > 40:  # 80% success rate
         print("   ✅ Bus recovery successful")
     else:
@@ -402,9 +401,7 @@ if __name__ == '__main__':
     # Run comprehensive CAN stress tests
     can_results = run_comprehensive_can_stress_test()
 
-    print("
-🔄 Testing CAN Bus Failure Recovery...")
+    print("\n🔄 Testing CAN Bus Failure Recovery...")
     recovery_results = simulate_can_bus_failure_recovery()
 
-    print("
-✨ CAN bus stress testing completed!")
+    print("\n✨ CAN bus stress testing completed!")

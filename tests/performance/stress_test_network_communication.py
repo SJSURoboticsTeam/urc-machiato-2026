@@ -251,9 +251,10 @@ def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.
 
         # Run stress test
         print(f"📊 Testing {stress_level} network conditions for {duration}s...")
-        print("   - Extreme: 50% packet loss, 500ms latency, 10Mbps bandwidth"
-        print("   - Severe: 20% packet loss, 200ms latency, 50Mbps bandwidth"
-        print("   - Moderate: 5% packet loss, 50ms latency"        print(f"   - Publishing at {1.0/config['publish_interval']:.0f}Hz with {config['payload_size']}B payloads"
+        print("   - Extreme: 50% packet loss, 500ms latency, 10Mbps bandwidth")
+        print("   - Severe: 20% packet loss, 200ms latency, 50Mbps bandwidth")
+        print("   - Moderate: 5% packet loss, 50ms latency")
+        print(f"   - Publishing at {1.0/config['publish_interval']:.0f}Hz with {config['payload_size']}B payloads")
 
         start_time = time.time()
         last_report = start_time
@@ -320,10 +321,11 @@ def run_comprehensive_network_stress_test():
 
         # Quick summary
         print(f"   ✅ {result['messages_received']}/{result['messages_sent']} messages delivered")
-        print(".1f"        print(".1f"        print(".1f"
+        print(".1f")
+        print(".1f")
+        print(".1f")
     # Comparative analysis
-    print("
-📈 NETWORK STRESS ANALYSIS")
+    print("\n📈 NETWORK STRESS ANALYSIS")
     print("=" * 40)
 
     for level in stress_levels:
@@ -335,8 +337,7 @@ def run_comprehensive_network_stress_test():
 
     # Overall assessment
     extreme_result = results['extreme']
-    print("
-🎯 STRESS TEST ASSESSMENT")
+    print("\n🎯 STRESS TEST ASSESSMENT")
 
     if extreme_result['messages_received'] > extreme_result['messages_sent'] * 0.5:
         print("✅ System maintains basic functionality under extreme network stress")
@@ -348,8 +349,7 @@ def run_comprehensive_network_stress_test():
     else:
         print("⚠️ High latency may impact real-time performance")
 
-    print("
-📋 RECOMMENDATIONS:")
+    print("\n📋 RECOMMENDATIONS:")
     print("   • Implement message prioritization for critical topics")
     print("   • Add heartbeat monitoring for connection health")
     print("   • Consider redundant communication channels")
@@ -365,5 +365,4 @@ if __name__ == '__main__':
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
     results = run_comprehensive_network_stress_test()
-    print("
-✨ Network stress testing completed!")
+    print("\n✨ Network stress testing completed!")
