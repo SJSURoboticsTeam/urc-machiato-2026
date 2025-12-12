@@ -1,289 +1,181 @@
-#!/usr/bin/env python3
 """
-Configuration and Environment Validation
+Configuration Validation Module for URC 2026 Mission System.
 
-Validates environment variables and configuration at startup
-to ensure the system is properly configured for production use.
+Provides validation for mission configurations, system parameters,
+and startup requirements.
 """
 
 import os
 import sys
-from typing import Any, Dict, List, Optional
+import threading
+from typing import Any, Dict, List
 
-import structlog
+try:
+    import rclpy
+    RCLPY_AVAILABLE = True
+except ImportError:
+    RCLPY_AVAILABLE = False
 
-from .exceptions import ConfigurationError, validate_required_env_var
+# Add project paths
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-logger = structlog.get_logger(__name__)
+
+class ValidationError(Exception):
+    """Configuration validation error."""
 
 
-class ConfigValidator:
-    """
-    Validates configuration and environment variables at startup.
-    """
+class ConfigurationValidator:
+    """Validates mission and system configurations."""
 
     def __init__(self):
         self.errors: List[str] = []
         self.warnings: List[str] = []
 
-    def validate_environment_variables(self) -> bool:
-        """
-        Validate all required environment variables are set.
+    def validate_startup_configuration(self) -> bool:
+        """Validate system startup configuration."""
+        self.errors = []
+        self.warnings = []
 
-        Returns:
-            True if all required variables are set, False otherwise
-        """
-        logger.info("Validating environment variables")
-
-        # Core ROS2 environment variables
-        required_vars = [
-            "ROS_DOMAIN_ID",  # Unique ROS2 domain for network isolation
-            "ROS_DISCOVERY_SERVER",  # ROS2 discovery server for multi-machine setup
+        # Check environment variables
+        required_env_vars = [
+            'ROS_DOMAIN_ID',
+            'ROS_VERSION'
         ]
 
-        # Teleoperation/WebSocket variables
-        teleop_vars = [
-            "WEBSOCKET_URL",  # WebSocket bridge URL
-            "CAMERA_FRONT_URL",  # Front camera stream URL
-            "CAMERA_REAR_URL",  # Rear camera stream URL
-        ]
-
-        # Hardware interface variables
-        hardware_vars = [
-            "CAN_INTERFACE",  # CAN bus interface name
-            "CAN_ENABLED",  # Whether CAN is enabled
-            "CAMERAS_ENABLED",  # Whether cameras are enabled
-        ]
-
-        success = True
-
-        # Check core ROS2 variables
-        for var in required_vars:
-            try:
-                validate_required_env_var(var)
-                logger.info(f"Environment variable validated: {var}")
-            except ConfigurationError as e:
-                self.errors.append(str(e))
-                success = False
-
-        # Check teleoperation variables (warnings only if missing)
-        for var in teleop_vars:
+        for var in required_env_vars:
             if not os.getenv(var):
-                self.warnings.append(f"Teleoperation variable not set: {var}")
+                self.errors.append(f"Missing required environment variable: {var}")
 
-        # Check hardware variables (warnings only if missing)
-        for var in hardware_vars:
-            if not os.getenv(var):
-                self.warnings.append(f"Hardware variable not set: {var}")
-
-        return success
-
-    def validate_config_file(self, config_path: str) -> bool:
-        """
-        Validate configuration file exists and is readable.
-
-        Args:
-            config_path: Path to configuration file
-
-        Returns:
-            True if config file is valid, False otherwise
-        """
-        logger.info("Validating configuration file", config_path=config_path)
-
-        if not os.path.exists(config_path):
-            self.errors.append(f"Configuration file not found: {config_path}")
-            return False
-
-        if not os.access(config_path, os.R_OK):
-            self.errors.append(f"Configuration file not readable: {config_path}")
-            return False
-
-        # Try to load and parse the config
-        try:
-            import yaml
-
-            with open(config_path, "r") as f:
-                config = yaml.safe_load(f)
-
-            if not isinstance(config, dict):
-                self.errors.append(
-                    f"Configuration file must contain a dictionary: {config_path}"
-                )
-                return False
-
-            logger.info("Configuration file validated", config_path=config_path)
-            return True
-
-        except Exception as e:
-            self.errors.append(f"Failed to parse configuration file {config_path}: {e}")
-            return False
-
-    def validate_network_connectivity(self) -> bool:
-        """
-        Validate network connectivity to required services.
-
-        Returns:
-            True if network connectivity is OK, False otherwise
-        """
-        logger.info("Validating network connectivity")
-
-        # Check ROS2 discovery server connectivity
-        discovery_server = os.getenv("ROS_DISCOVERY_SERVER")
-        if discovery_server:
-            try:
-                # Parse discovery server URL (format: host:port)
-                host_port = discovery_server.split(":")
-                if len(host_port) != 2:
-                    self.errors.append(
-                        f"Invalid ROS_DISCOVERY_SERVER format: {discovery_server}"
-                    )
-                    return False
-
-                host, port = host_port
-                port = int(port)
-
-                import socket
-
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5.0)  # 5 second timeout
-                result = sock.connect_ex((host, port))
-                sock.close()
-
-                if result != 0:
-                    self.warnings.append(
-                        f"Cannot connect to ROS2 discovery server: {discovery_server}"
-                    )
-                else:
-                    logger.info(
-                        "ROS2 discovery server connectivity confirmed",
-                        server=discovery_server,
-                    )
-
-            except Exception as e:
-                self.warnings.append(f"Error checking ROS2 discovery server: {e}")
-
-        return True
-
-    def validate_all(self, config_path: Optional[str] = None) -> bool:
-        """
-        Run all validation checks.
-
-        Args:
-            config_path: Optional path to configuration file to validate
-
-        Returns:
-            True if all critical validations pass, False otherwise
-        """
-        logger.info("Starting comprehensive configuration validation")
-
-        success = True
-
-        # Validate environment variables
-        if not self.validate_environment_variables():
-            success = False
-
-        # Validate config file if provided
-        if config_path:
-            if not self.validate_config_file(config_path):
-                success = False
-
-        # Validate network connectivity
-        self.validate_network_connectivity()
-
-        # Report results
-        if self.errors:
-            logger.error(
-                "Configuration validation failed",
-                error_count=len(self.errors),
-                errors=self.errors,
-            )
-
-        if self.warnings:
-            logger.warning(
-                "Configuration validation warnings",
-                warning_count=len(self.warnings),
-                warnings=self.warnings,
-            )
-
-        if success:
-            logger.info(
-                "Configuration validation completed successfully",
-                warning_count=len(self.warnings),
-            )
+        # Check ROS2 installation
+        if not RCLPY_AVAILABLE:
+            self.errors.append("ROS2 rclpy not available")
         else:
-            logger.error("Configuration validation failed")
+            try:
+                # Basic ROS2 functionality check
+                rclpy.init()
+                rclpy.shutdown()
+            except Exception as e:
+                self.errors.append(f"ROS2 initialization failed: {e}")
 
-        return success
+        # Check required directories
+        required_dirs = [
+            'missions',
+            'Autonomy/code',
+            'config'
+        ]
 
-    def get_summary(self) -> Dict[str, Any]:
-        """
-        Get validation summary.
+        for dir_path in required_dirs:
+            if not os.path.exists(dir_path):
+                self.warnings.append(f"Directory not found: {dir_path}")
 
-        Returns:
-            Dictionary with validation results
-        """
-        return {
-            "success": len(self.errors) == 0,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "error_count": len(self.errors),
-            "warning_count": len(self.warnings),
-        }
+        # Check configuration files
+        config_files = [
+            'config/mission_configs.yaml',
+            'config/development.yaml'
+        ]
+
+        for config_file in config_files:
+            if not os.path.exists(config_file):
+                self.warnings.append(f"Configuration file not found: {config_file}")
+
+        return len(self.errors) == 0
+
+    def validate_mission_config(self, config: Dict[str, Any]) -> bool:
+        """Validate mission configuration."""
+        self.errors = []
+        self.warnings = []
+
+        # Check required fields
+        required_fields = ['mission_type', 'waypoints']
+        for field in required_fields:
+            if field not in config:
+                self.errors.append(f"Missing required field: {field}")
+
+        # Validate mission type
+        valid_mission_types = [
+            'waypoint_navigation',
+            'object_detection',
+            'follow_me',
+            'delivery',
+            'emergency_response'
+        ]
+
+        mission_type = config.get('mission_type')
+        if mission_type and mission_type not in valid_mission_types:
+            self.errors.append(f"Invalid mission type: {mission_type}")
+
+        # Validate waypoints
+        waypoints = config.get('waypoints', [])
+        if isinstance(waypoints, list):
+            for i, waypoint in enumerate(waypoints):
+                if not isinstance(waypoint, dict):
+                    self.errors.append(f"Waypoint {i} must be a dictionary")
+                    continue
+
+                required_wp_fields = ['latitude', 'longitude']
+                for field in required_wp_fields:
+                    if field not in waypoint:
+                        self.errors.append(f"Waypoint {i} missing field: {field}")
+
+                # Validate coordinate ranges
+                lat = waypoint.get('latitude', 0)
+                lon = waypoint.get('longitude', 0)
+
+                if not -90 <= lat <= 90:
+                    self.errors.append(f"Waypoint {i} latitude out of range: {lat}")
+
+                if not -180 <= lon <= 180:
+                    self.errors.append(f"Waypoint {i} longitude out of range: {lon}")
+        else:
+            self.errors.append("Waypoints must be a list")
+
+        # Validate timeout
+        timeout = config.get('timeout', 300)
+        if not isinstance(timeout, (int, float)) or timeout <= 0:
+            self.errors.append("Timeout must be a positive number")
+
+        return len(self.errors) == 0
+
+    def get_errors(self) -> List[str]:
+        """Get validation errors."""
+        return self.errors.copy()
+
+    def get_warnings(self) -> List[str]:
+        """Get validation warnings."""
+        return self.warnings.copy()
+
+    def clear(self):
+        """Clear validation results."""
+        self.errors = []
+        self.warnings = []
 
 
-def validate_startup_configuration(config_path: Optional[str] = None) -> bool:
-    """
-    Validate configuration at application startup.
-
-    This function should be called early in the application lifecycle,
-    before any critical operations begin.
-
-    Args:
-        config_path: Optional path to configuration file
-
-    Returns:
-        True if startup validation passes, False otherwise
-
-    Raises:
-        SystemExit: If critical configuration errors prevent startup
-    """
-    validator = ConfigValidator()
-
-    if not validator.validate_all(config_path):
-        logger.critical(
-            "Startup configuration validation failed - exiting", errors=validator.errors
-        )
-        sys.exit(1)
-
-    return True
+# Global validator instance with thread safety
+_validator = ConfigurationValidator()
+_validator_lock = threading.Lock()
 
 
-if __name__ == "__main__":
-    # Allow running as a standalone script
-    import argparse
+def validate_startup_configuration():
+    """Validate system startup configuration with thread safety."""
+    with _validator_lock:
+        if not _validator.validate_startup_configuration():
+            errors = _validator.get_errors()
+            warnings = _validator.get_warnings()
 
-    parser = argparse.ArgumentParser(description="Validate system configuration")
-    parser.add_argument("--config", help="Path to configuration file")
-    args = parser.parse_args()
+            print("❌ Configuration validation failed:")
+            for error in errors:
+                print(f"  • {error}")
 
-    validator = ConfigValidator()
-    success = validator.validate_all(args.config)
+            if warnings:
+                print("\nWarnings:")
+                for warning in warnings:
+                    print(f"  • {warning}")
 
-    summary = validator.get_summary()
-    print(f"Validation {'PASSED' if success else 'FAILED'}")
-    print(f"Errors: {summary['error_count']}")
-    print(f"Warnings: {summary['warning_count']}")
-
-    if summary["errors"]:
-        print("\nErrors:")
-        for error in summary["errors"]:
-            print(f"  - {error}")
-
-    if summary["warnings"]:
-        print("\nWarnings:")
-        for warning in summary["warnings"]:
-            print(f"  - {warning}")
-
-    sys.exit(0 if success else 1)
+            # Exit with error if there are critical failures
+            if errors:
+                sys.exit(1)
 
 
+def validate_mission_configuration(config: Dict[str, Any]) -> bool:
+    """Validate mission configuration."""
+    return _validator.validate_mission_config(config)
