@@ -357,8 +357,7 @@ def main():
     print(".3f")
     print(".1f")
 
-    print("
-🌐 INTER-PROCESS (Decoupled):")
+    print("\n🌐 INTER-PROCESS (Decoupled):")
     print(f"  IMU Messages: {decoupled_results['imu_messages']}")
     print(f"  Cmd Vel Messages: {decoupled_results['cmd_vel_messages']}")
     print(".1f")
@@ -367,8 +366,7 @@ def main():
     print(".1f")
 
     # Performance comparison
-    print("
-⚡ PERFORMANCE COMPARISON:")
+    print("\n⚡ PERFORMANCE COMPARISON:")
 
     if coupled_results['avg_latency_ms'] > 0 and decoupled_results['avg_latency_ms'] > 0:
         latency_improvement = ((decoupled_results['avg_latency_ms'] - coupled_results['avg_latency_ms']) / decoupled_results['avg_latency_ms']) * 100
@@ -390,15 +388,13 @@ def main():
     memory_savings = decoupled_results['memory_delta_mb'] - coupled_results['memory_delta_mb']
     print(".2f")
 
-    print("
-🎯 SYSTEM IMPACT ASSESSMENT:")
+    print("\n🎯 SYSTEM IMPACT ASSESSMENT:")
     print("  • Real-time sensor processing (IMU, odometry)")
     print("  • Control loop responsiveness (cmd_vel)")
     print("  • Safety system reaction times")
     print("  • Computer vision processing pipeline")
 
-    print("
-📋 RECOMMENDATIONS:")
+    print("\n📋 RECOMMENDATIONS:")
 
     if latency_improvement > 30:
         print("  ✅ Intra-process communication successfully optimized")
@@ -409,8 +405,7 @@ def main():
         print("  ⚠️ Check for publisher/subscriber compatibility")
         print("  ⚠️ Verify intra-process communication setup")
 
-    print("
-✨ Performance test completed!")
+    print("\n✨ Performance test completed!")
 
 
 if __name__ == '__main__':

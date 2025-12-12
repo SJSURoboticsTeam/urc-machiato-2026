@@ -213,7 +213,7 @@ class FaultInjectionFramework(Node):
         self.fault_control_pub.publish(control_msg)
 
         self.logger.warn(f"INJECTED FAULT: {fault.fault_type.value} on {fault.target_component} "
-                        ".1f"
+                        f"(severity: {fault.severity.value:.1f})")
         return fault_id
 
     def inject_scenario(self, scenario_name: str) -> List[str]:
@@ -420,20 +420,21 @@ def run_fault_injection_demo():
             print(f" Scenario {scenario} completed")
 
         # Demonstrate random fault injection
-        print("
- Injecting random faults for chaos testing..."        for i in range(3):
+        print("Injecting random faults for chaos testing...")
+        for i in range(3):
             fault_id = framework.inject_random_fault()
             time.sleep(random.uniform(5, 15))
 
         # Generate final statistics
         stats = framework.get_fault_statistics()
-        print("
- FAULT INJECTION STATISTICS:"        print(f"  Total Injections: {stats['total_injections']}")
+        print("\nFAULT INJECTION STATISTICS:")
+        print(f"  Total Injections: {stats['total_injections']}")
         print(f"  Active Faults: {stats['active_faults']}")
-        print(".1f"        print(f"  Fault Types Tested: {', '.join(stats['fault_types_tested'])}")
+        print(f"  Recovery Rate: {stats.get('recovery_rate', 0):.1f}")
+        print(f"  Fault Types Tested: {', '.join(stats['fault_types_tested'])}")
 
-        print("
- FAULT INJECTION FRAMEWORK DEMONSTRATION COMPLETE"        print("System robustness tested with multiple failure scenarios!")
+        print("\nFAULT INJECTION FRAMEWORK DEMONSTRATION COMPLETE")
+        print("System robustness tested with multiple failure scenarios!")
 
     except KeyboardInterrupt:
         print("\n Demonstration interrupted")
