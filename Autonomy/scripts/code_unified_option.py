@@ -10,33 +10,31 @@ Cons: Less modular, harder parallel development, monolithic
 """
 
 # Single package structure would be:
-# """
+#
 # Autonomy/
-# """
-# |- code/
-|   \- autonomy_system/           # Single ROS2 package
-|       |- package.xml           # Single manifest
-|       |- setup.py             # Single setup
-|       |- autonomy_system/      # Python package
-|       |   |- __init__.py
-|       |   |- state_management.py
-|       |   |- navigation.py
-|       |   |- slam.py
-|       |   |- computer_vision.py
-|       |   |- autonomous_typing.py
-|       |   \- led_status.py
-|       |- launch/
-|       |   |- state_management.launch.py
-|       |   |- navigation.launch.py
-|       |   |- system.launch.py     # Single launch file
-|       |   \- ...
-|       |- config/
-|       |   |- navigation.yaml
-|       |   |- slam.yaml
-|       |   \- system.yaml
-|       \- resource/
-|           \- autonomy_system
-# # """
+# ├── code/
+# │   └── autonomy_system/           # Single ROS2 package
+# │       ├── package.xml           # Single manifest
+# │       ├── setup.py             # Single setup
+# │       ├── autonomy_system/      # Python package
+# │       │   ├── __init__.py
+# │       │   ├── state_management.py
+# │       │   ├── navigation.py
+# │       │   ├── slam.py
+# │       │   ├── computer_vision.py
+# │       │   ├── autonomous_typing.py
+# │       │   └── led_status.py
+# │       ├── launch/
+# │       │   ├── state_management.launch.py
+# │       │   ├── navigation.launch.py
+# │       │   ├── system.launch.py     # Single launch file
+# │       │   └── ...
+# │       ├── config/
+# │       │   ├── navigation.yaml
+# │       │   ├── slam.yaml
+# │       │   └── system.yaml
+# │       └── resource/
+# │           └── autonomy_system
 
 # Example single package.xml:
 SINGLE_PACKAGE_XML = """
