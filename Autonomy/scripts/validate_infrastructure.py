@@ -8,6 +8,7 @@ and ready for development.
 
 import sys
 from pathlib import Path
+from typing import Dict
 
 
 class InfrastructureValidator:
@@ -18,7 +19,7 @@ class InfrastructureValidator:
         self.autonomy_dir = self.project_root / "Autonomy"
         self.ros2_ws = self.autonomy_dir / "ros2_ws"
         self.src_dir = self.ros2_ws / "src"
-        self.results = {}
+        self.results: Dict[str, bool] = {}
 
     def validate_workspace_structure(self) -> bool:
         """Validate ROS2 workspace structure"""
@@ -140,7 +141,8 @@ class InfrastructureValidator:
         """Validate testing framework"""
         print("🔍 Validating testing framework...")
 
-        test_files = [self.autonomy_dir / "tests" / "integration_test.py"]
+        # Legacy integration_test.py removed - use tests/integration/ instead
+        test_files = []
 
         missing_tests = []
         for test_file in test_files:
@@ -225,7 +227,7 @@ class InfrastructureValidator:
             print("\n📋 Next Steps:")
             print("1. Start Docker environment: cd development/docker && ./scripts/docker-dev.sh build")
             print("2. Build ROS2 packages: cd ros2_ws && colcon build")
-            print("3. Run tests: python3 tests/integration_test.py")
+            print("3. Run tests: pytest tests/integration/ -v")
             print("4. Begin development following the 40-day sprint plan")
         else:
             print("❌ INFRASTRUCTURE VALIDATION: FAILED")

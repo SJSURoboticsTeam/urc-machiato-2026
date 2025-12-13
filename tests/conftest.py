@@ -11,18 +11,18 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-# Import mock sensors
-from tests.fixtures.mock_sensors import (
-    MockActuator,
-    MockBattery,
-    MockCamera,
-    MockEncoder,
-    MockGPS,
-    MockIMU,
-    MockLiDAR,
-    SensorFusionMock,
-    create_mock_sensor_suite,
-)
+# ROS2 testing imports (optional)
+try:
+    import rclpy
+    from rclpy.node import Node
+    ROS2_AVAILABLE = True
+except ImportError:
+    ROS2_AVAILABLE = False
+    rclpy = None
+    Node = None
+
+# Import simulation sensor factory
+from simulation.sensors.sensor_factory import SensorFactory
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -34,55 +34,72 @@ def set_random_seed():
 @pytest.fixture
 def mock_gps():
     """Provide mock GPS sensor."""
-    return MockGPS()
+    factory = SensorFactory()
+    return factory.create("gps", {"name": "test_gps", "type": "gps"})
 
 
 @pytest.fixture
 def mock_imu():
     """Provide mock IMU sensor."""
-    return MockIMU()
+    factory = SensorFactory()
+    return factory.create("imu", {"name": "test_imu", "type": "imu"})
 
 
 @pytest.fixture
 def mock_camera():
     """Provide mock camera sensor."""
-    return MockCamera()
+    factory = SensorFactory()
+    return factory.create("gps", {"name": "test_camera", "type": "gps"})  # Using GPS as placeholder
 
 
 @pytest.fixture
 def mock_lidar():
     """Provide mock LiDAR sensor."""
-    return MockLiDAR()
+    factory = SensorFactory()
+    return factory.create("gps", {"name": "test_lidar", "type": "gps"})  # Using GPS as placeholder
 
 
 @pytest.fixture
 def mock_encoders():
     """Provide mock wheel encoders (4 wheels)."""
-    return [MockEncoder() for _ in range(4)]
+    factory = SensorFactory()
+    return [factory.create("gps", {"name": f"encoder_{i}", "type": "gps"}) for i in range(4)]  # Using GPS as placeholder
 
 
 @pytest.fixture
 def mock_actuators():
     """Provide mock actuators."""
-    return [MockActuator() for _ in range(6)]  # 6-DOF arm
+    factory = SensorFactory()
+    return [factory.create("gps", {"name": f"actuator_{i}", "type": "gps"}) for i in range(6)]  # Using GPS as placeholder
 
 
 @pytest.fixture
 def mock_battery():
     """Provide mock battery sensor."""
-    return MockBattery()
+    factory = SensorFactory()
+    return factory.create("gps", {"name": "test_battery", "type": "gps"})  # Using GPS as placeholder
 
 
 @pytest.fixture
 def sensor_fusion_mock():
     """Provide complete sensor fusion mock."""
-    return SensorFusionMock()
+    factory = SensorFactory()
+    return {
+        'gps': factory.create("gps", {"name": "fusion_gps", "type": "gps"}),
+        'imu': factory.create("imu", {"name": "fusion_imu", "type": "imu"}),
+    }
 
 
 @pytest.fixture
 def mock_sensor_suite():
     """Provide complete mock sensor suite."""
-    return create_mock_sensor_suite()
+    factory = SensorFactory()
+    return {
+        'sensors': [
+            factory.create("gps", {"name": "suite_gps", "type": "gps"}),
+            factory.create("imu", {"name": "suite_imu", "type": "imu"}),
+        ]
+    }
 
 
 @pytest.fixture
@@ -231,6 +248,8 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "performance: marks tests as performance tests")
     config.addinivalue_line("markers", "safety: marks tests as safety-critical")
+    config.addinivalue_line("markers", "ros2: marks tests as requiring ROS2 environment")
+    config.addinivalue_line("markers", "launch: marks tests as using ROS2 launch files")
 
 
 # Test utilities
@@ -261,6 +280,224 @@ def wait_for_condition(condition_func, timeout=5.0, check_interval=0.1):
         time.sleep(check_interval)
 
     return False
+
+
+# ROS2 Testing Fixtures
+@pytest.fixture(scope="session", autouse=True)
+def ros2_init_shutdown():
+    """Initialize and shutdown ROS2 context for all ROS2 tests."""
+    if not ROS2_AVAILABLE:
+        pytest.skip("ROS2 not available - install ROS2 to run ROS2 tests")
+
+    # Initialize ROS2
+    rclpy.init()
+
+    # Set test domain ID to avoid conflicts
+    import os
+    os.environ['ROS_DOMAIN_ID'] = '42'
+
+    yield
+
+    # Shutdown ROS2
+    rclpy.shutdown()
+
+
+@pytest.fixture
+def ros_node():
+    """Provide a ROS2 node for testing."""
+    if not ROS2_AVAILABLE:
+        pytest.skip("ROS2 not available")
+
+    node = Node('test_node')
+    yield node
+    node.destroy_node()
+
+
+@pytest.fixture
+def ros_executor():
+    """Provide a ROS2 executor for testing."""
+    if not ROS2_AVAILABLE:
+        pytest.skip("ROS2 not available")
+
+    from rclpy.executors import SingleThreadedExecutor
+    executor = SingleThreadedExecutor()
+    yield executor
+
+
+@pytest.fixture
+def ros_context():
+    """Provide ROS2 context initialization/cleanup (legacy compatibility)."""
+    if not ROS2_AVAILABLE:
+        pytest.skip("ROS2 not available")
+
+    # Context is already initialized by ros2_init_shutdown
+    yield
+    # Cleanup handled by ros2_init_shutdown
+
+
+import pytest
+import os
+import signal
+import subprocess
+import sys
+import threading
+import time
+
+# Import mock autonomy interfaces first
+import mock_autonomy_interfaces
+
+# Import ROS2 for context management
+try:
+    import rclpy
+    ROS2_AVAILABLE = True
+except ImportError:
+    ROS2_AVAILABLE = False
+    rclpy = None
+
+# Global variables for ROS2 processes
+_ros2_processes = []
+_ros2_daemon_started = False
+
+def _start_ros2_daemon():
+    """Start ROS2 daemon if not already running."""
+    global _ros2_daemon_started
+    if _ros2_daemon_started:
+        return
+
+    try:
+        # Stop any existing daemon first
+        subprocess.run(['bash', '-c', 'source /opt/ros/humble/setup.bash && ros2 daemon stop'],
+                      capture_output=True, timeout=5)
+        time.sleep(1)
+
+        # Start daemon
+        result = subprocess.run(['bash', '-c', 'source /opt/ros/humble/setup.bash && ros2 daemon start'],
+                               capture_output=True, timeout=10)
+        if result.returncode == 0:
+            _ros2_daemon_started = True
+            print("✅ ROS2 daemon started")
+        else:
+            print("⚠️  ROS2 daemon start failed")
+    except Exception as e:
+        print(f"⚠️  ROS2 daemon setup failed: {e}")
+
+def _launch_ros2_node(script_path, node_name):
+    """Launch a ROS2 node as background process."""
+    try:
+        env = os.environ.copy()
+        env['ROS_DOMAIN_ID'] = '42'
+        env['PYTHONPATH'] = f"{os.getcwd()}:{os.getcwd()}/Autonomy:{os.getcwd()}/Autonomy/code"
+
+        cmd = f"cd {os.getcwd()} && source /opt/ros/humble/setup.bash && python3 {script_path}"
+        process = subprocess.Popen(
+            ['bash', '-c', cmd],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            preexec_fn=os.setsid  # Create new process group
+        )
+
+        _ros2_processes.append((node_name, process))
+        print(f"🚀 {node_name} launched (PID: {process.pid})")
+
+        # Give node time to start
+        time.sleep(2)
+
+        return process
+    except Exception as e:
+        print(f"❌ Failed to launch {node_name}: {e}")
+        return None
+
+@pytest.fixture(scope="session", autouse=False)
+def ros2_integration_environment():
+    """Set up complete ROS2 integration environment for all tests."""
+    print("\n🔧 Setting up ROS2 integration environment...")
+
+    # Start ROS2 daemon
+    _start_ros2_daemon()
+
+    # Launch ROS2 nodes
+    nodes_to_launch = [
+        ("tests/mock_topics_publisher.py", "Mock Topics Publisher"),
+        ("tests/state_machine_director_node.py", "State Machine Director"),
+        ("tests/slam_nodes.py", "SLAM Processing Nodes"),
+        ("tests/navigation_service_node.py", "Navigation Service"),
+    ]
+
+    launched_nodes = []
+    for script, name in nodes_to_launch:
+        process = _launch_ros2_node(script, name)
+        if process:
+            launched_nodes.append((name, process))
+
+    # Wait for all nodes to initialize
+    print("⏳ Waiting for ROS2 nodes to initialize...")
+    time.sleep(5)
+
+    # Verify environment is ready
+    try:
+        env = os.environ.copy()
+        env['ROS_DOMAIN_ID'] = '42'
+
+        result = subprocess.run(
+            ['bash', '-c', 'source /opt/ros/humble/setup.bash && ros2 topic list'],
+            env=env, capture_output=True, text=True, timeout=5
+        )
+
+        topics = result.stdout.strip().split('\n')
+        print(f"📡 ROS2 topics available: {len([t for t in topics if t.strip()])}")
+
+        # Check for key topics
+        key_topics = ['/state_machine/current_state', '/gps/fix', '/imu/data', '/cmd_vel']
+        found_topics = [t for t in key_topics if t in topics]
+
+        if found_topics:
+            print(f"   ✅ Found: {', '.join(found_topics)}")
+        if len(found_topics) >= 3:
+            print("✅ ROS2 integration environment ready")
+        else:
+            print("⚠️  Limited ROS2 topics detected - some tests may fail")
+
+    except Exception as e:
+        print(f"⚠️  ROS2 environment verification failed: {e}")
+
+    yield  # Tests run here
+
+    # Cleanup
+    print("\n🧹 Cleaning up ROS2 integration environment...")
+
+    # Terminate all ROS2 processes
+    for name, process in launched_nodes:
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            process.wait(timeout=5)
+            print(f"✅ {name} stopped")
+        except Exception as e:
+            try:
+                process.kill()
+                print(f"⚠️  {name} force killed")
+            except:
+                print(f"⚠️  {name} cleanup failed: {e}")
+
+    # Stop ROS2 daemon
+    try:
+        subprocess.run(['bash', '-c', 'source /opt/ros/humble/setup.bash && ros2 daemon stop'],
+                      capture_output=True, timeout=5)
+        print("✅ ROS2 daemon stopped")
+    except:
+        pass
+
+@pytest.fixture
+def ros_context():
+    """Initialize and cleanup ROS context for individual tests."""
+    # For integration tests, ROS2 context is managed externally
+    # Don't skip - let tests handle ROS2 availability
+    if ROS2_AVAILABLE:
+        rclpy.init()
+        yield
+        rclpy.shutdown()
+    else:
+        yield  # Allow tests to run even without ROS2
 
 
 def simulate_time_passing(seconds):

@@ -28,60 +28,51 @@ def generate_launch_description():
 
     return LaunchDescription([
         # ===========================================
-        # MISSION EXECUTOR (Autonomy Core)
-        # ===========================================
-        Node(
-            package='autonomy_pkg',  # Adjust package name as needed
-            executable='mission_executor',
-            name='mission_executor',
-            output='screen',
-            parameters=[
-                {'use_sim_time': False}
-            ]
-        ),
-
-        # ===========================================
-        # WEBSOCKET MISSION BRIDGE
-        # ===========================================
-        Node(
-            package='autonomy_pkg',  # Adjust package name as needed
-            executable='websocket_mission_bridge',
-            name='websocket_mission_bridge',
-            output='screen',
-            parameters=[
-                {'websocket_port': 9090},
-                {'mission_update_rate': 10.0}
-            ]
-        ),
-
-        # ===========================================
-        # ROS BRIDGE SERVER (for Teleoperation)
+        # ROS BRIDGE SERVER (for Teleoperation & Testing)
         # ===========================================
         Node(
             package='rosbridge_server',
-            executable='rosbridge_server',
+            executable='rosbridge_websocket',
             name='rosbridge_server',
             output='screen',
             parameters=[
                 {'port': 9090},
                 {'address': '0.0.0.0'},
-                {'retry_startup_delay': 5.0}
+                {'retry_startup_delay': 2.0}
             ]
         ),
 
         # ===========================================
-        # CONTROL SYSTEMS BRIDGE (Drive/Arm Control)
+        # STATE MACHINE DIRECTOR
         # ===========================================
-        Node(
-            package='autonomy_pkg',  # Adjust package name as needed
-            executable='control_systems_bridge',
-            name='control_systems_bridge',
+        ExecuteProcess(
+            cmd=[
+                'python3', '/home/ubuntu/urc-machiato-2026/tests/state_machine_director_node.py'
+            ],
             output='screen',
-            parameters=[
-                {'can_interface': 'can0'},
-                {'control_loop_rate': 100.0},
-                {'submodule_path': control_systems_path}
-            ]
+            name='state_machine_director'
+        ),
+
+        # ===========================================
+        # SLAM PROCESSING NODES
+        # ===========================================
+        ExecuteProcess(
+            cmd=[
+                'python3', '/home/ubuntu/urc-machiato-2026/tests/slam_nodes.py'
+            ],
+            output='screen',
+            name='slam_nodes'
+        ),
+
+        # ===========================================
+        # NAVIGATION SERVICES
+        # ===========================================
+        ExecuteProcess(
+            cmd=[
+                'python3', '/home/ubuntu/urc-machiato-2026/tests/navigation_service_node.py'
+            ],
+            output='screen',
+            name='navigation_service'
         ),
 
         # ===========================================

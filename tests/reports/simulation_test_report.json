@@ -1,0 +1,454 @@
+{
+  "generated_at": "2025-12-12 23:54:09",
+  "summary": {
+    "total_tests": 15,
+    "passed": 14,
+    "failed": 1
+  },
+  "by_environment_tier": {
+    "perfect": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "real_life": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "extreme": {
+      "total": 5,
+      "passed": 4,
+      "failed": 1
+    }
+  },
+  "by_network_profile": {
+    "perfect": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "rural_wifi": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "extreme": {
+      "total": 5,
+      "passed": 4,
+      "failed": 1
+    }
+  },
+  "test_results": [
+    {
+      "test_name": "command_response_latency",
+      "status": "PASSED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 5855.129241943359,
+      "metrics": {
+        "average_latency_ms": 13.155274391174316,
+        "max_latency_ms": 28.584957122802734,
+        "p95_latency_ms": 23.21501970291137
+      },
+      "warnings": [
+        "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+        "Perfect environment - real-world performance may differ"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "command_response_latency",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 5882.967948913574,
+      "metrics": {
+        "average_latency_ms": 14.076547622680664,
+        "max_latency_ms": 28.78856658935547,
+        "p95_latency_ms": 22.53400087356567
+      },
+      "warnings": [
+        "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "command_response_latency",
+      "status": "PASSED",
+      "environment_tier": "extreme",
+      "network_profile": "extreme",
+      "duration_ms": 5687.267303466797,
+      "metrics": {
+        "average_latency_ms": 13.147743736825339,
+        "max_latency_ms": 26.569604873657227,
+        "p95_latency_ms": 22.091150283813477
+      },
+      "warnings": [
+        "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+        "Extreme conditions - if passing, system is highly robust"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "command_response_latency",
+      "status": "PASSED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 5855.129241943359,
+      "metrics": {
+        "average_latency_ms": 13.155274391174316,
+        "max_latency_ms": 28.584957122802734,
+        "p95_latency_ms": 23.21501970291137
+      },
+      "warnings": [
+        "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+        "Perfect environment - real-world performance may differ"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "command_response_latency",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 5882.967948913574,
+      "metrics": {
+        "average_latency_ms": 14.076547622680664,
+        "max_latency_ms": 28.78856658935547,
+        "p95_latency_ms": 22.53400087356567
+      },
+      "warnings": [
+        "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "command_response_latency",
+      "status": "PASSED",
+      "environment_tier": "extreme",
+      "network_profile": "extreme",
+      "duration_ms": 5687.267303466797,
+      "metrics": {
+        "average_latency_ms": 13.147743736825339,
+        "max_latency_ms": 26.569604873657227,
+        "p95_latency_ms": 22.091150283813477
+      },
+      "warnings": [
+        "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+        "Extreme conditions - if passing, system is highly robust"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "sensor_data_publishing_rate",
+      "status": "PASSED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 12373.600244522095,
+      "metrics": {
+        "messages_sent": 100,
+        "messages_received": 150,
+        "success_rate": 1.5,
+        "actual_rate_hz": 15.0,
+        "network_stats": {
+          "profile": "perfect",
+          "messages_sent": 150,
+          "messages_received": 150,
+          "messages_dropped": 0,
+          "packet_loss_percent": 0.0,
+          "average_latency_ms": 0.0,
+          "is_connected": true,
+          "condition": {
+            "latency_ms": 0.0,
+            "jitter_ms": 0.0,
+            "packet_loss_percent": 0.0,
+            "bandwidth_mbps": 1000.0
+          }
+        }
+      },
+      "warnings": [
+        "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+        "Perfect environment - real-world performance may differ"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "sensor_data_publishing_rate",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 12321.418523788452,
+      "metrics": {
+        "messages_sent": 93,
+        "messages_received": 143,
+        "success_rate": 1.43,
+        "actual_rate_hz": 14.3,
+        "network_stats": {
+          "profile": "rural_wifi",
+          "messages_sent": 145,
+          "messages_received": 143,
+          "messages_dropped": 2,
+          "packet_loss_percent": 1.3793103448275863,
+          "average_latency_ms": 84.09996412322857,
+          "is_connected": true,
+          "condition": {
+            "latency_ms": 85.0,
+            "jitter_ms": 25.0,
+            "packet_loss_percent": 2.0,
+            "bandwidth_mbps": 25.0
+          }
+        }
+      },
+      "warnings": [
+        "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "sensor_data_publishing_rate",
+      "status": "PASSED",
+      "environment_tier": "extreme",
+      "network_profile": "extreme",
+      "duration_ms": 12278.75304222107,
+      "metrics": {
+        "messages_sent": 54,
+        "messages_received": 95,
+        "success_rate": 0.95,
+        "actual_rate_hz": 9.5,
+        "network_stats": {
+          "profile": "extreme",
+          "messages_sent": 117,
+          "messages_received": 95,
+          "messages_dropped": 22,
+          "packet_loss_percent": 18.803418803418804,
+          "average_latency_ms": 1226.1094670319212,
+          "is_connected": true,
+          "condition": {
+            "latency_ms": 1500.0,
+            "jitter_ms": 500.0,
+            "packet_loss_percent": 15.0,
+            "bandwidth_mbps": 1.0
+          }
+        }
+      },
+      "warnings": [
+        "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+        "Extreme conditions - if passing, system is highly robust"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "waypoint_navigation_accuracy",
+      "status": "PASSED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 4180.222034454346,
+      "metrics": {
+        "average_waypoint_error_m": 0.3250024626703779,
+        "max_waypoint_error_m": 0.4920130481240368,
+        "waypoint_errors": [
+          0.0,
+          0.4000000000000181,
+          0.4079968025574567,
+          0.4920130481240368
+        ]
+      },
+      "warnings": [
+        "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+        "Perfect environment - real-world performance may differ"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "waypoint_navigation_accuracy",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 4121.845006942749,
+      "metrics": {
+        "average_waypoint_error_m": 1.4450344422302357,
+        "max_waypoint_error_m": 2.125004901959618,
+        "waypoint_errors": [
+          0.0,
+          2.0100000000000025,
+          2.125004901959618,
+          1.645132866961322
+        ]
+      },
+      "warnings": [
+        "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "waypoint_navigation_accuracy",
+      "status": "FAILED",
+      "environment_tier": "extreme",
+      "network_profile": "extreme",
+      "duration_ms": 4174.4818687438965,
+      "metrics": {
+        "average_waypoint_error_m": 5.708536281443973,
+        "max_waypoint_error_m": 9.715764741962106,
+        "waypoint_errors": [
+          0.0,
+          7.119999999999997,
+          9.715764741962106,
+          5.998380383813787
+        ]
+      },
+      "warnings": [],
+      "errors": [
+        "Average error 5.71m exceeds expected 3.00m for extreme"
+      ],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "emergency_stop_response_time",
+      "status": "PASSED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 10303.674697875977,
+      "metrics": {
+        "average_estop_response_ms": 12.809860706329346,
+        "max_estop_response_ms": 27.20022201538086
+      },
+      "warnings": [
+        "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+        "Perfect environment - real-world performance may differ"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "emergency_stop_response_time",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 10355.28039932251,
+      "metrics": {
+        "average_estop_response_ms": 13.439452648162842,
+        "max_estop_response_ms": 19.96898651123047
+      },
+      "warnings": [
+        "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    },
+    {
+      "test_name": "emergency_stop_response_time",
+      "status": "PASSED",
+      "environment_tier": "extreme",
+      "network_profile": "extreme",
+      "duration_ms": 10292.518377304077,
+      "metrics": {
+        "average_estop_response_ms": 13.843205240037706,
+        "max_estop_response_ms": 25.44713020324707
+      },
+      "warnings": [
+        "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+        "Extreme conditions - if passing, system is highly robust"
+      ],
+      "errors": [],
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    }
+  ],
+  "warnings": [
+    "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+    "Perfect environment - real-world performance may differ",
+    "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required",
+    "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+    "Extreme conditions - if passing, system is highly robust",
+    "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+    "Perfect environment - real-world performance may differ",
+    "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required",
+    "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+    "Extreme conditions - if passing, system is highly robust",
+    "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+    "Perfect environment - real-world performance may differ",
+    "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required",
+    "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+    "Extreme conditions - if passing, system is highly robust",
+    "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+    "Perfect environment - real-world performance may differ",
+    "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required",
+    "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+    "Perfect environment - real-world performance may differ",
+    "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required",
+    "\u26a0\ufe0f EXTREME SIMULATION PASS (network: extreme) - Hardware validation required",
+    "Extreme conditions - if passing, system is highly robust",
+    "\ud83d\udea8 ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment"
+  ]
+}

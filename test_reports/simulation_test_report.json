@@ -1,0 +1,103 @@
+{
+  "generated_at": "2025-12-12T23:54:09.578778",
+  "report_type": "SIMULATION_TEST_REPORT",
+  "simulation_warning": "\ud83d\udea8 ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment",
+  "summary": {
+    "total_tests": 3,
+    "passed": 2,
+    "failed": 1,
+    "skipped": 0,
+    "pass_rate": 66.66666666666666
+  },
+  "by_environment_tier": {
+    "perfect": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "real_life": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "extreme": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    }
+  },
+  "by_network_profile": {
+    "perfect": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "rural_wifi": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "extreme": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    }
+  },
+  "validation_status": {
+    "total_tests": 3,
+    "hardware_validated": 0,
+    "simulation_only": 3,
+    "hardware_coverage_percent": 0.0,
+    "ready_for_production": false,
+    "status": "SIMULATION_ONLY"
+  },
+  "test_results": [
+    {
+      "test_name": "test_gps_perfect",
+      "status": "PASSED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 125.3,
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      },
+      "warnings": [
+        "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required"
+      ]
+    },
+    {
+      "test_name": "test_gps_real_life",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 234.7,
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      },
+      "warnings": [
+        "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required"
+      ]
+    },
+    {
+      "test_name": "test_gps_extreme",
+      "status": "FAILED",
+      "environment_tier": "extreme",
+      "network_profile": "extreme",
+      "duration_ms": 1532.1,
+      "simulation_metadata": {
+        "is_simulation": true,
+        "hardware_validated": false,
+        "simulation_confidence": "MEDIUM"
+      }
+    }
+  ],
+  "warnings": [
+    "\u26a0\ufe0f PERFECT SIMULATION PASS (network: perfect) - Hardware validation required",
+    "\u26a0\ufe0f REAL_LIFE SIMULATION PASS (network: rural_wifi) - Hardware validation required",
+    "\ud83d\udea8 ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment"
+  ]
+}

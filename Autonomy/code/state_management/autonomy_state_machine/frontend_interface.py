@@ -286,13 +286,13 @@ class FrontendInterface:
 
 
 # Example usage for frontend developers:
-"""
-Example frontend integration:
-
-```python
-import rclpy
-from rclpy.node import Node
+# Example frontend integration:
+#
+# # ```python
+# import rclpy
 from autonomy_state_machine.frontend_interface import FrontendInterface
+from rclpy.node import Node
+
 
 class FrontendNode(Node):
     def __init__(self):
@@ -335,5 +335,5 @@ def main():
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
-```
-"""
+# ```
+# """

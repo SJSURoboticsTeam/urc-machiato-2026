@@ -1,0 +1,395 @@
+{
+  "generated_at": "2025-12-13 05:05:45",
+  "test_suite": "COMPREHENSIVE_INTEGRATION",
+  "summary": {
+    "total_tests": 21,
+    "passed": 3,
+    "failed": 18
+  },
+  "by_category": {
+    "LONG_DURATION": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1
+    },
+    "ARM_CONTROL": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "CAN_BUS": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2
+    },
+    "PERFORMANCE": {
+      "total": 4,
+      "passed": 0,
+      "failed": 4
+    },
+    "FAILURE_MODE": {
+      "total": 5,
+      "passed": 1,
+      "failed": 4
+    },
+    "MULTI_ROBOT": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    "MESSAGE_ROUTING": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    "INTEGRATION": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2
+    },
+    "MISSION": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    "STATE_MACHINE": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    "VISION": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    }
+  },
+  "test_results": [
+    {
+      "test_name": "30_minute_endurance_simulation",
+      "category": "LONG_DURATION",
+      "status": "PASSED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 6093.314409255981,
+      "metrics": {
+        "duration_seconds": 1800,
+        "avg_cpu_percent": 54.833333333333336,
+        "peak_cpu_percent": 64.66666666666666,
+        "avg_memory_mb": 174.58333333333334,
+        "peak_memory_mb": 199.16666666666666,
+        "total_messages": 177
+      },
+      "warnings": [
+        "\u26a0\ufe0f ENDURANCE SIMULATION - Hardware long-duration testing required"
+      ],
+      "errors": []
+    },
+    {
+      "test_name": "arm_control_sequence_simulation",
+      "category": "ARM_CONTROL",
+      "status": "PASSED",
+      "environment_tier": "real_life",
+      "network_profile": "N/A",
+      "duration_ms": 160.37535667419434,
+      "metrics": {
+        "sequence_steps": 3,
+        "total_joints_controlled": 18,
+        "avg_force_measurement": 33.728023551916266,
+        "safety_stops": 0
+      },
+      "warnings": [
+        "\u26a0\ufe0f ARM CONTROL SIMULATION - Hardware arm testing required"
+      ],
+      "errors": []
+    },
+    {
+      "test_name": "can_bus_mock_basic",
+      "category": "CAN_BUS",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 11.669397354125977,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'ComprehensiveIntegrationSuite' object has no attribute 'can_simulator'"
+      ]
+    },
+    {
+      "test_name": "can_bus_stress",
+      "category": "CAN_BUS",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 0.014066696166992188,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'ComprehensiveIntegrationSuite' object has no attribute 'can_simulator'"
+      ]
+    },
+    {
+      "test_name": "e2e_latency_perfect",
+      "category": "PERFORMANCE",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "perfect",
+      "duration_ms": 0.11014938354492188,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.PERFECT: 'perfect'>"
+      ]
+    },
+    {
+      "test_name": "e2e_latency_rural_wifi",
+      "category": "PERFORMANCE",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "rural_wifi",
+      "duration_ms": 0.021219253540039062,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.RURAL_WIFI: 'rural_wifi'>"
+      ]
+    },
+    {
+      "test_name": "e2e_latency_extreme",
+      "category": "PERFORMANCE",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "extreme",
+      "duration_ms": 0.011205673217773438,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.EXTREME: 'extreme'>"
+      ]
+    },
+    {
+      "test_name": "memory_exhaustion_handling",
+      "category": "FAILURE_MODE",
+      "status": "PASSED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 1248.9778995513916,
+      "metrics": {
+        "peak_memory_kb": 1992.1875,
+        "gc_events": 1,
+        "memory_samples": 100
+      },
+      "warnings": [
+        "\u26a0\ufe0f MEMORY EXHAUSTION SIMULATION - Hardware memory monitoring required"
+      ],
+      "errors": []
+    },
+    {
+      "test_name": "message_throughput",
+      "category": "PERFORMANCE",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 0.006198883056640625,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'ComprehensiveIntegrationSuite' object has no attribute 'message_router'"
+      ]
+    },
+    {
+      "test_name": "multi_robot_coordination_simulation",
+      "category": "MULTI_ROBOT",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 0.690460205078125,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'URCRover' object has no attribute 'get_position'"
+      ]
+    },
+    {
+      "test_name": "network_complete_loss_handling",
+      "category": "FAILURE_MODE",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "extreme",
+      "duration_ms": 0.00667572021484375,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.EXTREME: 'extreme'>"
+      ]
+    },
+    {
+      "test_name": "performance_degradation_monitoring",
+      "category": "LONG_DURATION",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 5080.73353767395,
+      "metrics": {
+        "baseline_avg_ms": 14.68129028360287,
+        "final_avg_ms": 20.7490320447294,
+        "degradation_percent": 41.32975810650257
+      },
+      "warnings": [],
+      "errors": [
+        "0 not greater than 0 : Should detect performance degradation"
+      ]
+    },
+    {
+      "test_name": "power_brownout_recovery",
+      "category": "FAILURE_MODE",
+      "status": "FAILED",
+      "environment_tier": "extreme",
+      "network_profile": "N/A",
+      "duration_ms": 0.1513957977294922,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'URCRover' object has no attribute 'set_power_voltage'"
+      ]
+    },
+    {
+      "test_name": "priority_routing",
+      "category": "MESSAGE_ROUTING",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 0.001430511474609375,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'ComprehensiveIntegrationSuite' object has no attribute 'message_router'"
+      ]
+    },
+    {
+      "test_name": "ros_can_websocket_perfect",
+      "category": "INTEGRATION",
+      "status": "FAILED",
+      "environment_tier": "perfect",
+      "network_profile": "perfect",
+      "duration_ms": 0.010967254638671875,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.PERFECT: 'perfect'>"
+      ]
+    },
+    {
+      "test_name": "ros_can_websocket_real_life",
+      "category": "INTEGRATION",
+      "status": "FAILED",
+      "environment_tier": "real_life",
+      "network_profile": "rural_wifi",
+      "duration_ms": 0.0021457672119140625,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.RURAL_WIFI: 'rural_wifi'>"
+      ]
+    },
+    {
+      "test_name": "sensor_complete_failure_recovery",
+      "category": "FAILURE_MODE",
+      "status": "FAILED",
+      "environment_tier": "extreme",
+      "network_profile": "N/A",
+      "duration_ms": 0.015974044799804688,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "SensorFactory.create() missing 1 required positional argument: 'config'"
+      ]
+    },
+    {
+      "test_name": "simulated_mission",
+      "category": "MISSION",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "N/A",
+      "duration_ms": 100.17561912536621,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'ComprehensiveIntegrationSuite' object has no attribute 'can_simulator'"
+      ]
+    },
+    {
+      "test_name": "state_transitions_network_loss",
+      "category": "STATE_MACHINE",
+      "status": "FAILED",
+      "environment_tier": "N/A",
+      "network_profile": "extreme",
+      "duration_ms": 0.010967254638671875,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "<NetworkProfile.EXTREME: 'extreme'>"
+      ]
+    },
+    {
+      "test_name": "thermal_shutdown_simulation",
+      "category": "FAILURE_MODE",
+      "status": "FAILED",
+      "environment_tier": "extreme",
+      "network_profile": "N/A",
+      "duration_ms": 0.09131431579589844,
+      "metrics": {},
+      "warnings": [],
+      "errors": [
+        "'URCRover' object has no attribute 'set_temperature'"
+      ]
+    },
+    {
+      "test_name": "vision_aruco_degradation_simulation",
+      "category": "VISION",
+      "status": "FAILED",
+      "environment_tier": "extreme",
+      "network_profile": "N/A",
+      "duration_ms": 0.10657310485839844,
+      "metrics": {
+        "perfect_detection_rate": 0.95,
+        "real_life_detection_rate": 0.55,
+        "extreme_detection_rate": 0.1
+      },
+      "warnings": [],
+      "errors": [
+        "0.55 not greater than 0.7 : Real-life should have moderate detection rate"
+      ]
+    }
+  ],
+  "critical_warnings": [
+    "\ud83d\udea8 ALL TESTS ARE SIMULATION-BASED",
+    "\ud83d\udea8 CAN bus: Mocked - hardware validation required",
+    "\ud83d\udea8 WebSocket: Simulated - real network testing required",
+    "\ud83d\udea8 ROS topics: Simulated - ROS2 integration testing required",
+    "\ud83d\udea8 Mission execution: Simulated - field testing required"
+  ],
+  "coverage_gaps": {
+    "missing_tests": [
+      "Vision system integration",
+      "Arm control sequences",
+      "Science operations",
+      "Long-duration (>30min) testing",
+      "Multi-robot coordination"
+    ],
+    "missing_hardware_validation": [
+      "Real CAN bus timing",
+      "Actual network latency",
+      "Physical sensor noise",
+      "Motor response characteristics",
+      "Power consumption"
+    ],
+    "missing_failure_modes": [
+      "Sensor complete failure",
+      "Network complete loss >5min",
+      "Power brownouts",
+      "Thermal shutdown",
+      "Memory exhaustion"
+    ]
+  }
+}

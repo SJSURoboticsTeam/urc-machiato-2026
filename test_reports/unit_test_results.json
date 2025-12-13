@@ -1,0 +1,11 @@
+{
+  "test_type": "unit_tests",
+  "timestamp": "2025-12-13T06:32:00.469692",
+  "duration_seconds": 0.8853139877319336,
+  "total_modules": 3,
+  "total_tests": 35,
+  "passed_tests": 35,
+  "failed_tests": 0,
+  "pass_rate": 100.0,
+  "results": []
+}
