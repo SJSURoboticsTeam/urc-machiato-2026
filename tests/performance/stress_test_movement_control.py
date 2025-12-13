@@ -218,7 +218,6 @@ class MovementStressPublisher(Node):
 
         self.config = stress_config
         self.controller = MovementStressController(stress_config)
-        self.command_count = 0
 
         # QoS for real-time movement commands
         qos_realtime = QoSProfile(
@@ -270,8 +269,6 @@ class MovementStressPublisher(Node):
             emergency_msg = Bool()
             emergency_msg.data = True
             self.emergency_stop_pub.publish(emergency_msg)
-
-        self.command_count += 1
 
     def publish_status(self):
         """Publish movement control status."""

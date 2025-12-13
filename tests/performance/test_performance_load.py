@@ -291,8 +291,6 @@ class PerformanceLoadTest(unittest.TestCase):
         start_time = time.time()
 
         for burst in range(num_messages // burst_size):
-            burst_start = time.time()
-
             # Send burst of messages
             for i in range(burst_size):
                 msg = {
@@ -316,12 +314,10 @@ class PerformanceLoadTest(unittest.TestCase):
                 self.message_router.dequeue_message()
 
         # Process remaining messages
-        remaining = 0
         while True:
             msg = self.message_router.dequeue_message()
             if msg is None:
                 break
-            remaining += 1
 
         end_time = time.time()
         total_time = end_time - start_time

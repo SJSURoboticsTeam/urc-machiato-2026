@@ -42,7 +42,6 @@ class FollowMeTester(Node):
         self.frontend.set_state_callback(self._on_state_update)
 
         # Test state
-        self.test_completed = False
         self.test_results = []
 
         self.get_logger().info("Follow Me Tester initialized")
