@@ -37,7 +37,6 @@ class MissionArUcoTester(Node):
         self.detector = MissionArUcoDetector(self)
 
         # Test state
-        self.test_completed = False
         self.test_results = []
 
         self.get_logger().info("Mission ArUco Tester initialized")

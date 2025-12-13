@@ -24,7 +24,6 @@ class TypingArUcoTester(Node):
         self.detector = TypingArUcoDetector(self)
 
         # Test state
-        self.test_completed = False
         self.test_results = []
 
         self.get_logger().info("Typing ArUco Tester initialized")

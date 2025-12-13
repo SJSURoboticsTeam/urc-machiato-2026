@@ -400,6 +400,6 @@ if __name__ == '__main__':
     can_results = run_comprehensive_can_stress_test()
 
     print("\n🔄 Testing CAN Bus Failure Recovery...")
-    recovery_results = simulate_can_bus_failure_recovery()
+    simulate_can_bus_failure_recovery()
 
     print("\n✨ CAN bus stress testing completed!")

@@ -98,7 +98,6 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
             while time.time() - start_time < 2.0 and messages_sent < 500:
                 test_msg = self._create_large_message(msg_size)
-                publish_time = time.time()
 
                 self.publisher_node.publish_intra_test_message(test_msg)
                 messages_sent += 1
@@ -160,7 +159,6 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
             while time.time() - start_time < 3.0 and messages_sent < 300:  # Fewer messages for inter-process
                 test_msg = self._create_large_message(msg_size)
-                publish_time = time.time()
 
                 self.publisher_node.publish_inter_test_message(test_msg)
                 messages_sent += 1

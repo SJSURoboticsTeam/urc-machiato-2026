@@ -134,8 +134,6 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
         # Mock ROS2 components for testing without full ROS2 environment
         self.mock_node = MagicMock()
-        self.mock_publisher = MagicMock()
-        self.mock_subscriber = MagicMock()
 
     def tearDown(self):
         """Clean up test resources."""

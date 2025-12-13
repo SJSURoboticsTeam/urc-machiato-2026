@@ -403,15 +403,14 @@ class TestVisionDegradation:
         """Test vision system with camera calibration drift."""
         # Simulate calibration parameters
         original_fx, original_fy = 500.0, 500.0
-        original_cx, original_cy = 320.0, 240.0
 
         drift_levels = [0.0, 0.01, 0.02, 0.05, 0.10]  # Percentage drift
         reprojection_errors = []
 
         for drift in drift_levels:
             # Apply drift to focal length
-            drifted_fx = original_fx * (1.0 + drift)
-            drifted_fy = original_fy * (1.0 + drift)
+            # Note: drifted_fx, drifted_fy calculations would be used in complete implementation
+            pass
 
             # Simulate reprojection error
             reprojection_error = drift * 10.0  # Simplified model
