@@ -190,8 +190,6 @@ class TestNavigationPathPlanning:
         # Path should prefer lower cost terrain
         assert len(path) > 2, "Path should consider terrain"
         # Path may detour to avoid steep slope
-        steep_waypoints = [wp for wp in path if abs(wp[0] - 5.0) < 0.5 and abs(wp[1]) < 0.5]
-        # If path goes through steep area, it should be necessary
         # (In real implementation, would check terrain costs)
 
     def test_terrain_difficulty_effects(self, ros_context):
@@ -450,7 +448,6 @@ class TestLoopClosure:
         ]
 
         # Loop closure should correct error
-        start_error = 0.0
         final_error = np.sqrt(0.2 ** 2 + 0.1 ** 2)  # ~0.22m
 
         # After loop closure correction

@@ -28,9 +28,9 @@ try:
     from sensor_msgs.msg import JointState
     from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
     try:
-        from control_msgs.msg import JointTrajectoryControllerState
+        from control_msgs.msg import JointTrajectoryControllerState  # noqa: F401
     except ImportError:
-        JointTrajectoryControllerState = None
+        pass
     ROS2_AVAILABLE = True
 except ImportError:
     ROS2_AVAILABLE = False
