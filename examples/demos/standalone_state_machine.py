@@ -8,6 +8,7 @@ the frontend without requiring the full ROS autonomy stack.
 
 import json
 import time
+from typing import Dict
 
 import rclpy
 from rclpy.node import Node
@@ -71,7 +72,7 @@ class StandaloneStateMachine(Node):
                     # Use a simple round-robin approach for demo purposes
                     # Track which option we used last for each state
                     if not hasattr(self, 'transition_counters'):
-                        self.transition_counters = {}
+                        self.transition_counters: Dict[str, int] = {}
 
                     state_key = self.current_state
                     if state_key not in self.transition_counters:

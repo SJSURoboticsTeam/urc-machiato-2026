@@ -7,6 +7,7 @@ including service clients, state update subscribers, and acknowledgment mechanis
 
 from typing import Callable, Dict, Optional
 
+import rclpy
 import structlog
 from autonomy_interfaces.msg import SystemState as SystemStateMsg
 from autonomy_interfaces.srv import ChangeState, GetSystemState, RecoverFromSafety

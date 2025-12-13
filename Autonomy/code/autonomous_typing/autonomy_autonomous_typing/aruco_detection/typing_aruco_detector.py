@@ -52,7 +52,7 @@ class TypingArUcoDetector:
 
     def detect_typing_tags(
         self,
-        target_depth: float = None,
+        target_depth: Optional[float] = None,
         timeout: float = 5.0,
         max_detection_distance: float = 3.0,
     ) -> Dict[str, Any]:

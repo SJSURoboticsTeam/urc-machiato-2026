@@ -267,7 +267,7 @@ class RLDataRecorder(DataRecorder):
                         reward_function=reward_type,
                         episode_timeout=self.episode_timeout)
 
-    def start_episode(self, metadata: Dict[str, Any] = None) -> int:
+    def start_episode(self, metadata: Optional[Dict[str, Any]] = None) -> int:
         """Start a new RL training episode.
 
         Args:
@@ -302,8 +302,8 @@ class RLDataRecorder(DataRecorder):
                       action: Dict[str, Any],
                       next_state: Dict[str, Any],
                       done: bool,
-                      info: Dict[str, Any] = None,
-                      custom_reward: float = None) -> RLStep:
+                      info: Optional[Dict[str, Any]] = None,
+                      custom_reward: Optional[float] = None) -> RLStep:
         """Record a single RL training step.
 
         Args:
@@ -499,7 +499,7 @@ class RLDataRecorder(DataRecorder):
         Returns:
             Dictionary with RL training metrics
         """
-        stats = self.training_metrics.copy()
+        stats: Dict[str, Any] = self.training_metrics.copy()
 
         if self.episodes:
             # Recent episodes (last 10)

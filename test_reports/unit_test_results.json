@@ -1,7 +1,7 @@
 {
   "test_type": "unit_tests",
-  "timestamp": "2025-12-13T06:32:00.469692",
-  "duration_seconds": 0.8853139877319336,
+  "timestamp": "2025-12-13T08:27:21.798451",
+  "duration_seconds": 1.0650055408477783,
   "total_modules": 3,
   "total_tests": 35,
   "passed_tests": 35,

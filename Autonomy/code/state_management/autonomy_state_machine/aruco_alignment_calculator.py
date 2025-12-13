@@ -6,7 +6,7 @@ for autonomous typing and USB connection missions.
 """
 
 import math
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import structlog
@@ -60,7 +60,7 @@ class ArUcoAlignmentCalculator:
         self,
         detected_tags: List[Dict[str, Any]],
         mission_type: str,
-        target_depth: float = None,
+        target_depth: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Calculate alignment for mission-specific ArUco tag detection.

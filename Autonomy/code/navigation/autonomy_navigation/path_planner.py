@@ -164,7 +164,7 @@ class PathPlanner:
         # - Maintain safety margins
         return path  # Placeholder
 
-    def optimize_path(self, path: List[Tuple[float, float]], criteria: List[str] = None) -> List[Tuple[float, float]]:
+    def optimize_path(self, path: List[Tuple[float, float]], criteria: Optional[List[str]] = None) -> List[Tuple[float, float]]:
         """Optimize path based on multiple criteria"""
         if not criteria:
             criteria = ["distance", "terrain", "safety"]
@@ -188,7 +188,7 @@ class PathPlanner:
 
         return total_length
 
-    def estimate_traversal_time(self, path: List[Tuple[float, float]], speed_profile: dict = None) -> float:
+    def estimate_traversal_time(self, path: List[Tuple[float, float]], speed_profile: Optional[Dict[str, Any]] = None) -> float:
         """Estimate time to traverse path"""
         # TODO: Implement time estimation
         # - Consider terrain types

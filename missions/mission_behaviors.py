@@ -14,7 +14,7 @@ Author: URC 2026 Autonomy Team
 
 import math
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import rclpy
 from autonomy_interfaces.msg import VisionDetection
@@ -186,7 +186,7 @@ class ObjectDetectionMission:
 
     def __init__(self, node: rclpy.node.Node):
         self.node = node
-        self.target_object = None
+        self.target_object: Optional[str] = None
         self.approach_distance = 0.5  # meters
         self.search_timeout = 300.0  # 5 minutes
         self.vision_timeout = 10.0  # seconds without detection before search
@@ -276,6 +276,9 @@ class ObjectDetectionMission:
 
     def _is_target_object(self, detection: VisionDetection) -> bool:
         """Check if detection matches target object"""
+        if self.target_object is None:
+            return False
+
         # Simple label matching - could be enhanced with ML classification
         target_labels = [self.target_object.lower()]
         if self.target_object == "sample":

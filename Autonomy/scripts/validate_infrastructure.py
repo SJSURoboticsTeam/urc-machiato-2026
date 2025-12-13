@@ -8,7 +8,7 @@ and ready for development.
 
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, List
 
 
 class InfrastructureValidator:
@@ -19,7 +19,7 @@ class InfrastructureValidator:
         self.autonomy_dir = self.project_root / "Autonomy"
         self.ros2_ws = self.autonomy_dir / "ros2_ws"
         self.src_dir = self.ros2_ws / "src"
-        self.results: Dict[str, bool] = {}
+        self.results: Dict[str, Any] = {}
 
     def validate_workspace_structure(self) -> bool:
         """Validate ROS2 workspace structure"""
@@ -142,7 +142,7 @@ class InfrastructureValidator:
         print("🔍 Validating testing framework...")
 
         # Legacy integration_test.py removed - use tests/integration/ instead
-        test_files = []
+        test_files: List[Path] = []
 
         missing_tests = []
         for test_file in test_files:

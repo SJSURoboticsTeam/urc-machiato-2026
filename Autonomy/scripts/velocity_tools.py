@@ -312,13 +312,13 @@ class ArchitectureSimplifier:
 
     def _check_interface_consistency(self) -> List[str]:
         """Check interface consistency across subsystems."""
-        issues = []
+        issues: List[str] = []
         # This would analyze topic/service definitions for consistency
         return issues
 
     def _check_unused_imports(self) -> List[str]:
         """Check for unused imports."""
-        issues = []
+        issues: List[str] = []
         # This would run a code analysis tool
         return issues
 
@@ -349,7 +349,7 @@ class RiskMitigator:
 
     def assess_risks(self) -> Dict[str, Any]:
         """Assess current development risks."""
-        risks = {"high": [], "medium": [], "low": []}
+        risks: Dict[str, List[str]] = {"high": [], "medium": [], "low": []}
 
         # Timeline risk
         days_remaining = 40  # Would be calculated dynamically

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-12-13 05:05:45",
+  "generated_at": "2025-12-13 07:50:48",
   "test_suite": "COMPREHENSIVE_INTEGRATION",
   "summary": {
     "total_tests": 21,
@@ -70,7 +70,7 @@
       "status": "PASSED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 6093.314409255981,
+      "duration_ms": 6229.249715805054,
       "metrics": {
         "duration_seconds": 1800,
         "avg_cpu_percent": 54.833333333333336,
@@ -90,11 +90,11 @@
       "status": "PASSED",
       "environment_tier": "real_life",
       "network_profile": "N/A",
-      "duration_ms": 160.37535667419434,
+      "duration_ms": 159.6074104309082,
       "metrics": {
         "sequence_steps": 3,
         "total_joints_controlled": 18,
-        "avg_force_measurement": 33.728023551916266,
+        "avg_force_measurement": 30.570153551740244,
         "safety_stops": 0
       },
       "warnings": [
@@ -108,11 +108,11 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 11.669397354125977,
+      "duration_ms": 0.0016689300537109375,
       "metrics": {},
       "warnings": [],
       "errors": [
-        "'ComprehensiveIntegrationSuite' object has no attribute 'can_simulator'"
+        "'SimulationIntegrationSuite' object has no attribute 'can_simulator'"
       ]
     },
     {
@@ -121,11 +121,11 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 0.014066696166992188,
+      "duration_ms": 0.010013580322265625,
       "metrics": {},
       "warnings": [],
       "errors": [
-        "'ComprehensiveIntegrationSuite' object has no attribute 'can_simulator'"
+        "'SimulationIntegrationSuite' object has no attribute 'can_simulator'"
       ]
     },
     {
@@ -134,7 +134,7 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "perfect",
-      "duration_ms": 0.11014938354492188,
+      "duration_ms": 0.012874603271484375,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -147,7 +147,7 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "rural_wifi",
-      "duration_ms": 0.021219253540039062,
+      "duration_ms": 0.0019073486328125,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -160,7 +160,7 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "extreme",
-      "duration_ms": 0.011205673217773438,
+      "duration_ms": 0.00095367431640625,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -173,7 +173,7 @@
       "status": "PASSED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 1248.9778995513916,
+      "duration_ms": 1399.4653224945068,
       "metrics": {
         "peak_memory_kb": 1992.1875,
         "gc_events": 1,
@@ -190,11 +190,11 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 0.006198883056640625,
+      "duration_ms": 0.0045299530029296875,
       "metrics": {},
       "warnings": [],
       "errors": [
-        "'ComprehensiveIntegrationSuite' object has no attribute 'message_router'"
+        "'SimulationIntegrationSuite' object has no attribute 'message_router'"
       ]
     },
     {
@@ -203,7 +203,7 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 0.690460205078125,
+      "duration_ms": 0.16117095947265625,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -216,7 +216,7 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "extreme",
-      "duration_ms": 0.00667572021484375,
+      "duration_ms": 0.0057220458984375,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -229,11 +229,11 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 5080.73353767395,
+      "duration_ms": 5103.4345626831055,
       "metrics": {
-        "baseline_avg_ms": 14.68129028360287,
-        "final_avg_ms": 20.7490320447294,
-        "degradation_percent": 41.32975810650257
+        "baseline_avg_ms": 15.311768887155585,
+        "final_avg_ms": 20.902085562876085,
+        "degradation_percent": 36.509933743905876
       },
       "warnings": [],
       "errors": [
@@ -246,7 +246,7 @@
       "status": "FAILED",
       "environment_tier": "extreme",
       "network_profile": "N/A",
-      "duration_ms": 0.1513957977294922,
+      "duration_ms": 0.049114227294921875,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -259,11 +259,11 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 0.001430511474609375,
+      "duration_ms": 0.0016689300537109375,
       "metrics": {},
       "warnings": [],
       "errors": [
-        "'ComprehensiveIntegrationSuite' object has no attribute 'message_router'"
+        "'SimulationIntegrationSuite' object has no attribute 'message_router'"
       ]
     },
     {
@@ -272,7 +272,7 @@
       "status": "FAILED",
       "environment_tier": "perfect",
       "network_profile": "perfect",
-      "duration_ms": 0.010967254638671875,
+      "duration_ms": 0.0057220458984375,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -285,7 +285,7 @@
       "status": "FAILED",
       "environment_tier": "real_life",
       "network_profile": "rural_wifi",
-      "duration_ms": 0.0021457672119140625,
+      "duration_ms": 0.0019073486328125,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -298,7 +298,7 @@
       "status": "FAILED",
       "environment_tier": "extreme",
       "network_profile": "N/A",
-      "duration_ms": 0.015974044799804688,
+      "duration_ms": 0.004291534423828125,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -311,11 +311,11 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "N/A",
-      "duration_ms": 100.17561912536621,
+      "duration_ms": 100.13246536254883,
       "metrics": {},
       "warnings": [],
       "errors": [
-        "'ComprehensiveIntegrationSuite' object has no attribute 'can_simulator'"
+        "'SimulationIntegrationSuite' object has no attribute 'can_simulator'"
       ]
     },
     {
@@ -324,7 +324,7 @@
       "status": "FAILED",
       "environment_tier": "N/A",
       "network_profile": "extreme",
-      "duration_ms": 0.010967254638671875,
+      "duration_ms": 0.00762939453125,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -337,7 +337,7 @@
       "status": "FAILED",
       "environment_tier": "extreme",
       "network_profile": "N/A",
-      "duration_ms": 0.09131431579589844,
+      "duration_ms": 0.05793571472167969,
       "metrics": {},
       "warnings": [],
       "errors": [
@@ -350,15 +350,15 @@
       "status": "FAILED",
       "environment_tier": "extreme",
       "network_profile": "N/A",
-      "duration_ms": 0.10657310485839844,
+      "duration_ms": 0.07843971252441406,
       "metrics": {
-        "perfect_detection_rate": 0.95,
-        "real_life_detection_rate": 0.55,
-        "extreme_detection_rate": 0.1
+        "perfect_detection_rate": 1.0,
+        "real_life_detection_rate": 0.45,
+        "extreme_detection_rate": 0.15
       },
       "warnings": [],
       "errors": [
-        "0.55 not greater than 0.7 : Real-life should have moderate detection rate"
+        "0.45 not greater than 0.7 : Real-life should have moderate detection rate"
       ]
     }
   ],

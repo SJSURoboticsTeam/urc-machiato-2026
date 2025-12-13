@@ -147,7 +147,7 @@ class CameraIntrinsicsCalibrator:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.camera_config.resolution[0])
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.camera_config.resolution[1])
 
-        captured_images = []
+        captured_images: List[Any] = []
         skipped = 0
 
         print(f"\n{'='*70}")
@@ -270,7 +270,7 @@ class CameraIntrinsicsCalibrator:
 
         # Extract frames
         print("Extracting frames at regular intervals...")
-        captured_images = []
+        captured_images: List[Any] = []
         frame_step = max(1, len(recorded_frames) // target_images)
 
         for i in range(0, len(recorded_frames), frame_step):
@@ -410,7 +410,7 @@ class CameraIntrinsicsCalibrator:
             selected_indices = selected_indices[::step][:target_images]
 
         # Save selected
-        captured_images = []
+        captured_images: List[Any] = []
         for selected_idx in selected_indices:
             frame = recorded_frames[selected_idx]
             quality_score, _ = frame_quality_scores[selected_idx]

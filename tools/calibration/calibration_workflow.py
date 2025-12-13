@@ -217,7 +217,7 @@ class CalibrationWorkflow:
             )
 
         workflow = self.workflow_definitions[calibration_type]
-        results = {}
+        results: Dict[str, Any] = {}
 
         # Execute each step
         for step in workflow:

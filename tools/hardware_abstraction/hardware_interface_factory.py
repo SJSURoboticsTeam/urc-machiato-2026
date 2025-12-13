@@ -12,7 +12,10 @@ Author: URC 2026 Autonomy Team
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+# Type for cache keys: string representation
+CacheKey = str
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +101,7 @@ class HardwareInterfaceFactory:
     }
 
     # Cache of created instances
-    _instance_cache: Dict[str, Any] = {}
+    _instance_cache: Dict[CacheKey, Any] = {}
 
     @classmethod
     def set_configuration(cls, config: Dict[str, str]) -> bool:
@@ -224,7 +227,8 @@ class HardwareInterfaceFactory:
             Interface instance
         """
         # Check cache first
-        cache_key = (component_name, frozenset(kwargs.items()) if kwargs else None)
+        kwargs_str = str(sorted(kwargs.items())) if kwargs else ""
+        cache_key = f"{component_name}:{kwargs_str}"
         if cache_key in cls._instance_cache:
             return cls._instance_cache[cache_key]
 

@@ -66,8 +66,8 @@ class MissionArUcoDetector:
         self,
         mission_type: str,
         required_tag_ids: List[int],
-        optional_tag_ids: List[int] = None,
-        target_depth: float = None,
+        optional_tag_ids: Optional[List[int]] = None,
+        target_depth: Optional[float] = None,
         timeout: float = 5.0,
     ) -> Dict[str, Any]:
         """

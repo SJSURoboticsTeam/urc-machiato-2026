@@ -466,7 +466,7 @@ class SafetyDashboard(Node):
         level: SafetyAlertLevel,
         source: str,
         message: str,
-        context: Dict[str, Any] = None,
+        context: Optional[Dict[str, Any]] = None,
     ):
         """Create a new safety alert."""
         if alert_id in self.active_alerts:
@@ -493,9 +493,9 @@ class SafetyDashboard(Node):
         system_name: str,
         status: SafetySystemStatus,
         update_time: float,
-        health_score: float = None,
-        active_issues: List[str] = None,
-        metrics: Dict[str, Any] = None,
+        health_score: Optional[float] = None,
+        active_issues: Optional[List[str]] = None,
+        metrics: Optional[Dict[str, Any]] = None,
     ):
         """Update system health information."""
         if system_name not in self.system_health:

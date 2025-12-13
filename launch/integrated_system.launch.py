@@ -14,8 +14,8 @@ This launch file demonstrates the integration of submodules for complete system 
 
 import os
 
-from launch import LaunchDescription
 from launch.actions import ExecuteProcess, IncludeLaunchDescription, TimerAction
+from launch.launch_description import LaunchDescription  # type: ignore
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 

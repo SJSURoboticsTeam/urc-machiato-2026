@@ -236,8 +236,8 @@ class TelemetryCollector:
 
         # Events summary
         with self.events_lock:
-            severity_counts = {}
-            component_counts = {}
+            severity_counts: Dict[str, int] = {}
+            component_counts: Dict[str, int] = {}
             recent_events = []
 
             # Get recent events (last 100)

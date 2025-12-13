@@ -7,6 +7,8 @@ Integrates keyboard detection, arm control, and sequence execution.
 """
 
 
+from typing import Any, Dict
+
 import numpy as np
 import rclpy
 from autonomy_autonomous_typing.arm_controller import ArmController
@@ -143,7 +145,7 @@ class AutonomousTypingNode(Node):
             self.get_logger().error(f"ArUco detection error: {e}")
             return False
 
-    def get_aruco_typing_status(self) -> dict:
+    def get_aruco_typing_status(self) -> Dict[str, Any]:
         """Get current ArUco typing status."""
         if self.last_aruco_result is None:
             return {"status": "not_detected", "message": "No ArUco detection performed"}

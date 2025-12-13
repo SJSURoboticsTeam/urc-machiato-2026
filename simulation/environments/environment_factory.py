@@ -7,7 +7,9 @@ Author: URC 2026 Autonomy Team
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
+
+from simulation.environments.base_environment import BaseEnvironment
 
 from simulation.environments.extreme_environment import ExtremeEnvironment
 from simulation.environments.perfect_environment import PerfectEnvironment
@@ -22,7 +24,7 @@ class EnvironmentFactory:
     """
 
     # Registry of available environment types
-    _environment_types = {
+    _environment_types: Dict[str, Type[BaseEnvironment]] = {
         "perfect": PerfectEnvironment,
         "real_life": RealLifeEnvironment,
         "extreme": ExtremeEnvironment,

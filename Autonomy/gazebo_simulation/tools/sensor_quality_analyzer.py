@@ -12,7 +12,7 @@ import math
 import time
 from collections import deque
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List
+from typing import Any, Deque, Dict, List
 
 import numpy as np
 import rclpy
@@ -61,12 +61,12 @@ class SensorQualityAnalyzer(Node):
         self.analysis_complete = False
 
         # Data collection
-        self.imu_data = deque(maxlen=10000)
-        self.gps_data = deque(maxlen=1000)
-        self.lidar_data = deque(maxlen=1000)
-        self.camera_data = deque(maxlen=1000)
-        self.depth_data = deque(maxlen=1000)
-        self.odom_data = deque(maxlen=1000)
+        self.imu_data: Deque[Any] = deque(maxlen=10000)
+        self.gps_data: Deque[Any] = deque(maxlen=1000)
+        self.lidar_data: Deque[Any] = deque(maxlen=1000)
+        self.camera_data: Deque[Any] = deque(maxlen=1000)
+        self.depth_data: Deque[Any] = deque(maxlen=1000)
+        self.odom_data: Deque[Any] = deque(maxlen=1000)
 
         # Analysis results
         self.sensor_reports = {}
