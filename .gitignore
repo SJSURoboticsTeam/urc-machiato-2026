@@ -38,6 +38,7 @@ htmlcov/
 .coverage.*
 .cache
 nosetests.xml
+# Note: coverage.xml and *.xml are ignored below, but tests/reports/ is explicitly allowed
 coverage.xml
 *.cover
 .hypothesis/
@@ -269,3 +270,12 @@ Autonomy/development/log/
 
 # MCP server configurations (may contain sensitive data)
 mcp-servers/mcp-config-local.json
+
+# ========================================
+# Test Reports (EXPLICITLY ALLOWED - NOT IGNORED)
+# ========================================
+# Test reports in tests/reports/ should be tracked in git
+# This section explicitly allows test reports (must come at end after all ignores)
+!tests/reports/
+!tests/reports/**
+!tests/reports/**/*

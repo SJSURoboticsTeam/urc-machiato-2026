@@ -12,8 +12,8 @@ import time
 import unittest
 from unittest.mock import MagicMock
 
-from bridges.can_mock_simulator import CANBusMockSimulator
 from bridges.priority_message_router import PriorityMessageRouter
+from simulation.can.can_bus_mock_simulator import CANBusMockSimulator
 
 # Add project paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))

@@ -499,10 +499,10 @@ TODO: Implement ROS2 integration for state machine calibration mode
 
 4. STATE MACHINE INTEGRATION:
    - On enter "CALIBRATION" state:
-     ├─ Initialize calibrator based on parameter
-     └─ Subscribe to relevant topics
+     |- Initialize calibrator based on parameter
+     \\- Subscribe to relevant topics
    - On exit "CALIBRATION" state:
-     └─ Save calibration artifacts
+     \\- Save calibration artifacts
    - Parameter: /calibration/mode = "hand_eye" | "stereo" | "imu"
 """
 

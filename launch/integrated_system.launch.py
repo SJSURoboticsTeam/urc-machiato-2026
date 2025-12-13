@@ -50,12 +50,159 @@ def generate_launch_description():
         ),
 
         # ===========================================
-        # AUTONOMY SYSTEM (Core)
+        # BASIC ROS2 INFRASTRUCTURE
         # ===========================================
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(workspace_root, 'launch', 'mission_system.launch.py')
-            )
+        ExecuteProcess(
+            cmd=['ros2', 'run', 'rosbridge_server', 'rosbridge_server',
+                 '--ros-args', '-p', 'port:=9090'],
+            output='screen',
+            name='rosbridge_server'
+        ),
+
+        # ===========================================
+        # MOCK TOPICS FOR INTEGRATION TESTING
+        # ===========================================
+
+        # GPS Data
+        TimerAction(
+            period=1.0,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/gps/fix', 'sensor_msgs/msg/NavSatFix',
+                         'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "gps"}, '
+                         'latitude: 35.0, longitude: -117.0, altitude: 100.0'],
+                    output='log',
+                    name='gps_publisher'
+                )
+            ]
+        ),
+
+        # IMU Data
+        TimerAction(
+            period=0.1,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/imu/data', 'sensor_msgs/msg/Imu',
+                         'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "imu"}, '
+                         'orientation:{x: 0.0, y: 0.0, z: 0.0, w: 1.0}'],
+                    output='log',
+                    name='imu_publisher'
+                )
+            ]
+        ),
+
+        # Depth Camera
+        TimerAction(
+            period=0.5,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/camera/depth/image_raw', 'sensor_msgs/msg/Image',
+                         'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "camera_depth"}, '
+                         'height: 480, width: 640, encoding: "32FC1"'],
+                    output='log',
+                    name='depth_publisher'
+                )
+            ]
+        ),
+
+        # Cmd_vel for navigation
+        ExecuteProcess(
+            cmd=['ros2', 'topic', 'pub', '--once', '/cmd_vel', 'geometry_msgs/msg/Twist',
+                 'linear:{x: 0.0, y: 0.0, z: 0.0}, angular:{x: 0.0, y: 0.0, z: 0.0}'],
+            output='log',
+            name='cmd_vel_publisher'
+        ),
+
+        # ===========================================
+        # TELEOPERATION TOPICS (Mock)
+        # ===========================================
+        TimerAction(
+            period=0.2,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/teleoperation/joint_states', 'sensor_msgs/msg/JointState',
+                         'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "teleop"}, name: ["joint1"], position: [0.0]'],
+                    output='log',
+                    name='joint_states_publisher'
+                )
+            ]
+        ),
+
+        TimerAction(
+            period=0.2,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/teleoperation/chassis_velocity', 'geometry_msgs/msg/TwistStamped',
+                         'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "teleop"}'],
+                    output='log',
+                    name='chassis_velocity_publisher'
+                )
+            ]
+        ),
+
+        TimerAction(
+            period=0.2,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/teleoperation/motor_temperatures', 'std_msgs/msg/Float32MultiArray',
+                         'data: [25.0, 26.0, 24.5, 25.5]'],
+                    output='log',
+                    name='motor_temp_publisher'
+                )
+            ]
+        ),
+
+        TimerAction(
+            period=0.2,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/teleoperation/system_status', 'sensor_msgs/msg/BatteryState',
+                         'voltage: 24.0, current: 2.0, charge: 95.0'],
+                    output='log',
+                    name='system_status_publisher'
+                )
+            ]
+        ),
+
+        # ===========================================
+        # ADDITIONAL MOCK TOPICS FOR TESTING
+        # ===========================================
+
+        # Odometry for navigation testing
+        TimerAction(
+            period=0.1,
+            actions=[
+                ExecuteProcess(
+                    cmd=['ros2', 'topic', 'pub', '--once', '/odom', 'nav_msgs/msg/Odometry',
+                         'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "odom"}, pose:{pose:{position:{x: 0.0, y: 0.0, z: 0.0}, orientation:{w: 1.0}}}'],
+                    output='log',
+                    name='odom_publisher'
+                )
+            ]
+        ),
+
+        # Map topic for navigation
+        ExecuteProcess(
+            cmd=['ros2', 'topic', 'pub', '--once', '/map', 'nav_msgs/msg/OccupancyGrid',
+                 'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "map"}, info:{width: 100, height: 100, resolution: 0.1}'],
+            output='log',
+            name='map_publisher'
+        ),
+
+        # Goal pose for navigation testing
+        ExecuteProcess(
+            cmd=['ros2', 'topic', 'pub', '--once', '/goal_pose', 'geometry_msgs/msg/PoseStamped',
+                 'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "map"}, pose:{position:{x: 5.0, y: 5.0, z: 0.0}, orientation:{w: 1.0}}'],
+            output='log',
+            name='goal_pose_publisher'
+        ),
+
+        # Camera info for vision testing
+        ExecuteProcess(
+            cmd=['ros2', 'topic', 'pub', '--once', '/camera/camera_info', 'sensor_msgs/msg/CameraInfo',
+                 'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "camera"}, height: 480, width: 640, distortion_model: "plumb_bob"'],
+            output='log',
+            name='camera_info_publisher'
         ),
 
         # ===========================================
@@ -102,6 +249,33 @@ def generate_launch_description():
                     name='node_monitor'
                 )
             ]
+        ),
+
+        # ===========================================
+        # STATE MACHINE & NAVIGATION NODES
+        # ===========================================
+        ExecuteProcess(
+            cmd=[
+                'python3', '/home/ubuntu/urc-machiato-2026/tests/state_machine_director_node.py'
+            ],
+            output='screen',
+            name='state_machine_director'
+        ),
+
+        ExecuteProcess(
+            cmd=[
+                'python3', '/home/ubuntu/urc-machiato-2026/tests/slam_nodes.py'
+            ],
+            output='screen',
+            name='slam_nodes'
+        ),
+
+        ExecuteProcess(
+            cmd=[
+                'python3', '/home/ubuntu/urc-machiato-2026/tests/navigation_service_node.py'
+            ],
+            output='screen',
+            name='navigation_service'
         ),
 
         # ===========================================

@@ -1,0 +1,23 @@
+{
+  "test_type": "integration_tests",
+  "timestamp": "2025-12-13T06:29:36.536104",
+  "duration_seconds": 76.29554605484009,
+  "ros2_environment_setup": "managed_by_pytest_fixtures",
+  "total_categories": 8,
+  "total_modules": 28,
+  "total_tests": 43,
+  "passed_tests": 24,
+  "failed_tests": 35,
+  "pass_rate": 55.81395348837209,
+  "categories": [
+    "Core Integration",
+    "Messaging & Communication",
+    "Navigation & Control",
+    "Vision & Perception",
+    "State Management",
+    "Mission & Tasks",
+    "Safety & Arm Control",
+    "SLAM & Mapping"
+  ],
+  "results": []
+}

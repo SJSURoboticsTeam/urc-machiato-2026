@@ -17,7 +17,7 @@ import time
 
 import websockets
 
-from bridges.can_mock_simulator import CANBusMockSimulator
+from simulation.can.can_bus_mock_simulator import CANBusMockSimulator
 
 
 async def websocket_client_demo():

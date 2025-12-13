@@ -17,7 +17,7 @@ from std_msgs.msg import String
 # ===== ERROR HANDLING =====
 
 Result = Tuple[Optional[Any], Optional[str]]
-"""Type alias for (result, error) tuples. None result indicates success with no return value."""
+# Type alias for (result, error) tuples. None result indicates success with no return value.
 
 
 def safe_execute(func: Callable, *args, **kwargs) -> Result:
@@ -181,7 +181,7 @@ class NodeLogger:
 # ===== PARAMETER MANAGEMENT =====
 
 ValidatorFunc = Callable[[Any], bool]
-"""Type alias for parameter validation functions."""
+# Type alias for parameter validation functions.
 
 
 @dataclass

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional
 
-from bridges.can_mock_simulator import CANBusMockSimulator
+from simulation.can.can_bus_mock_simulator import CANBusMockSimulator
 
 # Add project paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
