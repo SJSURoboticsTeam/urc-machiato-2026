@@ -29,12 +29,13 @@ class CANStressLevel(Enum):
 
 class CANFaultType(Enum):
     """Types of CAN bus faults to simulate."""
-    BUS_OVERLOAD = "bus_overload"
-    ARBITRATION_COLLISION = "arbitration_collision"
-    ELECTRICAL_FAULT = "electrical_fault"
     BUS_OFF = "bus_off"
-    ACKNOWLEDGEMENT_ERROR = "acknowledgement_error"
-    BIT_ERROR = "bit_error"
+    # TODO: Implement additional fault types as needed
+    # BUS_OVERLOAD = "bus_overload"
+    # ARBITRATION_COLLISION = "arbitration_collision"
+    # ELECTRICAL_FAULT = "electrical_fault"
+    # ACKNOWLEDGEMENT_ERROR = "acknowledgement_error"
+    # BIT_ERROR = "bit_error"
 
 
 @dataclass
