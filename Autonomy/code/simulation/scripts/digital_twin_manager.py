@@ -20,8 +20,6 @@ import rclpy
 # Custom digital twin messages
 from autonomy_interfaces.msg import (  # Placeholder - would need actual interface; Placeholder
     DigitalTwinState,
-    RoverState,
-    SystemHealth,
     TwinSyncCommand,
 )
 from geometry_msgs.msg import PoseStamped

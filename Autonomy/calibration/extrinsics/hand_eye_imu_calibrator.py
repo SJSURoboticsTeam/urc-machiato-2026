@@ -478,33 +478,31 @@ class IMUCalibrator:
 # TODO: ROS2 INTEGRATION PLACEHOLDERS
 # ============================================================================
 
-"""
-TODO: Implement ROS2 integration for state machine calibration mode
-
-1. HAND-EYE CALIBRATION INPUT STREAM:
-   - Subscribe to /robot/state/end_effector_pose (tf2 TransformStamped)
-   - Subscribe to /camera/detections (custom msg with board corners)
-   - Service: /calibration/capture_hand_eye_pose (request + store observation)
-
-2. MULTI-CAMERA INPUT STREAM:
-   - Subscribe to /camera1/detections (board detection)
-   - Subscribe to /camera2/detections (board detection)
-   - Auto-sync observations by timestamp
-   - Service: /calibration/add_stereo_pair
-
-3. IMU CALIBRATION INPUT STREAM:
-   - Subscribe to /imu/data_raw (sensor_msgs/Imu)
-   - Service: /calibration/start_imu_static_calibration
-   - Service: /calibration/finish_imu_calibration
-
-4. STATE MACHINE INTEGRATION:
-   - On enter "CALIBRATION" state:
-     |- Initialize calibrator based on parameter
-     \\- Subscribe to relevant topics
-   - On exit "CALIBRATION" state:
-     \\- Save calibration artifacts
-   - Parameter: /calibration/mode = "hand_eye" | "stereo" | "imu"
-"""
+# TODO: Implement ROS2 integration for state machine calibration mode
+#
+# 1. HAND-EYE CALIBRATION INPUT STREAM:
+#    - Subscribe to /robot/state/end_effector_pose (tf2 TransformStamped)
+#    - Subscribe to /camera/detections (custom msg with board corners)
+#    - Service: /calibration/capture_hand_eye_pose (request + store observation)
+#
+# 2. MULTI-CAMERA INPUT STREAM:
+#    - Subscribe to /camera1/detections (board detection)
+#    - Subscribe to /camera2/detections (board detection)
+#    - Auto-sync observations by timestamp
+#    - Service: /calibration/add_stereo_pair
+#
+# 3. IMU CALIBRATION INPUT STREAM:
+#    - Subscribe to /imu/data_raw (sensor_msgs/Imu)
+#    - Service: /calibration/start_imu_static_calibration
+#    - Service: /calibration/finish_imu_calibration
+#
+# 4. STATE MACHINE INTEGRATION:
+#    - On enter "CALIBRATION" state:
+#      |- Initialize calibrator based on parameter
+#      \- Subscribe to relevant topics
+#    - On exit "CALIBRATION" state:
+#      \- Save calibration artifacts
+#    - Parameter: /calibration/mode = "hand_eye" | "stereo" | "imu"
 
 
 if __name__ == "__main__":
