@@ -60,7 +60,7 @@ class SimulationMonitor:
         self.max_metrics_history = 1000  # Keep last 1000 measurements
 
         # Performance data
-        self.performance_data = {
+        self.performance_data: Dict[str, List[Any]] = {
             "step_times": [],
             "memory_usage": [],
             "cpu_usage": [],

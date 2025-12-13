@@ -14,12 +14,16 @@ class SystemState(Enum):
     """Simplified state machine - user-friendly and maintainable"""
 
     BOOT = "BOOT"  # System startup and validation
+    CALIBRATION = "CALIBRATION"  # System calibration procedures
     IDLE = "IDLE"  # Ready for commands
     TELEOPERATION = "TELEOPERATION"  # Manual control
     SAFESTOP = "SAFESTOP"  # Context-aware pause (freeze arm, decelerate motion)
     AUTONOMOUS = "AUTONOMOUS"  # Mission execution with sub-modes
     ESTOP = "ESTOP"  # Emergency stop
     SHUTDOWN = "SHUTDOWN"  # System shutdown
+
+    # Alias for backward compatibility
+    SAFETY = SAFESTOP
 
     def __str__(self) -> str:
         return self.value
@@ -33,6 +37,19 @@ class AutonomousMode(Enum):
     SCIENCE = "SCIENCE"  # Sample collection/analysis
     EQUIPMENT = "EQUIPMENT"  # Equipment servicing
     FOLLOW_ME = "FOLLOW_ME"  # Person following
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class AutonomousSubstate(Enum):
+    """Substates for autonomous operations"""
+
+    NONE = "NONE"  # Not in autonomous mode
+    PLANNING = "PLANNING"  # Planning autonomous actions
+    EXECUTING = "EXECUTING"  # Executing autonomous actions
+    MONITORING = "MONITORING"  # Monitoring autonomous execution
+    RECOVERY = "RECOVERY"  # Recovery from autonomous failures
 
     def __str__(self) -> str:
         return self.value

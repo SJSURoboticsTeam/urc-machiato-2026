@@ -23,7 +23,7 @@ import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import cv2
 import numpy as np
@@ -122,8 +122,8 @@ class HandEyeCalibrator:
         """
         self.camera_intrinsics = camera_intrinsics
         self.board_config = board_config
-        self.poses_collected = []
-        self.image_detections = []
+        self.poses_collected: List[HandEyePose] = []
+        self.image_detections: List[Dict[str, Any]] = []
 
     def add_pose_observation(
         self,
@@ -308,7 +308,7 @@ class MultiCameraCalibrator:
         self.camera1_intrinsics = camera1_intrinsics
         self.camera2_intrinsics = camera2_intrinsics
         self.board_config = board_config
-        self.pose_pairs = []
+        self.pose_pairs: List[Dict[str, Any]] = []
 
     def add_observation(self, corners1: np.ndarray, ids1: np.ndarray, corners2: np.ndarray, ids2: np.ndarray):
         """Add synchronized observation from both cameras"""
@@ -376,8 +376,8 @@ class IMUCalibrator:
 
     def __init__(self, imu_id: str = "imu_0"):
         self.imu_id = imu_id
-        self.accel_samples = []
-        self.gyro_samples = []
+        self.accel_samples: List[np.ndarray] = []
+        self.gyro_samples: List[np.ndarray] = []
         self.calibration = IMUCalibrationData(imu_id=imu_id)
 
     def add_accel_sample(self, x: float, y: float, z: float, gravity_magnitude: float = 9.81):

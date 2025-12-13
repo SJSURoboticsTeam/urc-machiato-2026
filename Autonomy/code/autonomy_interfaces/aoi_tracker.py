@@ -42,7 +42,7 @@ class AOITracker:
     Tracks age of information with minimal memory footprint.
     """
 
-    def __init__(self, config: AOIConfig = None):
+    def __init__(self, config: Optional[AOIConfig] = None):
         self.config = config or AOIConfig()
 
         # Core tracking (minimal memory)

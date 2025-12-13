@@ -7,6 +7,8 @@ and mission-specific requirements.
 
 from typing import Dict, List, Optional, Tuple
 
+import structlog
+
 from .states import (
     AutonomousMode,
     SystemState,
@@ -14,6 +16,8 @@ from .states import (
     get_state_metadata,
     is_valid_transition,
 )
+
+logger = structlog.get_logger(__name__)
 
 
 class ValidationError(Exception):

@@ -218,7 +218,7 @@ class SensorInterfaceMock:
         self.logger = logging.getLogger(f"{__name__}.{sensor_type}_{node_id}")
 
         # Sensor state
-        self.last_reading = {}
+        self.last_reading: Dict[str, Any] = {}
         self.update_rate = 100.0  # Hz
         self.last_update = time.time()
 

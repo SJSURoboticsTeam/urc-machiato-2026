@@ -1168,7 +1168,7 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
 if __name__ == "__main__":
     # Run comprehensive integration test suite
-    suite = unittest.TestLoader().loadTestsFromTestCase(ComprehensiveIntegrationSuite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(SimulationIntegrationSuite)
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
 

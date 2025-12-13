@@ -8,7 +8,7 @@ Author: URC 2026 Autonomy Team
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -58,8 +58,8 @@ class BaseEnvironment(ABC):
         self.last_update_time = 0.0
 
         # Dynamic effects
-        self.weather_patterns = []
-        self.terrain_changes = []
+        self.weather_patterns: List[Any] = []
+        self.terrain_changes: List[Any] = []
 
         self.logger.info(f"Initialized {self.__class__.__name__} environment")
 

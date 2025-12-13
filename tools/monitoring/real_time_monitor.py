@@ -67,7 +67,7 @@ class RealTimeMonitor:
         """
         self.monitoring_interval = monitoring_interval
         self.control_loops: Dict[str, ControlLoopMetrics] = {}
-        self.system_metrics = {
+        self.system_metrics: Dict[str, Any] = {
             "cpu_percent": deque(maxlen=100),
             "memory_percent": deque(maxlen=100),
             "disk_io": deque(maxlen=100),

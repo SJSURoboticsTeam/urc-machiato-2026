@@ -11,7 +11,7 @@ Launches all components needed for SLAM data routing:
 
 from launch_ros.actions import Node
 
-from launch import LaunchDescription
+from launch.launch_description import LaunchDescription  # type: ignore
 
 
 def generate_launch_description():

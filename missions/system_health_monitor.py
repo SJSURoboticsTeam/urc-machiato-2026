@@ -39,6 +39,9 @@ class SystemHealthMonitor:
         # Callbacks for emergency responses
         self.emergency_callbacks: Dict[str, Callable] = {}
 
+        # Position tracking for discontinuity detection
+        self.previous_positions: List[float] = []
+
     def register_emergency_callback(self, emergency_type: str, callback: Callable):
         """Register callback for emergency situations"""
         self.emergency_callbacks[emergency_type] = callback

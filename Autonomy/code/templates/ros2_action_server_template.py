@@ -97,7 +97,7 @@ class YourActionServer(Node):
 
         try:
             # Execute the long-running task
-            success = self._execute_task(goal, feedback, result)
+            success = self._execute_task(goal_handle, goal, feedback, result)
 
             if success:
                 goal_handle.succeed()
@@ -133,7 +133,7 @@ class YourActionServer(Node):
 
         return True
 
-    def _execute_task(self, goal, feedback, result) -> bool:
+    def _execute_task(self, goal_handle, goal, feedback, result) -> bool:
         """Execute the main task logic."""
         try:
             # Initialize progress

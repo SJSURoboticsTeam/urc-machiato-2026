@@ -6,7 +6,7 @@ for autonomous typing missions. Works with any ArUco tag IDs.
 """
 
 import math
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import structlog
@@ -38,7 +38,7 @@ class TypingAlignmentCalculator:
         }
 
     def calculate_typing_alignment(
-        self, detected_tags: List[Dict[str, Any]], target_depth: float = None
+        self, detected_tags: List[Dict[str, Any]], target_depth: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Calculate alignment for autonomous typing with any ArUco tags.

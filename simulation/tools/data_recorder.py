@@ -259,7 +259,7 @@ class DataRecorder:
         Returns:
             Dict with compressed data
         """
-        compressed = {}
+        compressed: Dict[str, Any] = {}
 
         # Compress sensor data by rounding floating point values
         if "sensors" in data:
@@ -316,7 +316,7 @@ class DataRecorder:
             return
 
         # Get all possible keys
-        all_keys = set()
+        all_keys: set[str] = set()
         for record in self.data:
             all_keys.update(record.keys())
             if "data" in record:
@@ -328,7 +328,7 @@ class DataRecorder:
             writer.writeheader()
 
             for record in self.data:
-                row = {}
+                row: Dict[str, Any] = {}
                 # Flatten nested data
                 self._flatten_dict(record, row)
                 writer.writerow(row)

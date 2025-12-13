@@ -10,7 +10,6 @@ Shows how separate packages communicate through ROS2 topics, services, and actio
 from launch_ros.actions import Node, PushRosNamespace
 from launch_ros.substitutions import FindPackageShare
 
-from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     GroupAction,
@@ -21,6 +20,7 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit, OnProcessStart
+from launch.launch_description import LaunchDescription  # type: ignore
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
