@@ -44,6 +44,7 @@ def safe_execute(func: Callable, *args, **kwargs) -> Result:
 
 # ===== LOGGING =====
 
+
 class NodeLogger:
     """
     Simple logging helper for ROS2 nodes with consistent formatting.
@@ -82,7 +83,9 @@ class NodeLogger:
     def error(self, message: str, error: Optional[Exception] = None, **context) -> None:
         """Log error message."""
         if error:
-            context.update({"error_type": type(error).__name__, "error_message": str(error)})
+            context.update(
+                {"error_type": type(error).__name__, "error_message": str(error)}
+            )
         self._logger.error(self._format_message(message, **context))
 
     def critical(self, message: str, **context) -> None:
@@ -91,6 +94,7 @@ class NodeLogger:
 
 
 # ===== PARAMETER MANAGEMENT =====
+
 
 def get_validated_parameter(
     node: Node,
@@ -115,15 +119,21 @@ def get_validated_parameter(
     try:
         value = node.get_parameter(name).value
         if validator and not validator(value):
-            error_msg = f"Parameter '{name}' failed validation, using default: {default_value}"
+            error_msg = (
+                f"Parameter '{name}' failed validation, using default: {default_value}"
+            )
             if logger:
-                logger.warn(error_msg, parameter=name, value=value, default=default_value)
+                logger.warn(
+                    error_msg, parameter=name, value=value, default=default_value
+                )
             else:
                 node.get_logger().warn(error_msg)
                 return default_value
         return value
     except Exception as e:
-        error_msg = f"Failed to get parameter '{name}': {e}, using default: {default_value}"
+        error_msg = (
+            f"Failed to get parameter '{name}': {e}, using default: {default_value}"
+        )
         if logger:
             logger.error(error_msg, parameter=name, default=default_value)
         else:
@@ -132,6 +142,7 @@ def get_validated_parameter(
 
 
 # ===== STATE MACHINE =====
+
 
 class StateMachineNode(Node):
     """
@@ -219,8 +230,11 @@ class StateMachineNode(Node):
 
 # ===== CONFIGURATION MANAGEMENT =====
 
+
 def load_config_file(
-    filename: str, required_keys: Optional[List[str]] = None, logger: Optional[NodeLogger] = None
+    filename: str,
+    required_keys: Optional[List[str]] = None,
+    logger: Optional[NodeLogger] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Load YAML configuration file with basic validation.
@@ -251,7 +265,11 @@ def load_config_file(
                 return None
 
         if logger:
-            logger.info("Configuration loaded successfully", file=filename, keys=list(config.keys()))
+            logger.info(
+                "Configuration loaded successfully",
+                file=filename,
+                keys=list(config.keys()),
+            )
         return config
 
     except Exception as e:
@@ -265,6 +283,7 @@ def load_config_file(
 
 # ===== COMPATIBILITY CLASSES =====
 # Simple stubs for backward compatibility with existing code
+
 
 class NodeParameters:
     """Simple parameter container for backward compatibility."""
@@ -331,4 +350,4 @@ class MessagePipeline:
                 if self.logger:
                     self.logger.error(f"Pipeline step failed: {step_name}", error=e)
                 raise
-        return type('Result', (), {'value': current_data})()
+        return type("Result", (), {"value": current_data})()
