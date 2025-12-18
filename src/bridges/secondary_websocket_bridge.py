@@ -135,7 +135,7 @@ class SecondaryWebSocketBridge:
             self.clients.add(websocket)
             client_id = f"secondary_{len(self.clients)}"
         self.get_logger().info(f"[SATELLITE] Secondary client connected: {client_id}")
-            try:
+        try:
                 # Send initial telemetry
                 await websocket.send(json.dumps({
                     'type': 'initial',

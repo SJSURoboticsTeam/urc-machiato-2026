@@ -288,8 +288,8 @@ class RedundancyTestSuite:
         if 'performance' in self.test_results:
             perf = self.test_results['performance']
             print("Test completed successfully")
-Performance Impact:
-        print("\n🎯 Reliability Improvements:")
+            print("\nPerformance Impact:")
+            print("\n🎯 Reliability Improvements:")
         print("   • Zero-downtime failover (<1 second detection)")
         print("   • Progressive data degradation (full → state → safety → emergency)")
         print("   • Automatic load balancing across healthy endpoints")

@@ -134,7 +134,7 @@ class TertiaryWebSocketBridge:
             self.clients.add(websocket)
             client_id = f"tertiary_{len(self.clients)}"
         self.get_logger().info(f"[ALERT] Tertiary client connected: {client_id}")
-            try:
+        try:
                 # Send initial critical telemetry
                 await websocket.send(json.dumps({
                     'type': 'emergency_initial',
