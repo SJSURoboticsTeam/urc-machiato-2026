@@ -10,7 +10,7 @@ import os
 import subprocess
 
 
-def run_cmd(cmd, description=""):
+def run_cmd(cmd, description="") -> tuple:
     """Run a command and return the result."""
     try:
         result = subprocess.run(
@@ -21,14 +21,14 @@ def run_cmd(cmd, description=""):
         return False, "", str(e)
 
 
-def print_section(title):
+def print_section(title) -> None:
     """Print a section header."""
     print(f"\n{'='*60}")
     print(f"[IGNITE] {title}")
     print(f"{'='*60}")
 
 
-def main():
+def main() -> None:
     """Main demonstration."""
     print(" URC 2026 ROS2 Universal Monitoring Demo")
     print("This shows how to monitor ALL ROS topics and services in the system")
@@ -127,7 +127,8 @@ def main():
         if param_services:
             print(f"\n Parameter Services ({len(param_services)}):")
             print(
-                f"   [GRAPH] {len(param_services)} parameter management services available"
+                f"   [GRAPH] {len(param_services)} parameter management "
+                f"services available"
             )
 
     print_section("4. LIVE TOPIC MONITORING")
@@ -148,8 +149,8 @@ def main():
     for topic in key_topics:
         print(f"[MAGNIFY] Monitoring {topic}:")
         success, output, error = run_cmd(
-            ros_setup
-            + f"timeout 2 ros2 topic echo --once {topic} 2>/dev/null || echo 'No recent data'"
+            ros_setup + f"timeout 2 ros2 topic echo --once {topic} "
+            f"2>/dev/null || echo 'No recent data'"
         )
 
         if success and output and "No recent data" not in output:

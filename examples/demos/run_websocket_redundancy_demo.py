@@ -69,7 +69,8 @@ def demonstrate_endpoint_registration():
     for endpoint in endpoints:
         manager.add_endpoint(endpoint)
         print(
-            f"[PASS] Registered {endpoint.name} on port {endpoint.port} (priority {endpoint.priority.value})"
+            f"[PASS] Registered {endpoint.name} on port {endpoint.port} "
+            f"(priority {endpoint.priority.value})"
         )
 
     return manager, endpoints
@@ -97,7 +98,8 @@ def demonstrate_redundancy_system(manager):
         status = manager.get_system_status()
         health = status["system_health"]
         print(
-            f"   {i+1}s: Health {health['score']:.1f}% ({health['status']}) - {len(status['endpoints'])} endpoints"
+            f"   {i+1}s: Health {health['score']:.1f}% ({health['status']}) - "
+            f"{len(status['endpoints'])} endpoints"
         )
 
     return True
