@@ -1,0 +1,46 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/AdaptiveAction.msg
+// generated code does not contain a copyright notice
+
+#include "autonomy_interfaces/msg/ContextState.idl"
+#include "builtin_interfaces/msg/Time.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "AdaptiveAction.msg" "\n"
+      "Actions taken by the adaptive state machine")
+    struct AdaptiveAction {
+      @verbatim (language="comment", text=
+        "Action type" "\n"
+        "EMERGENCY_RETURN, REDUCE_POWER, OBSTACLE_AVOIDANCE, etc.")
+      string action_type;
+
+      @verbatim (language="comment", text=
+        "Action parameters" "\n"
+        "Key-value pairs as strings")
+      sequence<string> parameters;
+
+      @verbatim (language="comment", text=
+        "Context that triggered the action")
+      autonomy_interfaces::msg::ContextState trigger_context;
+
+      @verbatim (language="comment", text=
+        "Action priority (higher = more urgent)" "\n"
+        "0-100")
+      int32 priority;
+
+      @verbatim (language="comment", text=
+        "Expected duration (seconds)")
+      float expected_duration;
+
+      @verbatim (language="comment", text=
+        "Success criteria")
+      string success_criteria;
+
+      @verbatim (language="comment", text=
+        "Timestamp")
+      builtin_interfaces::msg::Time timestamp;
+    };
+  };
+};

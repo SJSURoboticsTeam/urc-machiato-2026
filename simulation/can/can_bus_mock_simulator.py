@@ -16,13 +16,14 @@ import random
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class CANMessagePriority(Enum):
     """CAN message priority levels (lower number = higher priority)."""
+
     EMERGENCY_STOP = 0
     SAFETY_CRITICAL = 1
     CONTROL_COMMAND = 2
@@ -33,6 +34,7 @@ class CANMessagePriority(Enum):
 
 class CANMessageType(Enum):
     """Types of CAN messages supported."""
+
     MOTOR_COMMAND = "motor_command"
     MOTOR_STATUS = "motor_status"
     SENSOR_DATA = "sensor_data"
@@ -45,6 +47,7 @@ class CANMessageType(Enum):
 @dataclass
 class CANMessage:
     """Represents a CAN bus message."""
+
     message_id: int
     data: bytes
     priority: CANMessagePriority
@@ -77,17 +80,17 @@ class MotorControllerMock:
 
         # Motor state
         self.velocity_setpoint = 0.0  # rad/s
-        self.velocity_actual = 0.0    # rad/s
-        self.position = 0.0           # rad
-        self.current = 0.0            # A
-        self.temperature = 25.0       # °C
-        self.voltage = 24.0           # V
+        self.velocity_actual = 0.0  # rad/s
+        self.position = 0.0  # rad
+        self.current = 0.0  # A
+        self.temperature = 25.0  # °C
+        self.voltage = 24.0  # V
 
         # Motor parameters
-        self.max_velocity = 10.0      # rad/s
-        self.max_current = 5.0        # A
-        self.nominal_voltage = 24.0   # V
-        self.gear_ratio = 50.0        # :1
+        self.max_velocity = 10.0  # rad/s
+        self.max_current = 5.0  # A
+        self.nominal_voltage = 24.0  # V
+        self.gear_ratio = 50.0  # :1
 
         # Simulation parameters
         self.velocity_ramp_rate = 2.0  # rad/s²
@@ -139,7 +142,7 @@ class MotorControllerMock:
             "voltage": self.voltage,
             "fault_active": self.fault_active,
             "fault_type": self.fault_type,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
     def emergency_stop(self) -> bool:
@@ -172,7 +175,9 @@ class MotorControllerMock:
 
         # Velocity control simulation
         velocity_error = self.velocity_setpoint - self.velocity_actual
-        acceleration = min(self.velocity_ramp_rate, max(-self.velocity_ramp_rate, velocity_error / 0.1))
+        acceleration = min(
+            self.velocity_ramp_rate, max(-self.velocity_ramp_rate, velocity_error / 0.1)
+        )
         self.velocity_actual += acceleration * dt
 
         # Position integration
@@ -180,8 +185,8 @@ class MotorControllerMock:
 
         # Current calculation (simplified motor model)
         torque_current = abs(self.velocity_actual) * 0.5  # Base current
-        acceleration_current = abs(acceleration) * 0.2     # Acceleration current
-        friction_current = self.friction_coefficient        # Friction current
+        acceleration_current = abs(acceleration) * 0.2  # Acceleration current
+        friction_current = self.friction_coefficient  # Friction current
         self.current = torque_current + acceleration_current + friction_current
 
         # Temperature simulation (thermal model)
@@ -196,7 +201,9 @@ class MotorControllerMock:
         # Random fault simulation (very low probability)
         if random.random() < 0.0001:  # 0.01% chance per update
             self.fault_active = True
-            self.fault_type = random.choice(["overcurrent", "overtemp", "encoder_failure"])
+            self.fault_type = random.choice(
+                ["overcurrent", "overtemp", "encoder_failure"]
+            )
             self.logger.error(f"🚨 SIMULATED FAULT: {self.fault_type}")
 
 
@@ -253,7 +260,7 @@ class SensorInterfaceMock:
             "node_id": self.node_id,
             "sensor_type": self.sensor_type,
             "timestamp": current_time,
-            **self.last_reading
+            **self.last_reading,
         }
 
     def _generate_reading(self) -> Dict[str, Any]:
@@ -289,9 +296,15 @@ class SensorInterfaceMock:
         mag_z = random.gauss(50.0, self.noise_std["mag"])  # Earth's field ~50uT
 
         return {
-            "accel_x": accel_x, "accel_y": accel_y, "accel_z": accel_z,
-            "gyro_x": gyro_x, "gyro_y": gyro_y, "gyro_z": gyro_z,
-            "mag_x": mag_x, "mag_y": mag_y, "mag_z": mag_z
+            "accel_x": accel_x,
+            "accel_y": accel_y,
+            "accel_z": accel_z,
+            "gyro_x": gyro_x,
+            "gyro_y": gyro_y,
+            "gyro_z": gyro_z,
+            "mag_x": mag_x,
+            "mag_y": mag_y,
+            "mag_z": mag_z,
         }
 
     def _generate_gps_reading(self) -> Dict[str, Any]:
@@ -308,7 +321,7 @@ class SensorInterfaceMock:
             "altitude": random.gauss(100.0, 5.0),
             "hdop": random.uniform(1.0, 3.0),
             "satellites_visible": random.randint(8, 12),
-            "fix_quality": random.choice([1, 2, 4])  # GPS fix types
+            "fix_quality": random.choice([1, 2, 4]),  # GPS fix types
         }
 
     def _generate_encoder_reading(self) -> Dict[str, Any]:
@@ -319,7 +332,7 @@ class SensorInterfaceMock:
         return {
             "position": position,
             "velocity": velocity,
-            "raw_counts": int(position * self.resolution / (2 * 3.14159))
+            "raw_counts": int(position * self.resolution / (2 * 3.14159)),
         }
 
     def _generate_current_reading(self) -> Dict[str, Any]:
@@ -330,17 +343,14 @@ class SensorInterfaceMock:
         return {
             "current": current,
             "voltage_drop": voltage,
-            "power": current * 24.0  # Assuming 24V system
+            "power": current * 24.0,  # Assuming 24V system
         }
 
     def _generate_temperature_reading(self) -> Dict[str, Any]:
         """Generate temperature sensor reading."""
         temperature = random.gauss(35.0, self.noise_std)  # Typical operating temp
 
-        return {
-            "temperature": temperature,
-            "temperature_f": temperature * 9/5 + 32
-        }
+        return {"temperature": temperature, "temperature_f": temperature * 9 / 5 + 32}
 
 
 class CANBusMockSimulator:
@@ -362,11 +372,19 @@ class CANBusMockSimulator:
 
         # Initialize motor controllers (6 wheels)
         self.motor_controllers = {}
-        wheel_names = ["front_left", "front_right", "middle_left",
-                      "middle_right", "rear_left", "rear_right"]
+        wheel_names = [
+            "front_left",
+            "front_right",
+            "middle_left",
+            "middle_right",
+            "rear_left",
+            "rear_right",
+        ]
 
         for i, name in enumerate(wheel_names):
-            self.motor_controllers[name] = MotorControllerMock(node_id=i+1, motor_name=name)
+            self.motor_controllers[name] = MotorControllerMock(
+                node_id=i + 1, motor_name=name
+            )
 
         # Initialize arm controllers (4 joints)
         self.arm_controllers = {}
@@ -374,30 +392,42 @@ class CANBusMockSimulator:
 
         for i, joint in enumerate(arm_joints):
             node_id = i + 10  # Different node IDs
-            self.arm_controllers[joint] = MotorControllerMock(node_id=node_id, motor_name=f"arm_{joint}")
+            self.arm_controllers[joint] = MotorControllerMock(
+                node_id=node_id, motor_name=f"arm_{joint}"
+            )
 
         # Initialize sensors
         self.sensors = {}
 
         # IMU sensors
         for i in range(2):  # Primary and backup IMU
-            self.sensors[f"imu_{i}"] = SensorInterfaceMock(node_id=20+i, sensor_type="imu")
+            self.sensors[f"imu_{i}"] = SensorInterfaceMock(
+                node_id=20 + i, sensor_type="imu"
+            )
 
         # GPS sensors
         for i in range(2):  # Primary and backup GPS
-            self.sensors[f"gps_{i}"] = SensorInterfaceMock(node_id=30+i, sensor_type="gps")
+            self.sensors[f"gps_{i}"] = SensorInterfaceMock(
+                node_id=30 + i, sensor_type="gps"
+            )
 
         # Wheel encoders (one per wheel)
         for i, wheel in enumerate(wheel_names):
-            self.sensors[f"encoder_{wheel}"] = SensorInterfaceMock(node_id=40+i, sensor_type="encoder")
+            self.sensors[f"encoder_{wheel}"] = SensorInterfaceMock(
+                node_id=40 + i, sensor_type="encoder"
+            )
 
         # Current sensors
         for i, motor in enumerate(wheel_names):
-            self.sensors[f"current_{motor}"] = SensorInterfaceMock(node_id=50+i, sensor_type="current")
+            self.sensors[f"current_{motor}"] = SensorInterfaceMock(
+                node_id=50 + i, sensor_type="current"
+            )
 
         # Temperature sensors
         for i, motor in enumerate(wheel_names + arm_joints):
-            self.sensors[f"temp_{motor}"] = SensorInterfaceMock(node_id=60+i, sensor_type="temperature")
+            self.sensors[f"temp_{motor}"] = SensorInterfaceMock(
+                node_id=60 + i, sensor_type="temperature"
+            )
 
         # CAN bus state
         self.bus_load = 0.0  # Percentage bus utilization
@@ -410,7 +440,9 @@ class CANBusMockSimulator:
 
         self.logger.info("🚍 MOCK CAN Bus Simulator initialized with full rover network")
 
-    def get_mock_reading(self, sensor_type: str, sensor_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_mock_reading(
+        self, sensor_type: str, sensor_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Get mock sensor reading.
 
@@ -492,12 +524,14 @@ class CANBusMockSimulator:
                 self._update_bus_load()
 
                 # Add to message queue for tracking
-                self.message_queue.append({
-                    "type": "motor_command",
-                    "motor": motor_name,
-                    "velocity": velocity,
-                    "timestamp": time.time()
-                })
+                self.message_queue.append(
+                    {
+                        "type": "motor_command",
+                        "motor": motor_name,
+                        "velocity": velocity,
+                        "timestamp": time.time(),
+                    }
+                )
 
                 # Keep queue size reasonable
                 if len(self.message_queue) > 100:
@@ -538,7 +572,7 @@ class CANBusMockSimulator:
             "arm_controllers": len(self.arm_controllers),
             "sensors": len(self.sensors),
             "mock": True,
-            "simulated": True
+            "simulated": True,
         }
 
     def _update_bus_load(self):
@@ -547,8 +581,13 @@ class CANBusMockSimulator:
         current_time = time.time()
         time_window = 1.0  # 1 second window
 
-        recent_messages = [msg for msg in self.message_queue
-                          if current_time - msg["timestamp"] < time_window]
+        recent_messages = [
+            msg
+            for msg in self.message_queue
+            if current_time - msg["timestamp"] < time_window
+        ]
 
         # Estimate bus load (rough calculation)
-        self.bus_load = min(100.0, len(recent_messages) * 2.0)  # Max ~50 messages/sec = 100% load
+        self.bus_load = min(
+            100.0, len(recent_messages) * 2.0
+        )  # Max ~50 messages/sec = 100% load

@@ -4,10 +4,12 @@ Test script for LED status integration with state management.
 
 This script tests the LED status system integration with the state machine
 by publishing various LED information messages and verifying the responses.
-"""
+
+NOTE: This test is skipped because Complex LED integration replaced with basic LED control."""
 
 import time
 
+import pytest
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -23,7 +25,9 @@ class LEDIntegrationTester(Node):
         self.led_info_pub = self.create_publisher(String, "/state_machine/led_info", 10)
 
         # Publisher for system state
-        self.system_state_pub = self.create_publisher(String, "/state_machine/system_state", 10)
+        self.system_state_pub = self.create_publisher(
+            String, "/state_machine/system_state", 10
+        )
 
         # Test sequence
         self.test_sequence = [

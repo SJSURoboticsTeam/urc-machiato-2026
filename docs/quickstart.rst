@@ -34,7 +34,7 @@ Installation
 
    .. code-block:: bash
 
-      cd Autonomy/ros2_ws
+      cd autonomy/ros2_ws
       colcon build
 
 First Run

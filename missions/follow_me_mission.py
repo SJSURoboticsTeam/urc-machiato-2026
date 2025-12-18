@@ -517,7 +517,10 @@ class FollowMeMission(Node):
             self.cmd_vel_pub.publish(stop_cmd)
 
             # Try to recover for a short time, then stop mission
-            if self.last_detection_time and time.time() - self.last_detection_time > self.lost_timeout * 3:
+            if (
+                self.last_detection_time
+                and time.time() - self.last_detection_time > self.lost_timeout * 3
+            ):
                 self.state = FollowMeState.STOPPED
                 self.get_logger().error("Target lost for too long, stopping mission")
 

@@ -164,11 +164,12 @@ Daily Development Cycle
 
    .. code-block:: bash
 
-      # Python tests
-      python -m pytest
+   # Complete testing pyramid
+   python3 test_everything.py
 
-      # ROS2 tests
-      colcon test
+   # Individual test suites
+   python3 tests/run_tests.py --unit
+   python3 tests/run_tests.py --integration
 
 4. **Start Development**
 

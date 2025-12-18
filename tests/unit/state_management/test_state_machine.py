@@ -11,7 +11,9 @@ import sys
 import pytest
 
 # Add the state machine to path
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 STATE_MGMT_ROOT = os.path.join(PROJECT_ROOT, "Autonomy", "code", "state_management")
 sys.path.insert(0, STATE_MGMT_ROOT)
 sys.path.insert(0, os.path.join(STATE_MGMT_ROOT, "autonomy_state_machine"))
@@ -31,7 +33,9 @@ try:
     )
     from autonomy_state_machine.transition_validator import TransitionValidator
 except ImportError:
-    pytest.skip("autonomy_state_machine package not importable", allow_module_level=True)
+    pytest.skip(
+        "autonomy_state_machine package not importable", allow_module_level=True
+    )
 
 
 @pytest.mark.unit
@@ -104,7 +108,9 @@ class TestStates:
 
     def test_required_subsystems_autonomous_navigation(self):
         """Test required subsystems for autonomous navigation mission."""
-        subsystems = get_required_subsystems(SystemState.AUTONOMOUS, AutonomousSubstate.AUTONOMOUS_NAVIGATION)
+        subsystems = get_required_subsystems(
+            SystemState.AUTONOMOUS, AutonomousSubstate.AUTONOMOUS_NAVIGATION
+        )
         assert "navigation" in subsystems
         assert "computer_vision" in subsystems
 
@@ -123,13 +129,17 @@ class TestTransitionValidator:
         validator = TransitionValidator()
 
         # Without boot complete
-        is_valid, message, failed = validator.validate_transition(SystemState.BOOT, SystemState.IDLE)
+        is_valid, message, failed = validator.validate_transition(
+            SystemState.BOOT, SystemState.IDLE
+        )
         assert is_valid is False
         assert "boot_complete" in failed
 
         # With boot complete
         validator.set_boot_complete(True)
-        is_valid, message, failed = validator.validate_transition(SystemState.BOOT, SystemState.IDLE)
+        is_valid, message, failed = validator.validate_transition(
+            SystemState.BOOT, SystemState.IDLE
+        )
         assert is_valid is True
         assert len(failed) == 0
 
@@ -141,13 +151,17 @@ class TestTransitionValidator:
         validator.update_active_subsystems(["navigation", "computer_vision", "slam"])
 
         # Without calibration
-        is_valid, message, failed = validator.validate_transition(SystemState.IDLE, SystemState.AUTONOMOUS)
+        is_valid, message, failed = validator.validate_transition(
+            SystemState.IDLE, SystemState.AUTONOMOUS
+        )
         assert is_valid is False
         assert "calibration_required" in failed or "calibration_complete" in failed
 
         # With calibration
         validator.set_calibration_complete(True)
-        is_valid, message, failed = validator.validate_transition(SystemState.IDLE, SystemState.AUTONOMOUS)
+        is_valid, message, failed = validator.validate_transition(
+            SystemState.IDLE, SystemState.AUTONOMOUS
+        )
         assert is_valid is True
 
     def test_force_transition_skips_validation(self):
@@ -155,7 +169,9 @@ class TestTransitionValidator:
         validator = TransitionValidator()
 
         # Force transition without meeting requirements
-        is_valid, message, failed = validator.validate_transition(SystemState.BOOT, SystemState.AUTONOMOUS, force=True)
+        is_valid, message, failed = validator.validate_transition(
+            SystemState.BOOT, SystemState.AUTONOMOUS, force=True
+        )
         assert is_valid is True
         assert len(failed) == 0
 
@@ -238,8 +254,12 @@ class TestSafetyManager:
         """Test getting highest severity level."""
         manager = SafetyManager()
 
-        manager.trigger_safety(SafetyTriggerType.THERMAL_WARNING, SafetySeverity.WARNING, "Temp high")
-        manager.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.EMERGENCY, "Battery low")
+        manager.trigger_safety(
+            SafetyTriggerType.THERMAL_WARNING, SafetySeverity.WARNING, "Temp high"
+        )
+        manager.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.EMERGENCY, "Battery low"
+        )
 
         highest = manager.get_highest_severity()
         assert highest == SafetySeverity.EMERGENCY
@@ -320,7 +340,9 @@ class TestSafetyManager:
         status = manager.get_safety_status()
         assert status["is_safe"] is True
 
-        manager.trigger_safety(SafetyTriggerType.SENSOR_FAILURE, SafetySeverity.CRITICAL, "Sensor failed")
+        manager.trigger_safety(
+            SafetyTriggerType.SENSOR_FAILURE, SafetySeverity.CRITICAL, "Sensor failed"
+        )
 
         status = manager.get_safety_status()
         assert status["is_safe"] is False

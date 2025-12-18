@@ -1,0 +1,160 @@
+@startuml Mission Behavior Hierarchy
+title Mission Behavior Class Diagram
+
+abstract class MissionBehavior {
+    {abstract} +execute(params: Dict[str, Any]) -> MissionResult
+    {abstract} +validate_requirements() -> bool
+    {abstract} +get_timeout() -> float
+    {abstract} +cleanup() -> None
+    {abstract} +get_status() -> MissionStatus
+    #_setup_resources() -> None
+    #_execute_core_logic(params: Dict) -> Any
+    #_handle_errors(error: Exception) -> MissionResult
+    #_validate_parameters(params: Dict) -> bool
+    -_logger: Logger
+    -_node: rclpy.node.Node
+    -_start_time: datetime
+    -_mission_id: str
+}
+
+class WaypointNavigation {
+    -waypoint_tolerance: float = 1.0
+    -heading_tolerance: float = 5.0
+    -navigation_timeout: float = 300.0
+    -max_waypoints: int = 50
+    +execute(waypoints: List[Dict[str, float]]) -> NavigationResult
+    +get_remaining_waypoints() -> List[Dict]
+    +get_current_target() -> Dict[str, float]
+    -_calculate_heading_error() -> float
+    -_is_waypoint_reached(pose: Pose) -> bool
+}
+
+class ObjectDetection {
+    -detection_timeout: float = 60.0
+    -approach_distance: float = 0.5
+    -confidence_threshold: float = 0.8
+    -max_search_time: float = 300.0
+    +execute(target_type: str, target_id: str = None) -> DetectionResult
+    +get_detection_confidence() -> float
+    +is_target_visible() -> bool
+    -_search_for_target() -> VisionDetection
+    -_approach_target(detection: VisionDetection) -> bool
+}
+
+class FollowMeBehavior {
+    -max_distance: float = 3.0
+    -min_distance: float = 1.0
+    -tracking_timeout: float = 30.0
+    -aruco_dictionary: str = "DICT_4X4_50"
+    -marker_id: int
+    +execute(target_id: str) -> TrackingResult
+    +get_target_distance() -> float
+    +get_target_bearing() -> float
+    +is_target_lost() -> bool
+    -_detect_aruco_marker() -> ArucoDetection
+    -_calculate_relative_pose(marker: ArucoDetection) -> Pose
+}
+
+class DeliveryMission {
+    -pickup_location: PoseStamped
+    -delivery_location: PoseStamped
+    -payload_verification: bool = True
+    -approach_tolerance: float = 0.2
+    +execute(payload_type: str) -> DeliveryResult
+    +verify_payload_pickup() -> bool
+    +verify_payload_delivery() -> bool
+    +get_mission_phase() -> DeliveryPhase
+    -_navigate_to_location(location: PoseStamped) -> bool
+    -_perform_pickup_operation() -> bool
+    -_perform_delivery_operation() -> bool
+}
+
+class SampleCollection {
+    -collection_site: PoseStamped
+    -sample_types: List[str]
+    -max_samples: int = 5
+    -collection_timeout: float = 120.0
+    +execute(site_id: str) -> CollectionResult
+    +get_sample_count() -> int
+    +is_collection_complete() -> bool
+    +get_next_sample_location() -> PoseStamped
+    -_identify_sample(sample_type: str) -> bool
+    -_collect_sample(sample_type: str) -> bool
+    -_validate_sample(sample_type: str) -> bool
+}
+
+class AutonomousKeyboardTyping {
+    -keyboard_search_timeout: float = 60.0
+    -navigation_timeout: float = 120.0
+    -positioning_timeout: float = 30.0
+    -typing_timeout: float = 60.0
+    -approach_distance: float = 0.5
+    -typing_sequence: str = "URC2026"
+    +execute(keyboard_type: str) -> TypingResult
+    +get_keyboard_location() -> PoseStamped
+    +is_keyboard_visible() -> bool
+    +get_typing_progress() -> str
+    -_search_keyboard() -> VisionDetection
+    -_approach_keyboard() -> bool
+    -_perform_typing() -> bool
+}
+
+MissionBehavior <|-- WaypointNavigation : extends
+MissionBehavior <|-- ObjectDetection : extends
+MissionBehavior <|-- FollowMeBehavior : extends
+MissionBehavior <|-- DeliveryMission : extends
+MissionBehavior <|-- SampleCollection : extends
+MissionBehavior <|-- AutonomousKeyboardTyping : extends
+
+class MissionResult {
+    +success: bool
+    +mission_id: str
+    +execution_time: float
+    +error_message: str
+    +data: Dict[str, Any]
+}
+
+class NavigationResult {
+    +waypoints_completed: int
+    +total_waypoints: int
+    +final_pose: PoseStamped
+    +path_deviation: float
+}
+
+class DetectionResult {
+    +target_found: bool
+    +target_pose: PoseStamped
+    +detection_confidence: float
+    +detection_time: datetime
+}
+
+class TrackingResult {
+    +target_lost: bool
+    +distance_maintained: bool
+    +tracking_duration: float
+    +average_distance: float
+}
+
+MissionBehavior ..> MissionResult : returns
+WaypointNavigation ..> NavigationResult : returns
+ObjectDetection ..> DetectionResult : returns
+FollowMeBehavior ..> TrackingResult : returns
+
+note as N6
+  **Design Patterns:**
+  - Template Method: MissionBehavior.execute()
+  - Strategy: Different mission implementations
+  - Observer: Status reporting
+  - Factory: Mission creation
+
+  **Error Handling:**
+  - Timeout management
+  - Safety validation
+  - Recovery strategies
+  - Graceful degradation
+
+  **Created:** 2024-12-16
+  **Source:** missions/mission_behaviors.py, missions/*.py
+  **Stakeholders:** Mission Team, Autonomy Team
+end note
+@enduml

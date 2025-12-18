@@ -77,8 +77,9 @@ class SimulationManager:
         Returns:
             bool: True if initialization successful
         """
-        with self.tracer.trace_context("simulation_initialization",
-                                      config_keys=list(config.keys())):
+        with self.tracer.trace_context(
+            "simulation_initialization", config_keys=list(config.keys())
+        ):
             try:
                 self.logger.info("Initializing enhanced simulation framework v2.0...")
                 self.config = config
@@ -90,7 +91,7 @@ class SimulationManager:
                         log_level=logging_config.get("level", "INFO"),
                         log_file=logging_config.get("file", "simulation.log"),
                         enable_structured=logging_config.get("structured", True),
-                        enable_json=logging_config.get("json_format", False)
+                        enable_json=logging_config.get("json_format", False),
                     )
 
                 # Validate configuration
@@ -108,8 +109,9 @@ class SimulationManager:
                 # Create environment
                 env_config = config.get("environment", {})
                 self.environment = EnvironmentFactory.create(env_config)
-                self.logger.info("Environment initialized",
-                               tier=env_config.get('tier', 'default'))
+                self.logger.info(
+                    "Environment initialized", tier=env_config.get("tier", "default")
+                )
 
                 # Create sensors
                 sensor_configs = config.get("sensors", [])
@@ -118,21 +120,26 @@ class SimulationManager:
                     sensor_type = sensor_config["type"]
                     sensor = SensorFactory.create(sensor_type, sensor_config)
                     self.sensors[sensor_name] = sensor
-                    self.logger.info("Sensor initialized",
-                                   sensor_name=sensor_name,
-                                   sensor_type=sensor_type)
+                    self.logger.info(
+                        "Sensor initialized",
+                        sensor_name=sensor_name,
+                        sensor_type=sensor_type,
+                    )
 
                 # Create network
                 network_config = config.get("network", {})
                 self.network = NetworkFactory.create(network_config)
-                self.logger.info("Network initialized",
-                               profile=network_config.get('profile', 'default'))
+                self.logger.info(
+                    "Network initialized",
+                    profile=network_config.get("profile", "default"),
+                )
 
                 # Create rover
                 rover_config = config.get("rover", {})
                 self.rover = RoverFactory.create(rover_config)
-                self.logger.info("Rover initialized",
-                               model=rover_config.get('model', 'default'))
+                self.logger.info(
+                    "Rover initialized", model=rover_config.get("model", "default")
+                )
 
                 # Initialize time manager
                 time_config = config.get("time", {})
@@ -151,15 +158,19 @@ class SimulationManager:
 
                 # Mark as initialized
                 self.is_initialized = True
-                self.logger.info("Enhanced simulation framework initialized successfully",
-                               features=self.simulation_metadata["features"])
+                self.logger.info(
+                    "Enhanced simulation framework initialized successfully",
+                    features=self.simulation_metadata["features"],
+                )
 
                 return True
 
             except Exception as e:
-                self.logger.error("Simulation initialization failed",
-                                error=str(e),
-                                config_keys=list(config.keys()))
+                self.logger.error(
+                    "Simulation initialization failed",
+                    error=str(e),
+                    config_keys=list(config.keys()),
+                )
                 return False
 
     def start(self) -> bool:
@@ -234,9 +245,9 @@ class SimulationManager:
         step_start = time.time()
         self._last_step_time = step_start
 
-        with self.tracer.trace_context("simulation_step",
-                                     step_count=self.step_count,
-                                     dt=dt) as span:
+        with self.tracer.trace_context(
+            "simulation_step", step_count=self.step_count, dt=dt
+        ) as span:
             try:
                 # Update time
                 self.time_manager.step(dt)
@@ -248,9 +259,9 @@ class SimulationManager:
                 # Update sensors with environment
                 sensor_data = {}
                 for name, sensor in self.sensors.items():
-                    with self.tracer.trace_context(f"sensor_step_{name}",
-                                                 sensor_name=name,
-                                                 dt=dt):
+                    with self.tracer.trace_context(
+                        f"sensor_step_{name}", sensor_name=name, dt=dt
+                    ):
                         data = sensor.step(dt, env_state)
                         sensor_data[name] = data
 
@@ -260,7 +271,9 @@ class SimulationManager:
 
                 # Process network conditions
                 with self.tracer.trace_context("network_step"):
-                    network_state = self.network.process_messages() if self.network else {}
+                    network_state = (
+                        self.network.process_messages() if self.network else {}
+                    )
 
                 # Combine all state
                 simulation_state = {
@@ -283,7 +296,7 @@ class SimulationManager:
                     self.step_count,
                     self.time_manager.current_time,
                     step_duration=step_duration,
-                    sensor_count=len(sensor_data)
+                    sensor_count=len(sensor_data),
                 )
 
                 self.step_count += 1
@@ -296,9 +309,9 @@ class SimulationManager:
                 return simulation_state
 
             except Exception as e:
-                self.logger.error("Simulation step failed",
-                                step_count=self.step_count,
-                                error=str(e))
+                self.logger.error(
+                    "Simulation step failed", step_count=self.step_count, error=str(e)
+                )
                 raise
 
     def reset(self) -> bool:
@@ -344,7 +357,9 @@ class SimulationManager:
             "step_count": self.step_count,
             "current_time": self.time_manager.current_time,
             "environment": self.environment.get_state() if self.environment else {},
-            "sensors": {name: sensor.get_state() for name, sensor in self.sensors.items()},
+            "sensors": {
+                name: sensor.get_state() for name, sensor in self.sensors.items()
+            },
             "rover": self.rover.get_state() if self.rover else {},
             "network": self.network.get_state() if self.network else {},
             "metadata": self.simulation_metadata,
@@ -364,6 +379,7 @@ class SimulationManager:
             filepath = Path(filename)
 
             import json
+
             with open(filepath, "w") as f:
                 json.dump(state, f, indent=2, default=str)
 
@@ -387,6 +403,7 @@ class SimulationManager:
             filepath = Path(filename)
 
             import json
+
             with open(filepath, "r") as f:
                 state = json.load(f)
 
@@ -418,15 +435,15 @@ class SimulationManager:
         }
 
         # Add monitoring statistics
-        if hasattr(self.monitor, 'get_performance_report'):
+        if hasattr(self.monitor, "get_performance_report"):
             base_stats["monitoring"] = self.monitor.get_performance_report()
 
         # Add tracing statistics
-        if hasattr(self.tracer, 'get_performance_report'):
+        if hasattr(self.tracer, "get_performance_report"):
             base_stats["tracing"] = self.tracer.get_performance_report()
 
         # Add RL statistics if using RL recorder
-        if hasattr(self.data_recorder, 'get_rl_statistics'):
+        if hasattr(self.data_recorder, "get_rl_statistics"):
             base_stats["rl_training"] = self.data_recorder.get_rl_statistics()
 
         return base_stats
@@ -467,7 +484,11 @@ class SimulationManager:
             return False
 
         for sensor in sensors:
-            if not isinstance(sensor, dict) or "name" not in sensor or "type" not in sensor:
+            if (
+                not isinstance(sensor, dict)
+                or "name" not in sensor
+                or "type" not in sensor
+            ):
                 self.logger.error("Each sensor must have 'name' and 'type' fields")
                 return False
 

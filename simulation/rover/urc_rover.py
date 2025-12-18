@@ -59,7 +59,9 @@ class URCRover(BaseRover):
         # Initialize wheel positions (simplified)
         self._initialize_wheel_positions()
 
-    def _kinematics_step(self, dt: float, control_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _kinematics_step(
+        self, dt: float, control_inputs: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute differential drive kinematics step.
 
         Args:
@@ -75,7 +77,9 @@ class URCRover(BaseRover):
 
         # Apply velocity limits
         linear_cmd = np.clip(linear_cmd, -self.max_velocity, self.max_velocity)
-        angular_cmd = np.clip(angular_cmd, -self.max_angular_velocity, self.max_angular_velocity)
+        angular_cmd = np.clip(
+            angular_cmd, -self.max_angular_velocity, self.max_angular_velocity
+        )
 
         # Differential drive kinematics
         # Left and right wheel velocities
@@ -110,8 +114,12 @@ class URCRover(BaseRover):
             # (accounting for slip and terrain effects - applied in dynamics)
 
         # Calculate rover velocity (simplified - assumes no slip initially)
-        rover_linear_velocity = (self.wheel_velocities[:3].mean() + self.wheel_velocities[3:].mean()) / 2
-        rover_angular_velocity = (self.wheel_velocities[:3].mean() - self.wheel_velocities[3:].mean()) / self.track_width
+        rover_linear_velocity = (
+            self.wheel_velocities[:3].mean() + self.wheel_velocities[3:].mean()
+        ) / 2
+        rover_angular_velocity = (
+            self.wheel_velocities[:3].mean() - self.wheel_velocities[3:].mean()
+        ) / self.track_width
 
         # Update position and orientation
         self.orientation[2] += rover_angular_velocity * dt  # Yaw update
@@ -158,14 +166,18 @@ class URCRover(BaseRover):
             max_torque = self.motor_max_torque * terrain_traction
 
             # Torque decreases with speed (simplified motor curve)
-            speed_ratio = abs(commanded_velocity) / (self.motor_max_rpm * 2 * np.pi * self.wheel_radius / 60)
+            speed_ratio = abs(commanded_velocity) / (
+                self.motor_max_rpm * 2 * np.pi * self.wheel_radius / 60
+            )
             available_torque = max_torque * max(0, 1 - speed_ratio)
 
             self.wheel_torques[i] = available_torque
 
             # Calculate wheel slip
             # Simplified: slip increases with low traction and high torque
-            slip_factor = (1 - terrain_traction) + (available_torque / self.motor_max_torque) * 0.3
+            slip_factor = (1 - terrain_traction) + (
+                available_torque / self.motor_max_torque
+            ) * 0.3
             self.wheel_slip_ratios[i] = min(1.0, slip_factor)
 
             # Apply slip to effective velocity
@@ -217,10 +229,12 @@ class URCRover(BaseRover):
         # Update velocities
         self.velocity[0] += acceleration_x * dt
         self.velocity[1] += acceleration_y * dt
-        self.angular_velocity[2] += (total_torque_z / (self.mass * self.wheelbase / 2)) * dt
+        self.angular_velocity[2] += (
+            total_torque_z / (self.mass * self.wheelbase / 2)
+        ) * dt
 
         # Apply velocity limits
-        speed = np.sqrt(self.velocity[0]**2 + self.velocity[1]**2)
+        speed = np.sqrt(self.velocity[0] ** 2 + self.velocity[1] ** 2)
         if speed > self.max_velocity:
             self.velocity[0] *= self.max_velocity / speed
             self.velocity[1] *= self.max_velocity / speed
@@ -240,14 +254,38 @@ class URCRover(BaseRover):
     def _initialize_wheel_positions(self):
         """Initialize wheel positions for 6-wheel rover."""
         # Front axle
-        self.wheel_positions[0] = [-self.wheelbase/2, self.track_width/2, -self.wheel_radius]  # Front left
-        self.wheel_positions[1] = [-self.wheelbase/2, 0, -self.wheel_radius]  # Front center
-        self.wheel_positions[2] = [-self.wheelbase/2, -self.track_width/2, -self.wheel_radius]  # Front right
+        self.wheel_positions[0] = [
+            -self.wheelbase / 2,
+            self.track_width / 2,
+            -self.wheel_radius,
+        ]  # Front left
+        self.wheel_positions[1] = [
+            -self.wheelbase / 2,
+            0,
+            -self.wheel_radius,
+        ]  # Front center
+        self.wheel_positions[2] = [
+            -self.wheelbase / 2,
+            -self.track_width / 2,
+            -self.wheel_radius,
+        ]  # Front right
 
         # Rear axle
-        self.wheel_positions[3] = [self.wheelbase/2, self.track_width/2, -self.wheel_radius]  # Rear left
-        self.wheel_positions[4] = [self.wheelbase/2, 0, -self.wheel_radius]  # Rear center
-        self.wheel_positions[5] = [self.wheelbase/2, -self.track_width/2, -self.wheel_radius]  # Rear right
+        self.wheel_positions[3] = [
+            self.wheelbase / 2,
+            self.track_width / 2,
+            -self.wheel_radius,
+        ]  # Rear left
+        self.wheel_positions[4] = [
+            self.wheelbase / 2,
+            0,
+            -self.wheel_radius,
+        ]  # Rear center
+        self.wheel_positions[5] = [
+            self.wheelbase / 2,
+            -self.track_width / 2,
+            -self.wheel_radius,
+        ]  # Rear right
 
     def _get_wheel_angle(self, wheel_index: int) -> float:
         """Get wheel steering angle.
@@ -287,16 +325,24 @@ class URCRover(BaseRover):
         urc_metrics = {
             "wheel_slip_average": np.mean(self.wheel_slip_ratios),
             "wheel_slip_max": np.max(self.wheel_slip_ratios),
-            "motor_utilization": np.mean(self.motor_currents) / (self.motor_max_torque * self.gear_ratio),
+            "motor_utilization": np.mean(self.motor_currents)
+            / (self.motor_max_torque * self.gear_ratio),
             "thermal_margin": 100 - max(self.motor_temperatures),  # °C margin to limit
             "battery_range_estimate_km": (
-                self.battery_percentage / 100 * 500 * self.friction_coefficient /
-                max(0.001, base_metrics["efficiency_wh_per_km"])
-            ) if base_metrics["efficiency_wh_per_km"] > 0 else 0,
+                self.battery_percentage
+                / 100
+                * 500
+                * self.friction_coefficient
+                / max(0.001, base_metrics["efficiency_wh_per_km"])
+            )
+            if base_metrics["efficiency_wh_per_km"] > 0
+            else 0,
             "terrain_capability_score": (
-                self.ground_clearance * 10 +  # cm to score
-                (1 - np.mean(self.wheel_slip_ratios)) * 50 +  # traction score
-                min(50, self.suspension_travel * 1000)  # suspension score
+                self.ground_clearance * 10
+                + (1 - np.mean(self.wheel_slip_ratios)) * 50  # cm to score
+                + min(  # traction score
+                    50, self.suspension_travel * 1000
+                )  # suspension score
             ),
         }
 

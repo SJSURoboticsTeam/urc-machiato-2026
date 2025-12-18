@@ -66,14 +66,16 @@ class LatencySubscriber(Node):
 
 def run_latency_test(topic_name: str, use_intra_process: bool, num_messages: int = 100):
     """Run a latency test for given configuration."""
-    print(f"Testing {'Intra' if use_intra_process else 'Inter'}-Process Communication...")
+    print(
+        f"Testing {'Intra' if use_intra_process else 'Inter'}-Process Communication..."
+    )
 
     # Configure QoS
-    durability = DurabilityPolicy.VOLATILE if use_intra_process else DurabilityPolicy.VOLATILE
+    durability = (
+        DurabilityPolicy.VOLATILE if use_intra_process else DurabilityPolicy.VOLATILE
+    )
     qos = QoSProfile(
-        reliability=ReliabilityPolicy.RELIABLE,
-        durability=durability,
-        depth=10
+        reliability=ReliabilityPolicy.RELIABLE, durability=durability, depth=10
     )
 
     # Initialize ROS2
@@ -103,7 +105,10 @@ def run_latency_test(topic_name: str, use_intra_process: bool, num_messages: int
     # Wait for all messages to be received
     timeout = 5.0
     start_wait = time.time()
-    while subscriber.get_message_count() < num_messages and (time.time() - start_wait) < timeout:
+    while (
+        subscriber.get_message_count() < num_messages
+        and (time.time() - start_wait) < timeout
+    ):
         time.sleep(0.1)
 
     # Get results
@@ -117,10 +122,10 @@ def run_latency_test(topic_name: str, use_intra_process: bool, num_messages: int
     rclpy.shutdown()
 
     return {
-        'messages_sent': num_messages,
-        'messages_received': messages_received,
-        'avg_latency_ms': avg_latency,
-        'success_rate': messages_received / num_messages * 100
+        "messages_sent": num_messages,
+        "messages_received": messages_received,
+        "avg_latency_ms": avg_latency,
+        "success_rate": messages_received / num_messages * 100,
     }
 
 
@@ -133,17 +138,21 @@ def main():
     num_messages = 50  # Smaller number for reliable testing
 
     # Run intra-process test
-    intra_topic = 'latency_test_intra'
+    intra_topic = "latency_test_intra"
     print("\n🔗 Testing INTRA-PROCESS communication...")
-    intra_results = run_latency_test(intra_topic, use_intra_process=True, num_messages=num_messages)
+    intra_results = run_latency_test(
+        intra_topic, use_intra_process=True, num_messages=num_messages
+    )
 
     # Small delay between tests
     time.sleep(1.0)
 
     # Run inter-process test
-    inter_topic = 'latency_test_inter'
+    inter_topic = "latency_test_inter"
     print("\n🌐 Testing INTER-PROCESS communication...")
-    inter_results = run_latency_test(inter_topic, use_intra_process=False, num_messages=num_messages)
+    inter_results = run_latency_test(
+        inter_topic, use_intra_process=False, num_messages=num_messages
+    )
 
     # Results
     print("\n📊 TEST RESULTS")
@@ -164,9 +173,13 @@ def main():
     # Performance comparison
     print("\n⚡ PERFORMANCE COMPARISON:")
 
-    if intra_results['avg_latency_ms'] > 0 and inter_results['avg_latency_ms'] > 0:
-        latency_reduction = inter_results['avg_latency_ms'] - intra_results['avg_latency_ms']
-        latency_improvement = (latency_reduction / inter_results['avg_latency_ms']) * 100
+    if intra_results["avg_latency_ms"] > 0 and inter_results["avg_latency_ms"] > 0:
+        latency_reduction = (
+            inter_results["avg_latency_ms"] - intra_results["avg_latency_ms"]
+        )
+        latency_improvement = (
+            latency_reduction / inter_results["avg_latency_ms"]
+        ) * 100
 
         print(".1f")
         print(".1f")
@@ -187,5 +200,5 @@ def main():
     print("\n✨ Test completed!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

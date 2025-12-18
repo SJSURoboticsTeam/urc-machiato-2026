@@ -15,7 +15,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class SampleType(Enum):
     """Types of samples that can be collected."""
+
     SOIL = "soil"
     ROCK = "rock"
     REGOLITH = "regolith"
@@ -33,6 +34,7 @@ class SampleType(Enum):
 
 class AnalysisType(Enum):
     """Types of analysis that can be performed."""
+
     SPECTROSCOPY = "spectroscopy"
     MICROSCOPY = "microscopy"
     CHROMATOGRAPHY = "chromatography"
@@ -43,18 +45,20 @@ class AnalysisType(Enum):
 @dataclass
 class Sample:
     """Represents a collected sample."""
+
     sample_id: str
     sample_type: SampleType
     collection_time: float
     location: Tuple[float, float, float]  # x, y, z coordinates
-    mass: float                           # grams
-    temperature: float                    # °C
+    mass: float  # grams
+    temperature: float  # °C
     metadata: Dict[str, Any]
 
 
 @dataclass
 class AnalysisResult:
     """Result of sample analysis."""
+
     analysis_id: str
     sample_id: str
     analysis_type: AnalysisType
@@ -98,57 +102,57 @@ class SciencePayloadSimulator:
             "instruments": {
                 "spectrometer": {
                     "wavelength_range": [350, 2500],  # nm
-                    "resolution": 10,                  # nm
-                    "analysis_time": 30.0,             # seconds
-                    "power_consumption": 25.0,         # Watts
-                    "operating_temp_range": [0, 40]    # °C
+                    "resolution": 10,  # nm
+                    "analysis_time": 30.0,  # seconds
+                    "power_consumption": 25.0,  # Watts
+                    "operating_temp_range": [0, 40],  # °C
                 },
                 "microscope": {
                     "magnification_range": [10, 1000],
-                    "resolution": 1.0,                 # microns
+                    "resolution": 1.0,  # microns
                     "analysis_time": 15.0,
                     "power_consumption": 15.0,
-                    "operating_temp_range": [-10, 50]
+                    "operating_temp_range": [-10, 50],
                 },
                 "chromatograph": {
-                    "separation_time": 120.0,          # seconds
-                    "detection_limit": 0.001,          # ppm
+                    "separation_time": 120.0,  # seconds
+                    "detection_limit": 0.001,  # ppm
                     "analysis_time": 180.0,
                     "power_consumption": 35.0,
-                    "operating_temp_range": [10, 35]
+                    "operating_temp_range": [10, 35],
                 },
                 "thermal_analyzer": {
-                    "temp_range": [-100, 1200],       # °C
-                    "heating_rate": 10.0,              # °C/min
+                    "temp_range": [-100, 1200],  # °C
+                    "heating_rate": 10.0,  # °C/min
                     "analysis_time": 300.0,
                     "power_consumption": 50.0,
-                    "operating_temp_range": [-20, 30]
-                }
+                    "operating_temp_range": [-20, 30],
+                },
             },
             "sample_collection": {
                 "drill": {
-                    "max_depth": 0.5,                  # meters
-                    "drill_speed": 0.01,               # m/s
-                    "power_consumption": 100.0,        # Watts
-                    "collection_time": 60.0            # seconds
+                    "max_depth": 0.5,  # meters
+                    "drill_speed": 0.01,  # m/s
+                    "power_consumption": 100.0,  # Watts
+                    "collection_time": 60.0,  # seconds
                 },
                 "scoop": {
-                    "volume": 0.001,                   # m³
+                    "volume": 0.001,  # m³
                     "power_consumption": 20.0,
-                    "collection_time": 10.0
+                    "collection_time": 10.0,
                 },
                 "grinder": {
-                    "particle_size": 100.0,            # microns
+                    "particle_size": 100.0,  # microns
                     "power_consumption": 30.0,
-                    "processing_time": 45.0
-                }
+                    "processing_time": 45.0,
+                },
             },
             "storage": {
-                "capacity": 20,                        # number of samples
-                "max_sample_mass": 100.0,              # grams per sample
+                "capacity": 20,  # number of samples
+                "max_sample_mass": 100.0,  # grams per sample
                 "temperature_control": True,
-                "power_consumption": 10.0              # Watts
-            }
+                "power_consumption": 10.0,  # Watts
+            },
         }
 
     def _load_configuration(self, config: Dict):
@@ -161,8 +165,8 @@ class SciencePayloadSimulator:
     def _initialize_state(self):
         """Initialize science payload state."""
         # Sample storage
-        self.samples = []                    # List of stored samples
-        self.storage_temperature = 20.0      # °C
+        self.samples = []  # List of stored samples
+        self.storage_temperature = 20.0  # °C
 
         # Active operations
         self.active_collection = None
@@ -179,7 +183,7 @@ class SciencePayloadSimulator:
                 "temperature": 25.0,
                 "last_calibration": time.time(),
                 "error_count": 0,
-                "power_consumption": 0.0
+                "power_consumption": 0.0,
             }
 
         # Power and health
@@ -192,9 +196,12 @@ class SciencePayloadSimulator:
         self.total_analyses_performed = 0
         self.last_update_time = time.time()
 
-    def collect_sample(self, sample_type: SampleType,
-                      location: Tuple[float, float, float],
-                      method: str = "drill") -> Optional[Sample]:
+    def collect_sample(
+        self,
+        sample_type: SampleType,
+        location: Tuple[float, float, float],
+        method: str = "drill",
+    ) -> Optional[Sample]:
         """
         Collect a sample using specified method.
 
@@ -223,7 +230,7 @@ class SciencePayloadSimulator:
             "method": method,
             "sample_type": sample_type,
             "location": location,
-            "start_time": time.time()
+            "start_time": time.time(),
         }
         self.collection_start_time = time.time()
 
@@ -248,8 +255,8 @@ class SciencePayloadSimulator:
             metadata={
                 "collection_method": method,
                 "terrain_type": "unknown",  # Would be determined by perception
-                "estimated_composition": self._estimate_composition(sample_type)
-            }
+                "estimated_composition": self._estimate_composition(sample_type),
+            },
         )
 
         # Store sample
@@ -267,7 +274,9 @@ class SciencePayloadSimulator:
         self.logger.info(f"📦 Collected {sample_type.value} sample: {sample_id}")
         return sample
 
-    def analyze_sample(self, sample_id: str, analysis_type: AnalysisType) -> Optional[AnalysisResult]:
+    def analyze_sample(
+        self, sample_id: str, analysis_type: AnalysisType
+    ) -> Optional[AnalysisResult]:
         """
         Analyze a stored sample.
 
@@ -306,7 +315,7 @@ class SciencePayloadSimulator:
         self.active_analysis = {
             "sample_id": sample_id,
             "analysis_type": analysis_type,
-            "start_time": time.time()
+            "start_time": time.time(),
         }
         self.analysis_start_time = time.time()
 
@@ -331,7 +340,7 @@ class SciencePayloadSimulator:
             timestamp=time.time(),
             results=results,
             confidence=np.random.uniform(0.7, 0.95),
-            processing_time=time.time() - self.analysis_start_time
+            processing_time=time.time() - self.analysis_start_time,
         )
 
         # Update power consumption
@@ -360,7 +369,7 @@ class SciencePayloadSimulator:
                 "mass": s.mass,
                 "temperature": s.temperature,
                 "location": s.location,
-                "metadata": s.metadata
+                "metadata": s.metadata,
             }
             for s in self.samples
         ]
@@ -375,7 +384,7 @@ class SciencePayloadSimulator:
                 "analysis_type": np.random.choice([t.value for t in AnalysisType]),
                 "timestamp": time.time() - np.random.uniform(0, 3600),
                 "confidence": np.random.uniform(0.7, 0.95),
-                "mock": True
+                "mock": True,
             }
             for i in range(min(self.total_analyses_performed, 10))
         ]
@@ -411,7 +420,7 @@ class SciencePayloadSimulator:
             "total_power_consumption": self.total_power_consumption,
             "faults": self.faults.copy(),
             "mock": True,
-            "simulated": True
+            "simulated": True,
         }
 
     def emergency_stop_payload(self) -> bool:
@@ -446,7 +455,9 @@ class SciencePayloadSimulator:
         for instrument_name, state in self.instrument_states.items():
             # Thermal model (simplified)
             ambient_temp = 25.0
-            power_heating = state["power_consumption"] * 0.1  # Temperature rise per Watt
+            power_heating = (
+                state["power_consumption"] * 0.1
+            )  # Temperature rise per Watt
             cooling = (state["temperature"] - ambient_temp) * 0.5
 
             state["temperature"] += (power_heating - cooling) * dt
@@ -485,39 +496,44 @@ class SciencePayloadSimulator:
                 "silicon_dioxide": np.random.uniform(40, 60),
                 "iron_oxide": np.random.uniform(5, 15),
                 "aluminum_oxide": np.random.uniform(10, 20),
-                "other": np.random.uniform(5, 25)
+                "other": np.random.uniform(5, 25),
             }
         elif sample_type == SampleType.ROCK:
             return {
                 "silicon_dioxide": np.random.uniform(50, 70),
                 "magnesium_oxide": np.random.uniform(5, 15),
                 "calcium_oxide": np.random.uniform(5, 10),
-                "other": np.random.uniform(5, 30)
+                "other": np.random.uniform(5, 30),
             }
         else:
             return {"unknown_composition": 100.0}
 
-    def _generate_analysis_results(self, sample: Sample, analysis_type: AnalysisType) -> Dict[str, Any]:
+    def _generate_analysis_results(
+        self, sample: Sample, analysis_type: AnalysisType
+    ) -> Dict[str, Any]:
         """Generate mock analysis results."""
         if analysis_type == AnalysisType.SPECTROSCOPY:
             # Mock spectral data
             wavelengths = np.linspace(350, 2500, 100)
-            intensities = np.random.normal(1000, 200, 100) + \
-                         self._add_spectral_features(sample.sample_type, wavelengths)
+            intensities = np.random.normal(
+                1000, 200, 100
+            ) + self._add_spectral_features(sample.sample_type, wavelengths)
             return {
                 "wavelengths": wavelengths.tolist(),
                 "intensities": intensities.tolist(),
                 "peaks_identified": ["SiO2", "Fe2O3", "Al2O3"],
-                "estimated_composition": sample.metadata["estimated_composition"]
+                "estimated_composition": sample.metadata["estimated_composition"],
             }
 
         elif analysis_type == AnalysisType.MICROSCOPY:
             # Mock microscopic analysis
             return {
                 "particle_sizes": np.random.normal(50, 10, 20).tolist(),
-                "morphology": np.random.choice(["spherical", "irregular", "crystalline"]),
+                "morphology": np.random.choice(
+                    ["spherical", "irregular", "crystalline"]
+                ),
                 "surface_features": ["cracks", "inclusions", "porosity"],
-                "magnification_used": np.random.randint(100, 500)
+                "magnification_used": np.random.randint(100, 500),
             }
 
         elif analysis_type == AnalysisType.CHROMATOGRAPHY:
@@ -526,7 +542,7 @@ class SciencePayloadSimulator:
                 "compounds_detected": ["CO2", "H2O", "CH4", "N2"],
                 "concentrations": np.random.exponential(10, 4).tolist(),
                 "retention_times": np.random.uniform(1, 10, 4).tolist(),
-                "detection_method": "mass_spectrometry"
+                "detection_method": "mass_spectrometry",
             }
 
         elif analysis_type == AnalysisType.THERMAL:
@@ -537,7 +553,7 @@ class SciencePayloadSimulator:
                 "temperatures": temperatures.tolist(),
                 "mass_loss": mass_loss.tolist(),
                 "decomposition_temps": [150, 250, 350],
-                "thermal_stability": "moderate"
+                "thermal_stability": "moderate",
             }
 
         elif analysis_type == AnalysisType.CHEMICAL:
@@ -546,23 +562,25 @@ class SciencePayloadSimulator:
                 "ph_level": np.random.uniform(6, 9),
                 "conductivity": np.random.uniform(10, 100),
                 "organic_content": np.random.uniform(0.1, 5.0),
-                "mineral_content": sample.metadata["estimated_composition"]
+                "mineral_content": sample.metadata["estimated_composition"],
             }
 
         else:
             return {"error": f"Unknown analysis type: {analysis_type}"}
 
-    def _add_spectral_features(self, sample_type: SampleType, wavelengths: np.ndarray) -> np.ndarray:
+    def _add_spectral_features(
+        self, sample_type: SampleType, wavelengths: np.ndarray
+    ) -> np.ndarray:
         """Add spectral features based on sample type."""
         features = np.zeros_like(wavelengths)
 
         if sample_type == SampleType.SOIL:
             # Add peaks for common soil minerals
-            features += 500 * np.exp(-((wavelengths - 1000) / 50) ** 2)  # SiO2 peak
-            features += 300 * np.exp(-((wavelengths - 800) / 40) ** 2)   # Fe2O3 peak
+            features += 500 * np.exp(-(((wavelengths - 1000) / 50) ** 2))  # SiO2 peak
+            features += 300 * np.exp(-(((wavelengths - 800) / 40) ** 2))  # Fe2O3 peak
         elif sample_type == SampleType.ROCK:
             # Add peaks for rock minerals
-            features += 600 * np.exp(-((wavelengths - 1100) / 60) ** 2)  # MgO peak
-            features += 400 * np.exp(-((wavelengths - 900) / 45) ** 2)   # CaO peak
+            features += 600 * np.exp(-(((wavelengths - 1100) / 60) ** 2))  # MgO peak
+            features += 400 * np.exp(-(((wavelengths - 900) / 45) ** 2))  # CaO peak
 
         return features

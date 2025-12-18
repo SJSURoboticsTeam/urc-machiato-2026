@@ -153,7 +153,9 @@ class SimulationTestReport:
             "total_tests": total,
             "hardware_validated": hw_validated,
             "simulation_only": total - hw_validated,
-            "hardware_coverage_percent": (hw_validated / total * 100) if total > 0 else 0,
+            "hardware_coverage_percent": (hw_validated / total * 100)
+            if total > 0
+            else 0,
             "ready_for_production": hw_validated >= total * 0.8,
             "status": self._determine_validation_status(hw_validated, total),
         }
@@ -377,7 +379,9 @@ class SimulationTestReport:
 
         for tier, data in tier_data.items():
             tier_class = tier_classes.get(tier.lower(), "")
-            pass_rate = (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+            pass_rate = (
+                (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+            )
 
             html += f"""
     <div class="tier-section {tier_class}">
@@ -392,7 +396,9 @@ class SimulationTestReport:
         html = "<div class='tier-section'>"
 
         for profile, data in network_data.items():
-            pass_rate = (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+            pass_rate = (
+                (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+            )
 
             html += f"""
         <p><strong>{profile.replace('_', ' ').title()}</strong>:
@@ -460,7 +466,9 @@ class SimulationTestReport:
 """
 
         for tier, data in report_data["by_environment_tier"].items():
-            pass_rate = (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+            pass_rate = (
+                (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+            )
             md += f"- **{tier.replace('_', ' ').title()}**: {data['passed']}/{data['total']} passed ({pass_rate:.1f}%)\n"
 
         md += "\n## ⚠️ Warnings\n\n"
@@ -480,12 +488,18 @@ class SimulationTestReport:
         print("\n" + "=" * 70)
 
         summary = report_data["summary"]
-        print(f"\n📊 Summary: {summary['passed']}/{summary['total_tests']} passed ({summary['pass_rate']:.1f}%)")
+        print(
+            f"\n📊 Summary: {summary['passed']}/{summary['total_tests']} passed ({summary['pass_rate']:.1f}%)"
+        )
 
         validation = report_data["validation_status"]
-        print(f"\n✅ Hardware Validation: {validation['hardware_validated']}/{validation['total_tests']} ")
+        print(
+            f"\n✅ Hardware Validation: {validation['hardware_validated']}/{validation['total_tests']} "
+        )
         print(f"   Status: {validation['status'].replace('_', ' ').title()}")
-        print(f"   Production Ready: {'✅ Yes' if validation['ready_for_production'] else '❌ No'}")
+        print(
+            f"   Production Ready: {'✅ Yes' if validation['ready_for_production'] else '❌ No'}"
+        )
 
         print("\n" + "=" * 70)
 

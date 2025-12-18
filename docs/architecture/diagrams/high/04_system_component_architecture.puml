@@ -1,0 +1,101 @@
+@startuml System Component Diagram
+title System Component Architecture
+
+package "User Interface Layer" as ui {
+    [Web Dashboard] as dashboard
+    [3D Visualization] as viz
+    [Configuration Tools] as config
+    [Real-time Monitoring] as monitoring
+}
+
+package "Autonomy Stack" as autonomy {
+    [State Machine] as state
+    [Navigation System] as nav
+    [Computer Vision] as cv
+    [SLAM System] as slam
+    [Calibration Manager] as calib
+    [Motion Controller] as motion
+}
+
+package "Perception Layer" as perception {
+    [Sensor Integration] as sensors
+    [Terrain Intelligence] as terrain
+    [Object Detection] as detection
+    [Feature Extraction] as features
+}
+
+package "Hardware Interfaces" as hardware {
+    [Motor Controllers] as motors
+    [Sensor Drivers] as drivers
+    [Communication Interfaces] as comm
+    [Power Management] as power
+}
+
+package "Mission System" as missions {
+    [Mission Executor] as executor
+    [Mission Behaviors] as behaviors
+    [Waypoint Navigation] as waypoints
+    [Sample Collection] as samples
+}
+
+package "External Systems" as external {
+    [Gazebo Simulation] as sim
+    [Mission Control] as control
+    [Telemetry Systems] as telemetry
+}
+
+' User Interface connections
+dashboard --> autonomy : mission_commands
+dashboard --> monitoring : status_requests
+viz --> autonomy : visualization_data
+config --> autonomy : configuration_updates
+
+' Autonomy Stack connections
+state --> nav : state_transitions
+state --> missions : mission_coordination
+nav --> motion : navigation_commands
+nav --> slam : localization_requests
+cv --> perception : vision_processing
+calib --> cv : calibration_data
+
+' Perception connections
+perception --> autonomy : processed_data
+terrain --> nav : terrain_maps
+detection --> missions : object_detections
+
+' Hardware connections
+hardware --> perception : raw_sensor_data
+autonomy --> hardware : control_commands
+motion --> motors : actuator_commands
+power --> hardware : power_monitoring
+
+' Mission connections
+missions --> autonomy : mission_status
+executor --> behaviors : mission_execution
+behaviors --> nav : navigation_goals
+
+' External connections
+autonomy --> sim : simulation_sync
+control --> autonomy : mission_parameters
+telemetry --> dashboard : rover_data
+
+note right of autonomy
+    **Layered Architecture:**
+    1. User Interface (HMI)
+    2. Autonomy Stack (Decision Making)
+    3. Perception (Sensor Processing)
+    4. Hardware Abstraction (Device Control)
+end note
+
+note as N4
+  **Key Interfaces:**
+  - ROS2 Topics: Asynchronous data streams
+  - ROS2 Services: Synchronous requests
+  - ROS2 Actions: Long-running tasks
+  - WebSocket: Real-time UI updates
+
+  **Created:** 2024-12-16
+  **Source:** src/autonomy/, missions/, src/frontend/
+  **Stakeholders:** System Architects, Integration Team
+end note
+@enduml

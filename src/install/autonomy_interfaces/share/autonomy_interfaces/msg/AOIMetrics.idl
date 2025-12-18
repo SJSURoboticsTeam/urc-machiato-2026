@@ -1,0 +1,132 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/AOIMetrics.msg
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "AOIMetrics.msg" "\n"
+      "Detailed AoI metrics for system monitoring and diagnostics")
+    struct AOIMetrics {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "System-wide AoI summary" "\n"
+        "Average AoI across all monitored components")
+      double system_average_aoi;
+
+      @verbatim (language="comment", text=
+        "Total number of sensors being monitored")
+      uint32 total_sensors;
+
+      @verbatim (language="comment", text=
+        "Number of sensors with fresh data")
+      uint32 fresh_sensors;
+
+      @verbatim (language="comment", text=
+        "Number of sensors with stale data")
+      uint32 stale_sensors;
+
+      @verbatim (language="comment", text=
+        "Number of sensors with critical AoI")
+      uint32 critical_sensors;
+
+      @verbatim (language="comment", text=
+        "AoI distribution (percentiles)" "\n"
+        "50th percentile AoI (median)")
+      double aoi_p50;
+
+      @verbatim (language="comment", text=
+        "90th percentile AoI")
+      double aoi_p90;
+
+      @verbatim (language="comment", text=
+        "95th percentile AoI")
+      double aoi_p95;
+
+      @verbatim (language="comment", text=
+        "99th percentile AoI")
+      double aoi_p99;
+
+      @verbatim (language="comment", text=
+        "System health indicators" "\n"
+        "Overall system AoI health")
+      boolean system_healthy;
+
+      @verbatim (language="comment", text=
+        "\"HEALTHY\", \"WARNING\", \"CRITICAL\"")
+      string health_status;
+
+      @verbatim (language="comment", text=
+        "0.0-1.0 overall health score")
+      double health_score;
+
+      @verbatim (language="comment", text=
+        "Performance metrics" "\n"
+        "Rate of AoI status updates")
+      double update_rate_hz;
+
+      @verbatim (language="comment", text=
+        "Number of updates dropped due to high load")
+      uint32 dropped_updates;
+
+      @verbatim (language="comment", text=
+        "Average processing latency (seconds)")
+      double processing_latency;
+
+      @verbatim (language="comment", text=
+        "Alert information" "\n"
+        "List of active AoI alerts")
+      sequence<string> active_alerts;
+
+      @verbatim (language="comment", text=
+        "Number of active alerts")
+      uint32 alert_count;
+
+      @verbatim (language="comment", text=
+        "Time of last alert")
+      builtin_interfaces::msg::Time last_alert_time;
+
+      @verbatim (language="comment", text=
+        "Network health metrics" "\n"
+        "Number of sensors using serial transport")
+      uint32 serial_sensors;
+
+      @verbatim (language="comment", text=
+        "Number of sensors using CAN transport")
+      uint32 can_sensors;
+
+      @verbatim (language="comment", text=
+        "Number of sensors using ethernet transport")
+      uint32 ethernet_sensors;
+
+      @verbatim (language="comment", text=
+        "Number of sensors using local transport")
+      uint32 local_sensors;
+
+      @verbatim (language="comment", text=
+        "Average network latency across all sensors")
+      double avg_network_latency;
+
+      @verbatim (language="comment", text=
+        "Maximum network latency observed")
+      double max_network_latency;
+
+      @verbatim (language="comment", text=
+        "Number of transport links with congestion")
+      uint32 congested_links;
+
+      @verbatim (language="comment", text=
+        "System recommendations" "\n"
+        "Recommendations for network optimization")
+      sequence<string> network_recommendations;
+
+      @verbatim (language="comment", text=
+        "0.0-1.0 network health score")
+      double network_health_score;
+    };
+  };
+};

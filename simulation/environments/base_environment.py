@@ -157,12 +157,10 @@ class BaseEnvironment(ABC):
             "imu_noise_multiplier": self._calculate_imu_noise_multiplier(),
             "camera_visibility_factor": self.visibility,
             "lidar_range_factor": self._calculate_lidar_range_factor(),
-
             # Rover performance factors
             "traction_multiplier": self.traction,
             "rolling_resistance_factor": 1.0 + self.terrain_difficulty * 0.5,
             "wind_resistance_factor": 1.0 + self.wind_speed * 0.01,
-
             # Safety factors
             "collision_risk_factor": 1.0 - self.visibility,
             "thermal_stress_factor": abs(self.temperature - 25.0) / 50.0,
@@ -259,7 +257,9 @@ class BaseEnvironment(ABC):
             dt: Time step in seconds
         """
         # Simulate cloud movement or time of day
-        self.lighting = np.clip(self.lighting + np.random.normal(0, 0.05 * dt), 0.1, 1.0)
+        self.lighting = np.clip(
+            self.lighting + np.random.normal(0, 0.05 * dt), 0.1, 1.0
+        )
 
     def set_weather_conditions(self, **conditions):
         """Set specific weather conditions.
@@ -268,8 +268,13 @@ class BaseEnvironment(ABC):
             **conditions: Weather parameters to set
         """
         valid_params = [
-            "temperature", "humidity", "wind_speed", "wind_direction",
-            "visibility", "dust_density", "lighting"
+            "temperature",
+            "humidity",
+            "wind_speed",
+            "wind_direction",
+            "visibility",
+            "dust_density",
+            "lighting",
         ]
 
         for param, value in conditions.items():
@@ -285,9 +290,7 @@ class BaseEnvironment(ABC):
         Args:
             **conditions: Terrain parameters to set
         """
-        valid_params = [
-            "terrain_difficulty", "slope_angle", "traction", "surface_type"
-        ]
+        valid_params = ["terrain_difficulty", "slope_angle", "traction", "surface_type"]
 
         for param, value in conditions.items():
             if param in valid_params:
@@ -307,21 +310,24 @@ class BaseEnvironment(ABC):
         return {
             "navigation_accuracy_degradation": 1.0 - effects["gps_accuracy_factor"],
             "sensor_reliability_degradation": (
-                (effects["imu_noise_multiplier"] - 1.0) / 2.0 +
-                (1.0 - effects["camera_visibility_factor"]) / 2.0 +
-                (1.0 - effects["lidar_range_factor"]) / 2.0
-            ) / 3.0,
+                (effects["imu_noise_multiplier"] - 1.0) / 2.0
+                + (1.0 - effects["camera_visibility_factor"]) / 2.0
+                + (1.0 - effects["lidar_range_factor"]) / 2.0
+            )
+            / 3.0,
             "rover_performance_degradation": (
-                (1.0 - effects["traction_multiplier"]) +
-                (effects["rolling_resistance_factor"] - 1.0) +
-                (effects["wind_resistance_factor"] - 1.0)
-            ) / 3.0,
+                (1.0 - effects["traction_multiplier"])
+                + (effects["rolling_resistance_factor"] - 1.0)
+                + (effects["wind_resistance_factor"] - 1.0)
+            )
+            / 3.0,
             "safety_risk_increase": effects["collision_risk_factor"],
             "overall_difficulty_score": (
-                self.terrain_difficulty +
-                (1.0 - self.visibility) +
-                self.dust_density +
-                self.wind_speed / 20.0 +
-                abs(self.temperature - 25.0) / 50.0
-            ) / 5.0,
+                self.terrain_difficulty
+                + (1.0 - self.visibility)
+                + self.dust_density
+                + self.wind_speed / 20.0
+                + abs(self.temperature - 25.0) / 50.0
+            )
+            / 5.0,
         }

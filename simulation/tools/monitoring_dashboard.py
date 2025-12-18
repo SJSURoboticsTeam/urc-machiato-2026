@@ -19,6 +19,7 @@ from simulation.core.logging_config import get_simulation_logger
 
 class AlertLevel(Enum):
     """Alert severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -28,6 +29,7 @@ class AlertLevel(Enum):
 @dataclass
 class Alert:
     """Performance alert."""
+
     timestamp: float
     level: AlertLevel
     message: str
@@ -94,14 +96,11 @@ class SimulationMonitor:
         self.monitoring = True
 
         self.monitor_thread = threading.Thread(
-            target=self._monitoring_loop,
-            daemon=True,
-            name="SimulationMonitor"
+            target=self._monitoring_loop, daemon=True, name="SimulationMonitor"
         )
         self.monitor_thread.start()
 
-        self.logger.info("Started simulation monitoring",
-                        interval=interval)
+        self.logger.info("Started simulation monitoring", interval=interval)
 
     def stop_monitoring(self):
         """Stop monitoring."""
@@ -135,10 +134,9 @@ class SimulationMonitor:
             self.alert_thresholds[metric] = {}
 
         self.alert_thresholds[metric][level] = threshold
-        self.logger.info("Updated alert threshold",
-                        metric=metric,
-                        level=level,
-                        threshold=threshold)
+        self.logger.info(
+            "Updated alert threshold", metric=metric, level=level, threshold=threshold
+        )
 
     def _monitoring_loop(self):
         """Main monitoring loop."""
@@ -167,7 +165,7 @@ class SimulationMonitor:
             "memory_available_gb": psutil.virtual_memory().available / (1024**3),
             "cpu_usage_percent": psutil.cpu_percent(),
             "cpu_count": psutil.cpu_count(),
-            "disk_usage_percent": psutil.disk_usage('/').percent,
+            "disk_usage_percent": psutil.disk_usage("/").percent,
             "network_connections": len(psutil.net_connections()),
         }
 
@@ -175,25 +173,28 @@ class SimulationMonitor:
         sim_metrics = {}
         if self.sim_manager:
             stats = self.sim_manager.get_statistics()
-            sim_metrics.update({
-                "simulation_running": self.sim_manager.is_running,
-                "simulation_step_count": self.sim_manager.step_count,
-                "simulation_time": self.sim_manager.time_manager.current_time,
-                "active_sensors": len(self.sim_manager.sensors),
-                "data_points_recorded": len(self.sim_manager.data_recorder.data),
-                "network_latency_ms": (
-                    self.sim_manager.network.get_current_latency()
-                    if self.sim_manager.network else 0.0
-                ),
-                "network_packet_loss": (
-                    self.sim_manager.network.get_packet_loss_rate()
-                    if hasattr(self.sim_manager.network, 'get_packet_loss_rate')
-                    else 0.0
-                ),
-            })
+            sim_metrics.update(
+                {
+                    "simulation_running": self.sim_manager.is_running,
+                    "simulation_step_count": self.sim_manager.step_count,
+                    "simulation_time": self.sim_manager.time_manager.current_time,
+                    "active_sensors": len(self.sim_manager.sensors),
+                    "data_points_recorded": len(self.sim_manager.data_recorder.data),
+                    "network_latency_ms": (
+                        self.sim_manager.network.get_current_latency()
+                        if self.sim_manager.network
+                        else 0.0
+                    ),
+                    "network_packet_loss": (
+                        self.sim_manager.network.get_packet_loss_rate()
+                        if hasattr(self.sim_manager.network, "get_packet_loss_rate")
+                        else 0.0
+                    ),
+                }
+            )
 
             # Step time calculation (if we have recent steps)
-            if hasattr(self.sim_manager, '_last_step_time'):
+            if hasattr(self.sim_manager, "_last_step_time"):
                 step_time = time.time() - self.sim_manager._last_step_time
                 sim_metrics["last_step_time_seconds"] = step_time
 
@@ -249,14 +250,17 @@ class SimulationMonitor:
 
         # Check critical threshold first
         if "critical" in thresholds and value >= thresholds["critical"]:
-            self._create_alert(AlertLevel.CRITICAL, metric, value,
-                             thresholds["critical"], component)
+            self._create_alert(
+                AlertLevel.CRITICAL, metric, value, thresholds["critical"], component
+            )
         elif "warning" in thresholds and value >= thresholds["warning"]:
-            self._create_alert(AlertLevel.WARNING, metric, value,
-                             thresholds["warning"], component)
+            self._create_alert(
+                AlertLevel.WARNING, metric, value, thresholds["warning"], component
+            )
 
-    def _create_alert(self, level: AlertLevel, metric: str, value: Any,
-                     threshold: Any, component: str):
+    def _create_alert(
+        self, level: AlertLevel, metric: str, value: Any, threshold: Any, component: str
+    ):
         """Create and store alert.
 
         Args:
@@ -273,7 +277,7 @@ class SimulationMonitor:
             metric=metric,
             value=value,
             threshold=threshold,
-            component=component
+            component=component,
         )
 
         self.alerts.append(alert)
@@ -290,11 +294,13 @@ class SimulationMonitor:
             AlertLevel.CRITICAL: self.logger.critical,
         }.get(level, self.logger.warning)
 
-        log_method(alert.message,
-                  metric=metric,
-                  value=value,
-                  threshold=threshold,
-                  component=component)
+        log_method(
+            alert.message,
+            metric=metric,
+            value=value,
+            threshold=threshold,
+            component=component,
+        )
 
         # Call alert callbacks
         for callback in self.alert_callbacks:
@@ -315,7 +321,9 @@ class SimulationMonitor:
         # Maintain history size limit
         if len(self.metrics_history) > self.max_metrics_history:
             # Remove oldest entries
-            oldest_keys = sorted(self.metrics_history.keys())[:len(self.metrics_history) - self.max_metrics_history]
+            oldest_keys = sorted(self.metrics_history.keys())[
+                : len(self.metrics_history) - self.max_metrics_history
+            ]
             for key in oldest_keys:
                 del self.metrics_history[key]
 
@@ -323,9 +331,13 @@ class SimulationMonitor:
         system = metrics.get("system", {})
         simulation = metrics.get("simulation", {})
 
-        self.performance_data["memory_usage"].append(system.get("memory_usage_percent", 0))
+        self.performance_data["memory_usage"].append(
+            system.get("memory_usage_percent", 0)
+        )
         self.performance_data["cpu_usage"].append(system.get("cpu_usage_percent", 0))
-        self.performance_data["step_counts"].append(simulation.get("simulation_step_count", 0))
+        self.performance_data["step_counts"].append(
+            simulation.get("simulation_step_count", 0)
+        )
 
         # Maintain performance data size
         max_perf_data = 1000
@@ -383,8 +395,10 @@ class SimulationMonitor:
         sim_stats = {}
         if self.sim_manager:
             sim_stats = self.sim_manager.get_statistics()
-            if hasattr(self.sim_manager.data_recorder, 'get_rl_statistics'):
-                sim_stats["rl_metrics"] = self.sim_manager.data_recorder.get_rl_statistics()
+            if hasattr(self.sim_manager.data_recorder, "get_rl_statistics"):
+                sim_stats[
+                    "rl_metrics"
+                ] = self.sim_manager.data_recorder.get_rl_statistics()
 
         return {
             "current_metrics": current_metrics,
@@ -398,7 +412,7 @@ class SimulationMonitor:
                 "interval": self.monitoring_interval,
                 "metrics_history_size": len(self.metrics_history),
                 "alert_count": len(self.alerts),
-            }
+            },
         }
 
     def _get_alert_counts(self) -> Dict[str, int]:
@@ -472,10 +486,12 @@ class SimulationMonitor:
             simulation = metrics.get("simulation", {})
             if "last_step_time_seconds" in simulation:
                 step_times.append(simulation["last_step_time_seconds"])
-            sim_stats["total_steps"] = max(sim_stats["total_steps"],
-                                         simulation.get("simulation_step_count", 0))
-            sim_stats["simulation_time"] = max(sim_stats["simulation_time"],
-                                             simulation.get("simulation_time", 0.0))
+            sim_stats["total_steps"] = max(
+                sim_stats["total_steps"], simulation.get("simulation_step_count", 0)
+            )
+            sim_stats["simulation_time"] = max(
+                sim_stats["simulation_time"], simulation.get("simulation_time", 0.0)
+            )
 
         if step_times:
             sim_stats["avg_step_time"] = sum(step_times) / len(step_times)
@@ -496,11 +512,13 @@ class SimulationMonitor:
         """
         try:
             from pathlib import Path
+
             path = Path(filepath)
             path.parent.mkdir(parents=True, exist_ok=True)
 
             if format == "json":
                 import json
+
                 data = {
                     "metrics_history": self.metrics_history,
                     "alerts": [vars(alert) for alert in self.alerts],
@@ -512,12 +530,20 @@ class SimulationMonitor:
 
             elif format == "csv":
                 import csv
+
                 with open(path, "w", newline="") as f:
                     writer = csv.writer(f)
 
                     # Write header
-                    writer.writerow(["timestamp", "memory_usage", "cpu_usage",
-                                   "step_count", "alerts"])
+                    writer.writerow(
+                        [
+                            "timestamp",
+                            "memory_usage",
+                            "cpu_usage",
+                            "step_count",
+                            "alerts",
+                        ]
+                    )
 
                     # Write data
                     for timestamp in sorted(self.metrics_history.keys()):
@@ -525,13 +551,17 @@ class SimulationMonitor:
                         system = metrics.get("system", {})
                         simulation = metrics.get("simulation", {})
 
-                        writer.writerow([
-                            timestamp,
-                            system.get("memory_usage_percent", 0),
-                            system.get("cpu_usage_percent", 0),
-                            simulation.get("simulation_step_count", 0),
-                            len([a for a in self.alerts if a.timestamp <= timestamp])
-                        ])
+                        writer.writerow(
+                            [
+                                timestamp,
+                                system.get("memory_usage_percent", 0),
+                                system.get("cpu_usage_percent", 0),
+                                simulation.get("simulation_step_count", 0),
+                                len(
+                                    [a for a in self.alerts if a.timestamp <= timestamp]
+                                ),
+                            ]
+                        )
 
             self.logger.info("Metrics exported", filepath=str(path), format=format)
             return True

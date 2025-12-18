@@ -1,0 +1,47 @@
+@startuml
+title ROS2 Communication Architecture
+
+package "Topics" as topics {
+  [/mission/status]
+  [/navigation/status]
+  [/vision/detections]
+  [/cmd_vel]
+  [/odom]
+  [/joint_states]
+}
+
+package "Services" as services {
+  [/change_state]
+  [/mission/commands]
+  [/emergency/stop]
+  [/calibrate_camera]
+}
+
+package "Actions" as actions {
+  [/navigate_to_pose]
+  [/perform_typing]
+}
+
+topics --> services : async_communication
+services --> actions : sync_requests
+actions --> topics : feedback_loops
+
+note right of topics
+  Communication Patterns:
+  - Topics: Asynchronous data streams (10-100Hz)
+  - Services: Synchronous requests (< 1Hz)
+  - Actions: Long-running tasks with feedback
+  - QoS: BEST_EFFORT for sensors, RELIABLE for commands
+end note
+
+note as N5
+  Key Interfaces:
+  - Topics: Sensor data & status updates
+  - Services: Configuration & control
+  - Actions: Mission execution with progress
+
+  Created: 2024-12-16
+  Source: src/autonomy/interfaces/, src/autonomy/launch/
+  Stakeholders: ROS2 Team, Integration Team, Network Team
+end note
+@enduml

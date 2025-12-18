@@ -20,11 +20,12 @@ from typing import Dict, List
 import psutil
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class IntegratedStressLevel(Enum):
     """Integrated system stress test severity levels."""
+
     MODERATE = "moderate"
     SEVERE = "severe"
     EXTREME = "extreme"
@@ -33,6 +34,7 @@ class IntegratedStressLevel(Enum):
 @dataclass
 class IntegratedStressConfig:
     """Configuration for integrated system stress testing."""
+
     stress_level: IntegratedStressLevel
     test_duration: float = 120.0  # 2 minutes for comprehensive testing
 
@@ -58,34 +60,34 @@ class IntegratedStressConfig:
     def __post_init__(self):
         """Set default parameters based on stress level."""
         if self.stress_level == IntegratedStressLevel.MODERATE:
-            self.network_packet_loss = 0.02    # 2% packet loss
-            self.network_latency_ms = 25        # 25ms latency
+            self.network_packet_loss = 0.02  # 2% packet loss
+            self.network_latency_ms = 25  # 25ms latency
             self.can_message_frequency = 200.0  # 200Hz CAN
-            self.can_fault_rate = 0.03          # 3% CAN faults
+            self.can_fault_rate = 0.03  # 3% CAN faults
             self.movement_command_frequency = 75.0  # 75Hz commands
-            self.movement_fault_rate = 0.05     # 5% movement faults
+            self.movement_fault_rate = 0.05  # 5% movement faults
             self.cross_system_conflicts = False
         elif self.stress_level == IntegratedStressLevel.SEVERE:
-            self.network_packet_loss = 0.08    # 8% packet loss
-            self.network_latency_ms = 100       # 100ms latency
-            self.network_bandwidth_mbps = 50    # 50Mbps bandwidth limit
+            self.network_packet_loss = 0.08  # 8% packet loss
+            self.network_latency_ms = 100  # 100ms latency
+            self.network_bandwidth_mbps = 50  # 50Mbps bandwidth limit
             self.can_message_frequency = 500.0  # 500Hz CAN
-            self.can_fault_rate = 0.12          # 12% CAN faults
-            self.can_bus_load = 80              # 80% bus load
+            self.can_fault_rate = 0.12  # 12% CAN faults
+            self.can_bus_load = 80  # 80% bus load
             self.movement_command_frequency = 150.0  # 150Hz commands
-            self.movement_fault_rate = 0.15     # 15% movement faults
+            self.movement_fault_rate = 0.15  # 15% movement faults
             self.movement_emergency_rate = 0.08  # 8% emergency stops
             self.cross_system_conflicts = True
             self.resource_contention = True
         elif self.stress_level == IntegratedStressLevel.EXTREME:
-            self.network_packet_loss = 0.25    # 25% packet loss
-            self.network_latency_ms = 300       # 300ms latency
-            self.network_bandwidth_mbps = 10    # 10Mbps bandwidth limit
+            self.network_packet_loss = 0.25  # 25% packet loss
+            self.network_latency_ms = 300  # 300ms latency
+            self.network_bandwidth_mbps = 10  # 10Mbps bandwidth limit
             self.can_message_frequency = 1000.0  # 1000Hz CAN
-            self.can_fault_rate = 0.35          # 35% CAN faults
-            self.can_bus_load = 130             # 130% bus overload
+            self.can_fault_rate = 0.35  # 35% CAN faults
+            self.can_bus_load = 130  # 130% bus overload
             self.movement_command_frequency = 300.0  # 300Hz commands
-            self.movement_fault_rate = 0.40     # 40% movement faults
+            self.movement_fault_rate = 0.40  # 40% movement faults
             self.movement_emergency_rate = 0.25  # 25% emergency stops
             self.cross_system_conflicts = True
             self.resource_contention = True
@@ -109,7 +111,7 @@ class SystemResourceMonitor:
     def stop_monitoring(self):
         """Stop resource monitoring."""
         self.monitoring = False
-        if hasattr(self, 'monitor_thread'):
+        if hasattr(self, "monitor_thread"):
             self.monitor_thread.join(timeout=1.0)
 
     def _monitor_loop(self):
@@ -122,15 +124,19 @@ class SystemResourceMonitor:
     def get_stats(self) -> Dict:
         """Get resource monitoring statistics."""
         if not self.cpu_samples:
-            return {'avg_cpu': 0, 'max_cpu': 0, 'avg_memory': 0, 'max_memory': 0}
+            return {"avg_cpu": 0, "max_cpu": 0, "avg_memory": 0, "max_memory": 0}
 
         return {
-            'avg_cpu': statistics.mean(self.cpu_samples),
-            'max_cpu': max(self.cpu_samples),
-            'avg_memory': statistics.mean(self.memory_samples),
-            'max_memory': max(self.memory_samples),
-            'cpu_variance': statistics.variance(self.cpu_samples) if len(self.cpu_samples) > 1 else 0,
-            'memory_variance': statistics.variance(self.memory_samples) if len(self.memory_samples) > 1 else 0
+            "avg_cpu": statistics.mean(self.cpu_samples),
+            "max_cpu": max(self.cpu_samples),
+            "avg_memory": statistics.mean(self.memory_samples),
+            "max_memory": max(self.memory_samples),
+            "cpu_variance": statistics.variance(self.cpu_samples)
+            if len(self.cpu_samples) > 1
+            else 0,
+            "memory_variance": statistics.variance(self.memory_samples)
+            if len(self.memory_samples) > 1
+            else 0,
         }
 
 
@@ -148,19 +154,19 @@ class NetworkEmulator:
         # Apply packet loss
         if self.config.network_packet_loss > 0:
             loss_percent = self.config.network_packet_loss * 100
-            rule = f'sudo tc qdisc add dev lo root netem loss {loss_percent}%'
+            rule = f"sudo tc qdisc add dev lo root netem loss {loss_percent}%"
             self._apply_rule(rule)
 
         # Apply latency
         if self.config.network_latency_ms > 0:
             latency = self.config.network_latency_ms
-            rule = f'sudo tc qdisc add dev lo root netem delay {latency}ms'
+            rule = f"sudo tc qdisc add dev lo root netem delay {latency}ms"
             self._apply_rule(rule)
 
         # Apply bandwidth limit
         if self.config.network_bandwidth_mbps < 1000:
             bandwidth = self.config.network_bandwidth_mbps
-            rule = f'sudo tc qdisc add dev lo root tbf rate {bandwidth}mbit burst 32kbit latency 400ms'
+            rule = f"sudo tc qdisc add dev lo root tbf rate {bandwidth}mbit burst 32kbit latency 400ms"
             self._apply_rule(rule)
 
     def _apply_rule(self, rule: str):
@@ -174,8 +180,9 @@ class NetworkEmulator:
     def clear_network_stress(self):
         """Clear all network stress rules."""
         try:
-            subprocess.run(['sudo', 'tc', 'qdisc', 'del', 'dev', 'lo', 'root'],
-                           capture_output=True)
+            subprocess.run(
+                ["sudo", "tc", "qdisc", "del", "dev", "lo", "root"], capture_output=True
+            )
         except subprocess.CalledProcessError:
             pass
         self.active_rules = []
@@ -204,10 +211,15 @@ class IntegratedStressTest:
         # Display test configuration
         print("   Test Configuration:")
         print(f"   • Duration: {self.config.test_duration}s")
-        print(f"   • Network: {self.config.network_packet_loss*100:.1f}% loss, {self.config.network_latency_ms}ms latency")
-        print(f"   • CAN Bus: {self.config.can_message_frequency}Hz, {self.config.can_fault_rate*100:.1f}% faults")
         print(
-            f"   • Movement: {self.config.movement_command_frequency}Hz, {self.config.movement_fault_rate*100:.1f}% faults")
+            f"   • Network: {self.config.network_packet_loss*100:.1f}% loss, {self.config.network_latency_ms}ms latency"
+        )
+        print(
+            f"   • CAN Bus: {self.config.can_message_frequency}Hz, {self.config.can_fault_rate*100:.1f}% faults"
+        )
+        print(
+            f"   • Movement: {self.config.movement_command_frequency}Hz, {self.config.movement_fault_rate*100:.1f}% faults"
+        )
         print(f"   • Cross-system conflicts: {self.config.cross_system_conflicts}")
         print(f"   • Resource contention: {self.config.resource_contention}")
 
@@ -235,17 +247,25 @@ class IntegratedStressTest:
                     concurrent.futures.wait(
                         [future_network, future_can, future_movement, future_conflicts],
                         timeout=timeout,
-                        return_when=concurrent.futures.ALL_COMPLETED
+                        return_when=concurrent.futures.ALL_COMPLETED,
                     )
 
                     # Get results
-                    self.network_stats = future_network.result() if future_network.done() else {}
+                    self.network_stats = (
+                        future_network.result() if future_network.done() else {}
+                    )
                     self.can_stats = future_can.result() if future_can.done() else {}
-                    self.movement_stats = future_movement.result() if future_movement.done() else {}
-                    self.cross_system_events = future_conflicts.result() if future_conflicts.done() else []
+                    self.movement_stats = (
+                        future_movement.result() if future_movement.done() else {}
+                    )
+                    self.cross_system_events = (
+                        future_conflicts.result() if future_conflicts.done() else []
+                    )
 
                 except concurrent.futures.TimeoutError:
-                    print("   ⚠️  Test timed out - some components may not have completed")
+                    print(
+                        "   ⚠️  Test timed out - some components may not have completed"
+                    )
 
             # Stop resource monitoring
             self.resource_monitor.stop_monitoring()
@@ -270,10 +290,10 @@ class IntegratedStressTest:
 
         try:
             # Use severe network stress for integrated testing
-            return run_network_stress_test('severe', duration=self.config.test_duration)
+            return run_network_stress_test("severe", duration=self.config.test_duration)
         except Exception as e:
             print(f"   Network stress test failed: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _run_can_stress(self) -> Dict:
         """Run CAN bus stress test."""
@@ -293,7 +313,7 @@ class IntegratedStressTest:
             return run_can_stress_test_worker(can_config)
         except Exception as e:
             print(f"   CAN stress test failed: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _run_movement_stress(self) -> Dict:
         """Run movement control stress test."""
@@ -307,7 +327,7 @@ class IntegratedStressTest:
             return run_movement_stress_test_level(MovementStressLevel.SEVERE)
         except Exception as e:
             print(f"   Movement stress test failed: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _run_cross_system_conflicts(self) -> List[Dict]:
         """Run cross-system conflict simulation."""
@@ -318,10 +338,12 @@ class IntegratedStressTest:
             if self.config.cross_system_conflicts:
                 # Simulate cross-system conflicts
                 conflict = {
-                    'timestamp': time.time(),
-                    'type': 'cross_system_conflict',
-                    'description': 'Simulated cross-system communication conflict',
-                    'severity': 'high' if self.config.stress_level == IntegratedStressLevel.EXTREME else 'medium'
+                    "timestamp": time.time(),
+                    "type": "cross_system_conflict",
+                    "description": "Simulated cross-system communication conflict",
+                    "severity": "high"
+                    if self.config.stress_level == IntegratedStressLevel.EXTREME
+                    else "medium",
                 }
                 conflicts.append(conflict)
 
@@ -338,36 +360,40 @@ class IntegratedStressTest:
         health_components = []
 
         # Network health
-        if 'avg_latency_ms' in self.network_stats:
-            network_health = max(0, 100 - (self.network_stats['avg_latency_ms'] / 10))  # Penalize >1s latency
+        if "avg_latency_ms" in self.network_stats:
+            network_health = max(
+                0, 100 - (self.network_stats["avg_latency_ms"] / 10)
+            )  # Penalize >1s latency
             health_components.append(network_health)
 
         # CAN health
-        if 'bus_availability_percent' in self.can_stats:
-            can_health = self.can_stats['bus_availability_percent']
+        if "bus_availability_percent" in self.can_stats:
+            can_health = self.can_stats["bus_availability_percent"]
             health_components.append(can_health)
 
         # Movement health
-        if 'command_success_rate' in self.movement_stats:
-            movement_health = self.movement_stats['command_success_rate']
+        if "command_success_rate" in self.movement_stats:
+            movement_health = self.movement_stats["command_success_rate"]
             health_components.append(movement_health)
 
         # Resource health
-        resource_health = max(0, 100 - resource_stats['avg_cpu'] - (resource_stats['avg_memory'] / 2))
+        resource_health = max(
+            0, 100 - resource_stats["avg_cpu"] - (resource_stats["avg_memory"] / 2)
+        )
         health_components.append(resource_health)
 
         overall_health = statistics.mean(health_components) if health_components else 0
 
         return {
-            'stress_level': self.config.stress_level.value,
-            'duration': self.config.test_duration,
-            'overall_health_score': overall_health,
-            'network_performance': self.network_stats,
-            'can_performance': self.can_stats,
-            'movement_performance': self.movement_stats,
-            'resource_usage': resource_stats,
-            'cross_system_conflicts': len(self.cross_system_events),
-            'test_timestamp': time.time()
+            "stress_level": self.config.stress_level.value,
+            "duration": self.config.test_duration,
+            "overall_health_score": overall_health,
+            "network_performance": self.network_stats,
+            "can_performance": self.can_stats,
+            "movement_performance": self.movement_stats,
+            "resource_usage": resource_stats,
+            "cross_system_conflicts": len(self.cross_system_events),
+            "test_timestamp": time.time(),
         }
 
     def _display_integrated_results(self, results: Dict):
@@ -376,11 +402,13 @@ class IntegratedStressTest:
         print("\n📊 INTEGRATED SYSTEM STRESS TEST RESULTS")
         print("=" * 50)
 
-        print(f"   Overall System Health Score: {results['overall_health_score']:.1f}/100")
+        print(
+            f"   Overall System Health Score: {results['overall_health_score']:.1f}/100"
+        )
 
-        if results['overall_health_score'] > 80:
+        if results["overall_health_score"] > 80:
             health_status = "✅ EXCELLENT - System handles extreme stress well"
-        elif results['overall_health_score'] > 60:
+        elif results["overall_health_score"] > 60:
             health_status = "⚠️ GOOD - Some degradation under stress"
         else:
             health_status = "❌ POOR - Significant system issues"
@@ -390,14 +418,14 @@ class IntegratedStressTest:
         # Component breakdown
         print("\n   Component Performance:")
 
-        if 'avg_latency_ms' in results['network_performance']:
-            network_latency = results['network_performance']['avg_latency_ms']
+        if "avg_latency_ms" in results["network_performance"]:
+            network_latency = results["network_performance"]["avg_latency_ms"]
             print(".1f")
-        if 'bus_availability_percent' in results['can_performance']:
-            can_availability = results['can_performance']['bus_availability_percent']
+        if "bus_availability_percent" in results["can_performance"]:
+            can_availability = results["can_performance"]["bus_availability_percent"]
             print(".1f")
-        if 'command_success_rate' in results['movement_performance']:
-            movement_success = results['movement_performance']['command_success_rate']
+        if "command_success_rate" in results["movement_performance"]:
+            movement_success = results["movement_performance"]["command_success_rate"]
             print(".1f")
         print(".1f")
         print(".1f")
@@ -408,29 +436,40 @@ class IntegratedStressTest:
 
         issues = []
 
-        if results.get('network_performance', {}).get('avg_latency_ms', 0) > 200:
+        if results.get("network_performance", {}).get("avg_latency_ms", 0) > 200:
             issues.append("• Implement network fault tolerance and message queuing")
 
-        if results.get('can_performance', {}).get('bus_availability_percent', 100) < 90:
+        if results.get("can_performance", {}).get("bus_availability_percent", 100) < 90:
             issues.append("• Add CAN bus redundancy and error recovery")
 
-        if results.get('movement_performance', {}).get('command_success_rate', 100) < 85:
+        if (
+            results.get("movement_performance", {}).get("command_success_rate", 100)
+            < 85
+        ):
             issues.append("• Implement command validation and conflict resolution")
 
-        if results.get('resource_usage', {}).get('avg_cpu', 0) > 70:
-            issues.append("• Optimize processing efficiency and consider load balancing")
+        if results.get("resource_usage", {}).get("avg_cpu", 0) > 70:
+            issues.append(
+                "• Optimize processing efficiency and consider load balancing"
+            )
 
         if not issues:
-            issues.append("• System performs well under extreme stress - no major issues detected")
+            issues.append(
+                "• System performs well under extreme stress - no major issues detected"
+            )
 
         for issue in issues:
             print(issue)
 
         print("\n🎯 MISSION IMPACT ASSESSMENT:")
-        if results['overall_health_score'] > 75:
-            print("   ✅ System should maintain basic functionality in extreme conditions")
-        elif results['overall_health_score'] > 50:
-            print("   ⚠️ System may experience reduced performance in extreme conditions")
+        if results["overall_health_score"] > 75:
+            print(
+                "   ✅ System should maintain basic functionality in extreme conditions"
+            )
+        elif results["overall_health_score"] > 50:
+            print(
+                "   ⚠️ System may experience reduced performance in extreme conditions"
+            )
         else:
             print("   ❌ System reliability significantly compromised under stress")
 
@@ -444,7 +483,11 @@ def run_integrated_stress_test_suite():
     results = {}
 
     # Test all stress levels
-    stress_levels = [IntegratedStressLevel.MODERATE, IntegratedStressLevel.SEVERE, IntegratedStressLevel.EXTREME]
+    stress_levels = [
+        IntegratedStressLevel.MODERATE,
+        IntegratedStressLevel.SEVERE,
+        IntegratedStressLevel.EXTREME,
+    ]
 
     for level in stress_levels:
         print(f"\n🔥 Testing {level.value.upper()} Integrated System Stress")
@@ -458,7 +501,7 @@ def run_integrated_stress_test_suite():
             results[level.value] = level_results
         except Exception as e:
             print(f"   ❌ Integrated test failed: {e}")
-            results[level.value] = {'error': str(e)}
+            results[level.value] = {"error": str(e)}
 
         print()  # Add spacing
 
@@ -471,29 +514,35 @@ def run_integrated_stress_test_suite():
     print("-" * 70)
 
     for level_name, result in results.items():
-        if 'error' in result:
+        if "error" in result:
             print(f"{level_name:8} | ERROR  |   -    |   -    |    -    |    -   ")
             continue
 
         level_short = level_name[:3].upper()
-        health = result['overall_health_score']
+        health = result["overall_health_score"]
 
-        network_lat = result.get('network_performance', {}).get('avg_latency_ms', 999)
-        can_avail = result.get('can_performance', {}).get('bus_availability_percent', 0)
-        movement_success = result.get('movement_performance', {}).get('command_success_rate', 0)
-        cpu_usage = result.get('resource_usage', {}).get('avg_cpu', 999)
+        network_lat = result.get("network_performance", {}).get("avg_latency_ms", 999)
+        can_avail = result.get("can_performance", {}).get("bus_availability_percent", 0)
+        movement_success = result.get("movement_performance", {}).get(
+            "command_success_rate", 0
+        )
+        cpu_usage = result.get("resource_usage", {}).get("avg_cpu", 999)
 
-        print(f"{level_short:8} | {health:6.1f} | {network_lat:7.1f} | {can_avail:6.1f}% | {movement_success:8.1f}% | {cpu_usage:8.1f}%")
+        print(
+            f"{level_short:8} | {health:6.1f} | {network_lat:7.1f} | {can_avail:6.1f}% | {movement_success:8.1f}% | {cpu_usage:8.1f}%"
+        )
 
     # Final assessment
-    extreme_results = results.get('extreme', {})
-    if 'error' not in extreme_results:
+    extreme_results = results.get("extreme", {})
+    if "error" not in extreme_results:
         print("\n🎯 FINAL SYSTEM ASSESSMENT")
 
-        if extreme_results['overall_health_score'] > 70:
-            print("✅ System demonstrates good resilience under extreme integrated stress")
+        if extreme_results["overall_health_score"] > 70:
+            print(
+                "✅ System demonstrates good resilience under extreme integrated stress"
+            )
             print("   • Suitable for harsh Martian environment with proper monitoring")
-        elif extreme_results['overall_health_score'] > 40:
+        elif extreme_results["overall_health_score"] > 40:
             print("⚠️ System shows moderate resilience under extreme conditions")
             print("   • May require additional fault tolerance measures")
         else:
@@ -503,11 +552,11 @@ def run_integrated_stress_test_suite():
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
 
     # Add path for imports
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
     # Run integrated stress test suite
     integrated_results = run_integrated_stress_test_suite()

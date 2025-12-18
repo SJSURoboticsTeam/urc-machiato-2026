@@ -14,7 +14,7 @@
 
 **Before (Scattered)**:
 ```
-Autonomy/simulation/     # Gazebo worlds only
+autonomy/simulation/     # Gazebo worlds only
 tests/                   # Consolidated test framework
 tests/fixtures/         # Sensor mocks
 bridges/                # Network simulation

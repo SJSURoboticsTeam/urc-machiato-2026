@@ -92,7 +92,9 @@ class IMUSimulator(BaseSensor):
         # Update biases over time (drift)
         bias_update = np.random.normal(0, 0.001, 6)  # Slow bias drift
         self.gyro_bias = [b + bias_update[i] for i, b in enumerate(self.gyro_bias)]
-        self.accel_bias = [b + bias_update[i+3] for i, b in enumerate(self.accel_bias)]
+        self.accel_bias = [
+            b + bias_update[i + 3] for i, b in enumerate(self.accel_bias)
+        ]
 
         return {
             "orientation_w": self.current_orientation[0],
@@ -138,7 +140,9 @@ class IMUSimulator(BaseSensor):
 
         if terrain_difficulty > 0.5 or wind_speed > 5.0:
             # Add vibration-induced noise
-            vibration_noise = np.random.normal(0, 0.1 * (terrain_difficulty + wind_speed * 0.1), 6)
+            vibration_noise = np.random.normal(
+                0, 0.1 * (terrain_difficulty + wind_speed * 0.1), 6
+            )
             modified_data["angular_velocity_x"] += vibration_noise[0]
             modified_data["angular_velocity_y"] += vibration_noise[1]
             modified_data["angular_velocity_z"] += vibration_noise[2]
@@ -211,15 +215,15 @@ class IMUSimulator(BaseSensor):
         temperature = data.get("temperature", 25.0)
         if abs(temperature - 25.0) > 30.0:  # More than 30°C from nominal
             temp_penalty = min(0.5, abs(temperature - 25.0) / 60.0)
-            score *= (1.0 - temp_penalty)
+            score *= 1.0 - temp_penalty
 
         # Reduce score based on bias magnitude
         gyro_bias_magnitude = np.sqrt(
-            self.gyro_bias[0]**2 + self.gyro_bias[1]**2 + self.gyro_bias[2]**2
+            self.gyro_bias[0] ** 2 + self.gyro_bias[1] ** 2 + self.gyro_bias[2] ** 2
         )
         if gyro_bias_magnitude > 0.1:  # Significant gyro bias
             bias_penalty = min(0.3, gyro_bias_magnitude / 0.5)
-            score *= (1.0 - bias_penalty)
+            score *= 1.0 - bias_penalty
 
         return max(0.0, min(1.0, score))
 
@@ -259,18 +263,22 @@ class IMUSimulator(BaseSensor):
             intensity: Vibration intensity (0.0 to 1.0)
             duration_sec: Duration of vibration in seconds
         """
-        self.logger.info(f"Simulating vibration (intensity: {intensity}) for {duration_sec}s")
+        self.logger.info(
+            f"Simulating vibration (intensity: {intensity}) for {duration_sec}s"
+        )
 
         original_noise_std = self.accel_noise_std
-        self.accel_noise_std *= (1.0 + intensity * 2.0)  # Increase noise
+        self.accel_noise_std *= 1.0 + intensity * 2.0  # Increase noise
 
         def end_vibration():
             import time
+
             time.sleep(duration_sec)
             self.accel_noise_std = original_noise_std
             self.logger.info("Vibration simulation ended")
 
         import threading
+
         vibration_thread = threading.Thread(target=end_vibration, daemon=True)
         vibration_thread.start()
 

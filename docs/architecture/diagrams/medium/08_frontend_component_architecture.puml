@@ -1,0 +1,112 @@
+@startuml Frontend Component Diagram
+title Frontend Component Architecture
+
+package "Dashboard Core" as dashboard {
+    [App.jsx] as app
+    [Router] as router
+    [Layout Components] as layout
+    [Theme Provider] as theme
+    [Global State] as state
+}
+
+package "Dashboard Modules" as modules {
+    [MapVisualization] as map
+    [ThreeDVisualization] as threed
+    [SafetyDashboard] as safety
+    [StateTree] as statetree
+    [TestingDashboard] as testing
+    [ModularDebugger] as debugger
+}
+
+package "Communication Layer" as comm {
+    [ROS2 Bridge] as rosbridge
+    [WebSocket Bridge] as wsbridge
+    [Telemetry Handler] as telemetry
+    [Command Dispatcher] as dispatcher
+    [Status Poller] as poller
+}
+
+package "UI Component Library" as ui {
+    [Button Components] as buttons
+    [Chart Components] as charts
+    [Form Components] as forms
+    [Modal/Dialog] as modals
+    [Notification System] as notifications
+    [Data Tables] as tables
+}
+
+package "Utility Libraries" as utils {
+    [Custom Hooks] as hooks
+    [Data Transformers] as transformers
+    [Formatters] as formatters
+    [Validators] as validators
+    [API Clients] as clients
+}
+
+package "External Dependencies" as external {
+    [React] as react
+    [Three.js] as threejs
+    [ROS2 JS] as ros2js
+    [Chart Libraries] as charts_lib
+    [WebSocket Client] as websocket
+}
+
+' Core relationships
+app --> router : routing
+app --> theme : theming
+app --> state : global_state
+router --> modules : page_rendering
+
+' Module connections
+modules --> comm : data_requests
+map --> threed : coordinate_sync
+safety --> statetree : state_visualization
+testing --> debugger : debug_data
+
+' Communication layer
+comm --> external : external_connections
+dispatcher --> poller : status_updates
+telemetry --> state : data_updates
+
+' UI relationships
+modules --> ui : ui_components
+ui --> utils : utilities
+utils --> external : external_libs
+
+' Data flow
+comm --> utils : data_transformation
+utils --> modules : processed_data
+modules --> state : state_updates
+
+note right of comm
+    **Communication Protocols:**
+    - ROS2 WebSocket Bridge
+    - REST API for commands
+    - WebRTC for video streams
+    - WebSocket for real-time data
+
+    **Data Update Rates:**
+    - Telemetry: 10Hz
+    - Status: 1Hz
+    - Commands: Event-driven
+end note
+
+note as N8
+  **Technology Stack:**
+  - **Frontend:** React + TypeScript
+  - **3D:** Three.js + React Three Fiber
+  - **Charts:** Recharts + D3.js
+  - **State:** React Context + useReducer
+  - **Styling:** Tailwind CSS
+  - **Build:** Vite
+
+  **Performance Targets:**
+  - Initial load: < 3s
+  - Update latency: < 100ms
+  - Memory usage: < 200MB
+
+  **Created:** 2024-12-16
+  **Source:** src/frontend/, frontend/src/
+  **Stakeholders:** Frontend Team, UX Team
+end note
+@enduml

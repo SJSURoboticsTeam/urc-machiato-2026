@@ -1,0 +1,88 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/SystemState.msg
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "System State Message - URC 2026 Mars Rover Autonomy" "\n"
+      "" "\n"
+      "This message provides comprehensive state information for the rover's hierarchical" "\n"
+      "state machine. It tracks the current operational state, subsystem status, and" "\n"
+      "mission context to enable coordinated autonomous operations." "\n"
+      "" "\n"
+      "The state machine uses a three-level hierarchy:" "\n"
+      "- current_state: Top-level operational mode (BOOT, CALIBRATION, IDLE, etc.)" "\n"
+      "- substate: Mission-specific context (SCIENCE, DELIVERY, etc.)" "\n"
+      "- sub_substate: Detailed operational state (SAMPLE_DELIVERY, etc.)" "\n"
+      "" "\n"
+      "This design allows for flexible mission execution while maintaining clear" "\n"
+      "operational boundaries and safety constraints.")
+    struct SystemState {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "Primary state information" "\n"
+        "Top-level state (BOOT, CALIBRATION, IDLE, NAVIGATION, EXECUTION, RECOVERY, SHUTDOWN)")
+      string current_state;
+
+      @verbatim (language="comment", text=
+        "Mission-specific substate (SCIENCE, DELIVERY, MAINTENANCE, etc.)")
+      string substate;
+
+      @verbatim (language="comment", text=
+        "Detailed substate (SAMPLE_COLLECTION, DELIVERY_SETUP, DIAGNOSTIC_CHECK, etc.)")
+      string sub_substate;
+
+      @verbatim (language="comment", text=
+        "State metadata" "\n"
+        "Seconds spent in current state (resets on transition)")
+      double time_in_state;
+
+      @verbatim (language="comment", text=
+        "Maximum allowed time in state (0.0 = no timeout, seconds)")
+      double state_timeout;
+
+      @verbatim (language="comment", text=
+        "Last state before current transition")
+      string previous_state;
+
+      @verbatim (language="comment", text=
+        "UTC timestamp when current state was entered")
+      builtin_interfaces::msg::Time transition_timestamp;
+
+      @verbatim (language="comment", text=
+        "System status flags" "\n"
+        "True during state transitions (prevents conflicting operations)")
+      boolean is_transitioning;
+
+      @verbatim (language="comment", text=
+        "True when all autonomous operation prerequisites are satisfied")
+      boolean preconditions_met;
+
+      @verbatim (language="comment", text=
+        "List of currently active subsystems (navigation, vision, slam, etc.)")
+      sequence<string> active_subsystems;
+
+      @verbatim (language="comment", text=
+        "List of subsystems currently in error state")
+      sequence<string> failed_subsystems;
+
+      @verbatim (language="comment", text=
+        "Mission and operational context" "\n"
+        "Competition mission context (setup, terrain, equipment_service, science, etc.)")
+      string mission_phase;
+
+      @verbatim (language="comment", text=
+        "Identifier of who/what initiated current state (auto, manual, safety_system)")
+      string operator_id;
+
+      @verbatim (language="comment", text=
+        "Human-readable explanation for current state and any restrictions")
+      string state_reason;
+    };
+  };
+};

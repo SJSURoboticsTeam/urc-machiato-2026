@@ -51,7 +51,7 @@ class PerformanceSubscriber(Node):
         receive_time = time.time()
         # Extract timestamp from message (assuming format: "timestamp:content")
         try:
-            parts = msg.data.split(':', 1)
+            parts = msg.data.split(":", 1)
             if len(parts) == 2:
                 send_time = float(parts[0])
                 latency = (receive_time - send_time) * 1000  # Convert to milliseconds
@@ -64,14 +64,16 @@ class PerformanceSubscriber(Node):
     def get_stats(self):
         """Get performance statistics."""
         if not self.latencies:
-            return {'count': 0, 'avg_latency': 0, 'min_latency': 0, 'max_latency': 0}
+            return {"count": 0, "avg_latency": 0, "min_latency": 0, "max_latency": 0}
 
         return {
-            'count': len(self.latencies),
-            'avg_latency': statistics.mean(self.latencies),
-            'min_latency': min(self.latencies),
-            'max_latency': max(self.latencies),
-            'p95_latency': statistics.quantiles(self.latencies, n=20)[18] if len(self.latencies) >= 20 else max(self.latencies)
+            "count": len(self.latencies),
+            "avg_latency": statistics.mean(self.latencies),
+            "min_latency": min(self.latencies),
+            "max_latency": max(self.latencies),
+            "p95_latency": statistics.quantiles(self.latencies, n=20)[18]
+            if len(self.latencies) >= 20
+            else max(self.latencies),
         }
 
 
@@ -79,9 +81,9 @@ def measure_system_resources():
     """Measure current system resource usage."""
     process = psutil.Process()
     return {
-        'cpu_percent': psutil.cpu_percent(interval=0.1),
-        'memory_mb': process.memory_info().rss / 1024 / 1024,
-        'memory_percent': process.memory_percent()
+        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "memory_mb": process.memory_info().rss / 1024 / 1024,
+        "memory_percent": process.memory_percent(),
     }
 
 
@@ -93,15 +95,15 @@ def run_intra_process_test():
     qos_intra = QoSProfile(
         reliability=ReliabilityPolicy.RELIABLE,
         durability=DurabilityPolicy.VOLATILE,  # Enable intra-process
-        depth=100
+        depth=100,
     )
 
     # Initialize ROS2
     rclpy.init()
 
     # Create both publisher and subscriber in same process
-    publisher = PerformancePublisher('perf_test_intra', qos_intra)
-    subscriber = PerformanceSubscriber('perf_test_intra', qos_intra)
+    publisher = PerformancePublisher("perf_test_intra", qos_intra)
+    subscriber = PerformanceSubscriber("perf_test_intra", qos_intra)
 
     # Give ROS2 time to establish connections
     time.sleep(0.5)
@@ -138,16 +140,17 @@ def run_intra_process_test():
     rclpy.shutdown()
 
     return {
-        'type': 'intra_process',
-        'messages_sent': messages_to_send,
-        'messages_received': stats['count'],
-        'duration': test_duration,
-        'throughput_msg_per_sec': messages_to_send / test_duration,
-        'avg_latency_ms': stats['avg_latency'] if stats['count'] > 0 else 0,
-        'p95_latency_ms': stats['p95_latency'] if stats['count'] > 0 else 0,
-        'baseline_cpu': baseline_resources['cpu_percent'],
-        'final_cpu': final_resources['cpu_percent'],
-        'memory_delta_mb': final_resources['memory_mb'] - baseline_resources['memory_mb']
+        "type": "intra_process",
+        "messages_sent": messages_to_send,
+        "messages_received": stats["count"],
+        "duration": test_duration,
+        "throughput_msg_per_sec": messages_to_send / test_duration,
+        "avg_latency_ms": stats["avg_latency"] if stats["count"] > 0 else 0,
+        "p95_latency_ms": stats["p95_latency"] if stats["count"] > 0 else 0,
+        "baseline_cpu": baseline_resources["cpu_percent"],
+        "final_cpu": final_resources["cpu_percent"],
+        "memory_delta_mb": final_resources["memory_mb"]
+        - baseline_resources["memory_mb"],
     }
 
 
@@ -159,15 +162,15 @@ def run_inter_process_test():
     qos_inter = QoSProfile(
         reliability=ReliabilityPolicy.RELIABLE,
         durability=DurabilityPolicy.VOLATILE,  # Inter-process
-        depth=100
+        depth=100,
     )
 
     # Initialize ROS2
     rclpy.init()
 
     # Create both publisher and subscriber in same process (but QoS prevents intra-process)
-    publisher = PerformancePublisher('perf_test_inter', qos_inter)
-    subscriber = PerformanceSubscriber('perf_test_inter', qos_inter)
+    publisher = PerformancePublisher("perf_test_inter", qos_inter)
+    subscriber = PerformanceSubscriber("perf_test_inter", qos_inter)
 
     # Give ROS2 time to establish connections (longer for DDS discovery)
     time.sleep(2.0)
@@ -204,16 +207,17 @@ def run_inter_process_test():
     rclpy.shutdown()
 
     return {
-        'type': 'inter_process',
-        'messages_sent': messages_to_send,
-        'messages_received': stats['count'],
-        'duration': test_duration,
-        'throughput_msg_per_sec': messages_to_send / test_duration,
-        'avg_latency_ms': stats['avg_latency'] if stats['count'] > 0 else 0,
-        'p95_latency_ms': stats['p95_latency'] if stats['count'] > 0 else 0,
-        'baseline_cpu': baseline_resources['cpu_percent'],
-        'final_cpu': final_resources['cpu_percent'],
-        'memory_delta_mb': final_resources['memory_mb'] - baseline_resources['memory_mb']
+        "type": "inter_process",
+        "messages_sent": messages_to_send,
+        "messages_received": stats["count"],
+        "duration": test_duration,
+        "throughput_msg_per_sec": messages_to_send / test_duration,
+        "avg_latency_ms": stats["avg_latency"] if stats["count"] > 0 else 0,
+        "p95_latency_ms": stats["p95_latency"] if stats["count"] > 0 else 0,
+        "baseline_cpu": baseline_resources["cpu_percent"],
+        "final_cpu": final_resources["cpu_percent"],
+        "memory_delta_mb": final_resources["memory_mb"]
+        - baseline_resources["memory_mb"],
     }
 
 
@@ -259,19 +263,31 @@ def main():
     print(".2f")
 
     print("\n⚡ PERFORMANCE IMPROVEMENTS:")
-    if intra_results['avg_latency_ms'] > 0 and inter_results['avg_latency_ms'] > 0:
-        latency_improvement = ((inter_results['avg_latency_ms'] -
-                               intra_results['avg_latency_ms']) / inter_results['avg_latency_ms']) * 100
+    if intra_results["avg_latency_ms"] > 0 and inter_results["avg_latency_ms"] > 0:
+        latency_improvement = (
+            (inter_results["avg_latency_ms"] - intra_results["avg_latency_ms"])
+            / inter_results["avg_latency_ms"]
+        ) * 100
         print(".1f")
 
-    throughput_improvement = ((intra_results['throughput_msg_per_sec'] - inter_results['throughput_msg_per_sec']) /
-                              inter_results['throughput_msg_per_sec']) * 100 if inter_results['throughput_msg_per_sec'] > 0 else 0
+    throughput_improvement = (
+        (
+            (
+                intra_results["throughput_msg_per_sec"]
+                - inter_results["throughput_msg_per_sec"]
+            )
+            / inter_results["throughput_msg_per_sec"]
+        )
+        * 100
+        if inter_results["throughput_msg_per_sec"] > 0
+        else 0
+    )
     print(".1f")
 
-    cpu_savings = inter_results['final_cpu'] - intra_results['final_cpu']
+    cpu_savings = inter_results["final_cpu"] - intra_results["final_cpu"]
     print(".1f")
 
-    memory_savings = inter_results['memory_delta_mb'] - intra_results['memory_delta_mb']
+    memory_savings = inter_results["memory_delta_mb"] - intra_results["memory_delta_mb"]
     print(".2f")
 
     print("\n🎯 IMPACT ON URC 2026 AUTONOMY SYSTEM:")
@@ -282,8 +298,10 @@ def main():
     print("  ✅ Safety topics: Critical safety response time reduction")
 
     print("\n✨ Demo completed! Intra-process communication provides")
-    print("   significant performance improvements for real-time robotics applications.")
+    print(
+        "   significant performance improvements for real-time robotics applications."
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

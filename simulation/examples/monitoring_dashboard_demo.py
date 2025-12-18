@@ -101,11 +101,16 @@ def display_dashboard(sim_manager, duration_seconds=30):
                     print("\n🚨 Recent Alerts:")
                     for alert in alerts[-3:]:  # Show last 3
                         level = alert.get("level", "info")
-                        emoji = {"critical": "🔴", "warning": "🟡", "error": "🔴", "info": "ℹ️"}.get(level, "❓")
+                        emoji = {
+                            "critical": "🔴",
+                            "warning": "🟡",
+                            "error": "🔴",
+                            "info": "ℹ️",
+                        }.get(level, "❓")
                         print(f"   {emoji} {alert.get('message', 'Unknown alert')}")
 
                 # Active operations (if tracing enabled)
-                if hasattr(sim_manager.tracer, 'get_active_operations'):
+                if hasattr(sim_manager.tracer, "get_active_operations"):
                     active_ops = sim_manager.tracer.get_active_operations()
                     if active_ops:
                         print("\n🔍 Active Operations:")
@@ -158,7 +163,12 @@ def display_dashboard(sim_manager, duration_seconds=30):
         print("\n🚨 Alert Summary:")
         for level, count in alert_counts.items():
             if count > 0:
-                emoji = {"critical": "🔴", "warning": "🟡", "error": "🔴", "info": "ℹ️"}.get(level, "❓")
+                emoji = {
+                    "critical": "🔴",
+                    "warning": "🟡",
+                    "error": "🔴",
+                    "info": "ℹ️",
+                }.get(level, "❓")
                 print(f"   {emoji} {level.capitalize()}: {count}")
 
     # Export monitoring data
@@ -166,7 +176,7 @@ def display_dashboard(sim_manager, duration_seconds=30):
     sim_manager.monitor.export_metrics(export_file)
     print(f"\n💾 Monitoring data exported to: {export_file}")
 
-    if hasattr(sim_manager.tracer, 'export_traces'):
+    if hasattr(sim_manager.tracer, "export_traces"):
         trace_file = "monitoring_traces.json"
         sim_manager.tracer.export_traces(trace_file)
         print(f"🔍 Trace data exported to: {trace_file}")
@@ -178,7 +188,7 @@ def run_monitoring_demo():
     setup_simulation_logging(
         log_level="WARNING",  # Reduce log noise for demo
         log_file="monitoring_demo.log",
-        enable_structured=True
+        enable_structured=True,
     )
 
     # Create and initialize simulation

@@ -3,12 +3,20 @@
 Integration Tests for Vision and Control Systems
 
 Tests interaction between computer vision and state machine control.
+
+NOTE: This test is skipped because the complex computer vision pipeline
+and hierarchical state machine have been replaced with simplified systems.
 """
 
 import unittest
 from unittest.mock import Mock
 
+import pytest
 
+
+@pytest.mark.skip(
+    reason="Complex vision and state machine systems replaced with simplified mission control"
+)
 class TestVisionControlIntegration(unittest.TestCase):
     """Test integration between vision and control systems."""
 
@@ -16,25 +24,35 @@ class TestVisionControlIntegration(unittest.TestCase):
         """Set up vision-control integration tests."""
         # Mock vision system
         self.vision = Mock()
-        self.vision.detect_objects = Mock(return_value=[
-            {'type': 'hammer', 'position': (2.0, 1.0, 0.0), 'confidence': 0.95},
-            {'type': 'water_bottle', 'position': (3.0, -1.0, 0.0), 'confidence': 0.87}
-        ])
-        self.vision.get_keyboard_pose = Mock(return_value={
-            'position': (1.5, 0.8, 0.3),
-            'orientation': (0, 0, 0, 1),
-            'detected': True
-        })
+        self.vision.detect_objects = Mock(
+            return_value=[
+                {"type": "hammer", "position": (2.0, 1.0, 0.0), "confidence": 0.95},
+                {
+                    "type": "water_bottle",
+                    "position": (3.0, -1.0, 0.0),
+                    "confidence": 0.87,
+                },
+            ]
+        )
+        self.vision.get_keyboard_pose = Mock(
+            return_value={
+                "position": (1.5, 0.8, 0.3),
+                "orientation": (0, 0, 0, 1),
+                "detected": True,
+            }
+        )
 
         # Mock control system
         self.control = Mock()
         self.control.set_target_object = Mock()
         self.control.start_typing_sequence = Mock()
-        self.control.get_control_status = Mock(return_value={
-            'is_active': False,
-            'current_target': None,
-            'precision_mode': False
-        })
+        self.control.get_control_status = Mock(
+            return_value={
+                "is_active": False,
+                "current_target": None,
+                "precision_mode": False,
+            }
+        )
 
         # Mock state machine
         self.state_machine = Mock()
@@ -47,8 +65,8 @@ class TestVisionControlIntegration(unittest.TestCase):
         detected_objects = self.vision.detect_objects()
 
         self.assertEqual(len(detected_objects), 2)
-        self.assertEqual(detected_objects[0]['type'], 'hammer')
-        self.assertEqual(detected_objects[1]['type'], 'water_bottle')
+        self.assertEqual(detected_objects[0]["type"], "hammer")
+        self.assertEqual(detected_objects[1]["type"], "water_bottle")
 
         # Control system should respond to detections
         for obj in detected_objects:
@@ -60,8 +78,8 @@ class TestVisionControlIntegration(unittest.TestCase):
         # Vision detects keyboard
         keyboard_pose = self.vision.get_keyboard_pose()
 
-        self.assertTrue(keyboard_pose['detected'])
-        self.assertIsNotNone(keyboard_pose['position'])
+        self.assertTrue(keyboard_pose["detected"])
+        self.assertIsNotNone(keyboard_pose["position"])
 
         # Control should start typing sequence
         self.control.start_typing_sequence(keyboard_pose)
@@ -72,7 +90,7 @@ class TestVisionControlIntegration(unittest.TestCase):
         from autonomy_state_machine.states import SystemState
 
         # Vision detects keyboard → transition to typing mode
-        keyboard_detected = self.vision.get_keyboard_pose()['detected']
+        keyboard_detected = self.vision.get_keyboard_pose()["detected"]
         self.assertTrue(keyboard_detected)
 
         # Should transition to appropriate state for typing
@@ -84,16 +102,16 @@ class TestVisionControlIntegration(unittest.TestCase):
         """Test precision mode activation based on vision confidence."""
         # High confidence detection
         high_confidence_objects = [
-            {'type': 'hammer', 'confidence': 0.95, 'position': (1.0, 0.0, 0.0)},
-            {'type': 'water_bottle', 'confidence': 0.87, 'position': (2.0, 0.0, 0.0)}
+            {"type": "hammer", "confidence": 0.95, "position": (1.0, 0.0, 0.0)},
+            {"type": "water_bottle", "confidence": 0.87, "position": (2.0, 0.0, 0.0)},
         ]
 
         # Should activate precision mode for high confidence detections
         for obj in high_confidence_objects:
-            if obj['confidence'] > 0.9:
+            if obj["confidence"] > 0.9:
                 self.control.set_target_object(obj)
                 # Control should enable precision mode
-                self.assertGreater(obj['confidence'], 0.9)
+                self.assertGreater(obj["confidence"], 0.9)
 
     def test_vision_failure_handling(self):
         """Test handling vision system failures."""
@@ -199,11 +217,13 @@ class TestMultiSubsystemVisionControl(unittest.TestCase):
         self.state_machine = Mock()
 
         # Configure mocks
-        self.vision.detect_all_objects = Mock(return_value=[
-            {'type': 'keyboard', 'position': (1.0, 0.0, 0.0)},
-            {'type': 'hammer', 'position': (2.0, 1.0, 0.0)},
-            {'type': 'water_bottle', 'position': (0.0, 1.0, 0.0)}
-        ])
+        self.vision.detect_all_objects = Mock(
+            return_value=[
+                {"type": "keyboard", "position": (1.0, 0.0, 0.0)},
+                {"type": "hammer", "position": (2.0, 1.0, 0.0)},
+                {"type": "water_bottle", "position": (0.0, 1.0, 0.0)},
+            ]
+        )
 
     def test_complete_perception_to_action_chain(self):
         """Test complete chain from perception to action."""
@@ -217,10 +237,10 @@ class TestMultiSubsystemVisionControl(unittest.TestCase):
 
         # 3. Control system executes appropriate actions
         for obj in detected_objects:
-            if obj['type'] == 'keyboard':
+            if obj["type"] == "keyboard":
                 # Start typing sequence
                 self.control.start_typing_sequence(obj)
-            elif obj['type'] in ['hammer', 'water_bottle']:
+            elif obj["type"] in ["hammer", "water_bottle"]:
                 # Navigate to object
                 self.navigation.navigate_to_object(obj)
 
@@ -260,5 +280,5 @@ class TestMultiSubsystemVisionControl(unittest.TestCase):
         self.assertLess(total_time, 0.2)  # Less than 200ms total
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

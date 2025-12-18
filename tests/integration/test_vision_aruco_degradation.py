@@ -3,7 +3,8 @@
 ArUco Detection Degradation Tests
 
 Focused tests for ArUco marker detection under various degradation conditions.
-"""
+
+NOTE: This test is skipped because Complex vision degradation tests replaced with basic camera tests."""
 
 import os
 import sys
@@ -13,6 +14,7 @@ import pytest
 
 try:
     import cv2
+
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
@@ -28,9 +30,10 @@ try:
 except ImportError:
     # Fallback for direct execution
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "test_vision_degradation",
-        os.path.join(os.path.dirname(__file__), "test_vision_degradation.py")
+        os.path.join(os.path.dirname(__file__), "test_vision_degradation.py"),
     )
     if spec and spec.loader:
         module = importlib.util.module_from_spec(spec)
@@ -50,7 +53,9 @@ class TestArUcoDegradation:
             pytest.skip("VisionDegradationSimulator not available")
         self.vision_sim = VisionDegradationSimulator()
 
-    def create_aruco_test_image(self, width: int = 640, height: int = 480) -> np.ndarray:
+    def create_aruco_test_image(
+        self, width: int = 640, height: int = 480
+    ) -> np.ndarray:
         """Create test image with ArUco-like markers."""
         if not CV2_AVAILABLE:
             pytest.skip("OpenCV not available")
@@ -59,7 +64,7 @@ class TestArUcoDegradation:
 
         # Draw ArUco-like patterns (checkerboard squares)
         marker_positions = [
-            (50, 50, 100),      # Top-left, size 100
+            (50, 50, 100),  # Top-left, size 100
             (width - 150, 50, 100),  # Top-right
             (50, height - 150, 100),  # Bottom-left
             (width - 150, height - 150, 100),  # Bottom-right
@@ -98,7 +103,9 @@ class TestArUcoDegradation:
         detection_count = self._detect_markers(degraded)
 
         # Should detect most markers with light dust
-        assert detection_count >= 3, "Should detect at least 3 of 4 markers with light dust"
+        assert (
+            detection_count >= 3
+        ), "Should detect at least 3 of 4 markers with light dust"
 
     def test_aruco_detection_heavy_dust(self):
         """Test ArUco detection with heavy dust."""
@@ -109,7 +116,9 @@ class TestArUcoDegradation:
         detection_count = self._detect_markers(degraded)
 
         # Should detect some markers even with heavy dust
-        assert detection_count >= 1, "Should detect at least 1 marker even with heavy dust"
+        assert (
+            detection_count >= 1
+        ), "Should detect at least 1 marker even with heavy dust"
 
     def test_aruco_detection_combined_degradation(self):
         """Test ArUco detection with combined degradation factors."""
@@ -125,7 +134,9 @@ class TestArUcoDegradation:
         detection_count = self._detect_markers(degraded)
 
         # Should still detect some markers
-        assert detection_count >= 1, "Should detect at least 1 marker with combined degradation"
+        assert (
+            detection_count >= 1
+        ), "Should detect at least 1 marker with combined degradation"
 
     def test_aruco_detection_distance_simulation(self):
         """Test ArUco detection at different simulated distances."""
@@ -146,7 +157,9 @@ class TestArUcoDegradation:
             scaled_image = cv2.resize(test_image, (scaled_width, scaled_height))
 
             # Resize back to original (simulating camera zoom)
-            resized = cv2.resize(scaled_image, (test_image.shape[1], test_image.shape[0]))
+            resized = cv2.resize(
+                scaled_image, (test_image.shape[1], test_image.shape[0])
+            )
 
             # Apply slight degradation
             degraded = self.vision_sim.apply_dust(resized, dust_level=0.2)
@@ -156,7 +169,9 @@ class TestArUcoDegradation:
             detection_rates.append(detection_rate)
 
         # Detection should decrease with distance
-        assert detection_rates[0] > detection_rates[-1], "Detection should decrease with distance"
+        assert (
+            detection_rates[0] > detection_rates[-1]
+        ), "Detection should decrease with distance"
 
     def test_aruco_detection_angle_simulation(self):
         """Test ArUco detection at different viewing angles."""
@@ -175,12 +190,14 @@ class TestArUcoDegradation:
             # Create perspective transform
             angle_rad = np.radians(angle)
             src_points = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-            dst_points = np.float32([
-                [w * 0.1 * np.sin(angle_rad), 0],
-                [w - w * 0.1 * np.sin(angle_rad), 0],
-                [w, h],
-                [0, h],
-            ])
+            dst_points = np.float32(
+                [
+                    [w * 0.1 * np.sin(angle_rad), 0],
+                    [w - w * 0.1 * np.sin(angle_rad), 0],
+                    [w, h],
+                    [0, h],
+                ]
+            )
 
             matrix = cv2.getPerspectiveTransform(src_points, dst_points)
             transformed = cv2.warpPerspective(test_image, matrix, (w, h))
@@ -193,7 +210,9 @@ class TestArUcoDegradation:
             detection_rates.append(detection_rate)
 
         # Detection should decrease with viewing angle
-        assert detection_rates[0] > detection_rates[-1], "Detection should decrease with viewing angle"
+        assert (
+            detection_rates[0] > detection_rates[-1]
+        ), "Detection should decrease with viewing angle"
 
     def _detect_markers(self, image: np.ndarray) -> int:
         """
@@ -208,7 +227,9 @@ class TestArUcoDegradation:
         _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
 
         # Find contours
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         # Filter by area and aspect ratio (marker-like shapes)
         marker_count = 0

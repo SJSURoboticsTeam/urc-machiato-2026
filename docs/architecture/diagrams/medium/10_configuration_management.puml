@@ -1,0 +1,113 @@
+@startuml Configuration Architecture
+title Configuration Management
+
+package "Configuration Sources" as sources {
+    [YAML Files] as yaml
+    [Environment Variables] as env
+    [ROS2 Parameters] as params
+    [Database Storage] as db
+    [Command Line Args] as cli
+    [Remote Configuration] as remote
+}
+
+package "Configuration Manager" as manager {
+    [Config Validator] as validator
+    [Config Loader] as loader
+    [Config Merger] as merger
+    [Hot Reload Manager] as reload
+    [Config Cache] as cache
+    [Change Tracker] as tracker
+}
+
+package "Validation Rules" as validation {
+    [Schema Validator] as schema
+    [Type Checker] as types
+    [Range Validator] as ranges
+    [Dependency Checker] as deps
+    [Security Validator] as security
+    [Performance Validator] as perf
+}
+
+package "Configuration Consumers" as consumers {
+    [Mission Executor] as mission
+    [Navigation System] as nav
+    [Computer Vision] as cv
+    [Hardware Interface] as hw
+    [Safety System] as safety
+    [Frontend Dashboard] as frontend
+}
+
+package "Monitoring & Auditing" as monitoring {
+    [Configuration Logger] as logger
+    [Change Auditor] as auditor
+    [Health Checker] as health
+    [Performance Monitor] as perf_mon
+    [Alert System] as alerts
+}
+
+' Configuration loading flow
+sources --> loader : raw_config
+loader --> merger : loaded_config
+merger --> validator : merged_config
+validator --> validation : validation_request
+
+' Validation processing
+validation --> validator : validation_result
+validator --> cache : validated_config
+cache --> consumers : active_config
+
+' Hot reload capability
+tracker --> reload : config_changes
+reload --> merger : reload_trigger
+reload --> consumers : updated_config
+
+' Monitoring integration
+consumers --> logger : config_usage
+tracker --> auditor : change_events
+health --> alerts : health_issues
+perf_mon --> alerts : performance_alerts
+
+note right of validation
+    **Validation Types:**
+    - **Schema**: Structure compliance
+    - **Type**: Data type correctness
+    - **Range**: Value bounds checking
+    - **Dependency**: Inter-parameter relationships
+    - **Security**: Sensitive data handling
+    - **Performance**: Resource impact assessment
+
+    **Validation Modes:**
+    - Strict: Fail on any error
+    - Warning: Log but continue
+    - Lenient: Best effort parsing
+end note
+
+note as N10
+  **Configuration Hierarchy:**
+  1. **System Defaults**: Base configuration
+  2. **Environment Config**: Deployment specific
+  3. **Runtime Parameters**: Dynamic tuning
+  4. **User Overrides**: Operator adjustments
+
+  **Hot Reload Support:**
+  - Navigation parameters
+  - Vision thresholds
+  - Safety limits
+  - UI preferences
+
+  **Security Considerations:**
+  - Encrypted sensitive values
+  - Access control validation
+  - Audit trail logging
+  - Tamper detection
+
+  **Performance Targets:**
+  - Load time: < 500ms
+  - Validation: < 100ms
+  - Memory usage: < 50MB
+
+  **Created:** 2024-12-16
+  **Source:** config/, src/autonomy/core/state_management/
+  **Stakeholders:** DevOps Team, System Administrators
+end note
+@enduml

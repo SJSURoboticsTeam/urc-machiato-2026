@@ -20,7 +20,7 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPo
 from std_msgs.msg import String
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class NetworkStressPublisher(Node):
@@ -39,31 +39,31 @@ class NetworkStressPublisher(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,  # Stress test with best effort
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=stress_config.get('queue_depth', 100)
+            depth=stress_config.get("queue_depth", 100),
         )
 
         self.publisher = self.create_publisher(String, topic_name, qos_profile)
 
         # High-frequency timer for stress testing
         self.timer = self.create_timer(
-            stress_config.get('publish_interval', 0.01),  # 100Hz default
-            self.publish_stress_message
+            stress_config.get("publish_interval", 0.01),  # 100Hz default
+            self.publish_stress_message,
         )
 
     def publish_stress_message(self):
         """Publish a stress test message with simulated network conditions."""
         # Simulate message drops under stress
-        if random.random() < self.stress_config.get('drop_rate', 0.0):
+        if random.random() < self.stress_config.get("drop_rate", 0.0):
             self.dropped_messages += 1
             return
 
         # Create message with timestamp and stress data
         timestamp = time.time_ns()
-        stress_level = self.stress_config.get('stress_level', 'normal')
-        payload_size = self.stress_config.get('payload_size', 1000)
+        stress_level = self.stress_config.get("stress_level", "normal")
+        payload_size = self.stress_config.get("payload_size", 1000)
 
         # Create large payload to stress network
-        payload = 'X' * payload_size
+        payload = "X" * payload_size
         message_data = f"{timestamp}:{stress_level}:{payload}"
 
         msg = String()
@@ -90,7 +90,7 @@ class NetworkStressSubscriber(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=stress_config.get('queue_depth', 100)
+            depth=stress_config.get("queue_depth", 100),
         )
 
         self.subscription = self.create_subscription(
@@ -100,7 +100,7 @@ class NetworkStressSubscriber(Node):
     def stress_callback(self, msg):
         """Handle incoming stress test messages."""
         try:
-            parts = msg.data.split(':', 2)
+            parts = msg.data.split(":", 2)
             if len(parts) >= 2:
                 timestamp_ns = int(parts[0])
                 current_time_ns = time.time_ns()
@@ -124,21 +124,25 @@ class NetworkStressSubscriber(Node):
         """Get stress test statistics."""
         if not self.latency_samples:
             return {
-                'received': 0,
-                'avg_latency_ms': 0,
-                'max_latency_ms': 0,
-                'out_of_order': 0,
-                'jitter_ms': 0
+                "received": 0,
+                "avg_latency_ms": 0,
+                "max_latency_ms": 0,
+                "out_of_order": 0,
+                "jitter_ms": 0,
             }
 
         return {
-            'received': self.received_count,
-            'avg_latency_ms': statistics.mean(self.latency_samples),
-            'max_latency_ms': max(self.latency_samples),
-            'min_latency_ms': min(self.latency_samples),
-            'out_of_order': self.out_of_order_count,
-            'jitter_ms': statistics.stdev(self.latency_samples) if len(self.latency_samples) > 1 else 0,
-            'p95_latency_ms': statistics.quantiles(self.latency_samples, n=20)[18] if len(self.latency_samples) >= 20 else max(self.latency_samples)
+            "received": self.received_count,
+            "avg_latency_ms": statistics.mean(self.latency_samples),
+            "max_latency_ms": max(self.latency_samples),
+            "min_latency_ms": min(self.latency_samples),
+            "out_of_order": self.out_of_order_count,
+            "jitter_ms": statistics.stdev(self.latency_samples)
+            if len(self.latency_samples) > 1
+            else 0,
+            "p95_latency_ms": statistics.quantiles(self.latency_samples, n=20)[18]
+            if len(self.latency_samples) >= 20
+            else max(self.latency_samples),
         }
 
 
@@ -154,22 +158,20 @@ class NetworkEmulator:
         # Clear existing rules
         self.clear_network_stress()
 
-        if stress_level == 'extreme':
+        if stress_level == "extreme":
             # Simulate extreme conditions: 50% packet loss, 500ms latency, 10Mbps bandwidth
             rules = [
-                'sudo tc qdisc add dev lo root netem delay 500ms 100ms loss 50% rate 10mbit',
-                'sudo tc qdisc add dev lo root tbf rate 10mbit burst 32kbit latency 400ms'
+                "sudo tc qdisc add dev lo root netem delay 500ms 100ms loss 50% rate 10mbit",
+                "sudo tc qdisc add dev lo root tbf rate 10mbit burst 32kbit latency 400ms",
             ]
-        elif stress_level == 'severe':
+        elif stress_level == "severe":
             # Severe conditions: 20% packet loss, 200ms latency, 50Mbps bandwidth
             rules = [
-                'sudo tc qdisc add dev lo root netem delay 200ms 50ms loss 20% rate 50mbit'
+                "sudo tc qdisc add dev lo root netem delay 200ms 50ms loss 20% rate 50mbit"
             ]
-        elif stress_level == 'moderate':
+        elif stress_level == "moderate":
             # Moderate conditions: 5% packet loss, 50ms latency
-            rules = [
-                'sudo tc qdisc add dev lo root netem delay 50ms 10ms loss 5%'
-            ]
+            rules = ["sudo tc qdisc add dev lo root netem delay 50ms 10ms loss 5%"]
         else:
             return  # No stress
 
@@ -185,15 +187,16 @@ class NetworkEmulator:
     def clear_network_stress(self):
         """Clear all network stress rules."""
         try:
-            subprocess.run(['sudo', 'tc', 'qdisc', 'del', 'dev', 'lo', 'root'],
-                           capture_output=True)
+            subprocess.run(
+                ["sudo", "tc", "qdisc", "del", "dev", "lo", "root"], capture_output=True
+            )
         except subprocess.CalledProcessError:
             pass  # May not have rules to clear
 
         self.active_rules = []
 
 
-def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.0):
+def run_network_stress_test(stress_level: str = "extreme", duration: float = 30.0):
     """Run comprehensive network stress test."""
 
     print(f"🔥 Running {stress_level.upper()} Network Stress Test")
@@ -201,27 +204,27 @@ def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.
 
     # Configure stress parameters based on level
     stress_configs = {
-        'extreme': {
-            'publish_interval': 0.005,  # 200Hz
-            'drop_rate': 0.3,  # 30% artificial drops
-            'payload_size': 5000,  # 5KB messages
-            'queue_depth': 200
+        "extreme": {
+            "publish_interval": 0.005,  # 200Hz
+            "drop_rate": 0.3,  # 30% artificial drops
+            "payload_size": 5000,  # 5KB messages
+            "queue_depth": 200,
         },
-        'severe': {
-            'publish_interval': 0.01,  # 100Hz
-            'drop_rate': 0.1,  # 10% artificial drops
-            'payload_size': 2000,  # 2KB messages
-            'queue_depth': 100
+        "severe": {
+            "publish_interval": 0.01,  # 100Hz
+            "drop_rate": 0.1,  # 10% artificial drops
+            "payload_size": 2000,  # 2KB messages
+            "queue_depth": 100,
         },
-        'moderate': {
-            'publish_interval': 0.02,  # 50Hz
-            'drop_rate': 0.02,  # 2% artificial drops
-            'payload_size': 1000,  # 1KB messages
-            'queue_depth': 50
-        }
+        "moderate": {
+            "publish_interval": 0.02,  # 50Hz
+            "drop_rate": 0.02,  # 2% artificial drops
+            "payload_size": 1000,  # 1KB messages
+            "queue_depth": 50,
+        },
     }
 
-    config = stress_configs.get(stress_level, stress_configs['moderate'])
+    config = stress_configs.get(stress_level, stress_configs["moderate"])
 
     # Initialize network emulator
     net_emulator = NetworkEmulator()
@@ -232,7 +235,7 @@ def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.
         rclpy.init()
 
         # Create test topic
-        test_topic = f'/stress_test/network/{stress_level}'
+        test_topic = f"/stress_test/network/{stress_level}"
 
         # Create publisher and subscriber
         publisher = NetworkStressPublisher(test_topic, config)
@@ -251,7 +254,9 @@ def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.
         print("   - Extreme: 50% packet loss, 500ms latency, 10Mbps bandwidth")
         print("   - Severe: 20% packet loss, 200ms latency, 50Mbps bandwidth")
         print("   - Moderate: 5% packet loss, 50ms latency")
-        print(f"   - Publishing at {1.0/config['publish_interval']:.0f}Hz with {config['payload_size']}B payloads")
+        print(
+            f"   - Publishing at {1.0/config['publish_interval']:.0f}Hz with {config['payload_size']}B payloads"
+        )
 
         start_time = time.time()
         last_report = start_time
@@ -262,11 +267,13 @@ def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.
             # Periodic status report
             if current_time - last_report >= 5.0:
                 stats = subscriber.get_stats()
-                print(f"   [{current_time - start_time:.1f}s] "
-                      f"Sent: {publisher.message_count}, "
-                      f"Received: {stats['received']}, "
-                      f"Latency: {stats['avg_latency_ms']:.1f}ms, "
-                      f"Dropped: {publisher.dropped_messages}")
+                print(
+                    f"   [{current_time - start_time:.1f}s] "
+                    f"Sent: {publisher.message_count}, "
+                    f"Received: {stats['received']}, "
+                    f"Latency: {stats['avg_latency_ms']:.1f}ms, "
+                    f"Dropped: {publisher.dropped_messages}"
+                )
                 last_report = current_time
 
             time.sleep(0.1)
@@ -281,18 +288,23 @@ def run_network_stress_test(stress_level: str = 'extreme', duration: float = 30.
         rclpy.shutdown()
 
         return {
-            'stress_level': stress_level,
-            'duration': duration,
-            'messages_sent': publisher.message_count,
-            'messages_received': final_stats['received'],
-            'messages_dropped': publisher.dropped_messages,
-            'avg_latency_ms': final_stats['avg_latency_ms'],
-            'max_latency_ms': final_stats['max_latency_ms'],
-            'p95_latency_ms': final_stats['p95_latency_ms'],
-            'jitter_ms': final_stats['jitter_ms'],
-            'out_of_order': final_stats['out_of_order'],
-            'packet_loss_rate': (publisher.dropped_messages /
-                                 (publisher.message_count + publisher.dropped_messages)) * 100 if publisher.message_count > 0 else 0
+            "stress_level": stress_level,
+            "duration": duration,
+            "messages_sent": publisher.message_count,
+            "messages_received": final_stats["received"],
+            "messages_dropped": publisher.dropped_messages,
+            "avg_latency_ms": final_stats["avg_latency_ms"],
+            "max_latency_ms": final_stats["max_latency_ms"],
+            "p95_latency_ms": final_stats["p95_latency_ms"],
+            "jitter_ms": final_stats["jitter_ms"],
+            "out_of_order": final_stats["out_of_order"],
+            "packet_loss_rate": (
+                publisher.dropped_messages
+                / (publisher.message_count + publisher.dropped_messages)
+            )
+            * 100
+            if publisher.message_count > 0
+            else 0,
         }
 
     finally:
@@ -309,15 +321,19 @@ def run_comprehensive_network_stress_test():
     results = {}
 
     # Test each stress level
-    stress_levels = ['moderate', 'severe', 'extreme']
+    stress_levels = ["moderate", "severe", "extreme"]
 
     for level in stress_levels:
         print(f"\n🔥 Testing {level.upper()} network conditions...")
-        result = run_network_stress_test(level, duration=15.0)  # Shorter duration for comprehensive test
+        result = run_network_stress_test(
+            level, duration=15.0
+        )  # Shorter duration for comprehensive test
         results[level] = result
 
         # Quick summary
-        print(f"   ✅ {result['messages_received']}/{result['messages_sent']} messages delivered")
+        print(
+            f"   ✅ {result['messages_received']}/{result['messages_sent']} messages delivered"
+        )
         print(".1f")
         print(".1f")
         print(".1f")
@@ -329,21 +345,23 @@ def run_comprehensive_network_stress_test():
         result = results[level]
         print(f"\n{level.upper()} Conditions:")
         print(
-            f"  Reliability: {'❌ POOR' if result['packet_loss_rate'] > 30 else '⚠️ FAIR' if result['packet_loss_rate'] > 10 else '✅ GOOD'}")
+            f"  Reliability: {'❌ POOR' if result['packet_loss_rate'] > 30 else '⚠️ FAIR' if result['packet_loss_rate'] > 10 else '✅ GOOD'}"
+        )
         print(
-            f"  Latency: {'❌ VERY HIGH' if result['avg_latency_ms'] > 100 else '⚠️ HIGH' if result['avg_latency_ms'] > 50 else '✅ ACCEPTABLE'}")
+            f"  Latency: {'❌ VERY HIGH' if result['avg_latency_ms'] > 100 else '⚠️ HIGH' if result['avg_latency_ms'] > 50 else '✅ ACCEPTABLE'}"
+        )
         print(f"  Jitter: {result['jitter_ms']:.1f}ms")
 
     # Overall assessment
-    extreme_result = results['extreme']
+    extreme_result = results["extreme"]
     print("\n🎯 STRESS TEST ASSESSMENT")
 
-    if extreme_result['messages_received'] > extreme_result['messages_sent'] * 0.5:
+    if extreme_result["messages_received"] > extreme_result["messages_sent"] * 0.5:
         print("✅ System maintains basic functionality under extreme network stress")
     else:
         print("❌ System fails under extreme network conditions")
 
-    if extreme_result['avg_latency_ms'] < 1000:  # Less than 1 second
+    if extreme_result["avg_latency_ms"] < 1000:  # Less than 1 second
         print("✅ Communication remains responsive under stress")
     else:
         print("⚠️ High latency may impact real-time performance")
@@ -357,11 +375,11 @@ def run_comprehensive_network_stress_test():
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
 
     # Add path for imports
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
     results = run_comprehensive_network_stress_test()
     print("\n✨ Network stress testing completed!")

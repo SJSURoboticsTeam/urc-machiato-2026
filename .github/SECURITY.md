@@ -35,7 +35,7 @@ Run security checks with:
 pip install bandit safety
 
 # Run security linting
-bandit -r Autonomy/
+bandit -r autonomy/
 
 # Check for known vulnerabilities
 safety check

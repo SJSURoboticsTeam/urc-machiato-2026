@@ -1,0 +1,46 @@
+@startuml
+title Mission Execution States
+
+[*] --> IDLE
+IDLE --> LOCALIZING : start_mission
+
+LOCALIZING --> NAVIGATING : localization_success
+LOCALIZING --> FAILED : localization_timeout
+
+NAVIGATING --> DETECTING : waypoint_reached
+NAVIGATING --> FAILED : navigation_timeout
+
+DETECTING --> APPROACHING : target_detected
+DETECTING --> NAVIGATING : detection_failed
+
+APPROACHING --> EXECUTING : target_reached
+APPROACHING --> DETECTING : approach_failed
+
+EXECUTING --> COMPLETED : task_success
+EXECUTING --> FAILED : task_failure
+
+COMPLETED --> IDLE : mission_complete
+FAILED --> IDLE : mission_aborted
+
+note right of FAILED
+  FAILURE MODES:
+  - Timeout exceeded
+  - Safety violation
+  - Hardware failure
+  - Communication loss
+end note
+
+note as N2
+  Mission Types:
+  - Waypoint Navigation
+  - Object Detection & Approach
+  - Follow-Me (ArUco)
+  - Delivery Mission
+  - Return to Operator
+  - Sample Collection
+
+  Created: 2024-12-16
+  Source: missions/mission_executor.py, missions/mission_behaviors.py
+  Stakeholders: Mission Team, Integration Team
+end note
+@enduml

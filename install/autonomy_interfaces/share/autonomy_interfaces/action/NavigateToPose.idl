@@ -1,0 +1,63 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from autonomy_interfaces/action/NavigateToPose.action
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/PoseStamped.idl"
+
+module autonomy_interfaces {
+  module action {
+    @verbatim (language="comment", text=
+      "Navigate to a specific pose in the environment")
+    struct NavigateToPose_Goal {
+      @verbatim (language="comment", text=
+        "Goal: Where to go")
+      geometry_msgs::msg::PoseStamped target_pose;
+
+      @verbatim (language="comment", text=
+        "Acceptable distance error (meters)")
+      float tolerance;
+
+      @verbatim (language="comment", text=
+        "Maximum time allowed (seconds, 0 = no limit)")
+      float timeout;
+    };
+    @verbatim (language="comment", text=
+      "Feedback: Progress toward goal")
+    struct NavigateToPose_Result {
+      @verbatim (language="comment", text=
+        "Current distance remaining (meters)")
+      float distance_to_goal;
+
+      @verbatim (language="comment", text=
+        "Seconds until arrival")
+      float estimated_time_remaining;
+
+      @verbatim (language="comment", text=
+        "Current navigation state")
+      string navigation_state;
+
+      @verbatim (language="comment", text=
+        "Current robot pose")
+      geometry_msgs::msg::PoseStamped current_pose;
+    };
+    @verbatim (language="comment", text=
+      "Result: Final outcome")
+    struct NavigateToPose_Feedback {
+      boolean success;
+
+      string message;
+
+      @verbatim (language="comment", text=
+        "Where robot ended up")
+      geometry_msgs::msg::PoseStamped final_pose;
+
+      @verbatim (language="comment", text=
+        "Meters traveled during navigation")
+      float total_distance_traveled;
+
+      @verbatim (language="comment", text=
+        "Seconds taken to complete")
+      float total_time;
+    };
+  };
+};

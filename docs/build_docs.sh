@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DOCS_DIR="$SCRIPT_DIR"
 BUILD_DIR="$DOCS_DIR/_build"
-DOXYGEN_XML_DIR="$PROJECT_ROOT/Autonomy/docs/doxygen/xml"
+DOXYGEN_XML_DIR="$PROJECT_ROOT/autonomy/docs/doxygen/xml"
 JSDOC_DIR="$DOCS_DIR/_build/jsdoc"
 
 # Logging functions
@@ -108,7 +108,7 @@ generate_doxygen() {
     if command_exists doxygen; then
         log_info "Generating Doxygen documentation for C++ code..."
 
-        cd "$PROJECT_ROOT/Autonomy/docs"
+        cd "$PROJECT_ROOT/autonomy/docs"
         if [ -f "Doxyfile" ]; then
             doxygen Doxyfile
             log_success "Doxygen XML generated in $DOXYGEN_XML_DIR"

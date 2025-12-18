@@ -23,31 +23,13 @@ The central mission execution engine that orchestrates all mission activities.
 - Teleoperation data processing integration
 - Health monitoring and safety systems
 
-#### **TeleoperationDataProcessor** (`teleoperation_data_processor.py`)
-Processes and validates teleoperation sensor data from control systems.
+#### **Mission Behaviors** (`mission_behaviors.py`)
+Common mission behaviors and utilities shared across different mission types.
 
 **Key Features:**
-- **Data Validation**: Comprehensive validation of joint states, velocities, temperatures
-- **Filtering Pipeline**: Position, velocity, and temperature filtering
-- **Quality Monitoring**: Real-time data quality assessment and alerting
-- **Performance Optimized**: Efficient processing for real-time requirements
-
-#### **SystemHealthMonitor** (`system_health_monitor.py`)
-Monitors thermal, battery, and motor health conditions.
-
-**Key Features:**
-- **Multi-threshold Monitoring**: Warning, critical, and emergency thresholds
-- **Thermal Management**: Motor temperature monitoring with speed adjustments
-- **Battery Conservation**: Intelligent power management
-- **Emergency Triggering**: Automatic emergency response activation
-
-#### **EmergencyResponseCoordinator** (`emergency_response_coordinator.py`)
-Handles emergency situations and safety protocols.
-
-**Key Features:**
-- **Severity-based Response**: LOW, MEDIUM, HIGH, CRITICAL emergency levels
-- **Coordinated Actions**: Multi-system emergency response execution
-- **State Management**: Emergency mode tracking and recovery
+- **Reusable Behaviors**: Common navigation, detection, and control patterns
+- **Safety Integration**: Built-in safety checks and emergency handling
+- **Configuration Support**: Environment-aware behavior parameters
 - **Logging Integration**: Structured emergency event logging
 
 ### Supporting Infrastructure
@@ -116,6 +98,17 @@ Sample pickup and delivery operations.
 - Location-based navigation
 - Object manipulation coordination
 - Success/failure tracking
+
+### **Return to Operator Mission** (`return_to_operator_mission.py`)
+Autonomous return to operator with multi-modal localization and safe navigation.
+
+**Capabilities:**
+- GPS-based operator tracking and path planning
+- ArUco tag detection for precision final approach
+- SLAM-based global localization and obstacle avoidance
+- Real-time progress monitoring and safety checks
+- Stuck detection and recovery behaviors
+- Multi-phase mission execution (localize → plan → navigate → approach)
 
 ### **Debug Mission** (`debug_mission.py`)
 Testing and validation mission for system checkout.

@@ -16,19 +16,19 @@
 **Purpose**: Validate individual components in isolation
 **Scope**: Functions, classes, modules with mocked dependencies
 **Speed**: Fast execution (< 5 minutes)
-**Command**: `./tests/run_unit_tests.py`
+**Command**: `python3 tests/run_tests.py --unit`
 
 ### **Layer 2: Integration Tests** (Interaction)
 **Purpose**: Validate component interactions and data flow
 **Scope**: API contracts, message passing, cross-subsystem coordination
 **Speed**: Medium execution (10-30 minutes)
-**Command**: `./tests/run_integration_tests.py`
+**Command**: `python3 tests/run_tests.py --integration`
 
 ### **Layer 3: Simulation Tests** (Validation)
 **Purpose**: Validate system under simulated real-world conditions
 **Scope**: End-to-end simulation, network resilience, failure modes
 **Speed**: Slow execution (15-60 minutes)
-**Command**: `./tests/run_simulation_integration.sh`
+**Command**: `python3 test_everything.py`
 
 ---
 
@@ -37,16 +37,16 @@
 ### **Run Complete Testing Pyramid**
 ```bash
 cd /home/ubuntu/urc-machiato-2026
-./tests/run_all_tests.py
+python3 test_everything.py
 ```
 
 ### **Run Individual Layers**
 ```bash
 # Unit tests only
-./tests/run_unit_tests.py
+python3 tests/run_tests.py --unit
 
 # Integration tests only
-./tests/run_integration_tests.py
+python3 tests/run_tests.py --integration
 
 # Simulation tests only
 ./tests/run_simulation_integration.sh
@@ -563,4 +563,3 @@ jobs:
 **Last Updated**: 2025-12-12
 **Status**: ✅ Operational
 **Next Review**: After hardware validation begins
-

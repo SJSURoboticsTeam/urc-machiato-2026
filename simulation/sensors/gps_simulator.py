@@ -83,7 +83,9 @@ class GPSSimulator(BaseSensor):
         self.current_heading = (self.current_heading + heading_change) % 360
 
         # Simulate satellite visibility
-        self.satellites_visible = random.randint(self.min_satellites, self.max_satellites)
+        self.satellites_visible = random.randint(
+            self.min_satellites, self.max_satellites
+        )
 
         # Determine fix quality based on satellites
         if self.satellites_visible >= 8:
@@ -168,8 +170,12 @@ class GPSSimulator(BaseSensor):
 
         # Position noise (Gaussian)
         pos_noise = np.random.normal(0, self.position_noise_std, 3)
-        noisy_data["latitude"] += pos_noise[0] / 111000.0  # Convert meters to degrees lat
-        noisy_data["longitude"] += pos_noise[1] / (111000.0 * np.cos(np.radians(data["latitude"])))
+        noisy_data["latitude"] += (
+            pos_noise[0] / 111000.0
+        )  # Convert meters to degrees lat
+        noisy_data["longitude"] += pos_noise[1] / (
+            111000.0 * np.cos(np.radians(data["latitude"]))
+        )
         noisy_data["altitude"] += pos_noise[2]
 
         # Velocity noise
@@ -240,12 +246,14 @@ class GPSSimulator(BaseSensor):
         # Schedule recovery
         def recover_gps():
             import time
+
             time.sleep(duration_sec)
             self.satellites_visible = original_satellites
             self.fix_quality = 2
             self.logger.info("GPS signal recovered")
 
         import threading
+
         recovery_thread = threading.Thread(target=recover_gps, daemon=True)
         recovery_thread.start()
 

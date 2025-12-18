@@ -54,8 +54,12 @@ class NetworkFactory:
             if "custom_latency" in config:
                 # Allow custom latency override for testing
                 custom_config = config["custom_latency"]
-                emulator.condition.latency_ms = custom_config.get("base_ms", emulator.condition.latency_ms)
-                emulator.condition.jitter_ms = custom_config.get("jitter_ms", emulator.condition.jitter_ms)
+                emulator.condition.latency_ms = custom_config.get(
+                    "base_ms", emulator.condition.latency_ms
+                )
+                emulator.condition.jitter_ms = custom_config.get(
+                    "jitter_ms", emulator.condition.jitter_ms
+                )
 
             return emulator
 
@@ -109,7 +113,7 @@ class NetworkFactory:
         packet_loss_percent: float,
         bandwidth_mbps: float,
         connection_drops: bool = False,
-        drop_duration_s: float = 5.0
+        drop_duration_s: float = 5.0,
     ) -> NetworkEmulator:
         """Create a custom network profile.
 
@@ -180,7 +184,10 @@ class NetworkFactory:
 
         # Validate numeric parameters if present
         if "max_queue_size" in config:
-            if not isinstance(config["max_queue_size"], int) or config["max_queue_size"] <= 0:
+            if (
+                not isinstance(config["max_queue_size"], int)
+                or config["max_queue_size"] <= 0
+            ):
                 return False
 
         if "custom_latency" in config:

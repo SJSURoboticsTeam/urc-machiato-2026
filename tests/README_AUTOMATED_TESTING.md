@@ -210,7 +210,7 @@ python3 tests/run_tests.py --automated
 #### **System Won't Start**
 ```bash
 # Check ROS2 environment
-source Autonomy/ros2_ws/install/setup.bash
+source autonomy/ros2_ws/install/setup.bash
 ros2 doctor
 
 # Check system scripts
@@ -273,12 +273,3 @@ Options:
 **🎉 Your URC 2026 system now has enterprise-grade automated testing with complete lifecycle management!**
 
 **Next: Run `python3 tests/run_tests.py --aoi` to see it in action!** 🚀
-
-
-
-
-
-
-
-
-

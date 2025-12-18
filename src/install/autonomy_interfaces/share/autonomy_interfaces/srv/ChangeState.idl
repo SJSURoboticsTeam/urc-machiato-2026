@@ -1,0 +1,81 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/ChangeState.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request to change system state with validation")
+    struct ChangeState_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "Target state to transition to")
+      string desired_state;
+
+      @verbatim (language="comment", text=
+        "Optional: target substate (empty string if not applicable)")
+      string desired_substate;
+
+      @verbatim (language="comment", text=
+        "Optional: target calibration substate (empty string if not applicable)")
+      string desired_calibration_substate;
+
+      @verbatim (language="comment", text=
+        "Human-readable reason for state change")
+      string reason;
+
+      @verbatim (language="comment", text=
+        "ID of operator/system requesting change")
+      string operator_id;
+
+      @verbatim (language="comment", text=
+        "If true, skip some validation checks (use with caution)")
+      boolean force;
+
+      @verbatim (language="comment", text=
+        "Additional key=value metadata pairs")
+      sequence<string> metadata;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct ChangeState_Response {
+      @verbatim (language="comment", text=
+        "True if transition successful")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Actual state after transition attempt")
+      string actual_state;
+
+      @verbatim (language="comment", text=
+        "Actual substate after transition")
+      string actual_substate;
+
+      @verbatim (language="comment", text=
+        "Actual calibration substate after transition")
+      string actual_calibration_substate;
+
+      @verbatim (language="comment", text=
+        "Time taken to complete transition (seconds)")
+      double transition_time;
+
+      @verbatim (language="comment", text=
+        "Human-readable status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "Validation details" "\n"
+        "Were all preconditions satisfied")
+      boolean preconditions_met;
+
+      @verbatim (language="comment", text=
+        "List of preconditions that failed")
+      sequence<string> failed_preconditions;
+
+      @verbatim (language="comment", text=
+        "Non-critical warnings about the transition")
+      sequence<string> warnings;
+    };
+  };
+};

@@ -1,0 +1,117 @@
+@startuml Hardware Interface Diagram
+title Hardware Interface Architecture
+
+package "Hardware Abstraction Layer" as hal {
+    [CAN Bus Interface] as can
+    [Serial Interface] as serial
+    [Ethernet Interface] as eth
+    [GPIO Interface] as gpio
+    [I2C Interface] as i2c
+    [SPI Interface] as spi
+}
+
+package "Device Drivers" as drivers {
+    [Motor Controller\n(STM32)] as motor
+    [IMU Driver\n(BNO055)] as imu
+    [GPS Driver\n(u-blox)] as gps
+    [Camera Driver\n(OpenCV)] as camera
+    [Servo Controller\n(PCA9685)] as servo
+    [LiDAR Driver\n(RPLiDAR)] as lidar
+    [Encoder Driver] as encoder
+}
+
+package "Sensor Processing" as processing {
+    [Data Filtering] as filter
+    [Calibration Manager] as calib
+    [Sensor Fusion] as fusion
+    [Health Monitoring] as health
+    [Error Detection] as error
+}
+
+package "ROS2 Integration" as ros {
+    [Hardware Interface Node] as node
+    [Sensor Publishers] as sensors
+    [Command Subscribers] as commands
+    [Service Servers] as services
+    [Diagnostic Publisher] as diagnostics
+}
+
+package "Control Systems" as control {
+    [PID Controllers] as pid
+    [Trajectory Planner] as trajectory
+    [Motion Profiler] as profiler
+    [Safety Limits] as limits
+}
+
+package "Power Management" as power {
+    [Battery Monitor] as battery
+    [Power Distribution] as distribution
+    [Thermal Management] as thermal
+    [Power Sequencing] as sequencing
+}
+
+' Hardware abstraction connections
+hal --> drivers : raw_access
+drivers --> processing : sensor_data
+processing --> ros : processed_data
+
+' ROS2 integration
+ros --> commands : control_commands
+commands --> control : motion_commands
+control --> drivers : actuator_commands
+
+' Power management
+power --> hal : power_control
+power --> ros : power_status
+thermal --> control : thermal_limits
+
+' Safety integration
+limits --> control : safety_enforcement
+health --> ros : health_status
+error --> diagnostics : error_reporting
+
+' Data flow
+drivers --> filter : raw_measurements
+filter --> fusion : filtered_data
+fusion --> calib : calibrated_data
+calib --> sensors : published_data
+
+note right of processing
+    **Processing Pipeline:**
+    1. Raw sensor acquisition
+    2. Noise filtering (Kalman)
+    3. Sensor fusion (EKF)
+    4. Calibration correction
+    5. ROS2 publication
+
+    **Sample Rates:**
+    - IMU: 100Hz
+    - GPS: 10Hz
+    - Camera: 30Hz
+    - Motors: 50Hz
+end note
+
+note as N9
+  **Hardware Standards:**
+  - **CAN Bus:** 500kbps, 11-bit IDs
+  - **Serial:** 115200 baud, 8N1
+  - **Ethernet:** 100Mbps, TCP/UDP
+  - **Power:** 12V DC, 20A max
+
+  **Safety Features:**
+  - Watchdog timers
+  - Overcurrent protection
+  - Thermal shutdown
+  - Emergency stop circuits
+
+  **Threading Model:**
+  - CAN thread: 50Hz control
+  - Sensor thread: Variable rate
+  - ROS2 thread: Event-driven
+  - Watchdog thread: 10Hz
+
+  **Created:** 2024-12-16
+  **Source:** src/autonomy/control/hardware_interface/
+  **Stakeholders:** Hardware Team, Electrical Team, Firmware Team
+end note
+@enduml

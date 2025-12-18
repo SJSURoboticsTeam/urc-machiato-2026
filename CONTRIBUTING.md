@@ -18,8 +18,8 @@ Thank you for your interest in contributing to the URC 2026 Autonomy System! Thi
 ### Two-Workspace Architecture
 
 This project uses a **two-workspace development system**:
-- **`Autonomy/code/`** = **Development workspace** (where you write code)
-- **`Autonomy/ros2_ws/`** = **ROS2 workspace** (where ROS2 builds and runs code)
+- **`autonomy/code/`** = **Development workspace** (where you write code)
+- **`autonomy/ros2_ws/`** = **ROS2 workspace** (where ROS2 builds and runs code)
 
 **Always edit in `code/`, build in `ros2_ws/`!**
 
@@ -105,7 +105,7 @@ Examples:
 ### Unit Tests
 ```bash
 # Run Python unit tests
-cd Autonomy/ros2_ws
+cd autonomy/ros2_ws
 source install/setup.bash
 colcon test --packages-select autonomy_navigation
 colcon test-result --verbose
@@ -137,7 +137,7 @@ python tests/integration_test.py
 - Project link: https://github.com/users/ahmad-kad/projects/5
 - Use issue templates (Task, Bug, Epic, Visual Artifact)
 - Add `area:*`, `priority:*`, and `visual-artifact` labels as relevant
-- TODO comments in `Autonomy/**` will open/update issues
+- TODO comments in `autonomy/**` will open/update issues
 - New issues/PRs auto-add to the project; use `Fixes #<id>` to close and move to Done
 
 ### PR Template

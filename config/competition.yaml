@@ -1,0 +1,28 @@
+# URC 2026 Competition Configuration
+# Overrides for competition environment - inherits from rover.yaml
+
+# === COMPETITION SPECIFIC ===
+hardware_use_mock: false # Use real hardware in competition
+simulation_update_rate_hz: 20 # Faster updates for competition
+enable_monitoring: true # Enable monitoring in competition
+log_level: "INFO" # Clean logging for competition
+
+# === SAFETY STRINGENT SETTINGS ===
+safety_distance_meters: 0.5 # More conservative obstacle detection
+safety_max_speed_mps: 1.5 # Slower speeds for competition
+safety_battery_critical_percent: 15.0 # Higher battery threshold
+safety_thermal_limit_celsius: 75.0 # Stricter thermal limits
+safety_auto_recovery_enabled: false # No auto-recovery in competition
+safety_watchdog_heartbeat_timeout: 3.0 # Stricter timeouts
+
+# === MISSION SETTINGS ===
+mission_timeout_seconds: 3600 # Longer missions for competition (1 hour)
+mission_waypoint_timeout_seconds: 600 # More time per waypoint (10 min)
+mission_max_speed_mps: 0.8 # Conservative speeds for competition
+mission_emergency_stop_enabled: true # Enable emergency stops
+mission_auto_recovery_enabled: false # No auto-recovery in competition
+
+# === HARDWARE SETTINGS ===
+hardware_can_enabled: true # Enable CAN bus for competition
+hardware_cameras_enabled: true # Enable cameras
+hardware_websocket_url: "ws://rover-control.urc2026.local:8080" # Competition URL

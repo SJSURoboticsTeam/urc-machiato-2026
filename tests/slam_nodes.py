@@ -17,19 +17,19 @@ class DepthProcessorNode(Node):
     """ROS2 node for depth processing in SLAM."""
 
     def __init__(self):
-        super().__init__('depth_processor_node')
+        super().__init__("depth_processor_node")
 
         # Subscribers
         self.depth_sub = self.create_subscription(
-            Image, '/camera/depth/image_raw', self.depth_callback, 10
+            Image, "/camera/depth/image_raw", self.depth_callback, 10
         )
 
         # Publishers
         self.processed_depth_pub = self.create_publisher(
-            Image, '/slam/depth/processed', 10
+            Image, "/slam/depth/processed", 10
         )
 
-        self.get_logger().info('Depth Processor Node initialized')
+        self.get_logger().info("Depth Processor Node initialized")
 
     def depth_callback(self, msg: Image):
         """Process incoming depth images."""
@@ -52,26 +52,22 @@ class GPSFusionNode(Node):
     """ROS2 node for GPS-IMU fusion in SLAM."""
 
     def __init__(self):
-        super().__init__('gps_fusion_node')
+        super().__init__("gps_fusion_node")
 
         # Subscribers
         self.gps_sub = self.create_subscription(
-            NavSatFix, '/gps/fix', self.gps_callback, 10
+            NavSatFix, "/gps/fix", self.gps_callback, 10
         )
-        self.imu_sub = self.create_subscription(
-            Imu, '/imu/data', self.imu_callback, 10
-        )
+        self.imu_sub = self.create_subscription(Imu, "/imu/data", self.imu_callback, 10)
 
         # Publishers
-        self.fused_odom_pub = self.create_publisher(
-            Odometry, '/slam/odom/fused', 10
-        )
+        self.fused_odom_pub = self.create_publisher(Odometry, "/slam/odom/fused", 10)
 
         # State
         self.last_gps = None
         self.last_imu = None
 
-        self.get_logger().info('GPS Fusion Node initialized')
+        self.get_logger().info("GPS Fusion Node initialized")
 
     def gps_callback(self, msg: NavSatFix):
         """Handle GPS data."""
@@ -96,7 +92,7 @@ class GPSFusionNode(Node):
 
         odom = Odometry()
         odom.header.stamp = self.get_clock().now().to_msg()
-        odom.header.frame_id = 'odom'
+        odom.header.frame_id = "odom"
 
         # Mock fusion: use GPS position, IMU orientation
         odom.pose.pose.position.x = self.last_gps.longitude * 1000  # Mock conversion
@@ -147,5 +143,5 @@ def main():
             rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

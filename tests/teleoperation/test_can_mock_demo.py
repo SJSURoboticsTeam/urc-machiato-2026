@@ -35,14 +35,14 @@ async def websocket_client_demo():
             print(f"⚠️  {welcome_data.get('mock_warning', 'Mock system active')}")
 
             # Request different sensor readings
-            sensors_to_test = ['imu', 'gps', 'battery', 'motor_left', 'environment']
+            sensors_to_test = ["imu", "gps", "battery", "motor_left", "environment"]
 
             for sensor in sensors_to_test:
                 # Send sensor request
                 request = {
-                    'type': 'sensor_request',
-                    'sensor': sensor,
-                    'timestamp': time.time()
+                    "type": "sensor_request",
+                    "sensor": sensor,
+                    "timestamp": time.time(),
                 }
 
                 await websocket.send(json.dumps(request))
@@ -52,7 +52,7 @@ async def websocket_client_demo():
                 response = await websocket.recv()
                 data = json.loads(response)
 
-                if 'data' in data:
+                if "data" in data:
                     print(f"📨 {sensor.upper()}: {data['data']}")
                     print(f"   Mock: {data.get('mock', 'Unknown')}")
                 else:
@@ -64,10 +64,10 @@ async def websocket_client_demo():
             # Test motor command
             print("\n🔧 Testing motor command...")
             motor_cmd = {
-                'type': 'motor_command',
-                'motor': 'motor_left',
-                'velocity': 1.5,
-                'timestamp': time.time()
+                "type": "motor_command",
+                "motor": "motor_left",
+                "velocity": 1.5,
+                "timestamp": time.time(),
             }
 
             await websocket.send(json.dumps(motor_cmd))
@@ -82,17 +82,17 @@ async def websocket_client_demo():
 
             # Request motor data again to see the change
             motor_request = {
-                'type': 'sensor_request',
-                'sensor': 'motor_left',
-                'timestamp': time.time()
+                "type": "sensor_request",
+                "sensor": "motor_left",
+                "timestamp": time.time(),
             }
 
             await websocket.send(json.dumps(motor_request))
             motor_response = await websocket.recv()
             motor_data = json.loads(motor_response)
 
-            if 'data' in motor_data:
-                velocity = motor_data['data'].get('velocity', 'unknown')
+            if "data" in motor_data:
+                velocity = motor_data["data"].get("velocity", "unknown")
                 print(f"🔄 Motor left velocity after command: {velocity} rad/s")
 
     except Exception as e:
@@ -111,18 +111,18 @@ async def demo_priority_routing():
 
     # Create messages with different priorities
     messages = [
-        {'type': 'telemetry', 'sensor': 'temp', 'value': 25.5},  # LOW
-        {'type': 'imu_data', 'accel': [0, 0, 9.81]},           # NORMAL
-        {'type': 'calibration_command', 'action': 'start'},     # HIGH
-        {'type': 'safety_trigger', 'reason': 'obstacle'},       # CRITICAL
-        {'type': 'navigation_command', 'waypoint': [10, 5]},    # HIGH
+        {"type": "telemetry", "sensor": "temp", "value": 25.5},  # LOW
+        {"type": "imu_data", "accel": [0, 0, 9.81]},  # NORMAL
+        {"type": "calibration_command", "action": "start"},  # HIGH
+        {"type": "safety_trigger", "reason": "obstacle"},  # CRITICAL
+        {"type": "navigation_command", "waypoint": [10, 5]},  # HIGH
     ]
 
     print("📤 Enqueuing messages with different priorities...")
 
     for msg in messages:
         priority = router.determine_priority(msg)
-        router.enqueue_message(msg, 'demo_client')
+        router.enqueue_message(msg, "demo_client")
         print(f"   {msg['type']} → {priority.name}")
 
     # Process messages in priority order

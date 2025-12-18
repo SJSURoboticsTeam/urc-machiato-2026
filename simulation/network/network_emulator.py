@@ -128,9 +128,7 @@ class NetworkEmulator:
     def start(self):
         """Start network emulation."""
         self.running = True
-        self.delivery_thread = threading.Thread(
-            target=self._delivery_loop, daemon=True
-        )
+        self.delivery_thread = threading.Thread(target=self._delivery_loop, daemon=True)
         self.delivery_thread.start()
 
     def stop(self):

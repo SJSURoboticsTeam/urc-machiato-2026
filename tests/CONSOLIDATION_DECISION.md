@@ -32,7 +32,7 @@
 
 ---
 
-### Autonomy/tests/integration_test.py
+### autonomy/tests/integration_test.py
 
 **Status**: ⚠️ **CONSOLIDATE/REMOVE** - Legacy test, mostly superseded
 
@@ -62,9 +62,7 @@
    - Provides unique CAN bus and message routing coverage
    - Good for unified testing
 
-2. ❌ **REMOVE** `Autonomy/tests/integration_test.py`
+2. ❌ **REMOVE** `autonomy/tests/integration_test.py`
    - Legacy test superseded by better tests
    - Coverage is better in newer files
    - Not actively used
-
-

@@ -134,7 +134,9 @@ class TestEndurance:
     def test_30_minute_continuous_operation(self, ros_context):
         """Test 30-minute continuous operation."""
         # For CI/CD, use shorter duration; full 30 min for manual runs
-        test_duration_sec = float(os.getenv("ENDURANCE_TEST_DURATION", "60.0"))  # Default 1 min for CI
+        test_duration_sec = float(
+            os.getenv("ENDURANCE_TEST_DURATION", "60.0")
+        )  # Default 1 min for CI
 
         print(f"\n⏱️  Starting {test_duration_sec/60:.1f}-minute endurance test...")
 
@@ -165,7 +167,9 @@ class TestEndurance:
                 # Check for errors every 10 seconds
                 if iteration % 20 == 0:  # ~10 seconds at 0.5s intervals
                     if not self._check_system_health():
-                        errors.append(f"Health check failed at {time.time() - start_time:.1f}s")
+                        errors.append(
+                            f"Health check failed at {time.time() - start_time:.1f}s"
+                        )
 
                 time.sleep(0.5)  # 2 Hz operation rate
 
@@ -188,16 +192,24 @@ class TestEndurance:
 
         # Assertions
         assert len(errors) == 0, f"System errors during endurance test: {errors}"
-        assert elapsed_time >= test_duration_sec * 0.95, "Test should run for full duration"
-        assert abs(memory_trend) < 0.5, f"Memory leak detected: {memory_trend:.4f} MB/reading"
-        assert max_memory_delta < 200.0, f"Excessive memory growth: {max_memory_delta:.2f} MB"
+        assert (
+            elapsed_time >= test_duration_sec * 0.95
+        ), "Test should run for full duration"
+        assert (
+            abs(memory_trend) < 0.5
+        ), f"Memory leak detected: {memory_trend:.4f} MB/reading"
+        assert (
+            max_memory_delta < 200.0
+        ), f"Excessive memory growth: {max_memory_delta:.2f} MB"
         assert avg_cpu < 80.0, f"High CPU usage: {avg_cpu:.1f}%"
 
     def test_memory_leak_detection(self, ros_context):
         """Test for memory leaks during prolonged operation."""
         print("\n💧 Testing Memory Leak Detection")
 
-        test_duration_sec = float(os.getenv("MEMORY_LEAK_TEST_DURATION", "120.0"))  # 2 minutes for CI
+        test_duration_sec = float(
+            os.getenv("MEMORY_LEAK_TEST_DURATION", "120.0")
+        )  # 2 minutes for CI
 
         self.monitor.start_monitoring(interval_sec=2.0)
 
@@ -241,14 +253,20 @@ class TestEndurance:
         print(f"  📊 Max memory delta: {max_memory_delta:.2f} MB")
 
         # Memory leak detection: trend should be near zero
-        assert abs(memory_trend) < 0.1, f"Memory leak detected: {memory_trend:.4f} MB/reading"
-        assert max_memory_delta < 50.0, f"Excessive memory growth: {max_memory_delta:.2f} MB"
+        assert (
+            abs(memory_trend) < 0.1
+        ), f"Memory leak detected: {memory_trend:.4f} MB/reading"
+        assert (
+            max_memory_delta < 50.0
+        ), f"Excessive memory growth: {max_memory_delta:.2f} MB"
 
     def test_performance_degradation(self, ros_context):
         """Test for performance degradation over time."""
         print("\n📉 Testing Performance Degradation")
 
-        test_duration_sec = float(os.getenv("PERF_DEGRADATION_TEST_DURATION", "180.0"))  # 3 minutes for CI
+        test_duration_sec = float(
+            os.getenv("PERF_DEGRADATION_TEST_DURATION", "180.0")
+        )  # 3 minutes for CI
 
         self.monitor.start_monitoring(interval_sec=5.0)
 
@@ -286,7 +304,9 @@ class TestEndurance:
             print(f"  📊 Performance degradation ratio: {degradation_ratio:.2f}x")
 
             # Performance should not degrade more than 2x
-            assert degradation_ratio < 2.0, f"Performance degraded {degradation_ratio:.2f}x"
+            assert (
+                degradation_ratio < 2.0
+            ), f"Performance degraded {degradation_ratio:.2f}x"
 
     def test_resource_exhaustion_scenarios(self, ros_context):
         """Test system behavior under resource exhaustion."""
@@ -350,10 +370,14 @@ class TestEndurance:
 
         self.net_emu.stop()
 
-        print(f"  Successful reconnections: {successful_reconnections}/{reconnection_attempts}")
+        print(
+            f"  Successful reconnections: {successful_reconnections}/{reconnection_attempts}"
+        )
 
         # Should recover from most reconnection cycles
-        assert successful_reconnections >= reconnection_attempts * 0.8, "Should recover from network issues"
+        assert (
+            successful_reconnections >= reconnection_attempts * 0.8
+        ), "Should recover from network issues"
 
     def _simulate_sensor_processing(self):
         """Simulate sensor data processing."""

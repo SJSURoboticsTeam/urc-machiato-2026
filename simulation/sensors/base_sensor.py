@@ -107,7 +107,9 @@ class BaseSensor(ABC):
             raw_data = self._generate_raw_data(environment_state)
 
             # Apply environmental degradation
-            degraded_data = self._apply_environmental_effects(raw_data, environment_state)
+            degraded_data = self._apply_environmental_effects(
+                raw_data, environment_state
+            )
 
             # Add noise
             noisy_data = self._add_noise(degraded_data)

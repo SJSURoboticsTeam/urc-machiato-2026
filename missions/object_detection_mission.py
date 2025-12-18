@@ -395,8 +395,6 @@ class ObjectDetectionMission(Node):
                 self.get_logger().info("Already at appropriate distance from target")
                 return True
 
-            return False
-
         except Exception as e:
             self.get_logger().error(f"Approach error: {str(e)}")
             return False

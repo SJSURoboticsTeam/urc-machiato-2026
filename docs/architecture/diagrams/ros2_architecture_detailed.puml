@@ -1,0 +1,127 @@
+@startuml URC 2026 ROS2 Detailed Architecture
+
+title URC 2026 ROS2 Topics and Services - Detailed View
+
+' Define participants (ROS2 Nodes)
+participant "Competition Bridge\n(competition_bridge)" as CB #lightblue
+participant "State Machine Bridge\n(ros2_state_machine_bridge)" as SMB #lightgreen
+participant "SLAM Node\n(autonomy_slam)" as SLAM #orange
+participant "Navigation Node\n(autonomy_navigation)" as NAV #purple
+participant "Map Data Bridge\n(map_data_bridge)" as MDB #brown
+participant "Hardware Sensors" as HS #lightyellow
+participant "Mission Control" as MC #lightcoral
+participant "Safety Systems" as SS #lightgray
+participant "LED Control" as LED #lightcyan
+participant "C2 Display" as C2 #lightpink
+participant "Dashboard\n(WebSocket)" as DASH #gold
+
+' Publishers and Subscribers relationships
+== Topic Data Flow ==
+
+group Hardware Sensor Data
+HS -> CB : /hardware/battery_state\n(sensor_msgs/BatteryState)
+HS -> CB : /hardware/chassis_velocity\n(geometry_msgs/TwistStamped)
+HS -> CB : /hardware/gps\n(sensor_msgs/NavSatFix)
+HS -> CB : /hardware/imu\n(sensor_msgs/Imu)
+HS -> CB : /hardware/system_status\n(std_msgs/String)
+HS -> CB : /odom\n(nav_msgs/Odometry)
+end
+
+group SLAM Data Flow
+HS -> SLAM : camera/depth/image_raw\n(sensor_msgs/Image)
+HS -> SLAM : camera/camera_info\n(sensor_msgs/CameraInfo)
+SLAM -> MDB : slam/pose\n(geometry_msgs/PoseWithCovarianceStamped)
+SLAM -> MDB : /map\n(nav_msgs/OccupancyGrid)
+MDB -> CB : map_data\n(std_msgs/String)
+SLAM -> CB : slam/system/status\n(autonomy_interfaces/SlamStatus)
+end
+
+group Navigation Data Flow
+HS -> NAV : /odom\n(nav_msgs/Odometry)
+HS -> NAV : /imu\n(sensor_msgs/Imu)
+HS -> NAV : /gps/fix\n(sensor_msgs/NavSatFix)
+SMB -> NAV : navigation control\n(std_msgs/String)
+NAV -> CB : /navigation/status\n(autonomy_interfaces/NavigationStatus)
+NAV -> CB : /cmd_vel\n(geometry_msgs/Twist)
+NAV -> CB : /navigation/current_waypoint\n(geometry_msgs/PoseStamped)
+end
+
+group Mission Control Data
+MC -> CB : /mission/keyboard_status\n(std_msgs/String)
+MC -> CB : /mission/sample_collection_status\n(std_msgs/String)
+MC -> CB : /mission/status\n(std_msgs/String)
+CB -> MC : /mission/commands\n(std_msgs/String)
+end
+
+group Safety Systems
+SS -> CB : /emergency_stop\n(std_msgs/Bool)
+SS -> CB : /safety/boundary_violation\n(std_msgs/Bool)
+CB -> SS : /emergency_stop\n(std_msgs/Bool)
+end
+
+group Control Outputs
+CB -> LED : /led/command\n(autonomy_interfaces/LedCommand)
+CB -> C2 : /c2/object_highlight\n(autonomy_interfaces/VisionDetection)
+end
+
+group State Management
+MC -> SMB : /mission/state_request\n(std_msgs/String)
+SMB -> SMB : /state_machine/transition_request\n(std_msgs/String)
+SMB -> CB : /state_machine/current_state\n(std_msgs/String)
+SMB -> MC : /state_machine/for_mission_control\n(std_msgs/String)
+SMB -> SMB : /state_machine/state_transition\n(std_msgs/String)
+SMB -> SMB : /state_machine/metadata\n(std_msgs/String)
+end
+
+group Telemetry Streaming
+CB -> DASH : WebSocket Stream\nws://localhost:8080\nReal-time telemetry data
+end
+
+' Services
+== Service Interfaces ==
+
+group State Machine Services
+SMB -> SMB : /state_machine/can_transition_to_autonomous\n(std_srvs/Trigger)
+SMB -> SMB : /state_machine/health_check\n(std_srvs/Trigger)
+end
+
+group Navigation Services
+NAV -> NAV : navigate_to_pose\n(autonomy_interfaces/NavigateToPose)
+NAV -> NAV : navigation_integrity_check\n(autonomy_interfaces/NavigationIntegrityCheck)
+end
+
+group Parameter Management
+note right of CB
+Competition Bridge Parameters:
+• /competition_bridge/describe_parameters
+• /competition_bridge/get_parameter_types
+• /competition_bridge/get_parameters
+• /competition_bridge/list_parameters
+• /competition_bridge/set_parameters
+• /competition_bridge/set_parameters_atomically
+end note
+
+note right of SMB
+State Machine Bridge Parameters:
+• /ros2_state_machine_bridge/describe_parameters
+• /ros2_state_machine_bridge/get_parameter_types
+• /ros2_state_machine_bridge/get_parameters
+• /ros2_state_machine_bridge/list_parameters
+• /ros2_state_machine_bridge/set_parameters
+• /ros2_state_machine_bridge/set_parameters_atomically
+end note
+
+== Architecture Summary ==
+
+note right of DASH
+**System Statistics:**
+• Total Topics: 35+
+• Total Services: 16+
+• Competition Bridge: 11 subscribers, 5 publishers
+• State Machine Bridge: 2 subscribers, 5 publishers
+• SLAM Node: 2 subscribers, 3 publishers
+• Navigation Node: 3 subscribers, 3 publishers
+• Map Data Bridge: 2 subscribers, 1 publisher
+end note
+
+@enduml

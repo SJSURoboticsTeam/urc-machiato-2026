@@ -1,0 +1,76 @@
+# Performance Monitoring Configuration
+# Defines performance standards and monitoring settings for URC 2026
+
+monitoring:
+  # Performance standards (maximum acceptable values)
+  standards:
+    context_evaluation:
+      max_mean_time: 0.1        # 100ms for real-time context evaluation
+      max_variability: 0.5      # 50% coefficient of variation
+      regression_threshold: 0.05 # 5% performance degradation threshold
+
+    policy_engine:
+      max_mean_time: 0.05       # 50ms for emergency response decisions
+      max_variability: 0.5
+      regression_threshold: 0.05
+
+    communication_bridge:
+      max_mean_time: 0.01       # 10ms for communication operations
+      max_variability: 0.3
+      regression_threshold: 0.03
+
+  # Monitoring settings
+  settings:
+    data_retention_days: 90     # Keep performance data for 90 days
+    baseline_period_days: 7     # Use 7 days as baseline for regression detection
+    alert_threshold_severe: 0.10  # Alert on 10%+ degradation
+    alert_threshold_moderate: 0.05 # Alert on 5%+ degradation
+
+  # Benchmark configuration
+  benchmarks:
+    enabled:
+      - context_evaluation_performance
+      - policy_engine_performance
+      - communication_latency
+
+    iterations:
+      warmup: 5
+      rounds: 10
+      iterations: 100
+
+  # Alerting configuration
+  alerting:
+    enabled: true
+    channels:
+      - console
+      - file
+      # - slack  # Can be enabled with webhook
+      # - email  # Can be enabled with SMTP
+
+    thresholds:
+      severe_regression: 0.10
+      moderate_regression: 0.05
+      performance_violation: 0.95  # Alert if >95% of runs violate standards
+
+# Competition-specific performance requirements
+competition:
+  critical_deadlines:
+    emergency_response: 0.05      # 50ms max for emergency decisions
+    navigation_update: 0.1        # 100ms max for navigation updates
+    communication_timeout: 1.0    # 1 second max for communication timeouts
+
+  performance_targets:
+    cpu_usage_max: 80             # Maximum CPU usage percentage
+    memory_usage_max: 90          # Maximum memory usage percentage
+    network_latency_max: 50       # Maximum network latency (ms)
+
+  # Performance regression policies
+  regression_policy:
+    block_deployments: true       # Block deployments with severe regressions
+    require_approval: true        # Require manual approval for moderate regressions
+    notification_channels:        # Who to notify
+      - lead_developer
+      - systems_engineer
+      - competition_team
+
+

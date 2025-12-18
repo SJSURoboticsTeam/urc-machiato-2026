@@ -37,49 +37,41 @@ def create_rl_training_config():
             "structured": True,
             "json_format": False,
         },
-
         # Monitoring configuration
         "monitoring": {
             "enabled": True,
             "interval": 1.0,  # Monitor every second
         },
-
         # Tracing configuration
         "tracing": {
             "enabled": True,
             "auto_profile_threshold": 0.1,  # Log operations > 100ms
         },
-
         # Environment curriculum (starts easy, gets harder)
         "environment": {
             "tier": "real_life",  # Will be modified during curriculum
             "randomize_conditions": True,
         },
-
         # Sensor suite
         "sensors": [
             {"name": "gps", "type": "gps", "position_noise_std": 2.0},
             {"name": "imu", "type": "imu", "bias_drift": True},
         ],
-
         # Network conditions (affects communication reliability)
         "network": {
             "profile": "rural_wifi",  # Will vary during training
         },
-
         # Rover configuration
         "rover": {
             "model": "urc_rover",
             "physics_enabled": True,
             "failure_modes": ["wheel_stuck", "sensor_failure"],
         },
-
         # Time configuration
         "time": {
             "step_size": 0.1,  # 10Hz simulation
             "real_time_factor": 1.0,
         },
-
         # RL-specific recording
         "recording": {
             "format": "rl_dataset",
@@ -87,14 +79,13 @@ def create_rl_training_config():
             "state_compression": "minimal",
             "record_interval": 0.1,  # 10Hz recording
         },
-
         # RL training parameters
         "rl": {
             "reward_function": "navigation_efficiency",
             "episode_timeout": 300,  # 5 minutes max per episode
             "max_episodes": 100,
             "curriculum_learning": True,
-        }
+        },
     }
 
 
@@ -206,9 +197,7 @@ def run_rl_training():
 
     # Setup logging
     setup_simulation_logging(
-        log_level="INFO",
-        log_file="rl_training.log",
-        enable_structured=True
+        log_level="INFO", log_file="rl_training.log", enable_structured=True
     )
 
     # Create simulation with RL configuration
@@ -259,10 +248,16 @@ def run_rl_training():
                 print(f"   Network: {net_config.get('profile', 'default')}")
 
         # Start new episode
-        episode_id = rl_recorder.start_episode(metadata={
-            "curriculum_phase": "easy" if episode < 20 else "medium" if episode < 50 else "hard",
-            "episode": episode,
-        })
+        episode_id = rl_recorder.start_episode(
+            metadata={
+                "curriculum_phase": "easy"
+                if episode < 20
+                else "medium"
+                if episode < 50
+                else "hard",
+                "episode": episode,
+            }
+        )
 
         episode_reward = 0
         episode_steps = 0
@@ -302,7 +297,9 @@ def run_rl_training():
                     reward += 100  # Goal bonus
 
                 # Collision detection (simple bumper)
-                elif next_state.get("environment", {}).get("terrain_difficulty", 0) > 0.8:
+                elif (
+                    next_state.get("environment", {}).get("terrain_difficulty", 0) > 0.8
+                ):
                     done = True
                     termination_reason = "collision"
                     reward -= 50
@@ -315,9 +312,12 @@ def run_rl_training():
 
                 # Record RL step
                 rl_recorder.record_rl_step(
-                    current_state, action, next_state, done,
+                    current_state,
+                    action,
+                    next_state,
+                    done,
                     info={"termination_reason": termination_reason},
-                    custom_reward=reward
+                    custom_reward=reward,
                 )
 
                 # Update agent
@@ -329,8 +329,7 @@ def run_rl_training():
 
                 # Progress logging
                 if episode_steps % 100 == 0:
-                    print(".2f"
-                          ".3f")
+                    print(".2f" ".3f")
 
                 if done:
                     break
@@ -346,9 +345,7 @@ def run_rl_training():
         rl_recorder.end_episode(termination_reason, success=success)
 
         # Episode summary
-        print(".3f"
-              ".1f"
-              ".3f")
+        print(".3f" ".1f" ".3f")
 
         # Save checkpoint every 10 episodes
         if (episode + 1) % 10 == 0:

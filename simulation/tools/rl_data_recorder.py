@@ -21,6 +21,7 @@ from simulation.tools.data_recorder import DataRecorder
 @dataclass
 class RLStep:
     """Single RL training step."""
+
     timestamp: float
     episode: int
     step: int
@@ -36,6 +37,7 @@ class RLStep:
 @dataclass
 class RLEpisode:
     """Complete RL training episode."""
+
     episode_id: int
     start_time: float
     end_time: float
@@ -59,12 +61,14 @@ class RewardFunction:
         self.reward_type = reward_type
         self.logger = get_simulation_logger(__name__, "reward_function")
 
-    def calculate_reward(self,
-                        state: Dict[str, Any],
-                        action: Dict[str, Any],
-                        next_state: Dict[str, Any],
-                        done: bool,
-                        info: Dict[str, Any]) -> float:
+    def calculate_reward(
+        self,
+        state: Dict[str, Any],
+        action: Dict[str, Any],
+        next_state: Dict[str, Any],
+        done: bool,
+        info: Dict[str, Any],
+    ) -> float:
         """Calculate reward for RL step.
 
         Args:
@@ -78,21 +82,27 @@ class RewardFunction:
             Reward value
         """
         if self.reward_type == "navigation_efficiency":
-            return self._navigation_efficiency_reward(state, action, next_state, done, info)
+            return self._navigation_efficiency_reward(
+                state, action, next_state, done, info
+            )
         elif self.reward_type == "safety_focused":
             return self._safety_focused_reward(state, action, next_state, done, info)
         elif self.reward_type == "exploration":
             return self._exploration_reward(state, action, next_state, done, info)
         else:
-            self.logger.warning(f"Unknown reward type: {self.reward_type}, using default")
+            self.logger.warning(
+                f"Unknown reward type: {self.reward_type}, using default"
+            )
             return self._default_reward(state, action, next_state, done, info)
 
-    def _navigation_efficiency_reward(self,
-                                    state: Dict[str, Any],
-                                    action: Dict[str, Any],
-                                    next_state: Dict[str, Any],
-                                    done: bool,
-                                    info: Dict[str, Any]) -> float:
+    def _navigation_efficiency_reward(
+        self,
+        state: Dict[str, Any],
+        action: Dict[str, Any],
+        next_state: Dict[str, Any],
+        done: bool,
+        info: Dict[str, Any],
+    ) -> float:
         """Reward based on navigation efficiency."""
         reward = 0.0
 
@@ -100,7 +110,9 @@ class RewardFunction:
         if "goal_distance" in info:
             goal_distance = info["goal_distance"]
             prev_goal_distance = info.get("prev_goal_distance", goal_distance)
-            reward += (prev_goal_distance - goal_distance) * 10.0  # Progress toward goal
+            reward += (
+                prev_goal_distance - goal_distance
+            ) * 10.0  # Progress toward goal
 
         # Speed efficiency
         rover_state = next_state.get("rover", {})
@@ -134,12 +146,14 @@ class RewardFunction:
 
         return reward
 
-    def _safety_focused_reward(self,
-                              state: Dict[str, Any],
-                              action: Dict[str, Any],
-                              next_state: Dict[str, Any],
-                              done: bool,
-                              info: Dict[str, Any]) -> float:
+    def _safety_focused_reward(
+        self,
+        state: Dict[str, Any],
+        action: Dict[str, Any],
+        next_state: Dict[str, Any],
+        done: bool,
+        info: Dict[str, Any],
+    ) -> float:
         """Reward focused on safety and collision avoidance."""
         reward = 0.0
 
@@ -168,12 +182,14 @@ class RewardFunction:
 
         return reward
 
-    def _exploration_reward(self,
-                           state: Dict[str, Any],
-                           action: Dict[str, Any],
-                           next_state: Dict[str, Any],
-                           done: bool,
-                           info: Dict[str, Any]) -> float:
+    def _exploration_reward(
+        self,
+        state: Dict[str, Any],
+        action: Dict[str, Any],
+        next_state: Dict[str, Any],
+        done: bool,
+        info: Dict[str, Any],
+    ) -> float:
         """Reward for exploration and coverage."""
         reward = 0.0
 
@@ -190,21 +206,25 @@ class RewardFunction:
             reward += info["information_gain"] * 2.0
 
         # Small movement penalty to encourage efficient exploration
-        movement = np.linalg.norm([
-            next_state.get("rover", {}).get("position", [0, 0, 0])[i] -
-            state.get("rover", {}).get("position", [0, 0, 0])[i]
-            for i in range(2)
-        ])
+        movement = np.linalg.norm(
+            [
+                next_state.get("rover", {}).get("position", [0, 0, 0])[i]
+                - state.get("rover", {}).get("position", [0, 0, 0])[i]
+                for i in range(2)
+            ]
+        )
         reward -= movement * 0.1
 
         return reward
 
-    def _default_reward(self,
-                       state: Dict[str, Any],
-                       action: Dict[str, Any],
-                       next_state: Dict[str, Any],
-                       done: bool,
-                       info: Dict[str, Any]) -> float:
+    def _default_reward(
+        self,
+        state: Dict[str, Any],
+        action: Dict[str, Any],
+        next_state: Dict[str, Any],
+        done: bool,
+        info: Dict[str, Any],
+    ) -> float:
         """Default reward function."""
         # Simple survival reward
         reward = 1.0  # Small reward for continuing
@@ -244,7 +264,7 @@ class RLDataRecorder(DataRecorder):
             "average_reward": 0.0,
             "average_episode_length": 0.0,
             "success_rate": 0.0,
-            "best_reward": float('-inf'),
+            "best_reward": float("-inf"),
         }
 
     def initialize(self, config: Dict[str, Any]):
@@ -263,9 +283,11 @@ class RLDataRecorder(DataRecorder):
         self.episode_timeout = rl_config.get("episode_timeout", 300)
         self.max_episodes = rl_config.get("max_episodes", 1000)
 
-        self.logger.info("RL Data Recorder initialized",
-                        reward_function=reward_type,
-                        episode_timeout=self.episode_timeout)
+        self.logger.info(
+            "RL Data Recorder initialized",
+            reward_function=reward_type,
+            episode_timeout=self.episode_timeout,
+        )
 
     def start_episode(self, metadata: Optional[Dict[str, Any]] = None) -> int:
         """Start a new RL training episode.
@@ -291,19 +313,21 @@ class RLDataRecorder(DataRecorder):
             episode_length=0,
             success=False,
             termination_reason="",
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self.logger.info("Started RL episode", episode_id=episode_id)
         return episode_id
 
-    def record_rl_step(self,
-                      state: Dict[str, Any],
-                      action: Dict[str, Any],
-                      next_state: Dict[str, Any],
-                      done: bool,
-                      info: Optional[Dict[str, Any]] = None,
-                      custom_reward: Optional[float] = None) -> RLStep:
+    def record_rl_step(
+        self,
+        state: Dict[str, Any],
+        action: Dict[str, Any],
+        next_state: Dict[str, Any],
+        done: bool,
+        info: Optional[Dict[str, Any]] = None,
+        custom_reward: Optional[float] = None,
+    ) -> RLStep:
         """Record a single RL training step.
 
         Args:
@@ -341,7 +365,7 @@ class RLDataRecorder(DataRecorder):
             next_state=self._extract_rl_state(next_state),
             done=done,
             info=info,
-            simulation_time=state.get("timestamp", 0.0)
+            simulation_time=state.get("timestamp", 0.0),
         )
 
         # Add to current episode
@@ -367,17 +391,14 @@ class RLDataRecorder(DataRecorder):
             self.end_episode(termination_reason, success)
 
         # Also record in base format for compatibility
-        self.record({
-            "rl_step": asdict(step),
-            "simulation_state": next_state
-        })
+        self.record({"rl_step": asdict(step), "simulation_state": next_state})
 
         self.logger.log_rl_step(
             episode=step.episode,
             step=step.step,
             reward=step.reward,
             action_type=action.get("type", "unknown"),
-            done=done
+            done=done,
         )
 
         return step
@@ -404,12 +425,14 @@ class RLDataRecorder(DataRecorder):
         # Update training metrics
         self._update_training_metrics(episode)
 
-        self.logger.info("Ended RL episode",
-                        episode_id=episode.episode_id,
-                        total_reward=episode.total_reward,
-                        episode_length=episode.episode_length,
-                        success=success,
-                        termination_reason=termination_reason)
+        self.logger.info(
+            "Ended RL episode",
+            episode_id=episode.episode_id,
+            total_reward=episode.total_reward,
+            episode_length=episode.episode_length,
+            success=success,
+            termination_reason=termination_reason,
+        )
 
     def _extract_rl_state(self, simulation_state: Dict[str, Any]) -> Dict[str, Any]:
         """Extract RL-relevant state from simulation state.
@@ -436,8 +459,12 @@ class RLDataRecorder(DataRecorder):
             "hdop": sensors.get("gps", {}).get("hdop", 50.0),
         }
         rl_state["imu"] = {
-            "linear_acceleration": sensors.get("imu", {}).get("linear_acceleration", [0.0, 0.0, 0.0]),
-            "angular_velocity": sensors.get("imu", {}).get("angular_velocity", [0.0, 0.0, 0.0]),
+            "linear_acceleration": sensors.get("imu", {}).get(
+                "linear_acceleration", [0.0, 0.0, 0.0]
+            ),
+            "angular_velocity": sensors.get("imu", {}).get(
+                "angular_velocity", [0.0, 0.0, 0.0]
+            ),
         }
 
         # Environmental factors
@@ -474,13 +501,13 @@ class RLDataRecorder(DataRecorder):
         # Rolling averages
         total_episodes = self.training_metrics["total_episodes"]
         self.training_metrics["average_reward"] = (
-            (self.training_metrics["average_reward"] * (total_episodes - 1)) +
-            episode.total_reward
+            (self.training_metrics["average_reward"] * (total_episodes - 1))
+            + episode.total_reward
         ) / total_episodes
 
         self.training_metrics["average_episode_length"] = (
-            (self.training_metrics["average_episode_length"] * (total_episodes - 1)) +
-            episode.episode_length
+            (self.training_metrics["average_episode_length"] * (total_episodes - 1))
+            + episode.episode_length
         ) / total_episodes
 
         # Success rate
@@ -489,8 +516,7 @@ class RLDataRecorder(DataRecorder):
 
         # Best reward
         self.training_metrics["best_reward"] = max(
-            self.training_metrics["best_reward"],
-            episode.total_reward
+            self.training_metrics["best_reward"], episode.total_reward
         )
 
     def get_rl_statistics(self) -> Dict[str, Any]:
@@ -504,8 +530,12 @@ class RLDataRecorder(DataRecorder):
         if self.episodes:
             # Recent episodes (last 10)
             recent_episodes = self.episodes[-10:]
-            stats["recent_average_reward"] = np.mean([ep.total_reward for ep in recent_episodes])
-            stats["recent_success_rate"] = np.mean([ep.success for ep in recent_episodes])
+            stats["recent_average_reward"] = np.mean(
+                [ep.total_reward for ep in recent_episodes]
+            )
+            stats["recent_success_rate"] = np.mean(
+                [ep.success for ep in recent_episodes]
+            )
 
             # Episode length distribution
             episode_lengths = [ep.episode_length for ep in self.episodes]
@@ -544,10 +574,12 @@ class RLDataRecorder(DataRecorder):
 
             if format == "json":
                 import json
+
                 with open(path, "w") as f:
                     json.dump(dataset, f, indent=2, default=str)
             elif format == "pickle":
                 import pickle
+
                 with open(path, "wb") as f:
                     pickle.dump(dataset, f)
             else:

@@ -32,25 +32,25 @@ class MockMotorController(Node):
     """
 
     def __init__(self):
-        super().__init__('mock_motor_controller')
+        super().__init__("mock_motor_controller")
 
         # Declare parameters
-        self.declare_parameter('update_rate', 10.0)  # Hz
-        self.declare_parameter('wheel_separation', 0.5)  # meters
-        self.declare_parameter('wheel_radius', 0.15)  # meters
-        self.declare_parameter('max_linear_velocity', 2.0)  # m/s
-        self.declare_parameter('max_angular_velocity', 1.5)  # rad/s
-        self.declare_parameter('position_noise_std', 0.01)  # meters
-        self.declare_parameter('orientation_noise_std', 0.01)  # radians
+        self.declare_parameter("update_rate", 10.0)  # Hz
+        self.declare_parameter("wheel_separation", 0.5)  # meters
+        self.declare_parameter("wheel_radius", 0.15)  # meters
+        self.declare_parameter("max_linear_velocity", 2.0)  # m/s
+        self.declare_parameter("max_angular_velocity", 1.5)  # rad/s
+        self.declare_parameter("position_noise_std", 0.01)  # meters
+        self.declare_parameter("orientation_noise_std", 0.01)  # radians
 
         # Get parameters
-        self.update_rate = self.get_parameter('update_rate').value
-        self.wheel_separation = self.get_parameter('wheel_separation').value
-        self.wheel_radius = self.get_parameter('wheel_radius').value
-        self.max_linear_vel = self.get_parameter('max_linear_velocity').value
-        self.max_angular_vel = self.get_parameter('max_angular_velocity').value
-        self.pos_noise_std = self.get_parameter('position_noise_std').value
-        self.orient_noise_std = self.get_parameter('orientation_noise_std').value
+        self.update_rate = self.get_parameter("update_rate").value
+        self.wheel_separation = self.get_parameter("wheel_separation").value
+        self.wheel_radius = self.get_parameter("wheel_radius").value
+        self.max_linear_vel = self.get_parameter("max_linear_velocity").value
+        self.max_angular_vel = self.get_parameter("max_angular_velocity").value
+        self.pos_noise_std = self.get_parameter("position_noise_std").value
+        self.orient_noise_std = self.get_parameter("orientation_noise_std").value
 
         # Control state
         self.current_linear_vel = 0.0
@@ -78,34 +78,37 @@ class MockMotorController(Node):
         qos_reliable = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=10,
         )
 
         qos_sensor = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=10,
         )
 
         # Publishers
-        self.odom_pub = self.create_publisher(Odometry, '/odom', qos_reliable)
-        self.imu_pub = self.create_publisher(Imu, '/imu/data', qos_sensor)
+        self.odom_pub = self.create_publisher(Odometry, "/odom", qos_reliable)
+        self.imu_pub = self.create_publisher(Imu, "/imu/data", qos_sensor)
 
         # Subscribers
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel', self.cmd_vel_callback, qos_reliable)
+            Twist, "/cmd_vel", self.cmd_vel_callback, qos_reliable
+        )
 
         # Control loop timer
         self.control_timer = self.create_timer(
-            1.0 / self.update_rate, self.control_loop)
+            1.0 / self.update_rate, self.control_loop
+        )
 
         # Odometry sequence counter
         self.odom_seq = 0
 
-        self.get_logger().info('Mock Motor Controller initialized')
-        self.get_logger().info(f'Update rate: {self.update_rate} Hz')
+        self.get_logger().info("Mock Motor Controller initialized")
+        self.get_logger().info(f"Update rate: {self.update_rate} Hz")
         self.get_logger().info(
-            f'Max velocities: linear={self.max_linear_vel} m/s, angular={self.max_angular_vel} rad/s')
+            f"Max velocities: linear={self.max_linear_vel} m/s, angular={self.max_angular_vel} rad/s"
+        )
 
     def cmd_vel_callback(self, msg: Twist):
         """Handle velocity commands from navigation stack"""
@@ -116,7 +119,7 @@ class MockMotorController(Node):
         self.target_linear_vel = linear_x
         self.target_angular_vel = angular_z
 
-        self.get_logger().debug('.2f')
+        self.get_logger().debug(".2f")
 
     def control_loop(self):
         """Main control loop - simulate physics and publish sensor data"""
@@ -133,7 +136,9 @@ class MockMotorController(Node):
 
         # Angular velocity control
         angular_error = self.target_angular_vel - self.current_angular_vel
-        angular_accel = max(-angular_accel_limit, min(angular_accel_limit, angular_error / dt))
+        angular_accel = max(
+            -angular_accel_limit, min(angular_accel_limit, angular_error / dt)
+        )
         self.current_angular_vel += angular_accel * dt
 
         # Update simulated rover position (kinematic model)
@@ -152,6 +157,7 @@ class MockMotorController(Node):
         """Update rover position using kinematic model"""
         # Add some noise to simulate real sensors
         import random
+
         pos_noise = random.gauss(0, self.pos_noise_std)
         orient_noise = random.gauss(0, self.orient_noise_std)
 
@@ -171,7 +177,9 @@ class MockMotorController(Node):
     def update_simulated_imu(self):
         """Update simulated IMU readings based on motion"""
         # Simulate accelerometer readings (including gravity and acceleration)
-        ax_world = self.current_linear_vel * self.current_angular_vel  # Centripetal acceleration
+        ax_world = (
+            self.current_linear_vel * self.current_angular_vel
+        )  # Centripetal acceleration
         ay_world = 0.0
         az_world = 9.81  # Gravity
 
@@ -187,6 +195,7 @@ class MockMotorController(Node):
 
         # Add some noise
         import random
+
         noise_std = 0.01
         self.imu_ax += random.gauss(0, noise_std)
         self.imu_ay += random.gauss(0, noise_std)
@@ -202,8 +211,8 @@ class MockMotorController(Node):
         # Header
         odom.header = Header()
         odom.header.stamp = self.get_clock().now().to_msg()
-        odom.header.frame_id = 'odom'
-        odom.child_frame_id = 'base_link'
+        odom.header.frame_id = "odom"
+        odom.child_frame_id = "base_link"
         self.odom_seq += 1
         odom.header.seq = self.odom_seq
 
@@ -219,12 +228,44 @@ class MockMotorController(Node):
         odom.pose.pose.orientation.w = math.cos(self.theta / 2.0)
 
         # Pose covariance (diagonal matrix)
-        odom.pose.covariance = [0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
+        odom.pose.covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
 
         # Twist
         odom.twist.twist.linear.x = self.vx
@@ -235,12 +276,44 @@ class MockMotorController(Node):
         odom.twist.twist.angular.z = self.vtheta
 
         # Twist covariance
-        odom.twist.covariance = [0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.01, 0.0]
+        odom.twist.covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+        ]
 
         self.odom_pub.publish(odom)
 
@@ -250,7 +323,7 @@ class MockMotorController(Node):
 
         # Header
         imu.header.stamp = self.get_clock().now().to_msg()
-        imu.header.frame_id = 'imu_link'
+        imu.header.frame_id = "imu_link"
 
         # Orientation (from odometry)
         imu.orientation.x = 0.0
@@ -263,13 +336,33 @@ class MockMotorController(Node):
         imu.angular_velocity.x = self.imu_gx
         imu.angular_velocity.y = self.imu_gy
         imu.angular_velocity.z = self.imu_gz
-        imu.angular_velocity_covariance = [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01]
+        imu.angular_velocity_covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
 
         # Linear acceleration
         imu.linear_acceleration.x = self.imu_ax
         imu.linear_acceleration.y = self.imu_ay
         imu.linear_acceleration.z = self.imu_az
-        imu.linear_acceleration_covariance = [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01]
+        imu.linear_acceleration_covariance = [
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+        ]
 
         self.imu_pub.publish(imu)
 
@@ -287,5 +380,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

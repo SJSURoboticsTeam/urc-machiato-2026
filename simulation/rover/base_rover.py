@@ -81,7 +81,9 @@ class BaseRover(ABC):
         )
 
     @abstractmethod
-    def _kinematics_step(self, dt: float, control_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _kinematics_step(
+        self, dt: float, control_inputs: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute kinematic simulation step.
 
         Args:
@@ -214,7 +216,7 @@ class BaseRover(ABC):
         self,
         linear_velocity: float = 0.0,
         angular_velocity: float = 0.0,
-        steering_angle: float = 0.0
+        steering_angle: float = 0.0,
     ):
         """Set rover control inputs.
 
@@ -224,8 +226,12 @@ class BaseRover(ABC):
             steering_angle: Steering angle (radians, for Ackermann steering)
         """
         # Clamp to physical limits
-        self.left_velocity_cmd = np.clip(linear_velocity, -self.max_velocity, self.max_velocity)
-        self.right_velocity_cmd = np.clip(linear_velocity, -self.max_velocity, self.max_velocity)
+        self.left_velocity_cmd = np.clip(
+            linear_velocity, -self.max_velocity, self.max_velocity
+        )
+        self.right_velocity_cmd = np.clip(
+            linear_velocity, -self.max_velocity, self.max_velocity
+        )
         self.steering_angle_cmd = np.clip(steering_angle, -0.5, 0.5)  # ±0.5 radians
 
         self.control_commands_processed += 1
@@ -268,7 +274,9 @@ class BaseRover(ABC):
 
         return control_inputs
 
-    def _update_motor_states(self, dt: float, control_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_motor_states(
+        self, dt: float, control_inputs: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Update motor states based on control inputs.
 
         Args:
@@ -294,7 +302,9 @@ class BaseRover(ABC):
                 self.motor_temperatures[i] = np.clip(self.motor_temperatures[i], 0, 100)
             else:
                 self.motor_currents[i] = 0.0
-                self.motor_temperatures[i] = max(25.0, self.motor_temperatures[i] - 0.1 * dt)
+                self.motor_temperatures[i] = max(
+                    25.0, self.motor_temperatures[i] - 0.1 * dt
+                )
 
         return {
             "temperatures": self.motor_temperatures.copy(),
@@ -302,7 +312,9 @@ class BaseRover(ABC):
             "enabled": self.motor_enabled.copy(),
         }
 
-    def _update_battery_state(self, dt: float, control_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _update_battery_state(
+        self, dt: float, control_inputs: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Update battery state based on power consumption.
 
         Args:
@@ -323,7 +335,9 @@ class BaseRover(ABC):
         # Update battery percentage (simplified model)
         battery_capacity_wh = 500  # 500Wh battery
         energy_used_wh = energy_used / 3600  # Convert to Wh
-        self.battery_percentage = max(0, self.battery_percentage - (energy_used_wh / battery_capacity_wh) * 100)
+        self.battery_percentage = max(
+            0, self.battery_percentage - (energy_used_wh / battery_capacity_wh) * 100
+        )
 
         # Update voltage (simplified discharge curve)
         self.battery_voltage = 24.0 * (0.9 + 0.1 * (self.battery_percentage / 100.0))
@@ -342,7 +356,9 @@ class BaseRover(ABC):
             dt: Time step
         """
         # Calculate distance traveled
-        velocity_magnitude = np.linalg.norm(self.velocity[:2])  # Ignore vertical velocity
+        velocity_magnitude = np.linalg.norm(
+            self.velocity[:2]
+        )  # Ignore vertical velocity
         self.distance_traveled += velocity_magnitude * dt
 
     def _create_error_state(self, error_msg: str) -> Dict[str, Any]:
@@ -372,15 +388,21 @@ class BaseRover(ABC):
         return {
             "distance_traveled_km": self.distance_traveled / 1000,
             "energy_consumed_wh": self.energy_consumed / 3600,
-            "average_velocity_m_s": self.distance_traveled / max(1, self.control_commands_processed * 0.01),
+            "average_velocity_m_s": self.distance_traveled
+            / max(1, self.control_commands_processed * 0.01),
             "efficiency_wh_per_km": (
-                (self.energy_consumed / 3600) / max(0.001, self.distance_traveled / 1000)
+                (self.energy_consumed / 3600)
+                / max(0.001, self.distance_traveled / 1000)
                 if self.distance_traveled > 0
                 else 0
             ),
-            "motor_temperature_max": max(self.motor_temperatures) if self.motor_temperatures else 0,
+            "motor_temperature_max": max(self.motor_temperatures)
+            if self.motor_temperatures
+            else 0,
             "battery_discharge_rate_percent_per_hour": (
-                (100 - self.battery_percentage) / max(0.001, self.distance_traveled / (self.max_velocity * 3600)) * 100
+                (100 - self.battery_percentage)
+                / max(0.001, self.distance_traveled / (self.max_velocity * 3600))
+                * 100
                 if self.distance_traveled > 0
                 else 0
             ),

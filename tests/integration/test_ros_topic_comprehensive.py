@@ -88,11 +88,11 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         # Check statistics
         stats = self.net_perfect.get_statistics()
         self.assertEqual(
-            stats["messages_dropped"], 0, "No messages should be dropped in perfect conditions"
+            stats["messages_dropped"],
+            0,
+            "No messages should be dropped in perfect conditions",
         )
-        self.assertLess(
-            stats["average_latency_ms"], 1.0, "Latency should be minimal"
-        )
+        self.assertLess(stats["average_latency_ms"], 1.0, "Latency should be minimal")
 
         print(f"  ✅ SIMULATED PASS - {stats['messages_received']}/50 messages received")
         print(f"  ⚠️  WARNING: Perfect environment - hardware validation required")
@@ -136,7 +136,9 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         )
 
         print(f"  ✅ SIMULATED PASS - {success_rate*100:.1f}% success rate")
-        print(f"  ⚠️  WARNING: Real-life simulation - actual field performance may vary")
+        print(
+            f"  ⚠️  WARNING: Real-life simulation - actual field performance may vary"
+        )
 
     def test_gps_topic_extreme_conditions(self):
         """Test GPS topic communication in extreme conditions."""
@@ -176,7 +178,9 @@ class ROSTopicIntegrationTest(unittest.TestCase):
             success_rate, 0.50, "Success rate should be >50% even in extreme conditions"
         )
 
-        print(f"  ✅ SIMULATED PASS - {success_rate*100:.1f}% success rate (survival mode)")
+        print(
+            f"  ✅ SIMULATED PASS - {success_rate*100:.1f}% success rate (survival mode)"
+        )
         print(f"  ⚠️  WARNING: Extreme simulation - if passing, system is robust")
 
     def test_imu_topic_across_all_tiers(self):
@@ -219,8 +223,10 @@ class ROSTopicIntegrationTest(unittest.TestCase):
                 "latency_ms": stats["average_latency_ms"],
             }
 
-            print(f"  {tier_name:10} {success_rate*100:.1f}% success, "
-                  f"{stats['average_latency_ms']:.1f}ms latency")
+            print(
+                f"  {tier_name:10} {success_rate*100:.1f}% success, "
+                f"{stats['average_latency_ms']:.1f}ms latency"
+            )
 
         # Verify degradation progression
         self.assertGreater(
@@ -264,11 +270,11 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         max_latency = np.max(command_latencies)
 
         # Commands should have <200ms latency in real-life conditions
-        self.assertLess(
-            max_latency, 200.0, "Max command latency should be <200ms"
-        )
+        self.assertLess(max_latency, 200.0, "Max command latency should be <200ms")
 
-        print(f"  ✅ SIMULATED PASS - Avg latency: {avg_latency:.1f}ms, Max: {max_latency:.1f}ms")
+        print(
+            f"  ✅ SIMULATED PASS - Avg latency: {avg_latency:.1f}ms, Max: {max_latency:.1f}ms"
+        )
         print(f"  ⚠️  WARNING: Simulation - actual motor response time not validated")
 
     def test_battery_status_topic(self):
@@ -295,7 +301,9 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         time.sleep(1.0)
 
         # Verify battery trend monitoring
-        self.assertGreater(len(battery_readings), 15, "Should receive most battery updates")
+        self.assertGreater(
+            len(battery_readings), 15, "Should receive most battery updates"
+        )
 
         # Check voltage is decreasing
         voltages = [b["voltage"] for b in battery_readings]

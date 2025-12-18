@@ -122,7 +122,9 @@ class RealLifeEnvironment(BaseEnvironment):
             self.traction = min(1.0, self.traction + moisture_effect)
 
             # Moisture evaporates quickly
-            self._schedule_traction_change(self.traction - moisture_effect, 300.0)  # 5 minutes
+            self._schedule_traction_change(
+                self.traction - moisture_effect, 300.0
+            )  # 5 minutes
 
     def _update_surface_properties(self):
         """Update terrain properties based on surface type."""
@@ -137,9 +139,12 @@ class RealLifeEnvironment(BaseEnvironment):
 
         # Smooth transition to new properties
         transition_rate = 0.1
-        self.traction = self.traction * (1 - transition_rate) + props["traction"] * transition_rate
+        self.traction = (
+            self.traction * (1 - transition_rate) + props["traction"] * transition_rate
+        )
         self.terrain_difficulty = (
-            self.terrain_difficulty * (1 - transition_rate) + props["difficulty"] * transition_rate
+            self.terrain_difficulty * (1 - transition_rate)
+            + props["difficulty"] * transition_rate
         )
 
     def _schedule_wind_change(self, target_speed: float, delay_seconds: float):
@@ -182,7 +187,9 @@ class RealLifeEnvironment(BaseEnvironment):
         storm_duration = np.random.uniform(1800.0, 7200.0)  # 30-120 minutes
         self._schedule_storm_end(original_dust, original_wind, storm_duration)
 
-    def _schedule_storm_end(self, original_dust: float, original_wind: float, duration: float):
+    def _schedule_storm_end(
+        self, original_dust: float, original_wind: float, duration: float
+    ):
         """Schedule dust storm end.
 
         Args:
@@ -210,7 +217,8 @@ class RealLifeEnvironment(BaseEnvironment):
             # IMU affected by temperature and vibration
             "imu_noise_multiplier": base_effects["imu_noise_multiplier"] * 1.2,
             # Camera affected by dust and lighting
-            "camera_visibility_factor": self.visibility * 0.85,  # Additional dust factor
+            "camera_visibility_factor": self.visibility
+            * 0.85,  # Additional dust factor
             # LiDAR affected by dust scatter
             "lidar_range_factor": base_effects["lidar_range_factor"] * 0.9,
         }

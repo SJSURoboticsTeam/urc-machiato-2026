@@ -1,0 +1,57 @@
+{
+  "validation_summary": {
+    "total_duration_seconds": 1.438004970550537,
+    "execution_timestamp": 1765998006.7169812,
+    "overall_readiness_score": 0.0,
+    "competition_ready": false
+  },
+  "test_results": {
+    "unit_tests": {
+      "status": "FAILED",
+      "output": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json=test-results/unit-results.json\n  inifile: /home/ubuntu/urc-machiato-2026/tests/pytest.ini\n  rootdir: /home/ubuntu/urc-machiato-2026/tests\n\n"
+    },
+    "competition_tests": {
+      "status": "FAILED",
+      "output": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json=test-results/competition-results.json\n  inifile: /home/ubuntu/urc-machiato-2026/tests/pytest.ini\n  rootdir: /home/ubuntu/urc-machiato-2026/tests\n\n"
+    },
+    "integration_tests": {
+      "status": "FAILED",
+      "output": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json=test-results/integration-results.json\n  inifile: /home/ubuntu/urc-machiato-2026/tests/pytest.ini\n  rootdir: /home/ubuntu/urc-machiato-2026/tests\n\n"
+    },
+    "performance_tests": {
+      "status": "FAILED",
+      "standards_violations": [
+        "Performance validation error: Expecting value: line 1 column 1 (char 0)"
+      ]
+    },
+    "system_integration": {
+      "status": "FAILED",
+      "config_check": {
+        "passed": true,
+        "missing_files": [],
+        "invalid_files": []
+      },
+      "deployment_check": {
+        "passed": true,
+        "missing_scripts": []
+      },
+      "ros2_check": {
+        "passed": false,
+        "ros2_available": true,
+        "ros2_initialized": false
+      }
+    },
+    "deployment_readiness": {
+      "readiness_score": 0.0,
+      "competition_ready": false,
+      "recommendations": [
+        "CRITICAL: Major test failures detected. Address all failing tests before deployment.",
+        "Failed components: Unit Tests, Competition Tests, Integration Tests, Performance Tests, System Integration"
+      ]
+    }
+  },
+  "recommendations": [
+    "CRITICAL: Major test failures detected. Address all failing tests before deployment.",
+    "Failed components: Unit Tests, Competition Tests, Integration Tests, Performance Tests, System Integration"
+  ]
+}

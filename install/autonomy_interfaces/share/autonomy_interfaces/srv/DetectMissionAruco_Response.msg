@@ -1,0 +1,27 @@
+
+# Response
+bool success  # Whether detection and alignment calculation was successful
+string message  # Status message
+string mission_type  # Mission type that was processed
+
+# Detection results
+int32[] detected_tag_ids  # IDs of successfully detected tags
+geometry_msgs/Point[] tag_positions  # 3D positions of detected tags
+float32[] tag_distances  # Estimated distances to tags
+float32[] tag_angles  # Angles to tags (radians)
+builtin_interfaces/Time detection_time  # When detection occurred
+
+# Alignment calculation results
+bool alignment_available  # Whether alignment calculation is available
+geometry_msgs/Point alignment_center  # Calculated center point of detected tags
+geometry_msgs/Quaternion alignment_orientation  # Calculated orientation for coplanar alignment
+geometry_msgs/Point arm_target_position  # Recommended arm position for alignment
+float32 alignment_quality  # Quality score of alignment (0.0-1.0)
+float32[] alignment_errors  # Individual alignment errors for each tag
+
+# Mission-specific information
+bool mission_ready  # Whether mission can proceed based on detection results
+string[] missing_required_tags  # Required tags that were not detected
+string[] detected_optional_tags  # Optional tags that were detected
+string[] alignment_warnings  # Warnings about alignment quality or missing tags
+string[] mission_recommendations  # Recommendations for improving mission success

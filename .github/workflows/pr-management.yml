@@ -39,8 +39,8 @@ jobs:
 
                 **Quick References:**
                 - 📖 [Contributing Guide](../CONTRIBUTING.md)
-                - 🏗️ [System Architecture](../Autonomy/docs/overview/SystemArchitecture.md)
-                - 🛠️ [Code Style Guide](../Autonomy/CODE_STYLE.md)
+                - 🏗️ [System Architecture](../autonomy/docs/overview/SystemArchitecture.md)
+                - 🛠️ [Code Style Guide](../autonomy/CODE_STYLE.md)
                 - 📊 [Project Board](../docs/onboard/ProjectBoard.md)
 
                 **Tips for success:**
