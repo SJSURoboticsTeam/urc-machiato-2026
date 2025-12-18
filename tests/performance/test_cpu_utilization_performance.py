@@ -11,19 +11,20 @@ Tests CPU usage under different operational modes:
 Critical for resource optimization and thermal management.
 """
 
-import time
-import statistics
-import unittest
-import psutil
-import threading
-import multiprocessing as mp
-from typing import Dict, List, Optional, Tuple, Any
-import numpy as np
-import os
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import cProfile
-import pstats
 import io
+import multiprocessing as mp
+import os
+import pstats
+import statistics
+import threading
+import time
+import unittest
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import psutil
 
 
 class CPUUtilizationPerformanceTest(unittest.TestCase):
@@ -33,10 +34,10 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         """Set up CPU utilization testing."""
         # Test parameters - aligned with competition requirements
         self.monitoring_duration_seconds = 60  # Monitor for 60 seconds per test
-        self.target_idle_cpu_percent = 5.0      # Idle CPU target
+        self.target_idle_cpu_percent = 5.0  # Idle CPU target
         self.target_navigation_cpu_percent = 50.0  # Autonomous navigation target
-        self.target_vision_cpu_percent = 60.0   # Vision processing target
-        self.target_peak_cpu_percent = 80.0     # Peak load target
+        self.target_vision_cpu_percent = 60.0  # Vision processing target
+        self.target_peak_cpu_percent = 80.0  # Peak load target
 
         # CPU tracking
         self.cpu_readings = []
@@ -46,10 +47,10 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
         # Test scenarios
         self.operational_modes = {
-            'idle': self.target_idle_cpu_percent,
-            'navigation': self.target_navigation_cpu_percent,
-            'vision': self.target_vision_cpu_percent,
-            'peak_load': self.target_peak_cpu_percent
+            "idle": self.target_idle_cpu_percent,
+            "navigation": self.target_navigation_cpu_percent,
+            "vision": self.target_vision_cpu_percent,
+            "peak_load": self.target_peak_cpu_percent,
         }
 
     def test_cpu_utilization_by_operational_mode(self):
@@ -67,7 +68,9 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         # Analyze results across modes
         self._analyze_cpu_mode_comparison(results_by_mode)
 
-    def _test_operational_mode_cpu(self, mode: str, target_cpu: float) -> Dict[str, Any]:
+    def _test_operational_mode_cpu(
+        self, mode: str, target_cpu: float
+    ) -> Dict[str, Any]:
         """Test CPU usage for a specific operational mode."""
         # Reset tracking
         self.cpu_readings.clear()
@@ -82,13 +85,13 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             # Run workload for this mode
             workload_start = time.time()
 
-            if mode == 'idle':
+            if mode == "idle":
                 self._run_idle_workload()
-            elif mode == 'navigation':
+            elif mode == "navigation":
                 self._run_navigation_workload()
-            elif mode == 'vision':
+            elif mode == "vision":
                 self._run_vision_workload()
-            elif mode == 'peak_load':
+            elif mode == "peak_load":
                 self._run_peak_load_workload()
 
             workload_duration = time.time() - workload_start
@@ -105,13 +108,15 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
     def _start_cpu_monitoring(self):
         """Start comprehensive CPU monitoring."""
         self.monitoring_active = True
-        self.monitor_thread = threading.Thread(target=self._cpu_monitor_worker, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._cpu_monitor_worker, daemon=True
+        )
         self.monitor_thread.start()
 
     def _stop_cpu_monitoring(self):
         """Stop CPU monitoring."""
         self.monitoring_active = False
-        if hasattr(self, 'monitor_thread'):
+        if hasattr(self, "monitor_thread"):
             self.monitor_thread.join(timeout=2.0)
 
     def _cpu_monitor_worker(self):
@@ -136,7 +141,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
                 self.process_cpu_readings.append(0.0)
 
             # System load
-            load_avg = os.getloadavg() if hasattr(os, 'getloadavg') else (0, 0, 0)
+            load_avg = os.getloadavg() if hasattr(os, "getloadavg") else (0, 0, 0)
             self.system_load_readings.append(load_avg)
 
     def _run_idle_workload(self):
@@ -222,16 +227,18 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
         while time.time() - start_time < duration:
             # Simulate navigation calculations
-            waypoints = [{'x': i*2.0, 'y': (i%3)*1.0} for i in range(20)]
+            waypoints = [{"x": i * 2.0, "y": (i % 3) * 1.0} for i in range(20)]
 
             for wp in waypoints:
                 # Path planning calculations
-                distance = np.sqrt(wp['x']**2 + wp['y']**2)
-                angle = np.arctan2(wp['y'], wp['x'])
+                distance = np.sqrt(wp["x"] ** 2 + wp["y"] ** 2)
+                angle = np.arctan2(wp["y"], wp["x"])
 
                 # Simulate obstacle avoidance
                 obstacles = np.random.random((10, 2)) * 10
-                distances_to_obstacles = np.sqrt(np.sum((obstacles - [wp['x'], wp['y']])**2, axis=1))
+                distances_to_obstacles = np.sqrt(
+                    np.sum((obstacles - [wp["x"], wp["y"]]) ** 2, axis=1)
+                )
                 min_distance = np.min(distances_to_obstacles)
 
                 # PID control calculations
@@ -254,14 +261,14 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
                 image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
 
                 # Simulate computer vision operations
-                gray = np.dot(image[...,:3], [0.2989, 0.5870, 0.1140]).astype(np.uint8)
+                gray = np.dot(image[..., :3], [0.2989, 0.5870, 0.1140]).astype(np.uint8)
 
                 # Edge detection
                 edges = np.zeros_like(gray)
-                for i in range(1, gray.shape[0]-1):
-                    for j in range(1, gray.shape[1]-1):
-                        gx = (gray[i+1, j] - gray[i-1, j])
-                        gy = (gray[i, j+1] - gray[i, j-1])
+                for i in range(1, gray.shape[0] - 1):
+                    for j in range(1, gray.shape[1] - 1):
+                        gx = gray[i + 1, j] - gray[i - 1, j]
+                        gy = gray[i, j + 1] - gray[i, j - 1]
                         edges[i, j] = min(255, np.sqrt(gx**2 + gy**2))
 
                 # Feature detection (simplified)
@@ -275,7 +282,9 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
                 detections = []
                 for _ in range(5):
                     x, y = np.random.randint(0, 640), np.random.randint(0, 480)
-                    detections.append({'x': x, 'y': y, 'confidence': np.random.random()})
+                    detections.append(
+                        {"x": x, "y": y, "confidence": np.random.random()}
+                    )
 
             time.sleep(0.01)
 
@@ -288,7 +297,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             # Pure CPU-intensive computation
             result = 0
             for i in range(100000):
-                result += i ** 2
+                result += i**2
                 result = result % 1000000  # Prevent overflow
 
             # Matrix operations
@@ -332,9 +341,13 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
                 for i in range(img.shape[0]):
                     for j in range(img.shape[1]):
                         r, g, b = img[i, j]
-                        hsv[i, j] = [np.arctan2(np.sqrt(3)*(g-b), 2*r-g-b) * 180/np.pi,
-                                   np.sqrt(r**2 + g**2 + b**2),
-                                   max(r, g, b)]
+                        hsv[i, j] = [
+                            np.arctan2(np.sqrt(3) * (g - b), 2 * r - g - b)
+                            * 180
+                            / np.pi,
+                            np.sqrt(r**2 + g**2 + b**2),
+                            max(r, g, b),
+                        ]
 
                 processed_images.append(hsv)
 
@@ -359,9 +372,11 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 next_pos = (current[0] + dx, current[1] + dy)
 
-                if (0 <= next_pos[0] < len(grid) and
-                    0 <= next_pos[1] < len(grid[0]) and
-                    grid[next_pos[0]][next_pos[1]] == 0):
+                if (
+                    0 <= next_pos[0] < len(grid)
+                    and 0 <= next_pos[1] < len(grid[0])
+                    and grid[next_pos[0]][next_pos[1]] == 0
+                ):
 
                     new_cost = cost_so_far[current] + 1
                     if next_pos not in cost_so_far or new_cost < cost_so_far[next_pos]:
@@ -380,20 +395,32 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
         return path
 
-    def _analyze_mode_cpu_usage(self, mode: str, target_cpu: float, duration: float) -> Dict[str, Any]:
+    def _analyze_mode_cpu_usage(
+        self, mode: str, target_cpu: float, duration: float
+    ) -> Dict[str, Any]:
         """Analyze CPU usage for a specific operational mode."""
         if not self.cpu_readings:
-            return {'error': 'No CPU readings collected'}
+            return {"error": "No CPU readings collected"}
 
         # Calculate CPU statistics
         avg_cpu = statistics.mean(self.cpu_readings)
         max_cpu = max(self.cpu_readings)
         min_cpu = min(self.cpu_readings)
-        p95_cpu = statistics.quantiles(self.cpu_readings, n=20)[18] if len(self.cpu_readings) > 1 else max_cpu
+        p95_cpu = (
+            statistics.quantiles(self.cpu_readings, n=20)[18]
+            if len(self.cpu_readings) > 1
+            else max_cpu
+        )
 
         # Process-specific CPU
-        avg_process_cpu = statistics.mean(self.process_cpu_readings) if self.process_cpu_readings else 0
-        max_process_cpu = max(self.process_cpu_readings) if self.process_cpu_readings else 0
+        avg_process_cpu = (
+            statistics.mean(self.process_cpu_readings)
+            if self.process_cpu_readings
+            else 0
+        )
+        max_process_cpu = (
+            max(self.process_cpu_readings) if self.process_cpu_readings else 0
+        )
 
         # Per-core analysis
         if self.cpu_per_core:
@@ -419,16 +446,16 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         print(".1f")
 
         return {
-            'mode': mode,
-            'avg_cpu_percent': avg_cpu,
-            'max_cpu_percent': max_cpu,
-            'p95_cpu_percent': p95_cpu,
-            'avg_process_cpu_percent': avg_process_cpu,
-            'max_process_cpu_percent': max_process_cpu,
-            'target_cpu_percent': target_cpu,
-            'passed': passed,
-            'readings_count': len(self.cpu_readings),
-            'test_duration': duration
+            "mode": mode,
+            "avg_cpu_percent": avg_cpu,
+            "max_cpu_percent": max_cpu,
+            "p95_cpu_percent": p95_cpu,
+            "avg_process_cpu_percent": avg_process_cpu,
+            "max_process_cpu_percent": max_process_cpu,
+            "target_cpu_percent": target_cpu,
+            "passed": passed,
+            "readings_count": len(self.cpu_readings),
+            "test_duration": duration,
         }
 
     def _analyze_cpu_mode_comparison(self, results_by_mode: Dict[str, Any]):
@@ -437,7 +464,9 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         print("=" * 50)
 
         # Overall assessment
-        all_passed = all(result.get('passed', False) for result in results_by_mode.values())
+        all_passed = all(
+            result.get("passed", False) for result in results_by_mode.values()
+        )
 
         if all_passed:
             print("✅ ALL CPU UTILIZATION TARGETS MET")
@@ -451,56 +480,61 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         print("-" * 40)
 
         for mode, result in results_by_mode.items():
-            if 'error' in result:
+            if "error" in result:
                 print(f"  {mode.replace('_', ' ').title()}: ERROR - {result['error']}")
                 continue
 
-            status = "✅" if result['passed'] else "❌"
-            print("20"
-                  ".1f")
+            status = "✅" if result["passed"] else "❌"
+            print("20" ".1f")
 
         # Performance trends and recommendations
         print("\n💡 CPU Optimization Analysis:")
         print("-" * 40)
 
         # Check for concerning patterns
-        idle_result = results_by_mode.get('idle', {})
-        peak_result = results_by_mode.get('peak_load', {})
+        idle_result = results_by_mode.get("idle", {})
+        peak_result = results_by_mode.get("peak_load", {})
 
-        if idle_result.get('avg_cpu_percent', 0) > self.target_idle_cpu_percent * 2:
-            print("   ⚠️  High idle CPU usage detected - investigate background processes")
+        if idle_result.get("avg_cpu_percent", 0) > self.target_idle_cpu_percent * 2:
+            print(
+                "   ⚠️  High idle CPU usage detected - investigate background processes"
+            )
 
-        if peak_result.get('max_cpu_percent', 0) > 90:
-            print("   ⚠️  Peak CPU usage approaching system limits - consider load balancing")
+        if peak_result.get("max_cpu_percent", 0) > 90:
+            print(
+                "   ⚠️  Peak CPU usage approaching system limits - consider load balancing"
+            )
 
         # CPU efficiency analysis
-        navigation_eff = results_by_mode.get('navigation', {}).get('avg_cpu_percent', 0)
-        vision_eff = results_by_mode.get('vision', {}).get('avg_cpu_percent', 0)
+        navigation_eff = results_by_mode.get("navigation", {}).get("avg_cpu_percent", 0)
+        vision_eff = results_by_mode.get("vision", {}).get("avg_cpu_percent", 0)
 
         if navigation_eff > self.target_navigation_cpu_percent:
             print("   📈 Navigation CPU usage high - optimize path planning algorithms")
 
         if vision_eff > self.target_vision_cpu_percent:
-            print("   📈 Vision CPU usage high - consider image resolution reduction or algorithm optimization")
+            print(
+                "   📈 Vision CPU usage high - consider image resolution reduction or algorithm optimization"
+            )
 
-        print("   🎯 Target CPU utilization ensures thermal management and battery efficiency")
+        print(
+            "   🎯 Target CPU utilization ensures thermal management and battery efficiency"
+        )
 
         # Store comprehensive results
         self.test_results = {
-            'modes_tested': list(results_by_mode.keys()),
-            'results_by_mode': results_by_mode,
-            'all_targets_met': all_passed,
-            'recommendations': []
+            "modes_tested": list(results_by_mode.keys()),
+            "results_by_mode": results_by_mode,
+            "all_targets_met": all_passed,
+            "recommendations": [],
         }
 
         # Assert critical requirements
-        idle_cpu = results_by_mode.get('idle', {}).get('avg_cpu_percent', 100)
-        peak_cpu = results_by_mode.get('peak_load', {}).get('avg_cpu_percent', 0)
+        idle_cpu = results_by_mode.get("idle", {}).get("avg_cpu_percent", 100)
+        peak_cpu = results_by_mode.get("peak_load", {}).get("avg_cpu_percent", 0)
 
-        self.assertLess(idle_cpu, self.target_idle_cpu_percent * 3,
-                       ".1f")
-        self.assertLess(peak_cpu, 95,
-                       ".1f")
+        self.assertLess(idle_cpu, self.target_idle_cpu_percent * 3, ".1f")
+        self.assertLess(peak_cpu, 95, ".1f")
 
     def test_cpu_profiling_detailed_analysis(self):
         """Perform detailed CPU profiling for performance bottleneck identification."""
@@ -508,9 +542,9 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
         # Profile key components
         components_to_profile = [
-            ('navigation_computation', self._profile_navigation_computation),
-            ('vision_processing', self._profile_vision_processing),
-            ('path_planning', self._profile_path_planning),
+            ("navigation_computation", self._profile_navigation_computation),
+            ("vision_processing", self._profile_vision_processing),
+            ("path_planning", self._profile_path_planning),
         ]
 
         profiling_results = {}
@@ -532,13 +566,13 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             # Analyze profile
             s = io.StringIO()
             stats = pstats.Stats(profiler, stream=s)
-            stats.sort_stats('cumulative')
+            stats.sort_stats("cumulative")
             stats.print_stats(10)  # Top 10 functions
 
             profiling_results[component_name] = {
-                'execution_time': execution_time,
-                'profile_stats': s.getvalue(),
-                'cpu_usage_during_execution': psutil.cpu_percent(interval=0.1)
+                "execution_time": execution_time,
+                "profile_stats": s.getvalue(),
+                "cpu_usage_during_execution": psutil.cpu_percent(interval=0.1),
             }
 
         # Print profiling summary
@@ -550,7 +584,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             print(".1f")
             print("    Top functions by cumulative time:")
             # Extract top functions from profile stats
-            lines = results['profile_stats'].split('\n')
+            lines = results["profile_stats"].split("\n")
             for line in lines[-6:-1]:  # Last 5 lines typically show top functions
                 if line.strip():
                     print(f"      {line.strip()}")
@@ -558,14 +592,14 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
     def _profile_navigation_computation(self):
         """Profile navigation computation for CPU analysis."""
         # Run navigation computation for profiling
-        waypoints = [{'x': i*2.0, 'y': (i%3)*1.0} for i in range(50)]
+        waypoints = [{"x": i * 2.0, "y": (i % 3) * 1.0} for i in range(50)]
 
         for wp in waypoints:
-            distance = np.sqrt(wp['x']**2 + wp['y']**2)
-            angle = np.arctan2(wp['y'], wp['x'])
+            distance = np.sqrt(wp["x"] ** 2 + wp["y"] ** 2)
+            angle = np.arctan2(wp["y"], wp["x"])
 
             # Simulate more complex navigation calculations
-            trajectory = np.linspace([0, 0], [wp['x'], wp['y']], 100)
+            trajectory = np.linspace([0, 0], [wp["x"], wp["y"]], 100)
             velocities = np.gradient(trajectory, axis=0)
             accelerations = np.gradient(velocities, axis=0)
 
@@ -573,22 +607,34 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         """Profile vision processing for CPU analysis."""
         # Run vision processing for profiling
         for frame in range(20):
-            image = np.random.randint(0, 255, (240, 320, 3), dtype=np.uint8)  # Smaller for profiling
+            image = np.random.randint(
+                0, 255, (240, 320, 3), dtype=np.uint8
+            )  # Smaller for profiling
 
             # Simulate vision pipeline
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if 'cv2' in globals() else np.dot(image[...,:3], [0.2989, 0.5870, 0.1140])
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0) if 'cv2' in globals() else gray
-            edges = cv2.Canny(blurred, 50, 150) if 'cv2' in globals() else (blurred > 100).astype(np.uint8)
+            gray = (
+                cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                if "cv2" in globals()
+                else np.dot(image[..., :3], [0.2989, 0.5870, 0.1140])
+            )
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0) if "cv2" in globals() else gray
+            edges = (
+                cv2.Canny(blurred, 50, 150)
+                if "cv2" in globals()
+                else (blurred > 100).astype(np.uint8)
+            )
 
     def _profile_path_planning(self):
         """Profile path planning for CPU analysis."""
         # Run path planning for profiling
-        grid = np.random.choice([0, 1], size=(50, 50), p=[0.8, 0.2])  # 50x50 grid with obstacles
+        grid = np.random.choice(
+            [0, 1], size=(50, 50), p=[0.8, 0.2]
+        )  # 50x50 grid with obstacles
         start, goal = (0, 0), (49, 49)
 
         # Simulate path planning
         path = self._simulate_astar_pathfinding(grid, start, goal)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

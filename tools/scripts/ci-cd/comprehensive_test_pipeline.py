@@ -6,14 +6,14 @@ Runs all test suites with chaos engineering, performance regression detection,
 and comprehensive coverage analysis.
 """
 
+import argparse
+import json
+import os
 import subprocess
 import sys
-import os
 import time
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-import json
-import argparse
+from typing import Any, Dict, List, Optional
 
 
 class ComprehensiveTestPipeline:
@@ -37,10 +37,10 @@ class ComprehensiveTestPipeline:
     def _load_performance_baselines(self) -> Dict[str, float]:
         """Load performance regression baselines."""
         return {
-            'websocket_setup': 0.15,    # seconds
-            'config_update': 7.5,       # milliseconds
-            'state_sync': 50,           # milliseconds
-            'dds_failover': 200         # milliseconds
+            "websocket_setup": 0.15,  # seconds
+            "config_update": 7.5,  # milliseconds
+            "state_sync": 50,  # milliseconds
+            "dds_failover": 200,  # milliseconds
         }
 
     def run_full_pipeline(self) -> bool:
@@ -96,30 +96,34 @@ class ComprehensiveTestPipeline:
         try:
             # Source ROS2
             env = os.environ.copy()
-            env['ROS_DOMAIN_ID'] = '42'
+            env["ROS_DOMAIN_ID"] = "42"
 
             # Build workspace if needed
-            if not (self.workspace_root / 'install').exists():
+            if not (self.workspace_root / "install").exists():
                 print("Building ROS2 workspace...")
                 result = subprocess.run(
-                    ['bash', '-c', 'source /opt/ros/humble/setup.bash && colcon build --symlink-install'],
+                    [
+                        "bash",
+                        "-c",
+                        "source /opt/ros/humble/setup.bash && colcon build --symlink-install",
+                    ],
                     cwd=self.workspace_root,
                     env=env,
                     capture_output=True,
-                    timeout=300
+                    timeout=300,
                 )
                 if result.returncode != 0:
                     print(f"Build failed: {result.stderr.decode()}")
                     return False
 
             # Source the workspace
-            setup_script = self.workspace_root / 'install' / 'setup.bash'
+            setup_script = self.workspace_root / "install" / "setup.bash"
             if setup_script.exists():
                 result = subprocess.run(
-                    ['bash', '-c', f'source {setup_script} && ros2 topic list'],
+                    ["bash", "-c", f"source {setup_script} && ros2 topic list"],
                     env=env,
                     capture_output=True,
-                    timeout=10
+                    timeout=10,
                 )
                 if result.returncode != 0:
                     print("ROS2 environment setup failed")
@@ -137,17 +141,27 @@ class ComprehensiveTestPipeline:
         print("\n🧪 Phase 2: Running unit tests...")
 
         try:
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest',
-                'tests/unit/',
-                '-v', '--tb=short',
-                '--cov=src', '--cov-report=term-missing'
-            ], cwd=self.workspace_root, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/unit/",
+                    "-v",
+                    "--tb=short",
+                    "--cov=src",
+                    "--cov-report=term-missing",
+                ],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
 
-            self.test_results['unit'] = {
-                'returncode': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+            self.test_results["unit"] = {
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
             }
 
             if result.returncode == 0:
@@ -168,17 +182,27 @@ class ComprehensiveTestPipeline:
         print("\n🔗 Phase 3: Running integration tests...")
 
         try:
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest',
-                'tests/integration/',
-                '-v', '--tb=short',
-                '--cov-append', '--cov-report=term-missing'
-            ], cwd=self.workspace_root, capture_output=True, text=True, timeout=600)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/integration/",
+                    "-v",
+                    "--tb=short",
+                    "--cov-append",
+                    "--cov-report=term-missing",
+                ],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
 
-            self.test_results['integration'] = {
-                'returncode': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+            self.test_results["integration"] = {
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
             }
 
             if result.returncode == 0:
@@ -199,16 +223,25 @@ class ComprehensiveTestPipeline:
         print("\n⚡ Phase 4: Running performance tests...")
 
         try:
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest',
-                'tests/performance/',
-                '-v', '--tb=short'
-            ], cwd=self.workspace_root, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/performance/",
+                    "-v",
+                    "--tb=short",
+                ],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
 
-            self.test_results['performance'] = {
-                'returncode': result.returncode,
-                'stdout': result.stdout,
-                'stderr': result.stderr
+            self.test_results["performance"] = {
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
             }
 
             # Check for performance regressions
@@ -234,16 +267,25 @@ class ComprehensiveTestPipeline:
         """Run chaos engineering tests."""
         print("\n🎭 Phase 5: Running chaos engineering tests...")
 
-        chaos_scenarios = ['network_partition', 'high_latency', 'packet_loss']
+        chaos_scenarios = ["network_partition", "high_latency", "packet_loss"]
 
         for scenario in chaos_scenarios:
             print(f"Running chaos scenario: {scenario}")
             try:
-                result = subprocess.run([
-                    sys.executable, '-m', 'pytest',
-                    f'tests/chaos/test_chaos_engineering.py::{scenario}',
-                    '-v', '--tb=short'
-                ], cwd=self.workspace_root, capture_output=True, text=True, timeout=120)
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        f"tests/chaos/test_chaos_engineering.py::{scenario}",
+                        "-v",
+                        "--tb=short",
+                    ],
+                    cwd=self.workspace_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
 
                 if result.returncode != 0:
                     print(f"⚠️  Chaos scenario {scenario} revealed system weaknesses")
@@ -261,20 +303,20 @@ class ComprehensiveTestPipeline:
         regressions = []
 
         # Parse performance test results
-        lines = test_output.split('\n')
+        lines = test_output.split("\n")
         for line in lines:
-            if 'Average' in line and ('ms' in line or 's' in line):
+            if "Average" in line and ("ms" in line or "s" in line):
                 # Extract metric and value
                 parts = line.split()
                 for i, part in enumerate(parts):
-                    if part == 'Average':
+                    if part == "Average":
                         try:
-                            metric_name = parts[i-1].lower().replace(':', '')
-                            value_str = parts[i+1]
-                            value = float(value_str.replace('ms', '').replace('s', ''))
+                            metric_name = parts[i - 1].lower().replace(":", "")
+                            value_str = parts[i + 1]
+                            value = float(value_str.replace("ms", "").replace("s", ""))
 
                             # Convert seconds to milliseconds for comparison
-                            if 's' in parts[i+1]:
+                            if "s" in parts[i + 1]:
                                 value *= 1000
 
                             # Check against baseline
@@ -297,9 +339,12 @@ class ComprehensiveTestPipeline:
 
         try:
             # Generate coverage report
-            result = subprocess.run([
-                sys.executable, '-m', 'coverage', 'report', '--include=src/*'
-            ], cwd=self.workspace_root, capture_output=True, text=True)
+            result = subprocess.run(
+                [sys.executable, "-m", "coverage", "report", "--include=src/*"],
+                cwd=self.workspace_root,
+                capture_output=True,
+                text=True,
+            )
 
             self.coverage_data = result.stdout
             print("Coverage report:")
@@ -313,24 +358,32 @@ class ComprehensiveTestPipeline:
         print("\n📋 Phase 7: Generating comprehensive report...")
 
         report = {
-            'timestamp': time.time(),
-            'pipeline_version': '1.0',
-            'test_results': self.test_results,
-            'coverage': self.coverage_data,
-            'performance_baselines': self.performance_baselines,
-            'summary': {
-                'unit_tests': 'passed' if self.test_results.get('unit', {}).get('returncode') == 0 else 'failed',
-                'integration_tests': 'passed' if self.test_results.get('integration', {}).get('returncode') == 0 else 'failed',
-                'performance_tests': 'passed' if self.test_results.get('performance', {}).get('returncode') == 0 else 'failed',
-                'chaos_tests': 'completed'  # Chaos tests always complete
-            }
+            "timestamp": time.time(),
+            "pipeline_version": "1.0",
+            "test_results": self.test_results,
+            "coverage": self.coverage_data,
+            "performance_baselines": self.performance_baselines,
+            "summary": {
+                "unit_tests": "passed"
+                if self.test_results.get("unit", {}).get("returncode") == 0
+                else "failed",
+                "integration_tests": "passed"
+                if self.test_results.get("integration", {}).get("returncode") == 0
+                else "failed",
+                "performance_tests": "passed"
+                if self.test_results.get("performance", {}).get("returncode") == 0
+                else "failed",
+                "chaos_tests": "completed",  # Chaos tests always complete
+            },
         }
 
         # Save report
-        report_path = self.workspace_root / 'test-reports' / 'comprehensive_test_report.json'
+        report_path = (
+            self.workspace_root / "test-reports" / "comprehensive_test_report.json"
+        )
         report_path.parent.mkdir(exist_ok=True)
 
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
 
         print(f"✅ Comprehensive report saved to {report_path}")
@@ -338,25 +391,31 @@ class ComprehensiveTestPipeline:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description='Comprehensive Test Pipeline')
-    parser.add_argument('--workspace', '-w', default=None,
-                       help='Workspace root directory')
-    parser.add_argument('--phase', '-p', choices=['unit', 'integration', 'performance', 'chaos', 'all'],
-                       default='all', help='Run specific test phase')
+    parser = argparse.ArgumentParser(description="Comprehensive Test Pipeline")
+    parser.add_argument(
+        "--workspace", "-w", default=None, help="Workspace root directory"
+    )
+    parser.add_argument(
+        "--phase",
+        "-p",
+        choices=["unit", "integration", "performance", "chaos", "all"],
+        default="all",
+        help="Run specific test phase",
+    )
 
     args = parser.parse_args()
 
     pipeline = ComprehensiveTestPipeline(args.workspace)
 
-    if args.phase == 'all':
+    if args.phase == "all":
         success = pipeline.run_full_pipeline()
     else:
         # Run individual phases
         phase_map = {
-            'unit': pipeline._run_unit_tests,
-            'integration': pipeline._run_integration_tests,
-            'performance': pipeline._run_performance_tests,
-            'chaos': pipeline._run_chaos_tests
+            "unit": pipeline._run_unit_tests,
+            "integration": pipeline._run_integration_tests,
+            "performance": pipeline._run_performance_tests,
+            "chaos": pipeline._run_chaos_tests,
         }
 
         success = phase_map[args.phase]()

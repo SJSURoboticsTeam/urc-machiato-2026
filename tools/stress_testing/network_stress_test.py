@@ -12,24 +12,25 @@ Comprehensive network performance testing under various conditions:
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import threading
-import statistics
-import json
 import asyncio
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-from std_msgs.msg import String, Float32, Int32
-from sensor_msgs.msg import BatteryState, NavSatFix, Imu
-from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist, PoseStamped
+import json
+import logging
+import statistics
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import psutil
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor
-import logging
+import rclpy
+from geometry_msgs.msg import PoseStamped, Twist
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import BatteryState, Imu, NavSatFix
+from std_msgs.msg import Float32, Int32, String
 
 # Import simulation components
 from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
@@ -39,6 +40,7 @@ from simulation.network.network_factory import NetworkFactory
 @dataclass
 class NetworkTestResult:
     """Results from a network performance test."""
+
     test_name: str
     duration_seconds: float
     messages_sent: int
@@ -57,6 +59,7 @@ class NetworkTestResult:
 @dataclass
 class StressTestScenario:
     """Definition of a stress test scenario."""
+
     name: str
     description: str
     network_profile: NetworkProfile
@@ -80,7 +83,7 @@ class ROS2NetworkStressTester(Node):
     """
 
     def __init__(self):
-        super().__init__('network_stress_tester')
+        super().__init__("network_stress_tester")
 
         # Test configuration
         self.test_active = False
@@ -101,16 +104,12 @@ class ROS2NetworkStressTester(Node):
 
         # Control topics
         self.control_sub = self.create_subscription(
-            String, '/network_test/control', self._control_callback, 10
+            String, "/network_test/control", self._control_callback, 10
         )
 
-        self.status_pub = self.create_publisher(
-            String, '/network_test/status', 10
-        )
+        self.status_pub = self.create_publisher(String, "/network_test/status", 10)
 
-        self.results_pub = self.create_publisher(
-            String, '/network_test/results', 10
-        )
+        self.results_pub = self.create_publisher(String, "/network_test/results", 10)
 
         self.get_logger().info("Network Stress Tester initialized")
 
@@ -119,31 +118,33 @@ class ROS2NetworkStressTester(Node):
         try:
             command = json.loads(msg.data)
 
-            if command['type'] == 'start_test':
-                scenario = self._create_scenario_from_config(command['scenario'])
+            if command["type"] == "start_test":
+                scenario = self._create_scenario_from_config(command["scenario"])
                 asyncio.create_task(self.run_stress_test(scenario))
 
-            elif command['type'] == 'stop_test':
+            elif command["type"] == "stop_test":
                 self.stop_current_test()
 
-            elif command['type'] == 'get_status':
+            elif command["type"] == "get_status":
                 self._publish_status()
 
         except Exception as e:
             self.get_logger().error(f"Control command error: {e}")
 
-    def _create_scenario_from_config(self, config: Dict[str, Any]) -> StressTestScenario:
+    def _create_scenario_from_config(
+        self, config: Dict[str, Any]
+    ) -> StressTestScenario:
         """Create test scenario from configuration."""
         return StressTestScenario(
-            name=config.get('name', 'custom_test'),
-            description=config.get('description', 'Custom network stress test'),
-            network_profile=NetworkProfile(config.get('network_profile', 'rural_wifi')),
-            message_rate_hz=config.get('message_rate_hz', 100),
-            test_duration_seconds=config.get('duration_seconds', 30),
-            concurrent_publishers=config.get('concurrent_publishers', 5),
-            message_size_bytes=config.get('message_size_bytes', 1024),
-            burst_mode=config.get('burst_mode', False),
-            burst_duration_seconds=config.get('burst_duration_seconds', 1.0)
+            name=config.get("name", "custom_test"),
+            description=config.get("description", "Custom network stress test"),
+            network_profile=NetworkProfile(config.get("network_profile", "rural_wifi")),
+            message_rate_hz=config.get("message_rate_hz", 100),
+            test_duration_seconds=config.get("duration_seconds", 30),
+            concurrent_publishers=config.get("concurrent_publishers", 5),
+            message_size_bytes=config.get("message_size_bytes", 1024),
+            burst_mode=config.get("burst_mode", False),
+            burst_duration_seconds=config.get("burst_duration_seconds", 1.0),
         )
 
     async def run_stress_test(self, scenario: StressTestScenario):
@@ -154,9 +155,9 @@ class ROS2NetworkStressTester(Node):
 
         try:
             # Initialize network emulator
-            self.network_emulator = NetworkFactory.create({
-                'profile': scenario.network_profile.value
-            })
+            self.network_emulator = NetworkFactory.create(
+                {"profile": scenario.network_profile.value}
+            )
             self.network_emulator.start()
 
             # Setup ROS2 topics with network emulation
@@ -195,7 +196,7 @@ class ROS2NetworkStressTester(Node):
                 memory_usage_mb=0.0,
                 network_profile=scenario.network_profile.value,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
             self.test_results.append(error_result)
 
@@ -208,7 +209,7 @@ class ROS2NetworkStressTester(Node):
         self.test_topics = []
 
         for i in range(scenario.concurrent_publishers):
-            topic_name = f'/network_test/data_{i}'
+            topic_name = f"/network_test/data_{i}"
 
             # Create publisher
             publisher = self.create_publisher(String, topic_name, 10)
@@ -218,6 +219,7 @@ class ROS2NetworkStressTester(Node):
             def create_callback(topic_name):
                 def callback(msg):
                     self._handle_test_message(topic_name, msg)
+
                 return callback
 
             subscriber = self.create_subscription(
@@ -228,9 +230,9 @@ class ROS2NetworkStressTester(Node):
 
             # Initialize message tracking
             self.message_counts[topic_name] = {
-                'sent': 0,
-                'received': 0,
-                'latencies': []
+                "sent": 0,
+                "received": 0,
+                "latencies": [],
             }
 
     async def _execute_test_scenario(self, scenario: StressTestScenario):
@@ -241,10 +243,9 @@ class ROS2NetworkStressTester(Node):
             futures = []
 
             for i in range(scenario.concurrent_publishers):
-                topic_name = f'/network_test/data_{i}'
+                topic_name = f"/network_test/data_{i}"
                 future = executor.submit(
-                    self._publisher_worker,
-                    topic_name, scenario, end_time
+                    self._publisher_worker, topic_name, scenario, end_time
                 )
                 futures.append(future)
 
@@ -252,7 +253,9 @@ class ROS2NetworkStressTester(Node):
             for future in futures:
                 future.result()
 
-    def _publisher_worker(self, topic_name: str, scenario: StressTestScenario, end_time: float):
+    def _publisher_worker(
+        self, topic_name: str, scenario: StressTestScenario, end_time: float
+    ):
         """Worker function for publishing test messages."""
         publisher = self.publishers[topic_name]
 
@@ -261,24 +264,28 @@ class ROS2NetworkStressTester(Node):
                 # Burst mode: send many messages quickly
                 burst_end = time.time() + scenario.burst_duration_seconds
                 while time.time() < burst_end and self.test_active:
-                    self._send_test_message(publisher, topic_name, scenario.message_size_bytes)
+                    self._send_test_message(
+                        publisher, topic_name, scenario.message_size_bytes
+                    )
                     time.sleep(0.001)  # 1ms between messages in burst
 
                 # Wait before next burst
                 time.sleep(0.1)
             else:
                 # Continuous mode
-                self._send_test_message(publisher, topic_name, scenario.message_size_bytes)
+                self._send_test_message(
+                    publisher, topic_name, scenario.message_size_bytes
+                )
                 time.sleep(1.0 / scenario.message_rate_hz)
 
     def _send_test_message(self, publisher, topic_name: str, message_size: int):
         """Send a test message."""
         # Create test message with timestamp
         message_data = {
-            'timestamp': time.time(),
-            'topic': topic_name,
-            'data': 'x' * message_size,  # Fixed size test data
-            'sequence': self.message_counts[topic_name]['sent']
+            "timestamp": time.time(),
+            "topic": topic_name,
+            "data": "x" * message_size,  # Fixed size test data
+            "sequence": self.message_counts[topic_name]["sent"],
         }
 
         msg = String()
@@ -287,20 +294,20 @@ class ROS2NetworkStressTester(Node):
         # Send through network emulator if available
         if self.network_emulator:
             if self.network_emulator.send_message(msg):
-                self.message_counts[topic_name]['sent'] += 1
+                self.message_counts[topic_name]["sent"] += 1
         else:
             publisher.publish(msg)
-            self.message_counts[topic_name]['sent'] += 1
+            self.message_counts[topic_name]["sent"] += 1
 
     def _handle_test_message(self, topic_name: str, msg):
         """Handle received test message."""
         try:
             message_data = json.loads(msg.data)
-            send_time = message_data['timestamp']
+            send_time = message_data["timestamp"]
             latency = (time.time() - send_time) * 1000  # Convert to milliseconds
 
-            self.message_counts[topic_name]['received'] += 1
-            self.message_counts[topic_name]['latencies'].append(latency)
+            self.message_counts[topic_name]["received"] += 1
+            self.message_counts[topic_name]["latencies"].append(latency)
             self.latency_measurements.append(latency)
 
         except Exception as e:
@@ -317,14 +324,18 @@ class ROS2NetworkStressTester(Node):
 
                 # Network metrics (simplified)
                 net_io = psutil.net_io_counters()
-                bandwidth_mbps = (net_io.bytes_sent + net_io.bytes_recv) * 8 / (1024 * 1024)  # Rough estimate
+                bandwidth_mbps = (
+                    (net_io.bytes_sent + net_io.bytes_recv) * 8 / (1024 * 1024)
+                )  # Rough estimate
 
-                self.system_metrics.append({
-                    'timestamp': time.time(),
-                    'cpu_percent': cpu_percent,
-                    'memory_mb': memory_mb,
-                    'bandwidth_mbps': bandwidth_mbps
-                })
+                self.system_metrics.append(
+                    {
+                        "timestamp": time.time(),
+                        "cpu_percent": cpu_percent,
+                        "memory_mb": memory_mb,
+                        "bandwidth_mbps": bandwidth_mbps,
+                    }
+                )
 
                 self.bandwidth_measurements.append(bandwidth_mbps)
 
@@ -334,25 +345,49 @@ class ROS2NetworkStressTester(Node):
                 self.get_logger().error(f"Performance monitoring error: {e}")
                 break
 
-    async def _collect_test_results(self, scenario: StressTestScenario, duration: float) -> NetworkTestResult:
+    async def _collect_test_results(
+        self, scenario: StressTestScenario, duration: float
+    ) -> NetworkTestResult:
         """Collect and analyze test results."""
         # Aggregate message counts
-        total_sent = sum(counts['sent'] for counts in self.message_counts.values())
-        total_received = sum(counts['received'] for counts in self.message_counts.values())
+        total_sent = sum(counts["sent"] for counts in self.message_counts.values())
+        total_received = sum(
+            counts["received"] for counts in self.message_counts.values()
+        )
 
         # Calculate packet loss
-        packet_loss = ((total_sent - total_received) / total_sent * 100) if total_sent > 0 else 0
+        packet_loss = (
+            ((total_sent - total_received) / total_sent * 100) if total_sent > 0 else 0
+        )
 
         # Calculate average latency
-        avg_latency = statistics.mean(self.latency_measurements) if self.latency_measurements else 0
+        avg_latency = (
+            statistics.mean(self.latency_measurements)
+            if self.latency_measurements
+            else 0
+        )
 
         # Calculate average bandwidth and system usage
-        avg_bandwidth = statistics.mean(self.bandwidth_measurements) if self.bandwidth_measurements else 0
-        avg_cpu = statistics.mean([m['cpu_percent'] for m in self.system_metrics]) if self.system_metrics else 0
-        avg_memory = statistics.mean([m['memory_mb'] for m in self.system_metrics]) if self.system_metrics else 0
+        avg_bandwidth = (
+            statistics.mean(self.bandwidth_measurements)
+            if self.bandwidth_measurements
+            else 0
+        )
+        avg_cpu = (
+            statistics.mean([m["cpu_percent"] for m in self.system_metrics])
+            if self.system_metrics
+            else 0
+        )
+        avg_memory = (
+            statistics.mean([m["memory_mb"] for m in self.system_metrics])
+            if self.system_metrics
+            else 0
+        )
 
         # Get network emulator statistics
-        emulator_stats = self.network_emulator.get_statistics() if self.network_emulator else {}
+        emulator_stats = (
+            self.network_emulator.get_statistics() if self.network_emulator else {}
+        )
 
         return NetworkTestResult(
             test_name=scenario.name,
@@ -366,16 +401,18 @@ class ROS2NetworkStressTester(Node):
             cpu_usage_percent=avg_cpu,
             memory_usage_mb=avg_memory,
             network_profile=scenario.network_profile.value,
-            success=packet_loss < 5.0 and avg_latency < 500.0  # Basic success criteria
+            success=packet_loss < 5.0 and avg_latency < 500.0,  # Basic success criteria
         )
 
     def _publish_status(self):
         """Publish current test status."""
         status = {
-            'active': self.test_active,
-            'current_scenario': self.current_scenario.name if self.current_scenario else None,
-            'total_tests_run': len(self.test_results),
-            'network_emulator_active': self.network_emulator is not None
+            "active": self.test_active,
+            "current_scenario": self.current_scenario.name
+            if self.current_scenario
+            else None,
+            "total_tests_run": len(self.test_results),
+            "network_emulator_active": self.network_emulator is not None,
         }
 
         msg = String()
@@ -385,19 +422,19 @@ class ROS2NetworkStressTester(Node):
     def _publish_test_results(self, result: NetworkTestResult):
         """Publish test results."""
         result_data = {
-            'test_name': result.test_name,
-            'duration_seconds': result.duration_seconds,
-            'messages_sent': result.messages_sent,
-            'messages_received': result.messages_received,
-            'messages_dropped': result.messages_dropped,
-            'average_latency_ms': result.average_latency_ms,
-            'packet_loss_percent': result.packet_loss_percent,
-            'bandwidth_used_mbps': result.bandwidth_used_mbps,
-            'cpu_usage_percent': result.cpu_usage_percent,
-            'memory_usage_mb': result.memory_usage_mb,
-            'network_profile': result.network_profile,
-            'success': result.success,
-            'error_message': result.error_message
+            "test_name": result.test_name,
+            "duration_seconds": result.duration_seconds,
+            "messages_sent": result.messages_sent,
+            "messages_received": result.messages_received,
+            "messages_dropped": result.messages_dropped,
+            "average_latency_ms": result.average_latency_ms,
+            "packet_loss_percent": result.packet_loss_percent,
+            "bandwidth_used_mbps": result.bandwidth_used_mbps,
+            "cpu_usage_percent": result.cpu_usage_percent,
+            "memory_usage_mb": result.memory_usage_mb,
+            "network_profile": result.network_profile,
+            "success": result.success,
+            "error_message": result.error_message,
         }
 
         msg = String()
@@ -426,14 +463,18 @@ class ROS2NetworkStressTester(Node):
     def generate_comprehensive_report(self) -> Dict[str, Any]:
         """Generate comprehensive test report."""
         if not self.test_results:
-            return {'status': 'no_tests_run'}
+            return {"status": "no_tests_run"}
 
         # Aggregate statistics
         total_tests = len(self.test_results)
         successful_tests = sum(1 for r in self.test_results if r.success)
         avg_latency = statistics.mean([r.average_latency_ms for r in self.test_results])
-        avg_packet_loss = statistics.mean([r.packet_loss_percent for r in self.test_results])
-        avg_bandwidth = statistics.mean([r.bandwidth_used_mbps for r in self.test_results])
+        avg_packet_loss = statistics.mean(
+            [r.packet_loss_percent for r in self.test_results]
+        )
+        avg_bandwidth = statistics.mean(
+            [r.bandwidth_used_mbps for r in self.test_results]
+        )
 
         # Performance by network profile
         profile_stats = {}
@@ -446,33 +487,40 @@ class ROS2NetworkStressTester(Node):
         profile_summary = {}
         for profile, results in profile_stats.items():
             profile_summary[profile] = {
-                'tests_run': len(results),
-                'success_rate': sum(1 for r in results if r.success) / len(results),
-                'avg_latency_ms': statistics.mean([r.average_latency_ms for r in results]),
-                'avg_packet_loss': statistics.mean([r.packet_loss_percent for r in results]),
-                'avg_bandwidth_mbps': statistics.mean([r.bandwidth_used_mbps for r in results])
+                "tests_run": len(results),
+                "success_rate": sum(1 for r in results if r.success) / len(results),
+                "avg_latency_ms": statistics.mean(
+                    [r.average_latency_ms for r in results]
+                ),
+                "avg_packet_loss": statistics.mean(
+                    [r.packet_loss_percent for r in results]
+                ),
+                "avg_bandwidth_mbps": statistics.mean(
+                    [r.bandwidth_used_mbps for r in results]
+                ),
             }
 
         return {
-            'summary': {
-                'total_tests': total_tests,
-                'successful_tests': successful_tests,
-                'success_rate_percent': (successful_tests / total_tests) * 100,
-                'average_latency_ms': avg_latency,
-                'average_packet_loss_percent': avg_packet_loss,
-                'average_bandwidth_mbps': avg_bandwidth
+            "summary": {
+                "total_tests": total_tests,
+                "successful_tests": successful_tests,
+                "success_rate_percent": (successful_tests / total_tests) * 100,
+                "average_latency_ms": avg_latency,
+                "average_packet_loss_percent": avg_packet_loss,
+                "average_bandwidth_mbps": avg_bandwidth,
             },
-            'performance_by_profile': profile_summary,
-            'individual_results': [
+            "performance_by_profile": profile_summary,
+            "individual_results": [
                 {
-                    'test_name': r.test_name,
-                    'success': r.success,
-                    'latency_ms': r.average_latency_ms,
-                    'packet_loss_percent': r.packet_loss_percent,
-                    'bandwidth_mbps': r.bandwidth_used_mbps
-                } for r in self.test_results
+                    "test_name": r.test_name,
+                    "success": r.success,
+                    "latency_ms": r.average_latency_ms,
+                    "packet_loss_percent": r.packet_loss_percent,
+                    "bandwidth_mbps": r.bandwidth_used_mbps,
+                }
+                for r in self.test_results
             ],
-            'recommendations': self._generate_recommendations()
+            "recommendations": self._generate_recommendations(),
         }
 
     def _generate_recommendations(self) -> List[str]:
@@ -480,17 +528,27 @@ class ROS2NetworkStressTester(Node):
         recommendations = []
 
         if self.test_results:
-            avg_latency = statistics.mean([r.average_latency_ms for r in self.test_results])
-            avg_packet_loss = statistics.mean([r.packet_loss_percent for r in self.test_results])
+            avg_latency = statistics.mean(
+                [r.average_latency_ms for r in self.test_results]
+            )
+            avg_packet_loss = statistics.mean(
+                [r.packet_loss_percent for r in self.test_results]
+            )
 
             if avg_latency > 200:
-                recommendations.append("Consider implementing message batching to reduce latency")
+                recommendations.append(
+                    "Consider implementing message batching to reduce latency"
+                )
 
             if avg_packet_loss > 2.0:
-                recommendations.append("Implement reliable message delivery protocols for high packet loss environments")
+                recommendations.append(
+                    "Implement reliable message delivery protocols for high packet loss environments"
+                )
 
             if any(r.bandwidth_used_mbps > 15 for r in self.test_results):
-                recommendations.append("Optimize message sizes and implement compression for bandwidth-constrained networks")
+                recommendations.append(
+                    "Optimize message sizes and implement compression for bandwidth-constrained networks"
+                )
 
         return recommendations
 
@@ -505,7 +563,7 @@ def create_stress_test_scenarios() -> List[StressTestScenario]:
             message_rate_hz=100,
             test_duration_seconds=30,
             concurrent_publishers=3,
-            message_size_bytes=512
+            message_size_bytes=512,
         ),
         StressTestScenario(
             name="rural_wifi_stress",
@@ -514,7 +572,7 @@ def create_stress_test_scenarios() -> List[StressTestScenario]:
             message_rate_hz=200,
             test_duration_seconds=45,
             concurrent_publishers=5,
-            message_size_bytes=1024
+            message_size_bytes=1024,
         ),
         StressTestScenario(
             name="cellular_4g_burst",
@@ -525,7 +583,7 @@ def create_stress_test_scenarios() -> List[StressTestScenario]:
             concurrent_publishers=8,
             message_size_bytes=2048,
             burst_mode=True,
-            burst_duration_seconds=2.0
+            burst_duration_seconds=2.0,
         ),
         StressTestScenario(
             name="satellite_extreme",
@@ -534,7 +592,7 @@ def create_stress_test_scenarios() -> List[StressTestScenario]:
             message_rate_hz=20,
             test_duration_seconds=90,
             concurrent_publishers=2,
-            message_size_bytes=4096
+            message_size_bytes=4096,
         ),
         StressTestScenario(
             name="competition_load_test",
@@ -545,8 +603,8 @@ def create_stress_test_scenarios() -> List[StressTestScenario]:
             concurrent_publishers=10,
             message_size_bytes=8192,
             burst_mode=True,
-            burst_duration_seconds=5.0
-        )
+            burst_duration_seconds=5.0,
+        ),
     ]
 
 
@@ -571,7 +629,9 @@ async def run_network_stress_tests():
         print(f"\n🔄 Scenario {i}/{len(scenarios)}: {scenario.name}")
         print(f"   {scenario.description}")
         print(f"   Network: {scenario.network_profile.value}")
-        print(f"   Load: {scenario.message_rate_hz}Hz x {scenario.concurrent_publishers} publishers")
+        print(
+            f"   Load: {scenario.message_rate_hz}Hz x {scenario.concurrent_publishers} publishers"
+        )
         print(f"   Duration: {scenario.test_duration_seconds}s")
 
         await tester.run_stress_test(scenario)
@@ -585,14 +645,14 @@ async def run_network_stress_tests():
 
     # Save report
     report_file = f"network_stress_test_report_{int(time.time())}.json"
-    with open(report_file, 'w') as f:
+    with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
 
     # Display summary
     print("\n🎯 NETWORK STRESS TESTING RESULTS")
     print("=" * 60)
 
-    summary = report['summary']
+    summary = report["summary"]
     print(f"Total Tests Run: {summary['total_tests']}")
     print(f"Success Rate: {summary['success_rate_percent']:.1f}%")
     print(f"Average Latency: {summary['average_latency_ms']:.1f}ms")
@@ -600,15 +660,15 @@ async def run_network_stress_tests():
     print(f"Average Bandwidth: {summary['average_bandwidth_mbps']:.2f}Mbps")
 
     print("\n📈 Performance by Network Profile:")
-    for profile, stats in report['performance_by_profile'].items():
+    for profile, stats in report["performance_by_profile"].items():
         print(f"  {profile}:")
         print(".1f")
         print(".1f")
         print(".2f")
 
-    if report.get('recommendations'):
+    if report.get("recommendations"):
         print("\n💡 Recommendations:")
-        for rec in report['recommendations']:
+        for rec in report["recommendations"]:
             print(f"  • {rec}")
 
     print(f"\n📄 Detailed report saved to: {report_file}")
@@ -625,4 +685,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -5,6 +5,7 @@ Type-safe utility classes and functions for improved code quality, debugging, an
 ## Overview
 
 These utilities provide consistent patterns for:
+
 - Error handling with type safety
 - Structured logging with context
 - Parameter validation

@@ -5,14 +5,14 @@ Enhanced tests for Monitoring Service
 Tests analytics, statistical calculations, callbacks, and performance monitoring.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-import time
 import math
+import time
+from unittest.mock import MagicMock, Mock, patch
 
-from autonomy_state_machine.monitoring_service import MonitoringService
+import pytest
+from autonomy_interfaces.msg import AdaptiveAction, ContextState
 from autonomy_state_machine.config import MonitoringConfig
-from autonomy_interfaces.msg import ContextState, AdaptiveAction
+from autonomy_state_machine.monitoring_service import MonitoringService
 
 
 class TestMonitoringServiceAnalytics:
@@ -22,21 +22,31 @@ class TestMonitoringServiceAnalytics:
     def monitoring_service(self):
         """Create a monitoring service instance with mocked ROS2 components."""
         # Mock the ROS2 components to avoid requiring rclpy.init()
-        with patch('rclpy.node.Node.__init__', return_value=None), \
-             patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.get_logger'), \
-             patch('rclpy.node.Node.declare_parameters', return_value=[]), \
-             patch('rclpy.node.Node.get_parameter', side_effect=lambda name: Mock(value={
-                 'dashboard_update_rate': 2.0,
-                 'analytics_update_rate': 0.1,
-                 'alert_check_rate': 1.0,
-                 'max_history_age': 3600.0
-             }[name])), \
-             patch('rclpy.node.Node.has_parameter', return_value=True), \
-             patch('rclpy.node.Node._parameters', {}, create=True):
+        with patch("rclpy.node.Node.__init__", return_value=None), patch(
+            "rclpy.node.Node.create_timer"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch(
+            "rclpy.node.Node.get_logger"
+        ), patch(
+            "rclpy.node.Node.declare_parameters", return_value=[]
+        ), patch(
+            "rclpy.node.Node.get_parameter",
+            side_effect=lambda name: Mock(
+                value={
+                    "dashboard_update_rate": 2.0,
+                    "analytics_update_rate": 0.1,
+                    "alert_check_rate": 1.0,
+                    "max_history_age": 3600.0,
+                }[name]
+            ),
+        ), patch(
+            "rclpy.node.Node.has_parameter", return_value=True
+        ), patch(
+            "rclpy.node.Node._parameters", {}, create=True
+        ):
             service = MonitoringService()
             # Manually initialize the attributes that would normally be set by __init__
             service.context_history = []
@@ -104,7 +114,7 @@ class TestMonitoringServiceAnalytics:
         for i in range(10):
             context = Mock()
             context.safety_active = i % 3 == 0  # Every 3rd context has safety active
-            contexts.append({'context': context})
+            contexts.append({"context": context})
 
         frequency = monitoring_service._calculate_safety_frequency(contexts)
         expected_frequency = 3 / 10  # 3 out of 10 contexts had safety active
@@ -121,10 +131,15 @@ class TestMonitoringServiceAnalytics:
         """Test system pattern analysis."""
         # This method delegates to other analysis methods
         # We can test that it calls the expected methods
-        with patch.object(monitoring_service, '_analyze_battery_trend') as mock_battery, \
-             patch.object(monitoring_service, '_analyze_performance_trend') as mock_perf, \
-             patch.object(monitoring_service, '_analyze_safety_frequency') as mock_safety, \
-             patch.object(monitoring_service, '_analyze_adaptation_effectiveness') as mock_adapt:
+        with patch.object(
+            monitoring_service, "_analyze_battery_trend"
+        ) as mock_battery, patch.object(
+            monitoring_service, "_analyze_performance_trend"
+        ) as mock_perf, patch.object(
+            monitoring_service, "_analyze_safety_frequency"
+        ) as mock_safety, patch.object(
+            monitoring_service, "_analyze_adaptation_effectiveness"
+        ) as mock_adapt:
 
             mock_battery.return_value = "increasing"
             mock_perf.return_value = "stable"
@@ -141,10 +156,10 @@ class TestMonitoringServiceAnalytics:
             mock_adapt.assert_called_once_with(contexts)
 
             # Verify results structure
-            assert 'battery_trend' in patterns
-            assert 'performance_trend' in patterns
-            assert 'safety_frequency' in patterns
-            assert 'adaptation_effectiveness' in patterns
+            assert "battery_trend" in patterns
+            assert "performance_trend" in patterns
+            assert "safety_frequency" in patterns
+            assert "adaptation_effectiveness" in patterns
 
     def test_compute_policy_effectiveness(self, monitoring_service):
         """Test policy effectiveness computation."""
@@ -166,9 +181,9 @@ class TestMonitoringServiceAnalytics:
 
         # Set up adaptation history
         monitoring_service.adaptation_history = [
-            {'action': adaptation1},
-            {'action': adaptation2},
-            {'action': adaptation3}
+            {"action": adaptation1},
+            {"action": adaptation2},
+            {"action": adaptation3},
         ]
 
         monitoring_service._compute_policy_effectiveness()
@@ -176,16 +191,16 @@ class TestMonitoringServiceAnalytics:
         effectiveness = monitoring_service.policy_effectiveness
 
         # Verify battery_mgmt policy effectiveness
-        assert 'battery_mgmt' in effectiveness
-        battery_stats = effectiveness['battery_mgmt']
-        assert battery_stats['count'] == 2  # Two battery actions
-        assert battery_stats['avg_priority'] == 82.5  # (80 + 85) / 2
+        assert "battery_mgmt" in effectiveness
+        battery_stats = effectiveness["battery_mgmt"]
+        assert battery_stats["count"] == 2  # Two battery actions
+        assert battery_stats["avg_priority"] == 82.5  # (80 + 85) / 2
 
         # Verify obstacle_avoidance policy effectiveness
-        assert 'obstacle_avoidance' in effectiveness
-        obstacle_stats = effectiveness['obstacle_avoidance']
-        assert obstacle_stats['count'] == 1
-        assert obstacle_stats['avg_priority'] == 75.0
+        assert "obstacle_avoidance" in effectiveness
+        obstacle_stats = effectiveness["obstacle_avoidance"]
+        assert obstacle_stats["count"] == 1
+        assert obstacle_stats["avg_priority"] == 75.0
 
     def test_compute_policy_effectiveness_insufficient_data(self, monitoring_service):
         """Test policy effectiveness with insufficient adaptation history."""
@@ -237,7 +252,7 @@ class TestMonitoringServiceAnalytics:
         """Test alert condition checking."""
         context = ContextState()
         context.battery_level = 5.0  # Critical battery
-        context.cpu_usage = 95.0     # High CPU
+        context.cpu_usage = 95.0  # High CPU
         context.communication_active = False  # Communication lost
         context.safety_active = True  # Safety active
 
@@ -266,9 +281,9 @@ class TestMonitoringServiceAnalytics:
         """Test performance issue detection."""
         # Set up monitoring service with some performance data
         monitoring_service.performance_metrics = {
-            'cpu_usage': 95.0,
-            'memory_usage': 92.0,
-            'disk_usage': 85.0
+            "cpu_usage": 95.0,
+            "memory_usage": 92.0,
+            "disk_usage": 85.0,
         }
 
         issues = monitoring_service._detect_performance_issues()
@@ -280,9 +295,9 @@ class TestMonitoringServiceAnalytics:
     def test_detect_performance_issues_normal(self, monitoring_service):
         """Test performance issue detection with normal values."""
         monitoring_service.performance_metrics = {
-            'cpu_usage': 45.0,
-            'memory_usage': 60.0,
-            'disk_usage': 70.0
+            "cpu_usage": 45.0,
+            "memory_usage": 60.0,
+            "disk_usage": 70.0,
         }
 
         issues = monitoring_service._detect_performance_issues()
@@ -303,8 +318,8 @@ class TestMonitoringServiceAnalytics:
         adaptation2.timestamp = time.time()
 
         monitoring_service.adaptation_history = [
-            {'action': adaptation1},
-            {'action': adaptation2}
+            {"action": adaptation1},
+            {"action": adaptation2},
         ]
 
         patterns = monitoring_service._analyze_adaptation_patterns()
@@ -316,27 +331,27 @@ class TestMonitoringServiceAnalytics:
         """Test comprehensive monitoring stats generation."""
         # Set up some monitoring data
         monitoring_service.performance_metrics = {
-            'avg_cpu_usage': 45.0,
-            'avg_memory_usage': 60.0,
-            'total_adaptations': 15,
-            'active_alerts': 2
+            "avg_cpu_usage": 45.0,
+            "avg_memory_usage": 60.0,
+            "total_adaptations": 15,
+            "active_alerts": 2,
         }
 
         monitoring_service.policy_effectiveness = {
-            'battery_mgmt': {'count': 8, 'avg_priority': 82.0},
-            'obstacle_avoidance': {'count': 7, 'avg_priority': 75.0}
+            "battery_mgmt": {"count": 8, "avg_priority": 82.0},
+            "obstacle_avoidance": {"count": 7, "avg_priority": 75.0},
         }
 
         stats = monitoring_service.get_monitoring_stats()
 
-        assert 'performance_metrics' in stats
-        assert 'policy_effectiveness' in stats
-        assert 'data_retention' in stats
-        assert 'system_health' in stats
+        assert "performance_metrics" in stats
+        assert "policy_effectiveness" in stats
+        assert "data_retention" in stats
+        assert "system_health" in stats
 
         # Verify specific metrics
-        assert stats['performance_metrics']['avg_cpu_usage'] == 45.0
-        assert stats['policy_effectiveness']['battery_mgmt']['count'] == 8
+        assert stats["performance_metrics"]["avg_cpu_usage"] == 45.0
+        assert stats["policy_effectiveness"]["battery_mgmt"]["count"] == 8
 
     # ========== STATISTICAL ANALYSIS TESTS ========== #
 
@@ -389,7 +404,7 @@ class TestMonitoringServiceAnalytics:
             adapt.action_type = "battery_mgmt"
             adapt.priority = 80 + i  # Increasing priority
             adapt.timestamp = time.time() + i
-            adaptations.append({'action': adapt})
+            adaptations.append({"action": adapt})
 
         # Obstacle avoidance adaptations (mixed success)
         for i in range(3):
@@ -397,7 +412,7 @@ class TestMonitoringServiceAnalytics:
             adapt.action_type = "obstacle_avoidance"
             adapt.priority = 75
             adapt.timestamp = time.time() + i + 10
-            adaptations.append({'action': adapt})
+            adaptations.append({"action": adapt})
 
         monitoring_service.adaptation_history = adaptations
         monitoring_service._compute_policy_effectiveness()
@@ -443,24 +458,23 @@ class TestMonitoringServiceAnalytics:
         """Test performance issue detection accuracy."""
         # Normal conditions
         monitoring_service.performance_metrics = {
-            'cpu_usage': 45.0,
-            'memory_usage': 60.0,
-            'disk_usage': 70.0
+            "cpu_usage": 45.0,
+            "memory_usage": 60.0,
+            "disk_usage": 70.0,
         }
         issues = monitoring_service._detect_performance_issues()
         assert len(issues) == 0
 
         # Single issue
-        monitoring_service.performance_metrics['cpu_usage'] = 85.0
+        monitoring_service.performance_metrics["cpu_usage"] = 85.0
         issues = monitoring_service._detect_performance_issues()
         assert "high_cpu_usage" in issues
         assert len(issues) == 1
 
         # Multiple issues
-        monitoring_service.performance_metrics.update({
-            'memory_usage': 95.0,
-            'disk_usage': 90.0
-        })
+        monitoring_service.performance_metrics.update(
+            {"memory_usage": 95.0, "disk_usage": 90.0}
+        )
         issues = monitoring_service._detect_performance_issues()
         assert len(issues) == 3
         assert "high_cpu_usage" in issues
@@ -478,7 +492,7 @@ class TestMonitoringServiceAnalytics:
             adapt.action_type = "battery_mgmt"
             adapt.priority = 80
             adapt.timestamp = time.time() + i * 60  # Every minute
-            adaptations.append({'action': adapt})
+            adaptations.append({"action": adapt})
 
         monitoring_service.adaptation_history = adaptations
         patterns = monitoring_service._analyze_adaptation_patterns()
@@ -523,8 +537,8 @@ class TestMonitoringServiceAnalytics:
 
         # Should have computed metrics
         assert len(monitoring_service.performance_metrics) > 0
-        assert 'avg_cpu_usage' in monitoring_service.performance_metrics
-        assert 'avg_memory_usage' in monitoring_service.performance_metrics
+        assert "avg_cpu_usage" in monitoring_service.performance_metrics
+        assert "avg_memory_usage" in monitoring_service.performance_metrics
 
     def test_alert_condition_evaluation_completeness(self, monitoring_service):
         """Test comprehensive alert condition evaluation."""
@@ -537,7 +551,12 @@ class TestMonitoringServiceAnalytics:
             (25.0, 30.0, True, ["critical_battery"]),  # Low battery
             (80.0, 85.0, True, ["high_cpu_usage"]),  # High CPU
             (80.0, 30.0, False, ["communication_loss"]),  # No comms
-            (25.0, 85.0, False, ["critical_battery", "high_cpu_usage", "communication_loss"]),  # Multiple
+            (
+                25.0,
+                85.0,
+                False,
+                ["critical_battery", "high_cpu_usage", "communication_loss"],
+            ),  # Multiple
         ]
 
         for battery, cpu, comms, expected_alerts in test_cases:
@@ -548,4 +567,6 @@ class TestMonitoringServiceAnalytics:
             alerts = monitoring_service._check_alert_conditions(context)
 
             for expected_alert in expected_alerts:
-                assert expected_alert in alerts, f"Missing alert: {expected_alert} for battery={battery}, cpu={cpu}, comms={comms}"
+                assert (
+                    expected_alert in alerts
+                ), f"Missing alert: {expected_alert} for battery={battery}, cpu={cpu}, comms={comms}"

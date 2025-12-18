@@ -8,15 +8,16 @@ running in a full ROS2 environment with real ROS2 nodes and DDS communication.
 Author: URC 2026 Autonomy Team
 """
 
+import os
+import sys
+import threading
 import time
 import unittest
-import threading
 from unittest.mock import Mock, patch
-import sys
-import os
 
 # Add src to path - go up two levels from tests/ros2_integration/
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def setup_ros2_environment():
     """Comprehensive ROS2 environment validation and setup."""
@@ -35,8 +36,9 @@ def setup_ros2_environment():
 
         # Check for autonomy_interfaces (URC-specific messages)
         try:
-            from autonomy_interfaces.msg import LedCommand, VisionDetection
             from autonomy_interfaces.action import NavigateToPose, PerformTyping
+            from autonomy_interfaces.msg import LedCommand, VisionDetection
+
             autonomy_interfaces_available = True
         except ImportError:
             print("⚠️ autonomy_interfaces not available - some tests will be skipped")
@@ -44,11 +46,12 @@ def setup_ros2_environment():
 
         # Check DDS domain configuration
         import os
-        domain_id = os.environ.get('ROS_DOMAIN_ID', '0')
+
+        domain_id = os.environ.get("ROS_DOMAIN_ID", "0")
         print(f"📡 ROS2 Domain ID: {domain_id}")
 
         # Test node creation and destruction
-        test_node = Node('ros2_test_node')
+        test_node = Node("ros2_test_node")
         test_node.destroy_node()
         if ros2_initialized:
             rclpy.shutdown()
@@ -60,6 +63,7 @@ def setup_ros2_environment():
         print(f"❌ ROS2 environment setup failed: {e}")
         return False, False
 
+
 # Setup ROS2 environment
 ROS2_AVAILABLE, AUTONOMY_INTERFACES_AVAILABLE = setup_ros2_environment()
 
@@ -68,14 +72,19 @@ if ROS2_AVAILABLE:
     import rclpy
     from rclpy.node import Node
     from std_msgs.msg import String
+
     if AUTONOMY_INTERFACES_AVAILABLE:
         from autonomy_interfaces.msg import LedCommand, VisionDetection
         from autonomy_interfaces.action import NavigateToPose, PerformTyping
 
-from ros2_environment_manager import (
-    ROS2EnvironmentManager, ROSEnvironmentConfig, ResourceLimits, get_environment_manager
-)
 from pathlib import Path
+
+from ros2_environment_manager import (
+    ResourceLimits,
+    ROS2EnvironmentManager,
+    ROSEnvironmentConfig,
+    get_environment_manager,
+)
 
 
 @unittest.skipUnless(ROS2_AVAILABLE, "ROS2 environment not available")
@@ -94,13 +103,13 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             use_sim_time=False,  # Use real time for ROS2 testing
             namespace="test_advanced_systems",
             discovery_timeout_sec=10.0,
-            log_level="INFO"
+            log_level="INFO",
         )
 
         cls.resource_limits = ResourceLimits(
             cpu_percent=60.0,  # Moderate CPU for ROS2
-            memory_mb=300,     # Moderate memory for ROS2
-            max_processes=8    # Allow ROS2 processes
+            memory_mb=300,  # Moderate memory for ROS2
+            max_processes=8,  # Allow ROS2 processes
         )
 
     def setUp(self):
@@ -123,18 +132,22 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
                     self.received_states = {}
 
                     # Create integrated state manager
-                    from core.state_synchronization_manager import DistributedStateManager
+                    from core.state_synchronization_manager import (
+                        DistributedStateManager,
+                    )
+
                     self.state_mgr = DistributedStateManager(node_name)
                     self.state_mgr.start()
 
                     # ROS2 publisher for state updates
                     self.state_pub = self.create_publisher(
-                        String, f'/{node_name}/state_updates', 10)
+                        String, f"/{node_name}/state_updates", 10
+                    )
 
                     # ROS2 subscriber for state updates from other nodes
                     self.state_sub = self.create_subscription(
-                        String, '/state_sync_broadcast',
-                        self.state_callback, 10)
+                        String, "/state_sync_broadcast", self.state_callback, 10
+                    )
 
                     # Register self with state manager
                     self.state_mgr.register_node(node_name)
@@ -145,10 +158,12 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
                     """Handle state update messages from DDS."""
                     try:
                         # Parse message (format: "node:key:value")
-                        parts = msg.data.split(':', 2)
+                        parts = msg.data.split(":", 2)
                         if len(parts) == 3:
                             source_node, key, value = parts
-                            if source_node != self.get_name():  # Don't process our own messages
+                            if (
+                                source_node != self.get_name()
+                            ):  # Don't process our own messages
                                 self.received_states[key] = value
                                 # Update local state manager
                                 self.state_mgr.update_state(key, value)
@@ -176,12 +191,13 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
                     super().destroy_node()
 
             # Create ROS2 nodes
-            node1 = StateSyncROS2Node('state_sync_node1')
-            node2 = StateSyncROS2Node('state_sync_node2')
+            node1 = StateSyncROS2Node("state_sync_node1")
+            node2 = StateSyncROS2Node("state_sync_node2")
 
             # Add broadcast publisher to node1
             node1.broadcast_pub = node1.create_publisher(
-                String, '/state_sync_broadcast', 10)
+                String, "/state_sync_broadcast", 10
+            )
 
             # Give nodes time to discover each other via DDS
             print("  📡 Allowing DDS discovery...")
@@ -191,9 +207,9 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
 
             # Test state synchronization via real DDS
             test_states = {
-                'telemetry_rate': '10.0',
-                'battery_level': '85.5',
-                'system_mode': 'autonomous'
+                "telemetry_rate": "10.0",
+                "battery_level": "85.5",
+                "system_mode": "autonomous",
             }
 
             print("  📤 Publishing state updates from node1...")
@@ -213,19 +229,31 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             received_states = node2.received_states
 
             for key, expected_value in test_states.items():
-                self.assertIn(key, received_states,
-                            f"State {key} should be received by Node2 via DDS")
-                self.assertEqual(received_states[key], expected_value,
-                               f"State {key} should have correct value")
+                self.assertIn(
+                    key,
+                    received_states,
+                    f"State {key} should be received by Node2 via DDS",
+                )
+                self.assertEqual(
+                    received_states[key],
+                    expected_value,
+                    f"State {key} should have correct value",
+                )
 
             # Verify state managers are synchronized
             for key, expected_value in test_states.items():
                 node1_state = node1.state_mgr.get_state(key)
                 node2_state = node2.state_mgr.get_state(key)
-                self.assertEqual(node1_state, expected_value,
-                               f"Node1 state manager should have {key}")
-                self.assertEqual(node2_state, expected_value,
-                               f"Node2 state manager should have {key}")
+                self.assertEqual(
+                    node1_state,
+                    expected_value,
+                    f"Node1 state manager should have {key}",
+                )
+                self.assertEqual(
+                    node2_state,
+                    expected_value,
+                    f"Node2 state manager should have {key}",
+                )
 
             print("  ✅ State synchronization via ROS2 DDS works")
 
@@ -250,6 +278,7 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
         try:
             # Create DDS manager
             from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
+
             dds_mgr = DDSDomainRedundancyManager(primary_domain=600)
 
             # Register test nodes (simulated ROS2 processes)
@@ -260,13 +289,21 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
 
             # Test initial domain status
             initial_status = dds_mgr.get_system_status()
-            self.assertEqual(initial_status['current_domain'], 600, "Should start on test domain")
-            self.assertEqual(len(initial_status['nodes']), 2, "Should have registered test nodes")
+            self.assertEqual(
+                initial_status["current_domain"], 600, "Should start on test domain"
+            )
+            self.assertEqual(
+                len(initial_status["nodes"]), 2, "Should have registered test nodes"
+            )
 
             # Test domain health measurement
             health_score = dds_mgr._measure_domain_health(600)
-            self.assertIsInstance(health_score, float, "Health score should be measurable")
-            self.assertGreaterEqual(health_score, 0.0, "Health score should be non-negative")
+            self.assertIsInstance(
+                health_score, float, "Health score should be measurable"
+            )
+            self.assertGreaterEqual(
+                health_score, 0.0, "Health score should be non-negative"
+            )
 
             # Test domain failover
             print("  🔄 Testing domain failover...")
@@ -280,7 +317,11 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
 
             # Verify domain change
             failover_status = dds_mgr.get_system_status()
-            self.assertEqual(failover_status['current_domain'], 601, "Should failover to backup domain")
+            self.assertEqual(
+                failover_status["current_domain"],
+                601,
+                "Should failover to backup domain",
+            )
 
             # Test that DDS manager handles ROS2 domain concepts
             # In real ROS2, domain failover would require node restarts
@@ -303,33 +344,43 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             name=self.env_name,
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             # Create config manager
             from core.dynamic_config_manager import DynamicConfigManager
+
             config_mgr = DynamicConfigManager()
 
             # Register test nodes
-            config_mgr.register_node("ros2_config_test1", {
-                'telemetry_rate_hz': 5.0,
-                'max_clients': 50
-            })
+            config_mgr.register_node(
+                "ros2_config_test1", {"telemetry_rate_hz": 5.0, "max_clients": 50}
+            )
 
-            config_mgr.register_node("ros2_config_test2", {
-                'update_rate_hz': 10.0,
-                'timeout_seconds': 30
-            })
+            config_mgr.register_node(
+                "ros2_config_test2", {"update_rate_hz": 10.0, "timeout_seconds": 30}
+            )
 
             # Test configuration updates
             success1 = config_mgr.update_node_config(
-                "ros2_config_test1", 'telemetry_rate_hz', 15.0)
-            self.assertTrue(success1, "Config update should succeed in ROS2 environment")
+                "ros2_config_test1", "telemetry_rate_hz", 15.0
+            )
+            self.assertTrue(
+                success1, "Config update should succeed in ROS2 environment"
+            )
 
             # Test cross-node configuration updates
             updates = [
-                {'node_name': 'ros2_config_test1', 'parameter_name': 'max_clients', 'new_value': 100},
-                {'node_name': 'ros2_config_test2', 'parameter_name': 'update_rate_hz', 'new_value': 20.0}
+                {
+                    "node_name": "ros2_config_test1",
+                    "parameter_name": "max_clients",
+                    "new_value": 100,
+                },
+                {
+                    "node_name": "ros2_config_test2",
+                    "parameter_name": "update_rate_hz",
+                    "new_value": 20.0,
+                },
             ]
             success2 = config_mgr.update_multiple_configs(updates)
             self.assertTrue(success2, "Multiple config updates should succeed")
@@ -338,13 +389,21 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             config1 = config_mgr.get_node_config("ros2_config_test1")
             config2 = config_mgr.get_node_config("ros2_config_test2")
 
-            self.assertEqual(config1['telemetry_rate_hz'], 15.0, "Config1 rate should be updated")
-            self.assertEqual(config1['max_clients'], 100, "Config1 clients should be updated")
-            self.assertEqual(config2['update_rate_hz'], 20.0, "Config2 rate should be updated")
+            self.assertEqual(
+                config1["telemetry_rate_hz"], 15.0, "Config1 rate should be updated"
+            )
+            self.assertEqual(
+                config1["max_clients"], 100, "Config1 clients should be updated"
+            )
+            self.assertEqual(
+                config2["update_rate_hz"], 20.0, "Config2 rate should be updated"
+            )
 
             # Test configuration history
             history = config_mgr.get_config_history()
-            self.assertGreater(len(history), 0, "Should have configuration history in ROS2 env")
+            self.assertGreater(
+                len(history), 0, "Should have configuration history in ROS2 env"
+            )
 
             print("  ✅ Dynamic configuration works in ROS2 environment")
 
@@ -364,7 +423,10 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
                     self.received_states = {}
 
                     # Create integrated state manager
-                    from core.state_synchronization_manager import DistributedStateManager
+                    from core.state_synchronization_manager import (
+                        DistributedStateManager,
+                    )
+
                     self.state_mgr = DistributedStateManager(node_name)
                     self.state_mgr.start()
                     self.state_mgr.register_node(node_name)
@@ -373,19 +435,22 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
 
                     # ROS2 communication for state sync
                     self.state_pub = self.create_publisher(
-                        String, '/state_sync_broadcast', 10)
+                        String, "/state_sync_broadcast", 10
+                    )
                     self.state_sub = self.create_subscription(
-                        String, '/state_sync_broadcast',
-                        self.state_callback, 10)
+                        String, "/state_sync_broadcast", self.state_callback, 10
+                    )
 
                 def state_callback(self, msg):
                     """Handle state sync messages from DDS."""
                     try:
                         # Parse message (format: "source_node:key:value")
-                        parts = msg.data.split(':', 2)
+                        parts = msg.data.split(":", 2)
                         if len(parts) == 3:
                             source_node, key, value = parts
-                            if source_node != self.get_name():  # Don't process our own messages
+                            if (
+                                source_node != self.get_name()
+                            ):  # Don't process our own messages
                                 self.received_states[key] = value
                                 # Update local state manager
                                 self.state_mgr.update_state(key, value)
@@ -408,9 +473,9 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
                     super().destroy_node()
 
             # Create multiple ROS2 nodes
-            node1 = MultiNodeStateSyncROS2('multi_sync_node1')
-            node2 = MultiNodeStateSyncROS2('multi_sync_node2')
-            node3 = MultiNodeStateSyncROS2('multi_sync_node3')
+            node1 = MultiNodeStateSyncROS2("multi_sync_node1")
+            node2 = MultiNodeStateSyncROS2("multi_sync_node2")
+            node3 = MultiNodeStateSyncROS2("multi_sync_node3")
 
             # Allow DDS discovery
             print("  📡 Allowing DDS discovery between nodes...")
@@ -436,24 +501,42 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             print("  ✅ Verifying state reception across all nodes...")
 
             # Check DDS message reception
-            self.assertIn("multi_node_test", node2.received_states,
-                         "Node2 should receive state via DDS")
-            self.assertIn("multi_node_test", node3.received_states,
-                         "Node3 should receive state via DDS")
+            self.assertIn(
+                "multi_node_test",
+                node2.received_states,
+                "Node2 should receive state via DDS",
+            )
+            self.assertIn(
+                "multi_node_test",
+                node3.received_states,
+                "Node3 should receive state via DDS",
+            )
 
-            self.assertEqual(node2.received_states["multi_node_test"], test_data,
-                           "Node2 should have correct state value")
-            self.assertEqual(node3.received_states["multi_node_test"], test_data,
-                           "Node3 should have correct state value")
+            self.assertEqual(
+                node2.received_states["multi_node_test"],
+                test_data,
+                "Node2 should have correct state value",
+            )
+            self.assertEqual(
+                node3.received_states["multi_node_test"],
+                test_data,
+                "Node3 should have correct state value",
+            )
 
             # Verify state managers are synchronized
             node1_state = node1.state_mgr.get_state("multi_node_test")
             node2_state = node2.state_mgr.get_state("multi_node_test")
             node3_state = node3.state_mgr.get_state("multi_node_test")
 
-            self.assertEqual(node1_state, test_data, "Node1 state manager should have state")
-            self.assertEqual(node2_state, test_data, "Node2 state manager should have state")
-            self.assertEqual(node3_state, test_data, "Node3 state manager should have state")
+            self.assertEqual(
+                node1_state, test_data, "Node1 state manager should have state"
+            )
+            self.assertEqual(
+                node2_state, test_data, "Node2 state manager should have state"
+            )
+            self.assertEqual(
+                node3_state, test_data, "Node3 state manager should have state"
+            )
 
             print("  ✅ Multi-node state synchronization works via ROS2 DDS")
 
@@ -476,19 +559,29 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             name=self.env_name,
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
-            from bridges.websocket_redundancy_manager import WebSocketRedundancyManager, WebSocketEndpoint, EndpointPriority
+            from bridges.websocket_redundancy_manager import (
+                EndpointPriority,
+                WebSocketEndpoint,
+                WebSocketRedundancyManager,
+            )
 
             # Create WebSocket manager
             ws_mgr = WebSocketRedundancyManager()
 
             # Create endpoints
             endpoints = [
-                WebSocketEndpoint("ros2_primary", 8080, EndpointPriority.PRIMARY, max_clients=50),
-                WebSocketEndpoint("ros2_secondary", 8081, EndpointPriority.SECONDARY, max_clients=25),
-                WebSocketEndpoint("ros2_tertiary", 8082, EndpointPriority.TERTIARY, max_clients=10)
+                WebSocketEndpoint(
+                    "ros2_primary", 8080, EndpointPriority.PRIMARY, max_clients=50
+                ),
+                WebSocketEndpoint(
+                    "ros2_secondary", 8081, EndpointPriority.SECONDARY, max_clients=25
+                ),
+                WebSocketEndpoint(
+                    "ros2_tertiary", 8082, EndpointPriority.TERTIARY, max_clients=10
+                ),
             ]
 
             for endpoint in endpoints:
@@ -499,37 +592,51 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
 
             # Test initial health
             status = ws_mgr.get_system_status()
-            healthy_endpoints = sum(1 for ep in status['endpoints'].values() if ep['is_healthy'])
+            healthy_endpoints = sum(
+                1 for ep in status["endpoints"].values() if ep["is_healthy"]
+            )
             self.assertEqual(healthy_endpoints, 3, "All endpoints should start healthy")
 
             # Test failover scenario
             print("  🔄 Testing failover in ROS2 environment...")
 
             # Fail primary endpoint
-            primary_ep = next(ep for ep in ws_mgr.endpoints.values() if ep.name == 'ros2_primary')
+            primary_ep = next(
+                ep for ep in ws_mgr.endpoints.values() if ep.name == "ros2_primary"
+            )
             primary_ep.is_running = False
             ws_mgr._check_endpoint_health()
 
             # Verify primary is down
             status_after_fail = ws_mgr.get_system_status()
-            primary_status = status_after_fail['endpoints']['ros2_primary']
-            self.assertEqual(primary_status['health'], 'DOWN', "Primary should be down")
+            primary_status = status_after_fail["endpoints"]["ros2_primary"]
+            self.assertEqual(primary_status["health"], "DOWN", "Primary should be down")
 
             # Verify other endpoints still healthy
-            secondary_status = status_after_fail['endpoints']['ros2_secondary']
-            tertiary_status = status_after_fail['endpoints']['ros2_tertiary']
+            secondary_status = status_after_fail["endpoints"]["ros2_secondary"]
+            tertiary_status = status_after_fail["endpoints"]["ros2_tertiary"]
 
-            self.assertEqual(secondary_status['health'], 'HEALTHY', "Secondary should remain healthy")
-            self.assertEqual(tertiary_status['health'], 'HEALTHY', "Tertiary should remain healthy")
+            self.assertEqual(
+                secondary_status["health"], "HEALTHY", "Secondary should remain healthy"
+            )
+            self.assertEqual(
+                tertiary_status["health"], "HEALTHY", "Tertiary should remain healthy"
+            )
 
             # Test load balancing
-            secondary_ep = next(ep for ep in ws_mgr.endpoints.values() if ep.name == 'ros2_secondary')
+            secondary_ep = next(
+                ep for ep in ws_mgr.endpoints.values() if ep.name == "ros2_secondary"
+            )
             secondary_ep.clients = [Mock()] * 20  # 80% capacity
             ws_mgr._check_endpoint_health()
 
             status_after_load = ws_mgr.get_system_status()
-            secondary_load_status = status_after_load['endpoints']['ros2_secondary']
-            self.assertEqual(secondary_load_status['health'], 'HEALTHY', "Secondary should handle load")
+            secondary_load_status = status_after_load["endpoints"]["ros2_secondary"]
+            self.assertEqual(
+                secondary_load_status["health"],
+                "HEALTHY",
+                "Secondary should handle load",
+            )
 
             ws_mgr.stop_redundancy_system()
 
@@ -543,14 +650,14 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             name=self.env_name,
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
-            from core.recovery_coordinator import RecoveryCoordinator
-            from core.state_synchronization_manager import DistributedStateManager
+            from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
             from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
             from core.dynamic_config_manager import DynamicConfigManager
-            from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
+            from core.recovery_coordinator import RecoveryCoordinator
+            from core.state_synchronization_manager import DistributedStateManager
 
             # Create all system managers
             recovery_coord = RecoveryCoordinator()
@@ -568,10 +675,16 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             # Setup basic system state
             state_mgr.register_node("ros2_recovery_test")
             dds_mgr.register_node("ros2_recovery_test", "echo test")
-            config_mgr.register_node("ros2_recovery_test", {'test_param': 'value'})
+            config_mgr.register_node("ros2_recovery_test", {"test_param": "value"})
 
-            from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
-            ws_endpoint = WebSocketEndpoint("ros2_recovery", 8080, EndpointPriority.PRIMARY)
+            from bridges.websocket_redundancy_manager import (
+                EndpointPriority,
+                WebSocketEndpoint,
+            )
+
+            ws_endpoint = WebSocketEndpoint(
+                "ros2_recovery", 8080, EndpointPriority.PRIMARY
+            )
             ws_endpoint.is_running = True
             ws_mgr.add_endpoint(ws_endpoint)
 
@@ -581,18 +694,29 @@ class AdvancedSystemsROS2IntegrationTest(unittest.TestCase):
             ws_mgr.start_redundancy_system()
 
             # Test recovery initiation
-            recovery_success = recovery_coord.initiate_recovery("ROS2 environment recovery test")
+            recovery_success = recovery_coord.initiate_recovery(
+                "ROS2 environment recovery test"
+            )
 
             # Wait for recovery completion
             timeout = 15
             start_time = time.time()
-            while recovery_coord.recovery_active and (time.time() - start_time) < timeout:
+            while (
+                recovery_coord.recovery_active and (time.time() - start_time) < timeout
+            ):
                 time.sleep(0.1)
 
             # Verify recovery completed
-            self.assertFalse(recovery_coord.recovery_active, "Recovery should complete in ROS2 environment")
+            self.assertFalse(
+                recovery_coord.recovery_active,
+                "Recovery should complete in ROS2 environment",
+            )
             recovery_status = recovery_coord.get_recovery_status()
-            self.assertEqual(recovery_status['current_phase'], 'COMPLETE', "Recovery should complete successfully")
+            self.assertEqual(
+                recovery_status["current_phase"],
+                "COMPLETE",
+                "Recovery should complete successfully",
+            )
 
             print("  ✅ Coordinated recovery works in ROS2 environment")
 

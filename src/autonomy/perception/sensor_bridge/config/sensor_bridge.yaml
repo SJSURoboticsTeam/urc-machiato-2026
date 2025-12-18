@@ -36,6 +36,7 @@ sensor_bridge:
       topic_name: "/temperature/data"
       update_rate: 5.0 # Hz
 
+
 # Expected WebSocket message format:
 #
 # {

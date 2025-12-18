@@ -9,8 +9,6 @@ configuration management for the competition bridge.
 from typing import Any, Dict, Optional
 
 import rclpy
-from rclpy.node import Node
-
 from constants import (
     ADAPTATION_RATE,
     BANDWIDTH_MEASUREMENT_WINDOW_SEC,
@@ -24,6 +22,7 @@ from constants import (
     MAX_TELEMETRY_RATE_HZ,
     MIN_TELEMETRY_RATE_HZ,
 )
+from rclpy.node import Node
 
 
 class ParameterManager:
@@ -53,150 +52,144 @@ class ParameterManager:
                 "type": int,
                 "min": 1024,
                 "max": 65535,
-                "description": "WebSocket server port"
+                "description": "WebSocket server port",
             },
             "max_websocket_clients": {
                 "default": DEFAULT_MAX_WEBSOCKET_CLIENTS,
                 "type": int,
                 "min": 1,
                 "max": 100,
-                "description": "Maximum WebSocket clients"
+                "description": "Maximum WebSocket clients",
             },
-
             # Telemetry Configuration
             "telemetry_rate_hz": {
                 "default": DEFAULT_TELEMETRY_RATE_HZ,
                 "type": float,
                 "min": MIN_TELEMETRY_RATE_HZ,
                 "max": MAX_TELEMETRY_RATE_HZ,
-                "description": "Telemetry publishing rate in Hz"
+                "description": "Telemetry publishing rate in Hz",
             },
-
             # Feature Toggles
             "enable_websocket_redundancy": {
                 "default": True,
                 "type": bool,
-                "description": "Enable WebSocket redundancy system"
+                "description": "Enable WebSocket redundancy system",
             },
             "redundancy_role": {
                 "default": "primary",
                 "type": str,
                 "allowed_values": ["primary", "secondary", "tertiary", "emergency"],
-                "description": "WebSocket redundancy role"
+                "description": "WebSocket redundancy role",
             },
             "enable_state_sync": {
                 "default": True,
                 "type": bool,
-                "description": "Enable state synchronization"
+                "description": "Enable state synchronization",
             },
             "enable_dds_redundancy": {
                 "default": True,
                 "type": bool,
-                "description": "Enable DDS domain redundancy"
+                "description": "Enable DDS domain redundancy",
             },
             "enable_dynamic_config": {
                 "default": True,
                 "type": bool,
-                "description": "Enable dynamic configuration"
+                "description": "Enable dynamic configuration",
             },
             "enable_recovery_coordinator": {
                 "default": True,
                 "type": bool,
-                "description": "Enable recovery coordinator"
+                "description": "Enable recovery coordinator",
             },
-
             # DDS Configuration
             "primary_domain_id": {
                 "default": DEFAULT_DDS_DOMAIN_ID,
                 "type": int,
                 "min": 0,
                 "max": 255,
-                "description": "Primary DDS domain ID"
+                "description": "Primary DDS domain ID",
             },
-
             # Logging Configuration
             "competition_log_file": {
                 "default": DEFAULT_COMPETITION_LOG_FILE,
                 "type": str,
-                "description": "Competition telemetry log file"
+                "description": "Competition telemetry log file",
             },
             "enable_data_logging": {
                 "default": True,
                 "type": bool,
-                "description": "Enable competition data logging"
+                "description": "Enable competition data logging",
             },
-
             # Adaptive Telemetry Parameters
             "adaptive_telemetry_enabled": {
                 "default": True,
                 "type": bool,
-                "description": "Enable adaptive telemetry"
+                "description": "Enable adaptive telemetry",
             },
             "min_telemetry_rate": {
                 "default": MIN_TELEMETRY_RATE_HZ,
                 "type": float,
                 "min": 0.1,
                 "max": 10.0,
-                "description": "Minimum telemetry rate"
+                "description": "Minimum telemetry rate",
             },
             "max_telemetry_rate": {
                 "default": MAX_TELEMETRY_RATE_HZ,
                 "type": float,
                 "min": 1.0,
                 "max": 50.0,
-                "description": "Maximum telemetry rate"
+                "description": "Maximum telemetry rate",
             },
             "bandwidth_target_utilization": {
                 "default": BANDWIDTH_TARGET_UTILIZATION,
                 "type": float,
                 "min": 0.1,
                 "max": 1.0,
-                "description": "Target bandwidth utilization"
+                "description": "Target bandwidth utilization",
             },
             "latency_target_ms": {
                 "default": LATENCY_TARGET_MS,
                 "type": float,
                 "min": 10.0,
                 "max": 1000.0,
-                "description": "Target latency in milliseconds"
+                "description": "Target latency in milliseconds",
             },
             "adaptation_rate": {
                 "default": ADAPTATION_RATE,
                 "type": float,
                 "min": 0.01,
                 "max": 1.0,
-                "description": "Telemetry adaptation rate"
+                "description": "Telemetry adaptation rate",
             },
             "bandwidth_measurement_window": {
                 "default": BANDWIDTH_MEASUREMENT_WINDOW_SEC,
                 "type": float,
                 "min": 1.0,
                 "max": 60.0,
-                "description": "Bandwidth measurement window in seconds"
+                "description": "Bandwidth measurement window in seconds",
             },
-
             # Defensive Maximization Parameters
             "defensive_maximization_enabled": {
                 "default": False,
                 "type": bool,
-                "description": "Enable defensive resource maximization"
+                "description": "Enable defensive resource maximization",
             },
             "aggressive_channel_switching": {
                 "default": False,
                 "type": bool,
-                "description": "Enable aggressive channel switching"
+                "description": "Enable aggressive channel switching",
             },
             "bandwidth_reservation_ratio": {
                 "default": 0.7,
                 "type": float,
                 "min": 0.1,
                 "max": 1.0,
-                "description": "Bandwidth reservation ratio"
+                "description": "Bandwidth reservation ratio",
             },
             "transmission_power_maximization": {
                 "default": False,
                 "type": bool,
-                "description": "Enable transmission power maximization"
+                "description": "Enable transmission power maximization",
             },
         }
 
@@ -212,7 +205,7 @@ class ParameterManager:
                     config["default"],
                     descriptor=rclpy.parameter_descriptor.ParameterDescriptor(
                         description=config.get("description", "")
-                    )
+                    ),
                 )
             except Exception as e:
                 self.logger.warning(f"Failed to declare parameter {param_name}: {e}")

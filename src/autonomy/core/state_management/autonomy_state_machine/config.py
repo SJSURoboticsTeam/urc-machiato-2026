@@ -6,7 +6,7 @@ Contains all magic numbers, thresholds, timeouts, and other configurable
 parameters used throughout the state machine components.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 # Timing Constants (seconds)
@@ -28,14 +28,14 @@ class Timing:
 
     # Timeouts
     MISSION_TIMEOUT_DEFAULT = 1800.0  # 30 minutes
-    MISSION_ABORT_TIMEOUT = 300.0     # 5 minutes
-    COMMUNICATION_TIMEOUT = 10.0      # 10 seconds
+    MISSION_ABORT_TIMEOUT = 300.0  # 5 minutes
+    COMMUNICATION_TIMEOUT = 10.0  # 10 seconds
     EMERGENCY_RETURN_TIMEOUT = 900.0  # 15 minutes
     COMPLETE_AND_RETURN_TIMEOUT = 600.0  # 10 minutes
-    AUTO_RETURN_TIMEOUT = 300.0       # 5 minutes
+    AUTO_RETURN_TIMEOUT = 300.0  # 5 minutes
 
     # Cooldowns
-    ADAPTIVE_ACTION_COOLDOWN = 5.0    # 5 seconds between same action
+    ADAPTIVE_ACTION_COOLDOWN = 5.0  # 5 seconds between same action
     HUMAN_INTERVENTION_COOLDOWN = 300.0  # 5 minutes
 
 
@@ -63,8 +63,8 @@ class Thresholds:
 
     # Environmental
     OBSTACLE_CRITICAL_DISTANCE = 0.3  # meters
-    OBSTACLE_WARNING_DISTANCE = 1.0   # meters
-    HAZARDOUS_AREA_DISTANCE = 5.0     # meters
+    OBSTACLE_WARNING_DISTANCE = 1.0  # meters
+    HAZARDOUS_AREA_DISTANCE = 5.0  # meters
 
     # Communication
     COMMUNICATION_LATENCY_WARNING = 100.0  # ms
@@ -131,21 +131,21 @@ class QoSConfig:
         "reliability": RELIABLE,
         "history": KEEP_LAST,
         "depth": STATE_DEPTH,
-        "durability": TRANSIENT_LOCAL
+        "durability": TRANSIENT_LOCAL,
     }
 
     SENSOR_QOS = {
         "reliability": BEST_EFFORT,
         "history": KEEP_LAST,
         "depth": SENSOR_DEPTH,
-        "durability": VOLATILE
+        "durability": VOLATILE,
     }
 
     COMMAND_QOS = {
         "reliability": RELIABLE,
         "history": KEEP_ALL,
         "depth": DEFAULT_DEPTH,
-        "durability": VOLATILE
+        "durability": VOLATILE,
     }
 
 
@@ -237,5 +237,3 @@ def validate_config(config: Dict[str, Any]) -> bool:
             return False
 
     return True
-
-

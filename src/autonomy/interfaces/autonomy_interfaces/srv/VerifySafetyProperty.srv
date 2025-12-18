@@ -5,5 +5,3 @@ bool satisfied
 string details
 int32 violation_count
 float64 last_violation
-
-

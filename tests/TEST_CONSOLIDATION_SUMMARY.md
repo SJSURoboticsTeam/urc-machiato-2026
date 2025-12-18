@@ -12,6 +12,7 @@ Consolidated scattered test files into proper `tests/` directory structure and r
 ### ✅ Files Moved (11 files)
 
 #### Scattered Tests → `tests/integration/`
+
 1. `autonomy/code/autonomous_typing/test_typing_aruco.py` → `tests/integration/test_typing_aruco.py`
 2. `autonomy/code/sensor_bridge/test_sensor_bridge.py` → `tests/integration/test_sensor_bridge.py`
 3. `autonomy/code/led_status/test_led_integration.py` → `tests/integration/test_led_integration.py`
@@ -19,10 +20,12 @@ Consolidated scattered test files into proper `tests/` directory structure and r
 5. `scripts/test_messaging_consistency.py` → `tests/integration/test_messaging_consistency.py`
 
 #### Scattered Tests → `tests/system/`
+
 6. `autonomy/tests/test_system_integration.py` → `tests/system/test_system_integration_legacy.py`
 7. `scripts/test_system_integration.py` → `tests/system/test_system_integration_scripts.py`
 
 #### Demo Files → `examples/demos/`
+
 8. `tests/standalone_safety_system.py` → `examples/demos/standalone_safety_system.py`
 9. `tests/standalone_state_machine.py` → `examples/demos/standalone_state_machine.py`
 10. `tests/performance/ros2_performance_demo.py` → `examples/demos/ros2_performance_demo.py`
@@ -86,6 +89,7 @@ These test files remain in their original locations for valid reasons:
 ### State Machine Tests
 
 Two state machine test files exist in different locations:
+
 - `tests/unit/control/test_state_machine.py` - Tests control/coordination aspects
 - `tests/unit/state_management/test_state_machine.py` - Tests state definitions/validation
 
@@ -94,6 +98,7 @@ Two state machine test files exist in different locations:
 ### Import Updates Needed
 
 Moved files may need import path updates. Check:
+
 - `tests/integration/test_typing_aruco.py`
 - `tests/integration/test_sensor_bridge.py`
 - `tests/integration/test_led_integration.py`
@@ -105,6 +110,7 @@ Moved files may need import path updates. Check:
 ### Comprehensive Integration Suite
 
 `tests/comprehensive_integration_suite.py` still exists. Review if:
+
 - Still actively used
 - Superseded by individual test files
 - Should be archived or removed
@@ -127,6 +133,7 @@ Moved files may need import path updates. Check:
 ## Verification
 
 Run tests to verify consolidation:
+
 ```bash
 # Run all tests
 pytest tests/ -v

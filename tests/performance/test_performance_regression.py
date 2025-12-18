@@ -12,15 +12,16 @@ Tracks performance baselines and detects regressions in:
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import psutil
-import unittest
-import sys
 import os
+import sys
+import time
+import unittest
 from statistics import mean, median, stdev
 
+import psutil
+
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
 class PerformanceRegressionTest(unittest.TestCase):
@@ -28,14 +29,14 @@ class PerformanceRegressionTest(unittest.TestCase):
 
     # Performance baselines (adjust based on target hardware)
     BASELINE_METRICS = {
-        'state_sync_operation_time_ms': 1.0,      # Max time per state sync operation
-        'state_sync_throughput_ops_sec': 1000,   # Min operations per second
-        'config_update_time_ms': 5.0,             # Max time per config update
-        'dds_registration_time_ms': 0.1,          # Max time per DDS registration
-        'websocket_setup_time_ms': 0.1,           # Max time per WebSocket setup
-        'memory_usage_mb': 50.0,                  # Max baseline memory usage
-        'cpu_usage_percent': 10.0,                # Max baseline CPU usage
-        'recovery_coordination_time_sec': 2.0,    # Max recovery coordination time
+        "state_sync_operation_time_ms": 1.0,  # Max time per state sync operation
+        "state_sync_throughput_ops_sec": 1000,  # Min operations per second
+        "config_update_time_ms": 5.0,  # Max time per config update
+        "dds_registration_time_ms": 0.1,  # Max time per DDS registration
+        "websocket_setup_time_ms": 0.1,  # Max time per WebSocket setup
+        "memory_usage_mb": 50.0,  # Max baseline memory usage
+        "cpu_usage_percent": 10.0,  # Max baseline CPU usage
+        "recovery_coordination_time_sec": 2.0,  # Max recovery coordination time
     }
 
     REGRESSION_THRESHOLD = 1.5  # 150% of baseline = regression
@@ -61,7 +62,7 @@ class PerformanceRegressionTest(unittest.TestCase):
         latencies = []
         for i in range(100):
             start = time.perf_counter()
-            mgr.update_state(f'perf_{i}', f'value_{i}')
+            mgr.update_state(f"perf_{i}", f"value_{i}")
             end = time.perf_counter()
             latencies.append((end - start) * 1000)  # Convert to ms
 
@@ -74,21 +75,29 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         # Check against baseline
-        self.assertLess(avg_latency, self.BASELINE_METRICS['state_sync_operation_time_ms'] * self.REGRESSION_THRESHOLD,
-                       f"Average latency {avg_latency:.2f}ms exceeds regression threshold")
+        self.assertLess(
+            avg_latency,
+            self.BASELINE_METRICS["state_sync_operation_time_ms"]
+            * self.REGRESSION_THRESHOLD,
+            f"Average latency {avg_latency:.2f}ms exceeds regression threshold",
+        )
 
         # Test throughput
         start_time = time.time()
         ops_count = 1000
         for i in range(ops_count):
-            mgr.update_state(f'throughput_{i}', f'value_{i}')
+            mgr.update_state(f"throughput_{i}", f"value_{i}")
         end_time = time.time()
 
         throughput = ops_count / (end_time - start_time)
         print(".0f")
 
-        self.assertGreater(throughput, self.BASELINE_METRICS['state_sync_throughput_ops_sec'] / self.REGRESSION_THRESHOLD,
-                          f"Throughput {throughput:.0f} ops/sec below regression threshold")
+        self.assertGreater(
+            throughput,
+            self.BASELINE_METRICS["state_sync_throughput_ops_sec"]
+            / self.REGRESSION_THRESHOLD,
+            f"Throughput {throughput:.0f} ops/sec below regression threshold",
+        )
 
         mgr.stop()
         print("  ✅ State sync performance within acceptable range")
@@ -100,13 +109,13 @@ class PerformanceRegressionTest(unittest.TestCase):
         from core.dynamic_config_manager import DynamicConfigManager
 
         config_mgr = DynamicConfigManager()
-        config_mgr.register_node("perf_test", {'param': 0})
+        config_mgr.register_node("perf_test", {"param": 0})
 
         # Test individual update latency
         latencies = []
         for i in range(100):
             start = time.perf_counter()
-            config_mgr.update_node_config("perf_test", 'param', i)
+            config_mgr.update_node_config("perf_test", "param", i)
             end = time.perf_counter()
             latencies.append((end - start) * 1000)  # Convert to ms
 
@@ -117,13 +126,16 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         # Check against baseline
-        self.assertLess(avg_latency, self.BASELINE_METRICS['config_update_time_ms'] * self.REGRESSION_THRESHOLD,
-                       f"Average config update latency {avg_latency:.2f}ms exceeds regression threshold")
+        self.assertLess(
+            avg_latency,
+            self.BASELINE_METRICS["config_update_time_ms"] * self.REGRESSION_THRESHOLD,
+            f"Average config update latency {avg_latency:.2f}ms exceeds regression threshold",
+        )
 
         # Test bulk updates
         start_time = time.time()
         bulk_updates = [
-            {'node_name': 'perf_test', 'parameter_name': 'param', 'new_value': i}
+            {"node_name": "perf_test", "parameter_name": "param", "new_value": i}
             for i in range(50)
         ]
         config_mgr.update_multiple_configs(bulk_updates)
@@ -132,8 +144,13 @@ class PerformanceRegressionTest(unittest.TestCase):
         bulk_time = (end_time - start_time) * 1000  # Convert to ms
         print(".2f")
 
-        self.assertLess(bulk_time, self.BASELINE_METRICS['config_update_time_ms'] * 50 * self.REGRESSION_THRESHOLD,
-                       f"Bulk config update time {bulk_time:.2f}ms exceeds regression threshold")
+        self.assertLess(
+            bulk_time,
+            self.BASELINE_METRICS["config_update_time_ms"]
+            * 50
+            * self.REGRESSION_THRESHOLD,
+            f"Bulk config update time {bulk_time:.2f}ms exceeds regression threshold",
+        )
 
         print("  ✅ Dynamic config performance within acceptable range")
 
@@ -160,8 +177,12 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         # Check against baseline
-        self.assertLess(avg_latency, self.BASELINE_METRICS['dds_registration_time_ms'] * self.REGRESSION_THRESHOLD,
-                       f"Average DDS registration latency {avg_latency:.2f}ms exceeds regression threshold")
+        self.assertLess(
+            avg_latency,
+            self.BASELINE_METRICS["dds_registration_time_ms"]
+            * self.REGRESSION_THRESHOLD,
+            f"Average DDS registration latency {avg_latency:.2f}ms exceeds regression threshold",
+        )
 
         # Test domain health checking performance
         dds_mgr = DDSDomainRedundancyManager()
@@ -184,7 +205,11 @@ class PerformanceRegressionTest(unittest.TestCase):
         """Test WebSocket redundancy performance against baseline."""
         print("🌐 Testing WebSocket Redundancy Performance Regression...")
 
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager, WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+            WebSocketRedundancyManager,
+        )
 
         # Test setup performance
         setup_times = []
@@ -193,7 +218,9 @@ class PerformanceRegressionTest(unittest.TestCase):
             ws_mgr.start_redundancy_system()
 
             start = time.perf_counter()
-            endpoint = WebSocketEndpoint(f"perf_endpoint_{i}", 8080 + i, EndpointPriority.PRIMARY)
+            endpoint = WebSocketEndpoint(
+                f"perf_endpoint_{i}", 8080 + i, EndpointPriority.PRIMARY
+            )
             endpoint.is_running = True
             endpoint.response_time = 0.05
             endpoint.last_health_check = time.time()
@@ -210,15 +237,21 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         # Check against baseline
-        self.assertLess(avg_setup_time, self.BASELINE_METRICS['websocket_setup_time_ms'] * self.REGRESSION_THRESHOLD,
-                       f"Average WebSocket setup time {avg_setup_time:.2f}ms exceeds regression threshold")
+        self.assertLess(
+            avg_setup_time,
+            self.BASELINE_METRICS["websocket_setup_time_ms"]
+            * self.REGRESSION_THRESHOLD,
+            f"Average WebSocket setup time {avg_setup_time:.2f}ms exceeds regression threshold",
+        )
 
         # Test health monitoring performance
         ws_mgr = WebSocketRedundancyManager()
         ws_mgr.start_redundancy_system()
 
         for i in range(10):
-            endpoint = WebSocketEndpoint(f"health_endpoint_{i}", 8080 + i, EndpointPriority.PRIMARY)
+            endpoint = WebSocketEndpoint(
+                f"health_endpoint_{i}", 8080 + i, EndpointPriority.PRIMARY
+            )
             endpoint.is_running = True
             endpoint.response_time = 0.05
             endpoint.last_health_check = time.time()
@@ -241,11 +274,15 @@ class PerformanceRegressionTest(unittest.TestCase):
         """Test recovery coordination performance against baseline."""
         print("🔧 Testing Recovery Coordination Performance Regression...")
 
-        from core.recovery_coordinator import RecoveryCoordinator
-        from core.state_synchronization_manager import DistributedStateManager
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+            WebSocketRedundancyManager,
+        )
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager, WebSocketEndpoint, EndpointPriority
+        from core.recovery_coordinator import RecoveryCoordinator
+        from core.state_synchronization_manager import DistributedStateManager
 
         # Setup all systems
         recovery_coord = RecoveryCoordinator()
@@ -294,12 +331,18 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         # Check against baseline
-        self.assertLess(recovery_time, self.BASELINE_METRICS['recovery_coordination_time_sec'] * self.REGRESSION_THRESHOLD,
-                       f"Recovery coordination time {recovery_time:.2f}s exceeds regression threshold")
+        self.assertLess(
+            recovery_time,
+            self.BASELINE_METRICS["recovery_coordination_time_sec"]
+            * self.REGRESSION_THRESHOLD,
+            f"Recovery coordination time {recovery_time:.2f}s exceeds regression threshold",
+        )
 
         self.assertTrue(success, "Recovery should succeed")
         final_status = recovery_coord.get_recovery_status()
-        self.assertEqual(final_status['current_phase'], 'complete', "Recovery should complete")
+        self.assertEqual(
+            final_status["current_phase"], "complete", "Recovery should complete"
+        )
 
         # Cleanup
         state_mgr.stop()
@@ -316,10 +359,10 @@ class PerformanceRegressionTest(unittest.TestCase):
         current_memory = self.process.memory_info().rss / 1024 / 1024
 
         # Load all systems
-        from core.state_synchronization_manager import DistributedStateManager
+        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
+        from core.state_synchronization_manager import DistributedStateManager
 
         systems = []
         systems.append(DistributedStateManager("memory_test"))
@@ -329,7 +372,7 @@ class PerformanceRegressionTest(unittest.TestCase):
 
         # Start systems
         for system in systems[:3]:  # Skip WebSocket for simplicity
-            if hasattr(system, 'start'):
+            if hasattr(system, "start"):
                 system.start()
 
         # Get memory usage with systems loaded
@@ -341,12 +384,15 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".1f")
 
         # Check against baseline
-        self.assertLess(loaded_memory, self.BASELINE_METRICS['memory_usage_mb'] * self.REGRESSION_THRESHOLD,
-                       f"Memory usage {loaded_memory:.1f}MB exceeds regression threshold")
+        self.assertLess(
+            loaded_memory,
+            self.BASELINE_METRICS["memory_usage_mb"] * self.REGRESSION_THRESHOLD,
+            f"Memory usage {loaded_memory:.1f}MB exceeds regression threshold",
+        )
 
         # Cleanup
         for system in systems[:3]:
-            if hasattr(system, 'stop'):
+            if hasattr(system, "stop"):
                 system.stop()
 
         print("  ✅ Memory usage within acceptable range")
@@ -360,8 +406,11 @@ class PerformanceRegressionTest(unittest.TestCase):
         idle_cpu = self.process.cpu_percent(interval=1)
         print(".1f")
 
-        self.assertLess(idle_cpu, self.BASELINE_METRICS['cpu_usage_percent'] * self.REGRESSION_THRESHOLD,
-                       f"Idle CPU usage {idle_cpu:.1f}% exceeds regression threshold")
+        self.assertLess(
+            idle_cpu,
+            self.BASELINE_METRICS["cpu_usage_percent"] * self.REGRESSION_THRESHOLD,
+            f"Idle CPU usage {idle_cpu:.1f}% exceeds regression threshold",
+        )
 
         # Test CPU under load
         from core.state_synchronization_manager import DistributedStateManager
@@ -372,7 +421,7 @@ class PerformanceRegressionTest(unittest.TestCase):
 
         # Generate CPU load
         for i in range(10000):
-            mgr.update_state(f'cpu_load_{i}', f'value_{i}')
+            mgr.update_state(f"cpu_load_{i}", f"value_{i}")
 
         load_cpu = self.process.cpu_percent(interval=1)
         print(".1f")
@@ -380,7 +429,9 @@ class PerformanceRegressionTest(unittest.TestCase):
         mgr.stop()
 
         # CPU under load should be reasonable (not a strict regression test)
-        self.assertLess(load_cpu, 50.0, f"Load CPU usage {load_cpu:.1f}% excessively high")
+        self.assertLess(
+            load_cpu, 50.0, f"Load CPU usage {load_cpu:.1f}% excessively high"
+        )
 
         print("  ✅ CPU usage within acceptable range")
 
@@ -402,7 +453,7 @@ class PerformanceRegressionTest(unittest.TestCase):
         for cycle in range(5):
             start = time.time()
             for i in range(100):
-                mgr.update_state(f'trend_{cycle}_{i}', f'value_{i}')
+                mgr.update_state(f"trend_{cycle}_{i}", f"value_{i}")
             end = time.time()
             measurements.append(end - start)
 

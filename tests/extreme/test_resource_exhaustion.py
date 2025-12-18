@@ -11,22 +11,27 @@ Tests system behavior under extreme resource constraints:
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import psutil
-import unittest
-import threading
 import gc
-from unittest.mock import Mock, patch
-import sys
 import os
+import sys
+import threading
+import time
+import unittest
+from unittest.mock import Mock, patch
+
+import psutil
 
 # Add src to path - go up two levels from tests/extreme/
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+from pathlib import Path
 
 from ros2_environment_manager import (
-    ROS2EnvironmentManager, ROSEnvironmentConfig, ResourceLimits, get_environment_manager
+    ResourceLimits,
+    ROS2EnvironmentManager,
+    ROSEnvironmentConfig,
+    get_environment_manager,
 )
-from pathlib import Path
 
 
 class ExtremeResourceExhaustionTest(unittest.TestCase):
@@ -41,14 +46,14 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
         self.ros_config = ROSEnvironmentConfig(
             domain_id=300,  # Isolated domain for resource testing
             use_sim_time=True,  # Use sim time for controlled testing
-            log_level="WARN"  # Reduce logging overhead
+            log_level="WARN",  # Reduce logging overhead
         )
 
         # Very constrained resources
         self.extreme_limits = ResourceLimits(
-            cpu_percent=5.0,   # Extremely limited CPU (5% of one core)
-            memory_mb=20,      # Extremely limited memory (20MB)
-            max_processes=3    # Very limited process count
+            cpu_percent=5.0,  # Extremely limited CPU (5% of one core)
+            memory_mb=20,  # Extremely limited memory (20MB)
+            max_processes=3,  # Very limited process count
         )
 
     def test_memory_pressure_extreme(self):
@@ -106,18 +111,30 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
             # Verify operations completed
             final_state = mgr.get_state(f"memory_stress_{operation_count-1}")
-            self.assertIsNotNone(final_state, "Operations should complete under memory pressure")
+            self.assertIsNotNone(
+                final_state, "Operations should complete under memory pressure"
+            )
 
             # Verify reasonable performance (should complete within reasonable time)
-            self.assertLess(operation_time, 30.0, "Operations should complete within 30 seconds under memory pressure")
+            self.assertLess(
+                operation_time,
+                30.0,
+                "Operations should complete within 30 seconds under memory pressure",
+            )
 
             # Test that state manager remains functional
             status = mgr.get_system_status()
-            self.assertIsNotNone(status, "State manager should remain functional under memory pressure")
-            self.assertEqual(status['role'], 'master', "State manager should maintain master role")
+            self.assertIsNotNone(
+                status, "State manager should remain functional under memory pressure"
+            )
+            self.assertEqual(
+                status["role"], "master", "State manager should maintain master role"
+            )
 
         except MemoryError:
-            self.fail("System should handle memory pressure gracefully, not crash with MemoryError")
+            self.fail(
+                "System should handle memory pressure gracefully, not crash with MemoryError"
+            )
 
         finally:
             # Cleanup memory
@@ -133,22 +150,19 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
         print("⚡ Testing CPU Starvation Scenario...")
 
         # Create environment with single CPU core limit
-        cpu_starved_config = ROSEnvironmentConfig(
-            domain_id=301,
-            use_sim_time=True
-        )
+        cpu_starved_config = ROSEnvironmentConfig(domain_id=301, use_sim_time=True)
 
         cpu_limits = ResourceLimits(
-            cpu_percent=1.0,   # Extremely limited CPU (1% of one core)
+            cpu_percent=1.0,  # Extremely limited CPU (1% of one core)
             memory_mb=50,
-            max_processes=2
+            max_processes=2,
         )
 
         with self.env_manager.create_environment(
             name="cpu_starvation_test",
             ros_config=cpu_starved_config,
             resource_limits=cpu_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -194,10 +208,16 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
                 # Verify operations completed (may be slower but should still work)
                 final_state = mgr.get_state(f"cpu_stress_{operation_count-1}")
-                self.assertIsNotNone(final_state, "Operations should complete under CPU starvation")
+                self.assertIsNotNone(
+                    final_state, "Operations should complete under CPU starvation"
+                )
 
                 # Operations should take longer due to CPU starvation
-                self.assertGreater(operation_time, 0.1, "Operations should take measurable time under CPU pressure")
+                self.assertGreater(
+                    operation_time,
+                    0.1,
+                    "Operations should take measurable time under CPU pressure",
+                )
 
             finally:
                 # Stop CPU loaders
@@ -217,7 +237,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
             name="disk_io_test",
             ros_config=self.ros_config,
             resource_limits=self.extreme_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -233,10 +253,13 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
             def io_contender():
                 """Continuously write to disk to create I/O contention."""
-                log_file = env.log_directory / f"io_contender_{threading.current_thread().ident}.log"
+                log_file = (
+                    env.log_directory
+                    / f"io_contender_{threading.current_thread().ident}.log"
+                )
                 log_files.append(log_file)
 
-                with open(log_file, 'w') as f:
+                with open(log_file, "w") as f:
                     while not stop_io.is_set():
                         # Write large amounts of data
                         f.write("x" * 10000 + "\n")
@@ -271,8 +294,12 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
                 # Verify operations completed
                 final_state = mgr.get_state(f"io_stress_{operation_count-1}")
-                self.assertIsNotNone(final_state, "Operations should complete under I/O pressure")
-                self.assertEqual(len(final_state), 5000, "Large data should be preserved")
+                self.assertIsNotNone(
+                    final_state, "Operations should complete under I/O pressure"
+                )
+                self.assertEqual(
+                    len(final_state), 5000, "Large data should be preserved"
+                )
 
             finally:
                 # Stop I/O contenders
@@ -296,23 +323,20 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
         print("🌐 Testing Network Bandwidth Saturation...")
 
         # Create environment with extreme network limits
-        network_config = ROSEnvironmentConfig(
-            domain_id=302,
-            use_sim_time=True
-        )
+        network_config = ROSEnvironmentConfig(domain_id=302, use_sim_time=True)
 
         network_limits = ResourceLimits(
             cpu_percent=10.0,
             memory_mb=30,
             network_bandwidth_mbps=0.001,  # 1Kbps - extremely limited
-            max_processes=2
+            max_processes=2,
         )
 
         with self.env_manager.create_environment(
             name="bandwidth_saturation_test",
             ros_config=network_config,
             resource_limits=network_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -344,7 +368,9 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
             # Verify all data was processed
             final_burst = mgr.get_state(f"bandwidth_burst_{burst_count-1}")
             self.assertIsNotNone(final_burst, "Burst operations should complete")
-            self.assertEqual(len(final_burst), 10000, "Large payloads should be preserved")
+            self.assertEqual(
+                len(final_burst), 10000, "Large payloads should be preserved"
+            )
 
             # Test sustained high-frequency updates
             sustained_start = time.time()
@@ -361,7 +387,9 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
             # Verify sustained operations
             sustained_final = mgr.get_state(f"sustained_{sustained_count-1}")
-            self.assertIsNotNone(sustained_final, "Sustained operations should complete")
+            self.assertIsNotNone(
+                sustained_final, "Sustained operations should complete"
+            )
 
             mgr.stop()
 
@@ -375,20 +403,20 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
         combined_config = ROSEnvironmentConfig(
             domain_id=303,
             use_sim_time=True,
-            log_level="ERROR"  # Minimal logging to reduce I/O
+            log_level="ERROR",  # Minimal logging to reduce I/O
         )
 
         combined_limits = ResourceLimits(
-            cpu_percent=5.0,   # Very limited CPU
-            memory_mb=15,      # Very limited memory
-            max_processes=2    # Very limited processes
+            cpu_percent=5.0,  # Very limited CPU
+            memory_mb=15,  # Very limited memory
+            max_processes=2,  # Very limited processes
         )
 
         with self.env_manager.create_environment(
             name="combined_exhaustion_test",
             ros_config=combined_config,
             resource_limits=combined_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -428,10 +456,17 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
                 # Verify system remained functional
                 final_state = mgr.get_state(f"combined_stress_{operation_count-1}")
-                self.assertIsNotNone(final_state, "System should function under combined resource exhaustion")
+                self.assertIsNotNone(
+                    final_state,
+                    "System should function under combined resource exhaustion",
+                )
 
                 # Operations should complete (may be very slow)
-                self.assertLess(operation_time, 60.0, "Operations should complete within 1 minute even under extreme pressure")
+                self.assertLess(
+                    operation_time,
+                    60.0,
+                    "Operations should complete within 1 minute even under extreme pressure",
+                )
 
             finally:
                 # Cleanup

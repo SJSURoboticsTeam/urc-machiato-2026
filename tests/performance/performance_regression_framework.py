@@ -11,14 +11,15 @@ Establishes performance baselines and detects regressions:
 Critical for maintaining competition performance over development lifecycle.
 """
 
-import os
 import json
-import time
+import os
 import statistics
-from typing import Dict, List, Optional, Tuple, Any
+import time
 from datetime import datetime, timedelta
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 class PerformanceBaseline:
@@ -46,35 +47,52 @@ class PerformanceBaseline:
             return {}
 
         stats = {
-            'mean': statistics.mean(self.values),
-            'median': statistics.median(self.values),
-            'std_dev': statistics.stdev(self.values) if len(self.values) > 1 else 0,
-            'min': min(self.values),
-            'max': max(self.values),
-            'p95': statistics.quantiles(self.values, n=20)[18] if len(self.values) >= 20 else max(self.values),
-            'sample_count': len(self.values),
-            'last_updated': self.timestamps[-1].isoformat() if self.timestamps else None
+            "mean": statistics.mean(self.values),
+            "median": statistics.median(self.values),
+            "std_dev": statistics.stdev(self.values) if len(self.values) > 1 else 0,
+            "min": min(self.values),
+            "max": max(self.values),
+            "p95": statistics.quantiles(self.values, n=20)[18]
+            if len(self.values) >= 20
+            else max(self.values),
+            "sample_count": len(self.values),
+            "last_updated": self.timestamps[-1].isoformat()
+            if self.timestamps
+            else None,
         }
 
         self.baseline_stats = stats
         return stats
 
-    def is_regression(self, current_value: float, threshold_percent: float = 5.0) -> Tuple[bool, float]:
+    def is_regression(
+        self, current_value: float, threshold_percent: float = 5.0
+    ) -> Tuple[bool, float]:
         """Check if current value represents a performance regression."""
         if not self.baseline_stats:
             return False, 0.0  # No baseline to compare against
 
-        baseline_mean = self.baseline_stats['mean']
+        baseline_mean = self.baseline_stats["mean"]
 
         # For most metrics, higher values indicate worse performance
         # (latency, memory usage, CPU usage, etc.)
-        if self.metric_name in ['latency', 'memory_usage', 'cpu_usage', 'power_consumption',
-                               'bandwidth_usage', 'startup_time', 'recovery_time']:
-            degradation_percent = ((current_value - baseline_mean) / baseline_mean) * 100
+        if self.metric_name in [
+            "latency",
+            "memory_usage",
+            "cpu_usage",
+            "power_consumption",
+            "bandwidth_usage",
+            "startup_time",
+            "recovery_time",
+        ]:
+            degradation_percent = (
+                (current_value - baseline_mean) / baseline_mean
+            ) * 100
             is_regression = degradation_percent > threshold_percent
         else:
             # For metrics where lower values are worse (throughput, FPS, etc.)
-            degradation_percent = ((baseline_mean - current_value) / baseline_mean) * 100
+            degradation_percent = (
+                (baseline_mean - current_value) / baseline_mean
+            ) * 100
             is_regression = degradation_percent > threshold_percent
 
         return is_regression, degradation_percent
@@ -82,32 +100,34 @@ class PerformanceBaseline:
     def get_trend_analysis(self) -> Dict[str, Any]:
         """Analyze performance trends over time."""
         if len(self.values) < 5:
-            return {'trend': 'insufficient_data'}
+            return {"trend": "insufficient_data"}
 
         # Calculate linear trend
         x = np.arange(len(self.values))
         y = np.array(self.values)
 
         slope, intercept = np.polyfit(x, y, 1)
-        trend_direction = 'improving' if slope < 0 else 'degrading'
-        trend_magnitude = abs(slope) / statistics.mean(self.values) * 100  # Percent per measurement
+        trend_direction = "improving" if slope < 0 else "degrading"
+        trend_magnitude = (
+            abs(slope) / statistics.mean(self.values) * 100
+        )  # Percent per measurement
 
         # Calculate recent vs old performance
         midpoint = len(self.values) // 2
         old_mean = statistics.mean(self.values[:midpoint])
         new_mean = statistics.mean(self.values[midpoint:])
 
-        if self.metric_name in ['latency', 'memory_usage', 'cpu_usage']:
+        if self.metric_name in ["latency", "memory_usage", "cpu_usage"]:
             recent_change = ((new_mean - old_mean) / old_mean) * 100
         else:
             recent_change = ((old_mean - new_mean) / old_mean) * 100
 
         return {
-            'trend_direction': trend_direction,
-            'trend_slope': slope,
-            'trend_magnitude_percent': trend_magnitude,
-            'recent_change_percent': recent_change,
-            'data_points': len(self.values)
+            "trend_direction": trend_direction,
+            "trend_slope": slope,
+            "trend_magnitude_percent": trend_magnitude,
+            "recent_change_percent": recent_change,
+            "data_points": len(self.values),
         }
 
 
@@ -124,24 +144,26 @@ class PerformanceRegressionFramework:
         """Load existing baseline data from disk."""
         for baseline_file in self.baseline_dir.glob("*.json"):
             try:
-                with open(baseline_file, 'r') as f:
+                with open(baseline_file, "r") as f:
                     data = json.load(f)
 
-                test_name = data['test_name']
-                metric_name = data['metric_name']
+                test_name = data["test_name"]
+                metric_name = data["metric_name"]
 
                 baseline = PerformanceBaseline(test_name, metric_name)
 
                 # Load historical measurements
-                for measurement in data.get('measurements', []):
-                    value = measurement['value']
-                    timestamp_str = measurement.get('timestamp')
-                    timestamp = datetime.fromisoformat(timestamp_str) if timestamp_str else None
+                for measurement in data.get("measurements", []):
+                    value = measurement["value"]
+                    timestamp_str = measurement.get("timestamp")
+                    timestamp = (
+                        datetime.fromisoformat(timestamp_str) if timestamp_str else None
+                    )
                     baseline.add_measurement(value, timestamp)
 
                 # Load baseline statistics
-                if 'baseline_stats' in data:
-                    baseline.baseline_stats = data['baseline_stats']
+                if "baseline_stats" in data:
+                    baseline.baseline_stats = data["baseline_stats"]
 
                 key = f"{test_name}.{metric_name}"
                 self.baselines[key] = baseline
@@ -149,8 +171,9 @@ class PerformanceRegressionFramework:
             except Exception as e:
                 print(f"Warning: Failed to load baseline from {baseline_file}: {e}")
 
-    def establish_baseline(self, test_name: str, metric_name: str,
-                          measurements: List[float]) -> PerformanceBaseline:
+    def establish_baseline(
+        self, test_name: str, metric_name: str, measurements: List[float]
+    ) -> PerformanceBaseline:
         """Establish a performance baseline from measurements."""
         key = f"{test_name}.{metric_name}"
 
@@ -186,18 +209,23 @@ class PerformanceRegressionFramework:
             baseline.calculate_baseline_stats()
             self._save_baseline(baseline)
 
-    def detect_regression(self, test_name: str, metric_name: str, current_value: float,
-                         threshold_percent: float = 5.0) -> Dict[str, Any]:
+    def detect_regression(
+        self,
+        test_name: str,
+        metric_name: str,
+        current_value: float,
+        threshold_percent: float = 5.0,
+    ) -> Dict[str, Any]:
         """Detect performance regression for a metric."""
         key = f"{test_name}.{metric_name}"
 
         if key not in self.baselines:
             return {
-                'regression_detected': False,
-                'reason': 'no_baseline',
-                'baseline_mean': None,
-                'current_value': current_value,
-                'degradation_percent': 0.0
+                "regression_detected": False,
+                "reason": "no_baseline",
+                "baseline_mean": None,
+                "current_value": current_value,
+                "degradation_percent": 0.0,
             }
 
         baseline = self.baselines[key]
@@ -207,27 +235,30 @@ class PerformanceRegressionFramework:
 
         if not baseline.baseline_stats:
             return {
-                'regression_detected': False,
-                'reason': 'insufficient_baseline_data',
-                'baseline_mean': None,
-                'current_value': current_value,
-                'degradation_percent': 0.0
+                "regression_detected": False,
+                "reason": "insufficient_baseline_data",
+                "baseline_mean": None,
+                "current_value": current_value,
+                "degradation_percent": 0.0,
             }
 
-        is_regression, degradation_percent = baseline.is_regression(current_value, threshold_percent)
+        is_regression, degradation_percent = baseline.is_regression(
+            current_value, threshold_percent
+        )
 
         return {
-            'regression_detected': is_regression,
-            'baseline_mean': baseline.baseline_stats['mean'],
-            'baseline_std_dev': baseline.baseline_stats['std_dev'],
-            'current_value': current_value,
-            'degradation_percent': degradation_percent,
-            'threshold_percent': threshold_percent,
-            'sample_count': baseline.baseline_stats['sample_count']
+            "regression_detected": is_regression,
+            "baseline_mean": baseline.baseline_stats["mean"],
+            "baseline_std_dev": baseline.baseline_stats["std_dev"],
+            "current_value": current_value,
+            "degradation_percent": degradation_percent,
+            "threshold_percent": threshold_percent,
+            "sample_count": baseline.baseline_stats["sample_count"],
         }
 
-    def get_performance_trends(self, test_name: Optional[str] = None,
-                              metric_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_performance_trends(
+        self, test_name: Optional[str] = None, metric_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Get performance trend analysis for specified tests/metrics."""
         trends = {}
 
@@ -239,22 +270,23 @@ class PerformanceRegressionFramework:
 
             trend_analysis = baseline.get_trend_analysis()
             trends[key] = {
-                'baseline_stats': baseline.baseline_stats,
-                'trend_analysis': trend_analysis,
-                'latest_value': baseline.values[-1] if baseline.values else None
+                "baseline_stats": baseline.baseline_stats,
+                "trend_analysis": trend_analysis,
+                "latest_value": baseline.values[-1] if baseline.values else None,
             }
 
         return trends
 
-    def generate_regression_report(self, current_results: Dict[str, Any],
-                                 threshold_percent: float = 5.0) -> Dict[str, Any]:
+    def generate_regression_report(
+        self, current_results: Dict[str, Any], threshold_percent: float = 5.0
+    ) -> Dict[str, Any]:
         """Generate comprehensive regression report."""
         report = {
-            'timestamp': datetime.now().isoformat(),
-            'regressions_detected': [],
-            'improvements_found': [],
-            'no_baseline_metrics': [],
-            'summary': {}
+            "timestamp": datetime.now().isoformat(),
+            "regressions_detected": [],
+            "improvements_found": [],
+            "no_baseline_metrics": [],
+            "summary": {},
         }
 
         total_checks = 0
@@ -272,62 +304,68 @@ class PerformanceRegressionFramework:
 
                 total_checks += 1
 
-                regression_result = self.detect_regression(test_name, metric_name,
-                                                         current_value, threshold_percent)
+                regression_result = self.detect_regression(
+                    test_name, metric_name, current_value, threshold_percent
+                )
 
-                if regression_result['regression_detected']:
+                if regression_result["regression_detected"]:
                     regression_count += 1
-                    report['regressions_detected'].append({
-                        'test': test_name,
-                        'metric': metric_name,
-                        'details': regression_result
-                    })
-                elif regression_result['reason'] == 'no_baseline':
-                    report['no_baseline_metrics'].append({
-                        'test': test_name,
-                        'metric': metric_name,
-                        'current_value': current_value
-                    })
-                elif regression_result['degradation_percent'] < -threshold_percent:
+                    report["regressions_detected"].append(
+                        {
+                            "test": test_name,
+                            "metric": metric_name,
+                            "details": regression_result,
+                        }
+                    )
+                elif regression_result["reason"] == "no_baseline":
+                    report["no_baseline_metrics"].append(
+                        {
+                            "test": test_name,
+                            "metric": metric_name,
+                            "current_value": current_value,
+                        }
+                    )
+                elif regression_result["degradation_percent"] < -threshold_percent:
                     # Significant improvement
                     improvement_count += 1
-                    report['improvements_found'].append({
-                        'test': test_name,
-                        'metric': metric_name,
-                        'details': regression_result
-                    })
+                    report["improvements_found"].append(
+                        {
+                            "test": test_name,
+                            "metric": metric_name,
+                            "details": regression_result,
+                        }
+                    )
 
         # Generate summary
-        report['summary'] = {
-            'total_metrics_checked': total_checks,
-            'regressions_detected': regression_count,
-            'improvements_found': improvement_count,
-            'no_baseline_metrics': len(report['no_baseline_metrics']),
-            'pass_rate': ((total_checks - regression_count) / total_checks * 100) if total_checks > 0 else 100,
-            'threshold_percent': threshold_percent
+        report["summary"] = {
+            "total_metrics_checked": total_checks,
+            "regressions_detected": regression_count,
+            "improvements_found": improvement_count,
+            "no_baseline_metrics": len(report["no_baseline_metrics"]),
+            "pass_rate": ((total_checks - regression_count) / total_checks * 100)
+            if total_checks > 0
+            else 100,
+            "threshold_percent": threshold_percent,
         }
 
         return report
 
     def export_baselines(self, output_file: str):
         """Export all baseline data to a file."""
-        export_data = {
-            'export_timestamp': datetime.now().isoformat(),
-            'baselines': {}
-        }
+        export_data = {"export_timestamp": datetime.now().isoformat(), "baselines": {}}
 
         for key, baseline in self.baselines.items():
-            export_data['baselines'][key] = {
-                'test_name': baseline.test_name,
-                'metric_name': baseline.metric_name,
-                'measurements': [
-                    {'value': v, 'timestamp': t.isoformat()}
+            export_data["baselines"][key] = {
+                "test_name": baseline.test_name,
+                "metric_name": baseline.metric_name,
+                "measurements": [
+                    {"value": v, "timestamp": t.isoformat()}
                     for v, t in zip(baseline.values, baseline.timestamps)
                 ],
-                'baseline_stats': baseline.baseline_stats
+                "baseline_stats": baseline.baseline_stats,
             }
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(export_data, f, indent=2, default=str)
 
         print(f"📊 Exported {len(self.baselines)} baselines to {output_file}")
@@ -338,16 +376,16 @@ class PerformanceRegressionFramework:
         filepath = self.baseline_dir / filename
 
         data = {
-            'test_name': baseline.test_name,
-            'metric_name': baseline.metric_name,
-            'measurements': [
-                {'value': v, 'timestamp': t.isoformat()}
+            "test_name": baseline.test_name,
+            "metric_name": baseline.metric_name,
+            "measurements": [
+                {"value": v, "timestamp": t.isoformat()}
                 for v, t in zip(baseline.values, baseline.timestamps)
             ],
-            'baseline_stats': baseline.baseline_stats
+            "baseline_stats": baseline.baseline_stats,
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(data, f, indent=2, default=str)
 
 
@@ -364,13 +402,13 @@ class PerformanceRegressionTest:
 
         # Import and run performance tests to establish baselines
         performance_tests = [
-            ('control_loop_latency', 'test_control_loop_latency'),
-            ('vision_pipeline', 'test_vision_pipeline_performance'),
-            ('terrain_analysis', 'test_terrain_analysis_performance'),
-            ('mission_execution', 'test_mission_execution_performance'),
-            ('memory_usage', 'test_memory_usage_trends'),
-            ('cpu_utilization', 'test_cpu_utilization_performance'),
-            ('network_bandwidth', 'test_network_bandwidth_performance')
+            ("control_loop_latency", "test_control_loop_latency"),
+            ("vision_pipeline", "test_vision_pipeline_performance"),
+            ("terrain_analysis", "test_terrain_analysis_performance"),
+            ("mission_execution", "test_mission_execution_performance"),
+            ("memory_usage", "test_memory_usage_trends"),
+            ("cpu_utilization", "test_cpu_utilization_performance"),
+            ("network_bandwidth", "test_network_bandwidth_performance"),
         ]
 
         for test_category, test_module in performance_tests:
@@ -383,16 +421,24 @@ class PerformanceRegressionTest:
                 # This is a simplified version - in practice, you'd run the full test suite
 
                 # Simulate baseline measurements (replace with actual test runs)
-                simulated_measurements = self._simulate_baseline_measurements(test_category)
+                simulated_measurements = self._simulate_baseline_measurements(
+                    test_category
+                )
 
                 for metric_name, measurements in simulated_measurements.items():
-                    baseline = self.framework.establish_baseline(test_category, metric_name, measurements)
-                    print(f"  ✅ {metric_name}: {len(measurements)} samples, baseline mean: {baseline.baseline_stats['mean']:.3f}")
+                    baseline = self.framework.establish_baseline(
+                        test_category, metric_name, measurements
+                    )
+                    print(
+                        f"  ✅ {metric_name}: {len(measurements)} samples, baseline mean: {baseline.baseline_stats['mean']:.3f}"
+                    )
 
             except Exception as e:
                 print(f"  ❌ Failed to establish baseline for {test_category}: {e}")
 
-        print(f"\n📈 Established baselines for {len(self.framework.baselines)} performance metrics")
+        print(
+            f"\n📈 Established baselines for {len(self.framework.baselines)} performance metrics"
+        )
 
     def run_regression_detection(self):
         """Run regression detection against established baselines."""
@@ -415,28 +461,26 @@ class PerformanceRegressionTest:
         print(".1f")
 
         # Report regressions
-        if report['regressions_detected']:
+        if report["regressions_detected"]:
             print("\n❌ PERFORMANCE REGRESSIONS DETECTED:")
             print("-" * 40)
-            for regression in report['regressions_detected']:
-                details = regression['details']
-                print("5.1f"
-                      ".3f")
+            for regression in report["regressions_detected"]:
+                details = regression["details"]
+                print("5.1f" ".3f")
 
         # Report improvements
-        if report['improvements_found']:
+        if report["improvements_found"]:
             print("\n✅ PERFORMANCE IMPROVEMENTS DETECTED:")
             print("-" * 40)
-            for improvement in report['improvements_found']:
-                details = improvement['details']
-                print("5.1f"
-                      ".3f")
+            for improvement in report["improvements_found"]:
+                details = improvement["details"]
+                print("5.1f" ".3f")
 
         # Overall assessment
-        if report['summary']['regressions_detected'] > 0:
+        if report["summary"]["regressions_detected"] > 0:
             print("\n🚨 PERFORMANCE REGRESSION ALERT")
             print("   Address performance regressions before deployment")
-        elif report['summary']['pass_rate'] >= 95:
+        elif report["summary"]["pass_rate"] >= 95:
             print("\n✅ PERFORMANCE WITHIN ACCEPTABLE RANGE")
             print("   No critical regressions detected")
         else:
@@ -445,45 +489,91 @@ class PerformanceRegressionTest:
 
         return report
 
-    def _simulate_baseline_measurements(self, test_category: str) -> Dict[str, List[float]]:
+    def _simulate_baseline_measurements(
+        self, test_category: str
+    ) -> Dict[str, List[float]]:
         """Simulate baseline measurements for testing (replace with actual test runs)."""
         # These are simulated measurements - in practice, you'd run the actual performance tests
         # multiple times to establish reliable baselines
 
-        if test_category == 'control_loop_latency':
+        if test_category == "control_loop_latency":
             return {
-                'avg_latency_ms': [45, 47, 46, 48, 44, 46, 45, 47, 46, 45],
-                'max_latency_ms': [85, 88, 82, 90, 86, 84, 87, 89, 83, 85]
+                "avg_latency_ms": [45, 47, 46, 48, 44, 46, 45, 47, 46, 45],
+                "max_latency_ms": [85, 88, 82, 90, 86, 84, 87, 89, 83, 85],
             }
-        elif test_category == 'vision_pipeline':
+        elif test_category == "vision_pipeline":
             return {
-                'avg_frame_time_ms': [55, 58, 56, 57, 54, 56, 55, 58, 56, 55],
-                'avg_memory_mb': [180, 185, 182, 188, 178, 183, 181, 186, 184, 182]
+                "avg_frame_time_ms": [55, 58, 56, 57, 54, 56, 55, 58, 56, 55],
+                "avg_memory_mb": [180, 185, 182, 188, 178, 183, 181, 186, 184, 182],
             }
-        elif test_category == 'terrain_analysis':
+        elif test_category == "terrain_analysis":
             return {
-                'avg_classification_ms': [45, 47, 46, 44, 48, 46, 45, 47, 46, 45],
-                'avg_traversability_ms': [28, 29, 27, 30, 28, 29, 27, 28, 29, 27]
+                "avg_classification_ms": [45, 47, 46, 44, 48, 46, 45, 47, 46, 45],
+                "avg_traversability_ms": [28, 29, 27, 30, 28, 29, 27, 28, 29, 27],
             }
-        elif test_category == 'mission_execution':
+        elif test_category == "mission_execution":
             return {
-                'avg_planning_ms': [1800, 1850, 1750, 1900, 1800, 1850, 1750, 1800, 1850, 1800],
-                'avg_execution_ms': [4500, 4600, 4400, 4700, 4500, 4600, 4400, 4500, 4600, 4500]
+                "avg_planning_ms": [
+                    1800,
+                    1850,
+                    1750,
+                    1900,
+                    1800,
+                    1850,
+                    1750,
+                    1800,
+                    1850,
+                    1800,
+                ],
+                "avg_execution_ms": [
+                    4500,
+                    4600,
+                    4400,
+                    4700,
+                    4500,
+                    4600,
+                    4400,
+                    4500,
+                    4600,
+                    4500,
+                ],
             }
-        elif test_category == 'memory_usage':
+        elif test_category == "memory_usage":
             return {
-                'memory_growth_mb_per_hour': [0.8, 0.9, 0.7, 1.0, 0.8, 0.9, 0.7, 0.8, 0.9, 0.8],
-                'peak_memory_mb': [580, 585, 575, 590, 580, 585, 575, 580, 585, 580]
+                "memory_growth_mb_per_hour": [
+                    0.8,
+                    0.9,
+                    0.7,
+                    1.0,
+                    0.8,
+                    0.9,
+                    0.7,
+                    0.8,
+                    0.9,
+                    0.8,
+                ],
+                "peak_memory_mb": [580, 585, 575, 590, 580, 585, 575, 580, 585, 580],
             }
-        elif test_category == 'cpu_utilization':
+        elif test_category == "cpu_utilization":
             return {
-                'idle_cpu_percent': [3, 4, 3, 5, 4, 3, 4, 3, 4, 3],
-                'navigation_cpu_percent': [45, 47, 46, 48, 45, 47, 46, 45, 47, 46]
+                "idle_cpu_percent": [3, 4, 3, 5, 4, 3, 4, 3, 4, 3],
+                "navigation_cpu_percent": [45, 47, 46, 48, 45, 47, 46, 45, 47, 46],
             }
-        elif test_category == 'network_bandwidth':
+        elif test_category == "network_bandwidth":
             return {
-                'avg_bandwidth_mbps': [8, 9, 7, 10, 8, 9, 7, 8, 9, 8],
-                'avg_compression_ratio': [0.65, 0.67, 0.63, 0.68, 0.65, 0.67, 0.63, 0.65, 0.67, 0.65]
+                "avg_bandwidth_mbps": [8, 9, 7, 10, 8, 9, 7, 8, 9, 8],
+                "avg_compression_ratio": [
+                    0.65,
+                    0.67,
+                    0.63,
+                    0.68,
+                    0.65,
+                    0.67,
+                    0.63,
+                    0.65,
+                    0.67,
+                    0.65,
+                ],
             }
         else:
             return {}
@@ -494,34 +584,34 @@ class PerformanceRegressionTest:
         # and improvements to test the regression detection system
 
         return {
-            'control_loop_latency': {
-                'avg_latency_ms': 52.0,  # Regression: was ~46ms baseline
-                'max_latency_ms': 95.0   # Regression: was ~85ms baseline
+            "control_loop_latency": {
+                "avg_latency_ms": 52.0,  # Regression: was ~46ms baseline
+                "max_latency_ms": 95.0,  # Regression: was ~85ms baseline
             },
-            'vision_pipeline': {
-                'avg_frame_time_ms': 58.0,  # Slight regression: was ~56ms baseline
-                'avg_memory_mb': 175.0      # Improvement: was ~182MB baseline
+            "vision_pipeline": {
+                "avg_frame_time_ms": 58.0,  # Slight regression: was ~56ms baseline
+                "avg_memory_mb": 175.0,  # Improvement: was ~182MB baseline
             },
-            'terrain_analysis': {
-                'avg_classification_ms': 43.0,  # Improvement: was ~46ms baseline
-                'avg_traversability_ms': 26.0   # Improvement: was ~28ms baseline
+            "terrain_analysis": {
+                "avg_classification_ms": 43.0,  # Improvement: was ~46ms baseline
+                "avg_traversability_ms": 26.0,  # Improvement: was ~28ms baseline
             },
-            'mission_execution': {
-                'avg_planning_ms': 1950.0,  # Regression: was ~1800ms baseline
-                'avg_execution_ms': 4550.0   # Slight regression: was ~4500ms baseline
+            "mission_execution": {
+                "avg_planning_ms": 1950.0,  # Regression: was ~1800ms baseline
+                "avg_execution_ms": 4550.0,  # Slight regression: was ~4500ms baseline
             },
-            'memory_usage': {
-                'memory_growth_mb_per_hour': 1.2,  # Regression: was ~0.8MB/hr baseline
-                'peak_memory_mb': 585.0             # No significant change
+            "memory_usage": {
+                "memory_growth_mb_per_hour": 1.2,  # Regression: was ~0.8MB/hr baseline
+                "peak_memory_mb": 585.0,  # No significant change
             },
-            'cpu_utilization': {
-                'idle_cpu_percent': 4.0,     # No significant change
-                'navigation_cpu_percent': 44.0  # Slight improvement: was ~46% baseline
+            "cpu_utilization": {
+                "idle_cpu_percent": 4.0,  # No significant change
+                "navigation_cpu_percent": 44.0,  # Slight improvement: was ~46% baseline
             },
-            'network_bandwidth': {
-                'avg_bandwidth_mbps': 7.5,     # Improvement: was ~8MBps baseline
-                'avg_compression_ratio': 0.62   # Improvement: was ~0.65 baseline
-            }
+            "network_bandwidth": {
+                "avg_bandwidth_mbps": 7.5,  # Improvement: was ~8MBps baseline
+                "avg_compression_ratio": 0.62,  # Improvement: was ~0.65 baseline
+            },
         }
 
 
@@ -552,31 +642,33 @@ def run_performance_regression_tests():
         degrading_trends = 0
 
         for metric_key, trend_data in trends.items():
-            trend_info = trend_data['trend_analysis']
-            if trend_info['trend'] == 'insufficient_data':
+            trend_info = trend_data["trend_analysis"]
+            if trend_info["trend"] == "insufficient_data":
                 continue
 
-            direction = trend_info['trend_direction']
-            magnitude = trend_info['trend_magnitude_percent']
+            direction = trend_info["trend_direction"]
+            magnitude = trend_info["trend_magnitude_percent"]
 
-            if direction == 'improving':
+            if direction == "improving":
                 improving_trends += 1
-            elif direction == 'degrading':
+            elif direction == "degrading":
                 degrading_trends += 1
 
             if magnitude > 1.0:  # Only show significant trends
-                status = "📈" if direction == 'improving' else "📉"
+                status = "📈" if direction == "improving" else "📉"
                 print(".1f")
 
-        print(f"\nTrend Summary: {improving_trends} improving, {degrading_trends} degrading")
+        print(
+            f"\nTrend Summary: {improving_trends} improving, {degrading_trends} degrading"
+        )
 
-        return report['summary']['regressions_detected'] == 0
+        return report["summary"]["regressions_detected"] == 0
 
     except Exception as e:
         print(f"❌ Performance regression testing failed: {e}")
         return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = run_performance_regression_tests()
     exit(0 if success else 1)

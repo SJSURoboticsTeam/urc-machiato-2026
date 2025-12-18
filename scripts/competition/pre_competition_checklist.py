@@ -5,9 +5,10 @@ Validates system readiness before competition deployment.
 """
 
 import os
-import yaml
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class PreCompetitionChecklist:
@@ -35,171 +36,175 @@ class PreCompetitionChecklist:
         self.checks = [
             # Hardware checks
             {
-                'id': 'hardware_power',
-                'description': 'Hardware power systems check',
-                'function': self._check_battery_level,
-                'status': 'pending',
-                'message': ''
+                "id": "hardware_power",
+                "description": "Hardware power systems check",
+                "function": self._check_battery_level,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'hardware_sensors',
-                'description': 'Hardware sensor systems check',
-                'function': self._check_sensor_health,
-                'status': 'pending',
-                'message': ''
+                "id": "hardware_sensors",
+                "description": "Hardware sensor systems check",
+                "function": self._check_sensor_health,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'hardware_actuators',
-                'description': 'Hardware actuator systems check',
-                'function': self._check_actuator_health,
-                'status': 'pending',
-                'message': ''
+                "id": "hardware_actuators",
+                "description": "Hardware actuator systems check",
+                "function": self._check_actuator_health,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'hardware_cameras',
-                'description': 'Hardware camera systems check',
-                'function': self._check_camera_health,
-                'status': 'pending',
-                'message': ''
+                "id": "hardware_cameras",
+                "description": "Hardware camera systems check",
+                "function": self._check_camera_health,
+                "status": "pending",
+                "message": "",
             },
             # Software checks
             {
-                'id': 'software_services',
-                'description': 'Software services availability',
-                'function': self._check_ros_services,
-                'status': 'pending',
-                'message': ''
+                "id": "software_services",
+                "description": "Software services availability",
+                "function": self._check_ros_services,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'software_bridge',
-                'description': 'Software bridge health',
-                'function': self._check_bridge_health,
-                'status': 'pending',
-                'message': ''
+                "id": "software_bridge",
+                "description": "Software bridge health",
+                "function": self._check_bridge_health,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'software_state',
-                'description': 'Software state machine',
-                'function': self._check_state_machine,
-                'status': 'pending',
-                'message': ''
+                "id": "software_state",
+                "description": "Software state machine",
+                "function": self._check_state_machine,
+                "status": "pending",
+                "message": "",
             },
             # Network checks
             {
-                'id': 'network_connectivity',
-                'description': 'Network connectivity check',
-                'function': self._check_network_connectivity,
-                'status': 'pending',
-                'message': ''
+                "id": "network_connectivity",
+                "description": "Network connectivity check",
+                "function": self._check_network_connectivity,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'network_dns',
-                'description': 'Network DNS resolution',
-                'function': self._check_network_connectivity,  # Reuse for now
-                'status': 'pending',
-                'message': ''
+                "id": "network_dns",
+                "description": "Network DNS resolution",
+                "function": self._check_network_connectivity,  # Reuse for now
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'network_latency',
-                'description': 'Network latency validation',
-                'function': self._check_network_latency,
-                'status': 'pending',
-                'message': ''
+                "id": "network_latency",
+                "description": "Network latency validation",
+                "function": self._check_network_latency,
+                "status": "pending",
+                "message": "",
             },
             # Safety checks
             {
-                'id': 'safety_emergency',
-                'description': 'Safety emergency systems',
-                'function': self._check_emergency_system,
-                'status': 'pending',
-                'message': ''
+                "id": "safety_emergency",
+                "description": "Safety emergency systems",
+                "function": self._check_emergency_system,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'safety_limits',
-                'description': 'Safety limits configuration',
-                'function': self._check_safety_limits,
-                'status': 'pending',
-                'message': ''
+                "id": "safety_limits",
+                "description": "Safety limits configuration",
+                "function": self._check_safety_limits,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'safety_override',
-                'description': 'Safety override mechanisms',
-                'function': self._check_safety_override,
-                'status': 'pending',
-                'message': ''
+                "id": "safety_override",
+                "description": "Safety override mechanisms",
+                "function": self._check_safety_override,
+                "status": "pending",
+                "message": "",
             },
             # Configuration
             {
-                'id': 'config_loaded',
-                'description': 'Configuration file validation',
-                'function': self._check_config_loaded,
-                'status': 'pending',
-                'message': ''
+                "id": "config_loaded",
+                "description": "Configuration file validation",
+                "function": self._check_config_loaded,
+                "status": "pending",
+                "message": "",
             },
             {
-                'id': 'config_validated',
-                'description': 'Configuration content validation',
-                'function': self._check_safety_limits,  # Reuse safety check as config validation
-                'status': 'pending',
-                'message': ''
-            }
+                "id": "config_validated",
+                "description": "Configuration content validation",
+                "function": self._check_safety_limits,  # Reuse safety check as config validation
+                "status": "pending",
+                "message": "",
+            },
         ]
 
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration file."""
         config_file = self.project_root / self.config_path
         if config_file.exists():
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 return yaml.safe_load(f) or {}
         return {}
 
-    def add_check_method(self, name: str, check_func: callable, description: str = "") -> None:
+    def add_check_method(
+        self, name: str, check_func: callable, description: str = ""
+    ) -> None:
         """Add a custom check method."""
-        self.checks.append({
-            'id': name,
-            'description': description or f'Custom check: {name}',
-            'function': check_func,
-            'status': 'pending',
-            'message': ''
-        })
+        self.checks.append(
+            {
+                "id": name,
+                "description": description or f"Custom check: {name}",
+                "function": check_func,
+                "status": "pending",
+                "message": "",
+            }
+        )
 
     def run_checklist(self) -> Dict[str, Any]:
         """Run all available checks."""
         results = {}
 
         for check in self.checks:
-            check_id = check['id']
-            check_func = check['function']
+            check_id = check["id"]
+            check_func = check["function"]
 
             try:
                 result = check_func()
                 # Handle both bool return and (bool, str) tuple return
                 if isinstance(result, tuple) and len(result) == 2:
                     passed, message = result
-                    check['status'] = 'passed' if passed else 'failed'
-                    check['message'] = message
+                    check["status"] = "passed" if passed else "failed"
+                    check["message"] = message
                     results[check_id] = {
-                        'passed': passed,
-                        'message': message,
-                        'error': None
+                        "passed": passed,
+                        "message": message,
+                        "error": None,
                     }
                 else:
                     # Assume bool return for backward compatibility
                     passed = bool(result)
-                    check['status'] = 'passed' if passed else 'failed'
-                    check['message'] = 'Check completed'
+                    check["status"] = "passed" if passed else "failed"
+                    check["message"] = "Check completed"
                     results[check_id] = {
-                        'passed': passed,
-                        'message': 'Check completed',
-                        'error': None
+                        "passed": passed,
+                        "message": "Check completed",
+                        "error": None,
                     }
             except Exception as e:
-                check['status'] = 'failed'
-                check['message'] = f'Check failed: {str(e)}'
+                check["status"] = "failed"
+                check["message"] = f"Check failed: {str(e)}"
                 results[check_id] = {
-                    'passed': False,
-                    'message': 'Check failed',
-                    'error': str(e)
+                    "passed": False,
+                    "message": "Check failed",
+                    "error": str(e),
                 }
 
         self.check_results = results
@@ -211,16 +216,24 @@ class PreCompetitionChecklist:
             self.run_checklist()
 
         return {
-            'overall_passed': all(r['passed'] for r in self.check_results.values()),
-            'total_checks': len(self.check_results),
-            'passed_checks': sum(1 for r in self.check_results.values() if r['passed']),
-            'failed_checks': sum(1 for r in self.check_results.values() if not r['passed']),
-            'results': self.check_results,
-            'config_summary': {
-                'simulation_rate': self.config.get('simulation', {}).get('simulation_update_rate_hz', 'unknown'),
-                'mission_timeout': self.config.get('mission', {}).get('mission_timeout_seconds', 'unknown'),
-                'safety_enabled': self.config.get('safety', {}).get('safety_emergency_stop_enabled', 'unknown'),
-            }
+            "overall_passed": all(r["passed"] for r in self.check_results.values()),
+            "total_checks": len(self.check_results),
+            "passed_checks": sum(1 for r in self.check_results.values() if r["passed"]),
+            "failed_checks": sum(
+                1 for r in self.check_results.values() if not r["passed"]
+            ),
+            "results": self.check_results,
+            "config_summary": {
+                "simulation_rate": self.config.get("simulation", {}).get(
+                    "simulation_update_rate_hz", "unknown"
+                ),
+                "mission_timeout": self.config.get("mission", {}).get(
+                    "mission_timeout_seconds", "unknown"
+                ),
+                "safety_enabled": self.config.get("safety", {}).get(
+                    "safety_emergency_stop_enabled", "unknown"
+                ),
+            },
         }
 
     # Individual check implementations
@@ -269,8 +282,8 @@ class PreCompetitionChecklist:
 
     def _check_safety_limits(self) -> tuple[bool, str]:
         """Check safety limits configuration."""
-        safety_config = self.config.get('safety', {})
-        if safety_config.get('safety_emergency_stop_enabled', False):
+        safety_config = self.config.get("safety", {})
+        if safety_config.get("safety_emergency_stop_enabled", False):
             return True, "Safety emergency stop enabled"
         return False, "Safety emergency stop not enabled in configuration"
 

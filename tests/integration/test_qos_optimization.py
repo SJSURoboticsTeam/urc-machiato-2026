@@ -6,14 +6,15 @@ Validates that QoS settings are correctly applied for optimized performance
 across control messages (depth=20), sensor messages (depth=5), and vision processing.
 """
 
-import pytest
-import rclpy
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from rclpy.node import Node
-
 # Add project paths
 import os
 import sys
+
+import pytest
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 AUTONOMY_ROOT = os.path.join(PROJECT_ROOT, "src", "autonomy")
 sys.path.insert(0, AUTONOMY_ROOT)
@@ -33,10 +34,12 @@ class TestQoSOptimization:
         """Test control message QoS settings."""
         # Import hardware interface for QoS validation
         try:
-            from control.hardware_interface.hardware_interface_node import HardwareInterfaceNode
+            from control.hardware_interface.hardware_interface_node import (
+                HardwareInterfaceNode,
+            )
 
             # Create node instance (mock ROS2 context)
-            with pytest.mock.patch('rclpy.node.Node.__init__', return_value=None):
+            with pytest.mock.patch("rclpy.node.Node.__init__", return_value=None):
                 node = HardwareInterfaceNode.__new__(HardwareInterfaceNode)
 
                 # Verify QoS settings match optimization requirements
@@ -45,7 +48,7 @@ class TestQoSOptimization:
                     reliability=ReliabilityPolicy.RELIABLE,
                     durability=DurabilityPolicy.VOLATILE,
                     depth=20,
-                    deadline=rclpy.duration.Duration(milliseconds=50)
+                    deadline=rclpy.duration.Duration(milliseconds=50),
                 )
 
                 assert expected_control_qos.depth == 20
@@ -62,7 +65,7 @@ class TestQoSOptimization:
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
             depth=5,
-            deadline=rclpy.duration.Duration(milliseconds=20)
+            deadline=rclpy.duration.Duration(milliseconds=20),
         )
 
         assert expected_sensor_qos.reliability == ReliabilityPolicy.BEST_EFFORT
@@ -72,7 +75,9 @@ class TestQoSOptimization:
     def test_vision_processing_qos(self):
         """Test vision processing QoS settings."""
         try:
-            from vision_processing.vision_processing.vision_processing_node import VisionProcessingNode
+            from vision_processing.vision_processing.vision_processing_node import (
+                VisionProcessingNode,
+            )
 
             # Vision processing: BEST_EFFORT, minimal depth, 15Hz deadline
             expected_vision_qos = QoSProfile(
@@ -81,7 +86,7 @@ class TestQoSOptimization:
                 history=HistoryPolicy.KEEP_LAST,
                 depth=3,
                 deadline=rclpy.duration.Duration(milliseconds=67),  # ~15Hz
-                lifespan=rclpy.duration.Duration(milliseconds=100)
+                lifespan=rclpy.duration.Duration(milliseconds=100),
             )
 
             assert expected_vision_qos.reliability == ReliabilityPolicy.BEST_EFFORT
@@ -98,8 +103,7 @@ class TestQoSOptimization:
 
             # Terrain analyzer subscribes to vision terrain map
             expected_terrain_qos = QoSProfile(
-                reliability=ReliabilityPolicy.BEST_EFFORT,
-                depth=3
+                reliability=ReliabilityPolicy.BEST_EFFORT, depth=3
             )
 
             assert expected_terrain_qos.reliability == ReliabilityPolicy.BEST_EFFORT
@@ -115,8 +119,7 @@ class TestQoSOptimization:
 
             # Keyboard mission subscribes to vision keyboard pose
             expected_keyboard_qos = QoSProfile(
-                reliability=ReliabilityPolicy.BEST_EFFORT,
-                depth=3
+                reliability=ReliabilityPolicy.BEST_EFFORT, depth=3
             )
 
             assert expected_keyboard_qos.reliability == ReliabilityPolicy.BEST_EFFORT
@@ -133,7 +136,7 @@ class TestQoSOptimization:
             # Direct CAN safety should work independently of ROS2 QoS
             # It's a hardware-level bypass for critical safety
 
-            with pytest.mock.patch('core.safety_system.direct_can_safety.CanSerial'):
+            with pytest.mock.patch("core.safety_system.direct_can_safety.CanSerial"):
                 safety = DirectCANSafety()
 
                 # Verify it doesn't depend on ROS2 QoS settings
@@ -194,7 +197,7 @@ class TestQoSOptimization:
             durability=DurabilityPolicy.VOLATILE,
             depth=20,
             deadline=rclpy.duration.Duration(milliseconds=50),
-            lifespan=rclpy.duration.Duration(milliseconds=100)
+            lifespan=rclpy.duration.Duration(milliseconds=100),
         )
 
         # Verify all settings are applied
@@ -218,33 +221,38 @@ class TestQoSOptimization:
         assert control_reliability != sensor_reliability
         assert control_depth > sensor_depth
 
-    @pytest.mark.parametrize("message_type,expected_depth,expected_reliability", [
-        ("control", 20, ReliabilityPolicy.RELIABLE),
-        ("sensor", 5, ReliabilityPolicy.BEST_EFFORT),
-        ("vision", 3, ReliabilityPolicy.BEST_EFFORT),
-    ])
-    def test_message_type_qos_profiles(self, message_type, expected_depth, expected_reliability):
+    @pytest.mark.parametrize(
+        "message_type,expected_depth,expected_reliability",
+        [
+            ("control", 20, ReliabilityPolicy.RELIABLE),
+            ("sensor", 5, ReliabilityPolicy.BEST_EFFORT),
+            ("vision", 3, ReliabilityPolicy.BEST_EFFORT),
+        ],
+    )
+    def test_message_type_qos_profiles(
+        self, message_type, expected_depth, expected_reliability
+    ):
         """Test QoS profiles for different message types."""
         if message_type == "control":
             qos = QoSProfile(
                 reliability=ReliabilityPolicy.RELIABLE,
                 durability=DurabilityPolicy.VOLATILE,
                 depth=20,
-                deadline=rclpy.duration.Duration(milliseconds=50)
+                deadline=rclpy.duration.Duration(milliseconds=50),
             )
         elif message_type == "sensor":
             qos = QoSProfile(
                 reliability=ReliabilityPolicy.BEST_EFFORT,
                 durability=DurabilityPolicy.VOLATILE,
                 depth=5,
-                deadline=rclpy.duration.Duration(milliseconds=20)
+                deadline=rclpy.duration.Duration(milliseconds=20),
             )
         elif message_type == "vision":
             qos = QoSProfile(
                 reliability=ReliabilityPolicy.BEST_EFFORT,
                 durability=DurabilityPolicy.VOLATILE,
                 depth=3,
-                deadline=rclpy.duration.Duration(milliseconds=67)
+                deadline=rclpy.duration.Duration(milliseconds=67),
             )
 
         assert qos.depth == expected_depth
@@ -254,13 +262,13 @@ class TestQoSOptimization:
         """Test deadline settings enforce real-time requirements."""
         # Competition requirements
         control_deadline_ms = 50  # Control loop deadline
-        sensor_deadline_ms = 20   # Sensor fusion deadline
-        vision_deadline_ms = 67   # Vision processing deadline (15Hz)
+        sensor_deadline_ms = 20  # Sensor fusion deadline
+        vision_deadline_ms = 67  # Vision processing deadline (15Hz)
 
         # Verify deadlines are set appropriately
         assert control_deadline_ms < 100  # Under 100ms for real-time control
-        assert sensor_deadline_ms < 50    # Under 50ms for sensor fusion
-        assert vision_deadline_ms < 100   # Under 100ms for vision processing
+        assert sensor_deadline_ms < 50  # Under 50ms for sensor fusion
+        assert vision_deadline_ms < 100  # Under 100ms for vision processing
 
     def test_competition_readiness_qos(self):
         """Test QoS settings meet competition performance requirements."""
@@ -270,7 +278,7 @@ class TestQoSOptimization:
             "sensor_latency_ms": 20,
             "vision_latency_ms": 67,
             "control_reliability": "RELIABLE",
-            "sensor_reliability": "BEST_EFFORT"
+            "sensor_reliability": "BEST_EFFORT",
         }
 
         # Verify our QoS settings meet requirements
@@ -284,13 +292,13 @@ class TestQoSOptimization:
         """Test QoS depth settings optimize memory usage."""
         # Calculate buffer memory usage estimates
         control_buffer_kb = 20 * 100  # 20 messages * ~100KB each
-        sensor_buffer_kb = 5 * 50     # 5 messages * ~50KB each
-        vision_buffer_kb = 3 * 200    # 3 messages * ~200KB each
+        sensor_buffer_kb = 5 * 50  # 5 messages * ~50KB each
+        vision_buffer_kb = 3 * 200  # 3 messages * ~200KB each
 
         # Verify reasonable memory usage
         assert control_buffer_kb < 5000  # Under 5MB for control
-        assert sensor_buffer_kb < 1000   # Under 1MB for sensors
-        assert vision_buffer_kb < 2000   # Under 2MB for vision
+        assert sensor_buffer_kb < 1000  # Under 1MB for sensors
+        assert vision_buffer_kb < 2000  # Under 2MB for vision
 
     def test_network_bandwidth_optimization(self):
         """Test QoS settings optimize network bandwidth."""
@@ -303,8 +311,16 @@ class TestQoSOptimization:
         small_depth_count = 0
 
         qos_profiles = [
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE, depth=5),
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE, depth=3),
+            QoSProfile(
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+                depth=5,
+            ),
+            QoSProfile(
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+                depth=3,
+            ),
         ]
 
         for qos in qos_profiles:
@@ -320,8 +336,5 @@ class TestQoSOptimization:
         assert small_depth_count == len(qos_profiles)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])
-
-
-

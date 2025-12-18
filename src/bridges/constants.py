@@ -48,13 +48,13 @@ LOAD_DEGRADED_THRESHOLD = 0.8  # 80% load triggers degraded status
 LOAD_CRITICAL_THRESHOLD = 0.9  # 90% load triggers critical status
 
 # File paths
-DEFAULT_COMPETITION_LOG_FILE = 'competition_telemetry.jsonl'
+DEFAULT_COMPETITION_LOG_FILE = "competition_telemetry.jsonl"
 
 # String constants
-PRIMARY_ROLE = 'primary'
-SECONDARY_ROLE = 'secondary'
-TERTIARY_ROLE = 'tertiary'
-EMERGENCY_ROLE = 'emergency'
+PRIMARY_ROLE = "primary"
+SECONDARY_ROLE = "secondary"
+TERTIARY_ROLE = "tertiary"
+EMERGENCY_ROLE = "emergency"
 
 # QoS Profiles
 DEFAULT_QOS_DEPTH = 10

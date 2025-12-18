@@ -14,18 +14,21 @@ The stress testing framework evaluates system resilience across three critical c
 ## Test Severity Levels
 
 ### Moderate Stress
+
 - Network: 2% packet loss, 25ms latency
 - CAN: 3% faults, 70% bus load
 - Movement: 5% faults, basic conflict detection
 - Duration: ~30 seconds per component
 
 ### Severe Stress
+
 - Network: 8% packet loss, 100ms latency, 50Mbps bandwidth limit
 - CAN: 12% faults, 90% bus load, arbitration conflicts
 - Movement: 15% faults, 8% emergency stops, 10% conflicts
 - Duration: ~60 seconds per component
 
 ### Extreme Stress
+
 - Network: 25% packet loss, 300ms latency, 10Mbps bandwidth limit
 - CAN: 35% faults, 130% bus overload, electrical noise
 - Movement: 40% faults, 25% emergency stops, 30% conflicts
@@ -66,24 +69,28 @@ python3 tests/performance/stress_test_orchestrator.py --quick-test
 ## Test Architecture
 
 ### Network Stress Test (`stress_test_network_communication.py`)
+
 - **Purpose**: Test ROS2 DDS communication under extreme network conditions
 - **Stressors**: Packet loss, latency, bandwidth limits
 - **Metrics**: Latency, throughput, packet loss rate
 - **Tools**: Linux `tc` (traffic control) for network emulation
 
 ### CAN Bus Stress Test (`stress_test_can_communication.py`)
+
 - **Purpose**: Test CAN bus communication with bus faults and overload
 - **Stressors**: Bus overload, arbitration conflicts, electrical faults
 - **Metrics**: Bus availability, error rates, arbitration collisions
 - **Simulation**: Software-based CAN bus fault injection
 
 ### Movement Control Stress Test (`stress_test_movement_control.py`)
+
 - **Purpose**: Test rover movement control under rapid command changes
 - **Stressors**: Command conflicts, emergency stops, rapid direction changes
 - **Metrics**: Command success rate, response latency, conflict detection
 - **ROS2 Integration**: Real publishers/subscribers with QoS profiles
 
 ### Integrated Stress Test (`stress_test_integrated_system.py`)
+
 - **Purpose**: Test complete system under combined communication stress
 - **Stressors**: All communication layers stressed simultaneously
 - **Metrics**: System health score, resource usage, cross-system conflicts
@@ -92,21 +99,25 @@ python3 tests/performance/stress_test_orchestrator.py --quick-test
 ## Performance Metrics
 
 ### Network Performance
+
 - **Latency**: Round-trip message latency (target: <50ms)
 - **Throughput**: Messages per second (target: >1000 msg/s)
 - **Packet Loss**: Percentage of lost messages (target: <5%)
 
 ### CAN Bus Performance
+
 - **Bus Availability**: Percentage of time bus is operational (target: >95%)
 - **Error Rate**: CAN bus errors per second (target: <5%)
 - **Arbitration Success**: Successful message arbitration (target: >98%)
 
 ### Movement Control Performance
+
 - **Command Success Rate**: Percentage of commands executed (target: >90%)
 - **Response Latency**: Time to process movement commands (target: <20ms)
 - **Conflict Resolution**: Successful handling of conflicting commands
 
 ### System Health
+
 - **Overall Health Score**: Composite score 0-100 (target: >75)
 - **Resource Usage**: CPU/memory usage under stress (target: <80%)
 - **Recovery Time**: Time to recover from faults (target: <5s)
@@ -114,12 +125,14 @@ python3 tests/performance/stress_test_orchestrator.py --quick-test
 ## Understanding Test Results
 
 ### Health Score Interpretation
+
 - **80-100**: ✅ Excellent - System handles extreme stress well
 - **60-79**: ⚠️ Good - Some degradation under stress
 - **40-59**: ⚠️ Poor - Moderate issues under stress
 - **0-39**: ❌ Critical - Significant system problems
 
 ### Common Failure Modes
+
 1. **Network Saturation**: High latency, packet loss >20%
 2. **CAN Bus Overload**: Bus availability <80%, error rate >15%
 3. **Command Conflicts**: Success rate <80%, high conflict counts
@@ -129,6 +142,7 @@ python3 tests/performance/stress_test_orchestrator.py --quick-test
 ## Troubleshooting
 
 ### Network Test Issues
+
 ```bash
 # Check if tc commands work
 sudo tc qdisc show dev lo
@@ -138,6 +152,7 @@ sudo tc qdisc del dev lo root
 ```
 
 ### ROS2 Issues
+
 ```bash
 # Check ROS2 installation
 ros2 --version
@@ -147,6 +162,7 @@ ros2 doctor
 ```
 
 ### Permission Issues
+
 ```bash
 # Allow tc commands without sudo for testing
 sudo setcap cap_net_admin+ep $(which python3)
@@ -157,11 +173,13 @@ sudo setcap cap_net_admin+ep $(which python3)
 The orchestrator generates two types of reports:
 
 ### JSON Results File
+
 - **Location**: `stress_test_results/stress_test_results_YYYYMMDD_HHMMSS.json`
 - **Contents**: Complete raw test data, metrics, and analysis
 - **Use**: Detailed analysis, historical comparison, debugging
 
 ### Summary Report
+
 - **Location**: `stress_test_results/stress_test_summary_YYYYMMDD_HHMMSS.txt`
 - **Contents**: Human-readable summary, key findings, recommendations
 - **Use**: Executive summary, quick assessment, documentation
@@ -263,6 +281,7 @@ When adding new stress tests:
 ## Support
 
 For issues or questions:
+
 1. Check the troubleshooting section above
 2. Review generated log files in `stress_test_results/`
 3. Examine individual test outputs for specific component failures

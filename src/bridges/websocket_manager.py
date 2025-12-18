@@ -8,13 +8,14 @@ and command processing for the URC competition bridge.
 
 import asyncio
 import json
-import time
 import threading
-from typing import Dict, Any, Optional, Set, Callable, Awaitable
+import time
+from typing import Any, Awaitable, Callable, Dict, Optional, Set
 
 try:
     import websockets
     from websockets.server import WebSocketServerProtocol
+
     WEBSOCKET_AVAILABLE = True
 except ImportError:
     WEBSOCKET_AVAILABLE = False
@@ -22,8 +23,8 @@ except ImportError:
 
 from constants import (
     DEFAULT_WEBSOCKET_PORT,
-    WEBSOCKET_PING_INTERVAL,
     WEBSOCKET_CLOSE_TIMEOUT,
+    WEBSOCKET_PING_INTERVAL,
 )
 
 
@@ -86,7 +87,9 @@ class WebSocketManager:
             True if server started successfully, False otherwise
         """
         if not WEBSOCKET_AVAILABLE:
-            self.logger.error("websockets library not available - WebSocket server disabled")
+            self.logger.error(
+                "websockets library not available - WebSocket server disabled"
+            )
             return False
 
         try:
@@ -122,9 +125,9 @@ class WebSocketManager:
                 "0.0.0.0",
                 self.port,
                 max_size=1048576,  # 1MB max message size
-                max_queue=128,     # Increased queue for high throughput
+                max_queue=128,  # Increased queue for high throughput
                 ping_interval=WEBSOCKET_PING_INTERVAL,  # Optimized ping frequency
-                close_timeout=WEBSOCKET_CLOSE_TIMEOUT,   # Faster connection cleanup
+                close_timeout=WEBSOCKET_CLOSE_TIMEOUT,  # Faster connection cleanup
                 compression=None,  # Disable compression for speed
             )
 
@@ -137,7 +140,9 @@ class WebSocketManager:
         finally:
             self.server_running = False
 
-    async def _handle_client_connection(self, websocket: WebSocketServerProtocol, path: str) -> None:
+    async def _handle_client_connection(
+        self, websocket: WebSocketServerProtocol, path: str
+    ) -> None:
         """
         Handle a new WebSocket client connection.
 
@@ -155,11 +160,15 @@ class WebSocketManager:
         else:
             # Legacy handling without redundancy
             self.websocket_clients.add(websocket)
-            self.logger.info(f"WebSocket client connected ({len(self.websocket_clients)} total)")
+            self.logger.info(
+                f"WebSocket client connected ({len(self.websocket_clients)} total)"
+            )
 
             try:
                 # Send initial telemetry
-                await self._send_message(websocket, self.telemetry_data, "initial telemetry")
+                await self._send_message(
+                    websocket, self.telemetry_data, "initial telemetry"
+                )
 
                 # Handle incoming messages
                 async for message in websocket:
@@ -172,7 +181,9 @@ class WebSocketManager:
             finally:
                 self.websocket_clients.discard(websocket)
 
-    async def _handle_websocket_message(self, websocket: WebSocketServerProtocol, message: str) -> None:
+    async def _handle_websocket_message(
+        self, websocket: WebSocketServerProtocol, message: str
+    ) -> None:
         """
         Handle incoming WebSocket message.
 
@@ -195,8 +206,12 @@ class WebSocketManager:
         except Exception as e:
             self.logger.error(f"WebSocket message handling error: {e}")
 
-    async def _handle_standard_command(self, websocket: WebSocketServerProtocol,
-                                     command_type: str, data: Dict[str, Any]) -> None:
+    async def _handle_standard_command(
+        self,
+        websocket: WebSocketServerProtocol,
+        command_type: str,
+        data: Dict[str, Any],
+    ) -> None:
         """
         Handle standard WebSocket commands.
 
@@ -229,7 +244,9 @@ class WebSocketManager:
 
             elif command_type == "request_telemetry":
                 # Send current telemetry
-                await self._send_message(websocket, self.telemetry_data, "current telemetry")
+                await self._send_message(
+                    websocket, self.telemetry_data, "current telemetry"
+                )
 
             elif command_type == "system_command":
                 # Handle system-level commands
@@ -249,17 +266,23 @@ class WebSocketManager:
                 target_type = data.get("target_type", "")
                 target_index = data.get("target_index", 0)
                 if "target_reached" in self.command_handlers:
-                    await self.command_handlers["target_reached"](target_type, target_index)
+                    await self.command_handlers["target_reached"](
+                        target_type, target_index
+                    )
 
             elif command_type == "abort_to_previous":
                 # Abort and return to previous target
                 if "abort_to_previous" in self.command_handlers:
                     previous_target = await self.command_handlers["abort_to_previous"]()
                     if previous_target:
-                        await self._send_message(websocket, {
-                            "type": "abort_acknowledged",
-                            "previous_target": previous_target
-                        }, "abort acknowledgment")
+                        await self._send_message(
+                            websocket,
+                            {
+                                "type": "abort_acknowledged",
+                                "previous_target": previous_target,
+                            },
+                            "abort acknowledgment",
+                        )
 
             elif command_type == "highlight_object":
                 # Highlight object on C2 display
@@ -267,7 +290,9 @@ class WebSocketManager:
                 confidence = data.get("confidence", 0.0)
                 bounding_box = data.get("bounding_box", [])
                 if "highlight_object" in self.command_handlers:
-                    await self.command_handlers["highlight_object"](object_name, confidence, bounding_box)
+                    await self.command_handlers["highlight_object"](
+                        object_name, confidence, bounding_box
+                    )
 
             elif command_type == "equipment_servicing_command":
                 # Handle equipment servicing commands
@@ -275,7 +300,9 @@ class WebSocketManager:
                 if subcommand == "complete_task":
                     task_name = data.get("task_name", "")
                     if "complete_equipment_task" in self.command_handlers:
-                        await self.command_handlers["complete_equipment_task"](task_name)
+                        await self.command_handlers["complete_equipment_task"](
+                            task_name
+                        )
                 elif subcommand == "set_launch_key":
                     launch_key = data.get("launch_key", "")
                     if "set_launch_key" in self.command_handlers:
@@ -285,16 +312,21 @@ class WebSocketManager:
                 # Send compliance status to judges
                 if "get_compliance_status" in self.command_handlers:
                     status = await self.command_handlers["get_compliance_status"]()
-                    await self._send_message(websocket, {
-                        "type": "compliance_status",
-                        "data": status
-                    }, "compliance status")
+                    await self._send_message(
+                        websocket,
+                        {"type": "compliance_status", "data": status},
+                        "compliance status",
+                    )
 
         except Exception as e:
             self.logger.error(f"Error handling command {command_type}: {e}")
 
-    async def _send_message(self, websocket: WebSocketServerProtocol,
-                          message: Dict[str, Any], description: str = "") -> None:
+    async def _send_message(
+        self,
+        websocket: WebSocketServerProtocol,
+        message: Dict[str, Any],
+        description: str = "",
+    ) -> None:
         """
         Send a message via WebSocket with error handling.
 
@@ -308,7 +340,9 @@ class WebSocketManager:
             if description:
                 self.logger.debug(f"Sent WebSocket message: {description}")
         except Exception as e:
-            self.logger.warning(f"Failed to send WebSocket message ({description}): {e}")
+            self.logger.warning(
+                f"Failed to send WebSocket message ({description}): {e}"
+            )
 
     def broadcast_telemetry(self, telemetry_data: Dict[str, Any]) -> None:
         """
@@ -324,13 +358,17 @@ class WebSocketManager:
             # Legacy broadcasting without redundancy
             if self.websocket_clients:
                 # In a real implementation, we'd create tasks for async broadcasting
-                self.logger.debug(f"Would broadcast telemetry to {len(self.websocket_clients)} clients")
+                self.logger.debug(
+                    f"Would broadcast telemetry to {len(self.websocket_clients)} clients"
+                )
 
     def get_connection_status(self) -> Dict[str, Any]:
         """Get current WebSocket connection status."""
         return {
             "server_running": self.server_running,
             "port": self.port,
-            "clients_connected": len(self.websocket_clients) if not self.redundancy_manager else 0,
+            "clients_connected": len(self.websocket_clients)
+            if not self.redundancy_manager
+            else 0,
             "redundancy_enabled": self.redundancy_manager is not None,
         }

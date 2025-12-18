@@ -7,6 +7,7 @@ The **Integrated Testing Dashboard** provides comprehensive visual testing and m
 ## Key Features
 
 ### PRIMARY: Communication & State Verification
+
 - **WebSocket ↔ ROS2 ↔ CAN Communication Flow**
   - Real-time visualization of message routing
   - Latency measurement across all channels
@@ -20,6 +21,7 @@ The **Integrated Testing Dashboard** provides comprehensive visual testing and m
   - Invalid transition detection
 
 ### SECONDARY: Mock Data Streaming
+
 - **CAN Bus Data Stream**
   - IMU sensor data (accelerometer, gyroscope)
   - GPS position and heading
@@ -32,6 +34,7 @@ The **Integrated Testing Dashboard** provides comprehensive visual testing and m
   - Fault injection capabilities
 
 ### TERTIARY: Simulation Monitoring
+
 - **Drive System Simulation**
 - **Robotic Arm Simulation**
 - **Science Payload Simulation**
@@ -83,6 +86,7 @@ The **Integrated Testing Dashboard** provides comprehensive visual testing and m
 ### Prerequisites
 
 1. **Frontend Dependencies**
+
    ```bash
    cd /home/ubuntu/urc-machiato-2026/frontend
    npm install
@@ -166,6 +170,7 @@ The central panel shows real-time communication between systems:
 ### State Machine Monitor
 
 Displays:
+
 - **Current State**: Large display of active state
 - **State History**: Last 10 state transitions with durations
 - **Transition Tests**: Validate state changes work correctly
@@ -173,6 +178,7 @@ Displays:
 ### Topic Monitor
 
 Shows all active ROS2 topics:
+
 - **Topic Name**: Full ROS2 topic path
 - **Type**: ROS2 message type
 - **Rate**: Publishing frequency in Hz
@@ -184,6 +190,7 @@ Click any topic to view detailed message contents.
 ### CAN Data Stream
 
 When "CAN Bus Stream" test is enabled:
+
 - Real-time display of mock CAN data
 - IMU accelerometer readings
 - GPS latitude/longitude
@@ -195,6 +202,7 @@ When "CAN Bus Stream" test is enabled:
 ### Test Results
 
 Bottom panel shows:
+
 - Test execution status (running/passed/failed)
 - Execution time
 - Pass/fail indicators
@@ -204,36 +212,36 @@ Bottom panel shows:
 
 ### Communication Tests
 
-| Test ID | Name | Duration | Description |
-|---------|------|----------|-------------|
-| `comm-ws-ros2` | WebSocket ↔ ROS2 | 2s | Verify message routing between WebSocket and ROS2 |
-| `comm-ros2-can` | ROS2 ↔ CAN | 2s | Verify message routing between ROS2 and CAN bus |
-| `comm-bidirectional` | Bidirectional Flow | 3s | Verify bidirectional message flow across all systems |
-| `comm-latency` | Latency Check | 5s | Measure end-to-end latency across communication channels |
+| Test ID              | Name               | Duration | Description                                              |
+| -------------------- | ------------------ | -------- | -------------------------------------------------------- |
+| `comm-ws-ros2`       | WebSocket ↔ ROS2   | 2s       | Verify message routing between WebSocket and ROS2        |
+| `comm-ros2-can`      | ROS2 ↔ CAN         | 2s       | Verify message routing between ROS2 and CAN bus          |
+| `comm-bidirectional` | Bidirectional Flow | 3s       | Verify bidirectional message flow across all systems     |
+| `comm-latency`       | Latency Check      | 5s       | Measure end-to-end latency across communication channels |
 
 ### State Machine Tests
 
-| Test ID | Name | Duration | Description |
-|---------|------|----------|-------------|
-| `state-transitions` | State Transitions | 4s | Test all valid state transitions |
-| `state-recovery` | Error Recovery | 3s | Test error state recovery mechanisms |
-| `state-timing` | Transition Timing | 6s | Measure state transition timing and delays |
+| Test ID             | Name              | Duration | Description                                |
+| ------------------- | ----------------- | -------- | ------------------------------------------ |
+| `state-transitions` | State Transitions | 4s       | Test all valid state transitions           |
+| `state-recovery`    | Error Recovery    | 3s       | Test error state recovery mechanisms       |
+| `state-timing`      | Transition Timing | 6s       | Measure state transition timing and delays |
 
 ### Mock Data Tests
 
-| Test ID | Name | Duration | Description |
-|---------|------|----------|-------------|
-| `mock-can-stream` | CAN Bus Stream | 10s | Continuously stream mock CAN bus data |
-| `mock-sensor-data` | Sensor Data | 5s | Generate and validate mock sensor data |
-| `mock-fault-injection` | Fault Injection | 8s | Inject faults into mock data streams |
+| Test ID                | Name            | Duration | Description                            |
+| ---------------------- | --------------- | -------- | -------------------------------------- |
+| `mock-can-stream`      | CAN Bus Stream  | 10s      | Continuously stream mock CAN bus data  |
+| `mock-sensor-data`     | Sensor Data     | 5s       | Generate and validate mock sensor data |
+| `mock-fault-injection` | Fault Injection | 8s       | Inject faults into mock data streams   |
 
 ### Simulation Tests
 
-| Test ID | Name | Duration | Description |
-|---------|------|----------|-------------|
-| `sim-drive` | Drive System | 15s | Run drive system simulation |
-| `sim-arm` | Arm System | 12s | Run robotic arm simulation |
-| `sim-science` | Science Payload | 10s | Run science payload simulation |
+| Test ID       | Name            | Duration | Description                    |
+| ------------- | --------------- | -------- | ------------------------------ |
+| `sim-drive`   | Drive System    | 15s      | Run drive system simulation    |
+| `sim-arm`     | Arm System      | 12s      | Run robotic arm simulation     |
+| `sim-science` | Science Payload | 10s      | Run science payload simulation |
 
 ## WebSocket API
 
@@ -264,6 +272,7 @@ The backend exposes the following WebSocket API at `ws://localhost:8766`:
 ### Server → Client Messages
 
 #### Full State Update
+
 ```json
 {
   "type": "full_state",
@@ -287,6 +296,7 @@ The backend exposes the following WebSocket API at `ws://localhost:8766`:
 ```
 
 #### Test Update
+
 ```json
 {
   "type": "test_update",
@@ -307,6 +317,7 @@ The backend exposes the following WebSocket API at `ws://localhost:8766`:
 ```
 
 #### Metrics Update
+
 ```json
 {
   "type": "metrics_update",
@@ -338,6 +349,7 @@ Then add the test to the frontend sidebar in `IntegratedTestingDashboard.jsx`.
 ### Modifying Communication Metrics
 
 Edit the `update_metrics_loop()` method in `TestDashboardBackend` class to:
+
 - Connect to actual ROS2 topics
 - Read from real CAN bus
 - Calculate real latency measurements
@@ -356,6 +368,7 @@ The dashboard uses Lucide React icons and Tailwind CSS. To add new visualization
 ### Backend Won't Start
 
 **Error**: `Address already in use`
+
 - **Solution**: Another service is using port 8766. Kill it or change the port in the backend script.
 
 ```bash
@@ -366,6 +379,7 @@ kill <PID>
 ### Frontend Can't Connect
 
 **Error**: `WebSocket connection failed`
+
 - **Solution**: Ensure backend is running and accessible
 - Check browser console for detailed error messages
 - Verify firewall isn't blocking port 8766
@@ -373,6 +387,7 @@ kill <PID>
 ### No Test Results
 
 **Problem**: Tests don't execute or show results
+
 - **Solution**: Check browser console for JavaScript errors
 - Verify WebSocket connection is established (green indicator)
 - Check backend logs for errors
@@ -380,6 +395,7 @@ kill <PID>
 ### ROS2 Integration Issues
 
 **Problem**: Topics don't appear or show as inactive
+
 - **Solution**: Ensure ROS2 is running: `ros2 topic list`
 - Verify `integrated_system.launch.py` is running
 - Check ROS2_DOMAIN_ID matches: `echo $ROS2_DOMAIN_ID`
@@ -405,6 +421,7 @@ kill <PID>
 ## Support
 
 For issues or questions:
+
 1. Check this README
 2. Review backend logs: `scripts/testing/test_dashboard_backend.py`
 3. Check frontend console (F12 in browser)

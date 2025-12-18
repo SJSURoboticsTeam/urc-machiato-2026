@@ -4,9 +4,11 @@ Test script to verify WebSocket connection to simulation bridge.
 """
 
 import asyncio
-import websockets
 import json
 import time
+
+import websockets
+
 
 async def test_websocket_connection():
     """Test WebSocket connection to simulation bridge."""
@@ -23,11 +25,11 @@ async def test_websocket_connection():
             data = json.loads(response)
             print(f"📨 Received: {data.get('type', 'unknown')}")
 
-            if data.get('type') == 'simulation_connected':
+            if data.get("type") == "simulation_connected":
                 print("✅ Simulation bridge confirmed connection")
 
                 # Request current state
-                request = {'type': 'request_state'}
+                request = {"type": "request_state"}
                 await websocket.send(json.dumps(request))
                 print("📤 Sent state request")
 
@@ -40,21 +42,25 @@ async def test_websocket_connection():
                         response = await asyncio.wait_for(websocket.recv(), timeout=1.0)
                         data = json.loads(response)
 
-                        if data.get('type') == 'simulation_update':
+                        if data.get("type") == "simulation_update":
                             message_count += 1
-                            sim_data = data.get('simulation_data', {})
+                            sim_data = data.get("simulation_data", {})
 
                             # Print sample data
                             if message_count == 1:
                                 print("📊 Sample simulation data received:")
-                                if 'gps' in sim_data:
-                                    gps = sim_data['gps']
-                                    print(f"  GPS: {gps.get('latitude', 'N/A'):.6f}, {gps.get('longitude', 'N/A'):.6f}")
-                                if 'imu' in sim_data:
-                                    imu = sim_data['imu']
-                                    print(f"  IMU: accel_x={imu.get('accel_x', 'N/A'):.3f}")
+                                if "gps" in sim_data:
+                                    gps = sim_data["gps"]
+                                    print(
+                                        f"  GPS: {gps.get('latitude', 'N/A'):.6f}, {gps.get('longitude', 'N/A'):.6f}"
+                                    )
+                                if "imu" in sim_data:
+                                    imu = sim_data["imu"]
+                                    print(
+                                        f"  IMU: accel_x={imu.get('accel_x', 'N/A'):.3f}"
+                                    )
 
-                        elif data.get('type') == 'simulation_state':
+                        elif data.get("type") == "simulation_state":
                             print("📊 Received simulation state response")
 
                     except asyncio.TimeoutError:
@@ -72,6 +78,7 @@ async def test_websocket_connection():
         print(f"❌ WebSocket connection failed: {e}")
         return False
 
+
 def main():
     """Main test function."""
     print("🧪 Testing WebSocket Connection to Simulation Bridge")
@@ -86,8 +93,6 @@ def main():
     else:
         print("❌ FAIL: WebSocket connection failed or no data received")
 
+
 if __name__ == "__main__":
     main()
-
-
-

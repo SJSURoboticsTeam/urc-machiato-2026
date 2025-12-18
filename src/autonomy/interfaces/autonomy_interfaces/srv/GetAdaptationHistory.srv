@@ -7,5 +7,3 @@ bool include_context  # Include full context with each action
 ---
 AdaptiveAction[] actions
 ContextState[] contexts
-
-

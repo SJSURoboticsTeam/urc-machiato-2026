@@ -5,13 +5,16 @@ Tests for Transition Manager
 Tests the transition validation, execution, and blocking logic.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
 
+import pytest
+from autonomy_state_machine.adaptive_policy_engine import (
+    AdaptiveAction,
+    AdaptiveActionType,
+)
+from autonomy_state_machine.config import PolicyConfig
 from autonomy_state_machine.states import RoverState
 from autonomy_state_machine.transition_manager import TransitionManager
-from autonomy_state_machine.adaptive_policy_engine import AdaptiveAction, AdaptiveActionType
-from autonomy_state_machine.config import PolicyConfig
 
 
 class TestTransitionManager:
@@ -54,7 +57,7 @@ class TestTransitionManager:
             parameters={},
             success_criteria="",
             expected_duration=0.0,
-            trigger_context=Mock()
+            trigger_context=Mock(),
         )
 
         transition_manager.register_adaptive_action(emergency_action)
@@ -76,7 +79,7 @@ class TestTransitionManager:
             parameters={},
             success_criteria="",
             expected_duration=0.0,
-            trigger_context=Mock()
+            trigger_context=Mock(),
         )
 
         transition_manager.register_adaptive_action(emergency_action)
@@ -111,7 +114,7 @@ class TestTransitionManager:
             parameters={},
             success_criteria="",
             expected_duration=0.0,
-            trigger_context=Mock()
+            trigger_context=Mock(),
         )
 
         transition_manager.register_adaptive_action(blocking_action)
@@ -120,7 +123,10 @@ class TestTransitionManager:
         blocking_actions = transition_manager.get_blocking_actions(RoverState.TELEOP)
 
         assert len(blocking_actions) == 1
-        assert blocking_actions[0].action_type == AdaptiveActionType.COMMUNICATION_SAFE_MODE
+        assert (
+            blocking_actions[0].action_type
+            == AdaptiveActionType.COMMUNICATION_SAFE_MODE
+        )
 
     def test_unregister_adaptive_action(self, transition_manager):
         """Test unregistering adaptive actions."""
@@ -131,19 +137,27 @@ class TestTransitionManager:
             parameters={},
             success_criteria="",
             expected_duration=0.0,
-            trigger_context=Mock()
+            trigger_context=Mock(),
         )
 
         transition_manager.register_adaptive_action(test_action)
 
         # Verify it's registered
-        assert AdaptiveActionType.SYSTEM_THROTTLE in transition_manager.active_adaptive_actions
+        assert (
+            AdaptiveActionType.SYSTEM_THROTTLE
+            in transition_manager.active_adaptive_actions
+        )
 
         # Unregister it
-        transition_manager.unregister_adaptive_action(AdaptiveActionType.SYSTEM_THROTTLE)
+        transition_manager.unregister_adaptive_action(
+            AdaptiveActionType.SYSTEM_THROTTLE
+        )
 
         # Verify it's unregistered
-        assert AdaptiveActionType.SYSTEM_THROTTLE not in transition_manager.active_adaptive_actions
+        assert (
+            AdaptiveActionType.SYSTEM_THROTTLE
+            not in transition_manager.active_adaptive_actions
+        )
 
     def test_can_force_transition_to_safe_states(self, transition_manager):
         """Test forcing transitions to safe states."""

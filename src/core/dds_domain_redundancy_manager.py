@@ -9,13 +9,13 @@ Author: URC 2026 Autonomy Team
 """
 
 import os
-import time
+import signal
 import subprocess
 import threading
-import signal
-from typing import Dict, List, Any, Optional, Callable
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 
 class DomainStatus(Enum):
@@ -242,7 +242,7 @@ class DDSDomainRedundancyManager:
                 time.sleep(self.health_check_interval)
 
             except Exception as e:
-        self.get_logger().info(f"DDS monitoring error: {e}")
+                self.get_logger().info(f"DDS monitoring error: {e}")
                 time.sleep(self.health_check_interval)
 
     def _check_domain_health(self):

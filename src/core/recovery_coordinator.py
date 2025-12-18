@@ -8,18 +8,19 @@ failure scenarios. Ensures systems recover in the correct order without conflict
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import threading
 import logging
-from typing import Dict, List, Any, Optional, Callable
+import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class RecoveryPhase(Enum):
     """Phases of coordinated recovery."""
+
     ASSESSMENT = "assessment"
     DDS_RECOVERY = "dds_recovery"
     STATE_RECOVERY = "state_recovery"
@@ -31,15 +32,17 @@ class RecoveryPhase(Enum):
 
 class FailureSeverity(Enum):
     """Severity levels for failures."""
-    MINOR = "minor"      # Single component, automatic recovery
+
+    MINOR = "minor"  # Single component, automatic recovery
     MODERATE = "moderate"  # Multiple components, coordinated recovery
-    SEVERE = "severe"    # System-wide, manual intervention may be needed
+    SEVERE = "severe"  # System-wide, manual intervention may be needed
     CRITICAL = "critical"  # Complete system failure
 
 
 @dataclass
 class RecoveryCheckpoint:
     """A checkpoint in the recovery process."""
+
     phase: RecoveryPhase
     timestamp: float = field(default_factory=time.time)
     status: str = "pending"
@@ -50,6 +53,7 @@ class RecoveryCheckpoint:
 @dataclass
 class FailureAssessment:
     """Assessment of a system failure."""
+
     severity: FailureSeverity
     affected_systems: List[str]
     primary_failure: str
@@ -104,13 +108,17 @@ class RecoveryCoordinator:
                 logger.warning("Recovery already in progress")
                 return False
 
-            logger.info(f"[ALERT] Initiating coordinated recovery: {failure_description}")
+            logger.info(
+                f"[ALERT] Initiating coordinated recovery: {failure_description}"
+            )
             self.recovery_active = True
             self.checkpoints = []
             self.current_phase = RecoveryPhase.ASSESSMENT
 
             # Start recovery in background thread
-            recovery_thread = threading.Thread(target=self._execute_recovery, daemon=True)
+            recovery_thread = threading.Thread(
+                target=self._execute_recovery, daemon=True
+            )
             recovery_thread.start()
 
             return True
@@ -127,7 +135,9 @@ class RecoveryCoordinator:
             assessment = self._assess_failure()
 
             if assessment.severity == FailureSeverity.CRITICAL:
-                error_message = "Critical failure detected - manual intervention required"
+                error_message = (
+                    "Critical failure detected - manual intervention required"
+                )
                 self._fail_recovery(error_message)
                 return
 
@@ -209,13 +219,13 @@ class RecoveryCoordinator:
                 if system_name == "dds":
                     # Check DDS health
                     status = manager.get_system_status()
-                    if status.get('current_domain') is None:
+                    if status.get("current_domain") is None:
                         affected_systems.append("dds")
                         primary_failure = "dds"
                 elif system_name == "state":
                     # Check state sync health
                     status = manager.get_system_status()
-                    if status.get('role') == 'unknown':
+                    if status.get("role") == "unknown":
                         affected_systems.append("state")
                         if not primary_failure or primary_failure == "unknown":
                             primary_failure = "state"
@@ -227,8 +237,11 @@ class RecoveryCoordinator:
                 elif system_name == "websocket":
                     # Check WebSocket health
                     status = manager.get_system_status()
-                    unhealthy_count = sum(1 for ep in status.get('endpoints', {}).values()
-                                        if not ep.get('is_healthy', True))
+                    unhealthy_count = sum(
+                        1
+                        for ep in status.get("endpoints", {}).values()
+                        if not ep.get("is_healthy", True)
+                    )
                     if unhealthy_count > 0:
                         affected_systems.append("websocket")
                         if not primary_failure or primary_failure == "unknown":
@@ -255,10 +268,12 @@ class RecoveryCoordinator:
             affected_systems=affected_systems,
             primary_failure=primary_failure,
             estimated_recovery_time=recovery_time,
-            can_auto_recover=severity != FailureSeverity.CRITICAL
+            can_auto_recover=severity != FailureSeverity.CRITICAL,
         )
 
-        logger.info(f"Assessment: {severity.value} severity, {len(affected_systems)} systems affected")
+        logger.info(
+            f"Assessment: {severity.value} severity, {len(affected_systems)} systems affected"
+        )
         return assessment
 
     def _recover_dds_domain(self) -> bool:
@@ -272,7 +287,9 @@ class RecoveryCoordinator:
                 return False
 
             # Trigger domain failover to backup
-            success = dds_manager.trigger_domain_failover(target_domain_id=43)  # Backup domain
+            success = dds_manager.trigger_domain_failover(
+                target_domain_id=43
+            )  # Backup domain
             if success:
                 logger.info("[SUCCESS] DDS domain failover successful")
                 return True
@@ -302,11 +319,13 @@ class RecoveryCoordinator:
 
             # Check if we have a master
             status = state_manager.get_system_status()
-            if status.get('master_node'):
+            if status.get("master_node"):
                 logger.info("[SUCCESS] State synchronization recovered")
                 return True
             else:
-                logger.error("[ERROR] State synchronization recovery failed - no master elected")
+                logger.error(
+                    "[ERROR] State synchronization recovery failed - no master elected"
+                )
                 return False
 
         except Exception as e:
@@ -326,7 +345,7 @@ class RecoveryCoordinator:
             # Configuration system usually recovers itself
             # Just validate it's working
             status = config_manager.get_system_status()
-            if status.get('current_version') is not None:
+            if status.get("current_version") is not None:
                 logger.info("[SUCCESS] Configuration system healthy")
                 return True
             else:
@@ -351,11 +370,16 @@ class RecoveryCoordinator:
             status = ws_manager.get_system_status()
 
             # Count healthy endpoints
-            healthy_endpoints = sum(1 for ep in status.get('endpoints', {}).values()
-                                  if ep.get('is_healthy', False))
+            healthy_endpoints = sum(
+                1
+                for ep in status.get("endpoints", {}).values()
+                if ep.get("is_healthy", False)
+            )
 
             if healthy_endpoints > 0:
-                logger.info(f"[SUCCESS] WebSocket system recovered ({healthy_endpoints} healthy endpoints)")
+                logger.info(
+                    f"[SUCCESS] WebSocket system recovered ({healthy_endpoints} healthy endpoints)"
+                )
                 return True
             else:
                 logger.error("[ERROR] No healthy WebSocket endpoints available")
@@ -377,23 +401,26 @@ class RecoveryCoordinator:
                 try:
                     if system_name == "dds":
                         status = manager.get_system_status()
-                        if not status.get('current_domain'):
+                        if not status.get("current_domain"):
                             all_healthy = False
                             logger.error(f"DDS system not healthy")
                     elif system_name == "state":
                         status = manager.get_system_status()
-                        if not status.get('master_node'):
+                        if not status.get("master_node"):
                             all_healthy = False
                             logger.error(f"State system not healthy")
                     elif system_name == "config":
                         status = manager.get_system_status()
-                        if status.get('current_version') is None:
+                        if status.get("current_version") is None:
                             all_healthy = False
                             logger.error(f"Config system not healthy")
                     elif system_name == "websocket":
                         status = manager.get_system_status()
-                        healthy_count = sum(1 for ep in status.get('endpoints', {}).values()
-                                          if ep.get('is_healthy', False))
+                        healthy_count = sum(
+                            1
+                            for ep in status.get("endpoints", {}).values()
+                            if ep.get("is_healthy", False)
+                        )
                         if healthy_count == 0:
                             all_healthy = False
                             logger.error(f"WebSocket system not healthy")
@@ -417,8 +444,7 @@ class RecoveryCoordinator:
         self.current_phase = phase
 
         checkpoint = RecoveryCheckpoint(
-            phase=phase,
-            description=f"Starting {phase.value} phase"
+            phase=phase, description=f"Starting {phase.value} phase"
         )
         self.checkpoints.append(checkpoint)
 
@@ -445,19 +471,19 @@ class RecoveryCoordinator:
     def get_recovery_status(self) -> Dict[str, Any]:
         """Get current recovery status."""
         return {
-            'active': self.recovery_active,
-            'current_phase': self.current_phase.value if self.current_phase else None,
-            'checkpoints': [
+            "active": self.recovery_active,
+            "current_phase": self.current_phase.value if self.current_phase else None,
+            "checkpoints": [
                 {
-                    'phase': cp.phase.value,
-                    'timestamp': cp.timestamp,
-                    'status': cp.status,
-                    'description': cp.description,
-                    'error': cp.error_message
+                    "phase": cp.phase.value,
+                    "timestamp": cp.timestamp,
+                    "status": cp.status,
+                    "description": cp.description,
+                    "error": cp.error_message,
                 }
                 for cp in self.checkpoints
             ],
-            'registered_systems': list(self.system_managers.keys())
+            "registered_systems": list(self.system_managers.keys()),
         }
 
 

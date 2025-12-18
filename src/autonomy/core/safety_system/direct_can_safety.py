@@ -5,16 +5,18 @@ Direct CAN Safety Interface - Hardware-Level Emergency Control
 Bypasses ROS2 middleware for critical safety operations.
 """
 
-import serial
-import time
-import threading
-from typing import Optional, Dict, Any
-from enum import Enum
 import logging
+import threading
+import time
+from enum import Enum
+from typing import Any, Dict, Optional
+
+import serial
 
 
 class SafetyCommand(Enum):
     """Safety command types."""
+
     EMERGENCY_STOP = "EMERGENCY_STOP"
     BOUNDARY_VIOLATION_STOP = "BOUNDARY_VIOLATION_STOP"
     MOTOR_BRAKE = "MOTOR_BRAKE"
@@ -23,23 +25,32 @@ class SafetyCommand(Enum):
 class DirectCANSafety:
     """Direct CAN Safety Interface for immediate hardware response."""
 
-    def __init__(self, can_port: str = '/dev/ttyACM0'):
+    def __init__(self, can_port: str = "/dev/ttyACM0"):
         self.can_port = can_port
         self.can_serial = None
         self.connected = False
         self.command_lock = threading.Lock()
-        self.logger = logging.getLogger('direct_can_safety')
+        self.logger = logging.getLogger("direct_can_safety")
         self.logger.setLevel(logging.INFO)
         self.connect()
 
     def connect(self) -> bool:
         """Connect to CAN serial interface."""
         try:
-            import sys
             import os
-            sys.path.append(os.path.join(
-                os.path.dirname(__file__), '..', '..', '..', 
-                'vendor', 'teleoperation', 'server'))
+            import sys
+
+            sys.path.append(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "..",
+                    "..",
+                    "vendor",
+                    "teleoperation",
+                    "server",
+                )
+            )
             from can_serial import CanSerial  # type: ignore
 
             self.can_serial = CanSerial(self.can_port)
@@ -61,7 +72,9 @@ class DirectCANSafety:
 
     def boundary_violation_stop(self) -> bool:
         """Stop due to boundary violation."""
-        return self.send_safety_command(SafetyCommand.BOUNDARY_VIOLATION_STOP, "BOUNDARY_VIOLATION")
+        return self.send_safety_command(
+            SafetyCommand.BOUNDARY_VIOLATION_STOP, "BOUNDARY_VIOLATION"
+        )
 
     def activate_motor_brake(self) -> bool:
         """Activate motor brakes."""

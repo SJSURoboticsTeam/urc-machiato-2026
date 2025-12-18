@@ -6,25 +6,27 @@ Tests context evaluation, adaptive policies, state machine integration,
 monitoring, and performance characteristics.
 """
 
+import threading
+import time
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock, patch
+
+import numpy as np
+import psutil
 import pytest
 import rclpy
-from rclpy.node import Node
-from unittest.mock import Mock, patch, MagicMock
-import time
-import threading
-import psutil
-from typing import Dict, Any, List, Optional
-import numpy as np
-
-from autonomy_state_machine.states import RoverState
-from autonomy_state_machine.context_evaluator import ContextEvaluator
+from autonomy_interfaces.msg import AdaptiveAction as AdaptiveActionMsg
+from autonomy_interfaces.msg import ContextState, ContextUpdate
 from autonomy_state_machine.adaptive_policy_engine import (
-    AdaptivePolicyEngine, AdaptiveAction, AdaptiveActionType
+    AdaptiveAction,
+    AdaptiveActionType,
+    AdaptivePolicyEngine,
 )
 from autonomy_state_machine.adaptive_state_machine import AdaptiveStateMachine
+from autonomy_state_machine.context_evaluator import ContextEvaluator
 from autonomy_state_machine.monitoring_service import MonitoringService
-
-from autonomy_interfaces.msg import ContextState, AdaptiveAction as AdaptiveActionMsg, ContextUpdate
+from autonomy_state_machine.states import RoverState
+from rclpy.node import Node
 
 
 class TestContextEvaluator:
@@ -42,7 +44,7 @@ class TestContextEvaluator:
     @pytest.fixture
     def node(self, ros2_context):
         """Create a test ROS2 node with proper isolation."""
-        node = Node('test_node')
+        node = Node("test_node")
         yield node
         node.destroy_node()
 
@@ -56,10 +58,10 @@ class TestContextEvaluator:
         context = context_evaluator.evaluate_system_context()
 
         assert isinstance(context, ContextState)
-        assert hasattr(context, 'battery_level')
-        assert hasattr(context, 'communication_active')
-        assert hasattr(context, 'cpu_usage')
-        assert hasattr(context, 'timestamp')
+        assert hasattr(context, "battery_level")
+        assert hasattr(context, "communication_active")
+        assert hasattr(context, "cpu_usage")
+        assert hasattr(context, "timestamp")
 
         # Verify reasonable value ranges
         assert 0.0 <= context.battery_level <= 100.0
@@ -103,22 +105,22 @@ class TestContextEvaluator:
         # Add mock context history
         for i in range(15):
             context_entry = {
-                'context': ContextState(),
-                'timestamp': time.time() - i * 0.1
+                "context": ContextState(),
+                "timestamp": time.time() - i * 0.1,
             }
-            context_entry['context'].battery_level = 80.0 - i * 0.5  # Declining trend
-            context_entry['context'].cpu_usage = 50.0 + i * 0.2      # Rising trend
+            context_entry["context"].battery_level = 80.0 - i * 0.5  # Declining trend
+            context_entry["context"].cpu_usage = 50.0 + i * 0.2  # Rising trend
             context_evaluator.context_history.append(context_entry)
 
         patterns = context_evaluator.get_context_patterns()
 
         # Check that patterns are detected
-        assert 'battery_trend' in patterns
+        assert "battery_trend" in patterns
         # CPU trend may not be detected with insufficient variation
-        assert 'performance_trend' in patterns
+        assert "performance_trend" in patterns
         # Battery trend should indicate declining (negative slope)
-        if isinstance(patterns['battery_trend'], (int, float)):
-            assert patterns['battery_trend'] < 0  # Should show declining trend
+        if isinstance(patterns["battery_trend"], (int, float)):
+            assert patterns["battery_trend"] < 0  # Should show declining trend
 
     def test_battery_evaluation(self, context_evaluator):
         """Test battery level evaluation."""
@@ -132,32 +134,32 @@ class TestContextEvaluator:
         perf_data = context_evaluator._evaluate_system_performance()
 
         assert isinstance(perf_data, dict)
-        assert 'cpu' in perf_data
-        assert 'memory' in perf_data
-        assert 'temperature' in perf_data
+        assert "cpu" in perf_data
+        assert "memory" in perf_data
+        assert "temperature" in perf_data
 
-        assert 0.0 <= perf_data['cpu'] <= 100.0
-        assert 0.0 <= perf_data['memory'] <= 100.0
-        assert perf_data['temperature'] >= 0.0
+        assert 0.0 <= perf_data["cpu"] <= 100.0
+        assert 0.0 <= perf_data["memory"] <= 100.0
+        assert perf_data["temperature"] >= 0.0
 
     def test_safety_evaluation(self, context_evaluator):
         """Test safety condition evaluation."""
         safety_data = context_evaluator._evaluate_safety()
 
         assert isinstance(safety_data, dict)
-        assert 'active' in safety_data
-        assert 'reason' in safety_data
-        assert isinstance(safety_data['active'], bool)
-        assert isinstance(safety_data['reason'], str)
+        assert "active" in safety_data
+        assert "reason" in safety_data
+        assert isinstance(safety_data["active"], bool)
+        assert isinstance(safety_data["reason"], str)
 
-    @patch('psutil.cpu_percent')
+    @patch("psutil.cpu_percent")
     def test_cpu_monitoring(self, mock_cpu, context_evaluator):
         """Test CPU usage monitoring."""
         mock_cpu.return_value = 75.5
 
         perf_data = context_evaluator._evaluate_system_performance()
 
-        assert perf_data['cpu'] == 75.5
+        assert perf_data["cpu"] == 75.5
 
     def test_context_pattern_analysis(self, context_evaluator):
         """Test context pattern analysis."""
@@ -167,16 +169,17 @@ class TestContextEvaluator:
         mock_context.cpu_usage = 60.0
         mock_context.safety_active = False
 
-        context_evaluator.context_history.extend([
-            {'context': mock_context, 'timestamp': time.time() - i}
-            for i in range(10)
-        ])
+        context_evaluator.context_history.extend(
+            [{"context": mock_context, "timestamp": time.time() - i} for i in range(10)]
+        )
 
         patterns = context_evaluator.get_context_patterns()
 
         assert isinstance(patterns, dict)
         # Should contain pattern analysis keys
-        assert 'battery_trend' in patterns or len(patterns) >= 0  # May be empty if analysis fails
+        assert (
+            "battery_trend" in patterns or len(patterns) >= 0
+        )  # May be empty if analysis fails
 
 
 class TestAdaptivePolicyEngine:
@@ -192,7 +195,7 @@ class TestAdaptivePolicyEngine:
     @pytest.fixture
     def node(self, ros2_context):
         """Create a test ROS2 node with proper isolation."""
-        node = Node('test_policy_node')
+        node = Node("test_policy_node")
         yield node
         node.destroy_node()
 
@@ -203,10 +206,10 @@ class TestAdaptivePolicyEngine:
 
     def test_policy_initialization(self, policy_engine):
         """Test policy engine initialization."""
-        assert hasattr(policy_engine, 'policies')
-        assert 'battery_critical' in policy_engine.policies
-        assert 'obstacle_critical' in policy_engine.policies
-        assert 'communication_loss' in policy_engine.policies
+        assert hasattr(policy_engine, "policies")
+        assert "battery_critical" in policy_engine.policies
+        assert "obstacle_critical" in policy_engine.policies
+        assert "communication_loss" in policy_engine.policies
 
     def test_battery_critical_policy(self, policy_engine):
         """Test battery critical policy."""
@@ -294,7 +297,11 @@ class TestAdaptivePolicyEngine:
         assert AdaptiveActionType.COMPLETE_AND_RETURN in action_types
         assert AdaptiveActionType.OBSTACLE_AVOIDANCE in action_types
         # Check priority of complete_and_return action
-        complete_actions = [a for a in actions if a.action_type == AdaptiveActionType.COMPLETE_AND_RETURN]
+        complete_actions = [
+            a
+            for a in actions
+            if a.action_type == AdaptiveActionType.COMPLETE_AND_RETURN
+        ]
         assert complete_actions[0].priority >= 90
 
     def test_policy_action_filtering(self, policy_engine):
@@ -307,7 +314,7 @@ class TestAdaptivePolicyEngine:
                 parameters={},
                 success_criteria="",
                 expected_duration=100.0,
-                trigger_context=ContextState()
+                trigger_context=ContextState(),
             ),
             AdaptiveAction(
                 action_type=AdaptiveActionType.EMERGENCY_RETURN,
@@ -315,8 +322,8 @@ class TestAdaptivePolicyEngine:
                 parameters={},
                 success_criteria="",
                 expected_duration=100.0,
-                trigger_context=ContextState()
-            )
+                trigger_context=ContextState(),
+            ),
         ]
 
         filtered = policy_engine._filter_actions(actions)
@@ -334,7 +341,7 @@ class TestAdaptivePolicyEngine:
             parameters={},
             success_criteria="",
             expected_duration=100.0,
-            trigger_context=ContextState()
+            trigger_context=ContextState(),
         )
 
         # Record some successes and failures
@@ -344,8 +351,8 @@ class TestAdaptivePolicyEngine:
 
         effectiveness = policy_engine.get_policy_effectiveness()
 
-        assert 'emergency_return' in effectiveness
-        assert effectiveness['emergency_return'] == 2.0/3.0  # 2/3 success rate
+        assert "emergency_return" in effectiveness
+        assert effectiveness["emergency_return"] == 2.0 / 3.0  # 2/3 success rate
 
     def test_mission_timeout_policy_edge_cases(self, policy_engine):
         """Test mission timeout policy with various scenarios."""
@@ -375,13 +382,13 @@ class TestAdaptivePolicyEngine:
 
         assert action is not None
         assert action.action_type == AdaptiveActionType.SYSTEM_THROTTLE
-        assert 'cpu_high' in action.parameters
-        assert 'memory_high' in action.parameters
+        assert "cpu_high" in action.parameters
+        assert "memory_high" in action.parameters
 
     def test_policy_cooldown(self, policy_engine):
         """Test policy cooldown mechanism."""
         # First evaluation should work
-        policy_name = 'battery_critical'
+        policy_name = "battery_critical"
         assert policy_engine._should_evaluate_policy(policy_name)
 
         # Simulate cooldown
@@ -408,17 +415,18 @@ class TestAdaptiveStateMachine:
     @pytest.fixture
     def node(self, ros2_context):
         """Create a test ROS2 node with proper isolation."""
-        node = Node('test_adaptive_sm')
+        node = Node("test_adaptive_sm")
         yield node
         node.destroy_node()
 
     @pytest.fixture
     def adaptive_sm(self, node):
         """Create an adaptive state machine instance."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
             sm = AdaptiveStateMachine()
             sm.enable_adaptive = True  # Ensure adaptive features are enabled
             return sm
@@ -427,13 +435,15 @@ class TestAdaptiveStateMachine:
         """Test state machine initialization."""
         assert adaptive_sm.current_state == RoverState.BOOT
         assert adaptive_sm.enable_adaptive
-        assert hasattr(adaptive_sm, 'context_evaluator')
-        assert hasattr(adaptive_sm, 'policy_engine')
+        assert hasattr(adaptive_sm, "context_evaluator")
+        assert hasattr(adaptive_sm, "policy_engine")
 
     def test_basic_transition_validation(self, adaptive_sm):
         """Test basic transition validation."""
         # Valid transition
-        success, message = adaptive_sm.transition_to_state(RoverState.READY, "test valid")
+        success, message = adaptive_sm.transition_to_state(
+            RoverState.READY, "test valid"
+        )
         assert success
         assert "Successfully transitioned" in message
 
@@ -441,7 +451,9 @@ class TestAdaptiveStateMachine:
         adaptive_sm.current_state = RoverState.BOOT
 
         # Invalid transition (BOOT -> AUTO is invalid)
-        success, message = adaptive_sm.transition_to_state(RoverState.AUTO, "test invalid")
+        success, message = adaptive_sm.transition_to_state(
+            RoverState.AUTO, "test invalid"
+        )
         assert not success
         assert "Invalid transition" in message
 
@@ -451,7 +463,10 @@ class TestAdaptiveStateMachine:
         adaptive_sm.current_state = RoverState.READY
 
         # Register an emergency action that should block certain transitions
-        from autonomy_state_machine.adaptive_policy_engine import AdaptiveAction, AdaptiveActionType
+        from autonomy_state_machine.adaptive_policy_engine import (
+            AdaptiveAction,
+            AdaptiveActionType,
+        )
         from autonomy_state_machine.config import PolicyConfig
 
         emergency_action = AdaptiveAction(
@@ -460,14 +475,16 @@ class TestAdaptiveStateMachine:
             parameters={},
             success_criteria="",
             expected_duration=0.0,
-            trigger_context=None
+            trigger_context=None,
         )
 
         # Register the action with the transition manager
         adaptive_sm.transition_manager.register_adaptive_action(emergency_action)
 
         # Should block AUTO transition due to emergency action
-        success, message = adaptive_sm.transition_to_state(RoverState.AUTO, "test blocking")
+        success, message = adaptive_sm.transition_to_state(
+            RoverState.AUTO, "test blocking"
+        )
         assert not success
         assert "blocked by high-priority adaptive action" in message
 
@@ -538,10 +555,9 @@ class TestAdaptiveStateMachine:
             action = Mock()
             action.action_type = f"test_action_{i}"
             action.priority = 70 + i
-            adaptive_sm.monitoring_service.adaptation_history.append({
-                'action': action,
-                'timestamp': time.time()
-            })
+            adaptive_sm.monitoring_service.adaptation_history.append(
+                {"action": action, "timestamp": time.time()}
+            )
 
         request = GetAdaptationHistory.Request()
         request.limit = 3
@@ -588,7 +604,9 @@ class TestAdaptiveStateMachine:
         total_time = end_time - start_time
 
         # Should handle 30 callback executions in reasonable time (< 1 second)
-        assert total_time < 1.0, f"Callbacks too slow: {total_time:.3f}s for 30 executions"
+        assert (
+            total_time < 1.0
+        ), f"Callbacks too slow: {total_time:.3f}s for 30 executions"
 
     def test_service_callback_parameter_validation(self, adaptive_sm):
         """Test service callback parameter validation."""
@@ -639,10 +657,10 @@ class TestAdaptiveStateMachine:
         status = adaptive_sm.get_system_status()
 
         assert isinstance(status, dict)
-        assert 'current_state' in status
-        assert 'adaptive_enabled' in status
-        assert 'active_adaptations' in status
-        assert 'transition_count' in status
+        assert "current_state" in status
+        assert "adaptive_enabled" in status
+        assert "active_adaptations" in status
+        assert "transition_count" in status
 
 
 class TestMonitoringService:
@@ -652,7 +670,7 @@ class TestMonitoringService:
     def node(self):
         """Create a test ROS2 node."""
         rclpy.init()
-        node = Node('test_monitoring')
+        node = Node("test_monitoring")
         yield node
         node.destroy_node()
         rclpy.shutdown()
@@ -660,19 +678,20 @@ class TestMonitoringService:
     @pytest.fixture
     def monitoring_service(self, node):
         """Create a monitoring service instance."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
             service = MonitoringService()
             return service
 
     def test_monitoring_initialization(self, monitoring_service):
         """Test monitoring service initialization."""
-        assert hasattr(monitoring_service, 'context_history')
-        assert hasattr(monitoring_service, 'adaptation_history')
-        assert hasattr(monitoring_service, 'system_events')
-        assert hasattr(monitoring_service, 'performance_metrics')
+        assert hasattr(monitoring_service, "context_history")
+        assert hasattr(monitoring_service, "adaptation_history")
+        assert hasattr(monitoring_service, "system_events")
+        assert hasattr(monitoring_service, "performance_metrics")
 
     def test_context_callback(self, monitoring_service):
         """Test context callback processing."""
@@ -687,7 +706,7 @@ class TestMonitoringService:
         monitoring_service._context_callback(context_msg)
 
         assert len(monitoring_service.context_history) == initial_count + 1
-        assert monitoring_service.context_history[-1]['context'].battery_level == 42.0
+        assert monitoring_service.context_history[-1]["context"].battery_level == 42.0
 
     def test_alert_level_calculation(self, monitoring_service):
         """Test alert level calculation."""
@@ -717,22 +736,22 @@ class TestMonitoringService:
         # Add mock context history
         for i in range(20):
             context_entry = {
-                'context': ContextState(),
-                'timestamp': time.time() - i * 0.1
+                "context": ContextState(),
+                "timestamp": time.time() - i * 0.1,
             }
-            context_entry['context'].battery_level = 100.0 - i * 2  # Declining battery
-            context_entry['context'].cpu_usage = 50.0 + i * 0.5     # Increasing CPU
-            context_entry['context'].memory_usage = 60.0
+            context_entry["context"].battery_level = 100.0 - i * 2  # Declining battery
+            context_entry["context"].cpu_usage = 50.0 + i * 0.5  # Increasing CPU
+            context_entry["context"].memory_usage = 60.0
             monitoring_service.context_history.append(context_entry)
 
         monitoring_service._compute_performance_metrics()
 
-        assert 'battery_trend' in monitoring_service.performance_metrics
-        assert 'avg_cpu_usage' in monitoring_service.performance_metrics
-        assert 'cpu_volatility' in monitoring_service.performance_metrics
+        assert "battery_trend" in monitoring_service.performance_metrics
+        assert "avg_cpu_usage" in monitoring_service.performance_metrics
+        assert "cpu_volatility" in monitoring_service.performance_metrics
 
         # Battery should be trending downward
-        assert monitoring_service.performance_metrics['battery_trend'] < 0
+        assert monitoring_service.performance_metrics["battery_trend"] < 0
 
 
 class TestMonitoringService:
@@ -748,26 +767,27 @@ class TestMonitoringService:
     @pytest.fixture
     def node(self, ros2_context):
         """Create a test ROS2 node with proper isolation."""
-        node = Node('test_monitoring')
+        node = Node("test_monitoring")
         yield node
         node.destroy_node()
 
     @pytest.fixture
     def monitoring_service(self, node):
         """Create a monitoring service instance."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
             service = MonitoringService()
             return service
 
     def test_monitoring_initialization(self, monitoring_service):
         """Test monitoring service initialization."""
-        assert hasattr(monitoring_service, 'context_history')
-        assert hasattr(monitoring_service, 'adaptation_history')
-        assert hasattr(monitoring_service, 'system_events')
-        assert hasattr(monitoring_service, 'performance_metrics')
+        assert hasattr(monitoring_service, "context_history")
+        assert hasattr(monitoring_service, "adaptation_history")
+        assert hasattr(monitoring_service, "system_events")
+        assert hasattr(monitoring_service, "performance_metrics")
 
     def test_context_callback_processing(self, monitoring_service):
         """Test context callback processing."""
@@ -782,7 +802,7 @@ class TestMonitoringService:
         monitoring_service._context_callback(context_msg)
 
         assert len(monitoring_service.context_history) == initial_count + 1
-        assert monitoring_service.context_history[-1]['context'].battery_level == 42.0
+        assert monitoring_service.context_history[-1]["context"].battery_level == 42.0
 
     def test_adaptation_callback_processing(self, monitoring_service):
         """Test adaptation callback processing."""
@@ -796,7 +816,10 @@ class TestMonitoringService:
         monitoring_service._adaptation_callback(action_msg)
 
         assert len(monitoring_service.adaptation_history) == initial_count + 1
-        assert monitoring_service.adaptation_history[-1]['action'].action_type == "EMERGENCY_RETURN"
+        assert (
+            monitoring_service.adaptation_history[-1]["action"].action_type
+            == "EMERGENCY_RETURN"
+        )
 
     def test_alert_level_calculation(self, monitoring_service):
         """Test alert level calculation for various scenarios."""
@@ -826,14 +849,14 @@ class TestMonitoringService:
         # Add some context history
         for i in range(5):
             context_entry = {
-                'context': ContextState(),
-                'timestamp': time.time() - i * 0.1
+                "context": ContextState(),
+                "timestamp": time.time() - i * 0.1,
             }
-            context_entry['context'].battery_level = 75.0 - i * 2
-            context_entry['context'].mission_status = "EXECUTING"
-            context_entry['context'].mission_progress = 0.5 + i * 0.1
-            context_entry['context'].communication_active = True
-            context_entry['context'].safety_active = False
+            context_entry["context"].battery_level = 75.0 - i * 2
+            context_entry["context"].mission_status = "EXECUTING"
+            context_entry["context"].mission_progress = 0.5 + i * 0.1
+            context_entry["context"].communication_active = True
+            context_entry["context"].safety_active = False
             monitoring_service.context_history.append(context_entry)
 
         # Trigger dashboard update
@@ -846,37 +869,49 @@ class TestMonitoringService:
         # Add mock context history with trends
         for i in range(20):
             context_entry = {
-                'context': ContextState(),
-                'timestamp': time.time() - i * 0.1
+                "context": ContextState(),
+                "timestamp": time.time() - i * 0.1,
             }
-            context_entry['context'].battery_level = 100.0 - i * 2  # Declining
-            context_entry['context'].cpu_usage = 50.0 + i * 0.5     # Rising
-            context_entry['context'].memory_usage = 60.0
+            context_entry["context"].battery_level = 100.0 - i * 2  # Declining
+            context_entry["context"].cpu_usage = 50.0 + i * 0.5  # Rising
+            context_entry["context"].memory_usage = 60.0
             monitoring_service.context_history.append(context_entry)
 
         monitoring_service._compute_performance_metrics()
 
-        assert 'battery_trend' in monitoring_service.performance_metrics
-        assert 'avg_cpu_usage' in monitoring_service.performance_metrics
-        assert 'cpu_volatility' in monitoring_service.performance_metrics
+        assert "battery_trend" in monitoring_service.performance_metrics
+        assert "avg_cpu_usage" in monitoring_service.performance_metrics
+        assert "cpu_volatility" in monitoring_service.performance_metrics
 
         # Battery should show declining trend
-        assert monitoring_service.performance_metrics['battery_trend'] < 0
+        assert monitoring_service.performance_metrics["battery_trend"] < 0
 
     def test_monitoring_stats_comprehensive(self, monitoring_service):
         """Test comprehensive monitoring statistics."""
         # Add some test data
-        monitoring_service.context_history.extend([{'context': ContextState(), 'timestamp': time.time()} for _ in range(10)])
-        monitoring_service.adaptation_history.extend([{'action': AdaptiveActionMsg(), 'timestamp': time.time()} for _ in range(5)])
-        monitoring_service.system_events.extend([{'type': 'TEST', 'message': 'test', 'timestamp': time.time()} for _ in range(3)])
+        monitoring_service.context_history.extend(
+            [{"context": ContextState(), "timestamp": time.time()} for _ in range(10)]
+        )
+        monitoring_service.adaptation_history.extend(
+            [
+                {"action": AdaptiveActionMsg(), "timestamp": time.time()}
+                for _ in range(5)
+            ]
+        )
+        monitoring_service.system_events.extend(
+            [
+                {"type": "TEST", "message": "test", "timestamp": time.time()}
+                for _ in range(3)
+            ]
+        )
 
         stats = monitoring_service.get_monitoring_stats()
 
-        assert stats['context_readings'] == 10
-        assert stats['adaptation_actions'] == 5
-        assert stats['system_events'] == 3
-        assert isinstance(stats['performance_metrics'], dict)
-        assert isinstance(stats['policy_effectiveness'], dict)
+        assert stats["context_readings"] == 10
+        assert stats["adaptation_actions"] == 5
+        assert stats["system_events"] == 3
+        assert isinstance(stats["performance_metrics"], dict)
+        assert isinstance(stats["policy_effectiveness"], dict)
 
     def test_available_actions_calculation(self, monitoring_service):
         """Test available actions calculation based on context."""
@@ -908,7 +943,7 @@ class TestAdaptiveIntegration:
     def test_context_to_policy_integration(self):
         """Test integration between context evaluation and policy engine."""
         rclpy.init()
-        node = Node('integration_test')
+        node = Node("integration_test")
 
         try:
             context_evaluator = ContextEvaluator(node)
@@ -928,7 +963,11 @@ class TestAdaptiveIntegration:
             actions = policy_engine.evaluate_policies(context)
 
             # Should generate complete and return action (mission is 90% complete)
-            complete_actions = [a for a in actions if a.action_type == AdaptiveActionType.COMPLETE_AND_RETURN]
+            complete_actions = [
+                a
+                for a in actions
+                if a.action_type == AdaptiveActionType.COMPLETE_AND_RETURN
+            ]
             assert len(complete_actions) > 0
 
             # Action should have high priority
@@ -941,13 +980,14 @@ class TestAdaptiveIntegration:
     def test_full_adaptive_workflow(self):
         """Test complete adaptive workflow."""
         rclpy.init()
-        node = Node('workflow_test')
+        node = Node("workflow_test")
 
         try:
-            with patch('rclpy.node.Node.create_timer'), \
-                 patch('rclpy.node.Node.create_publisher'), \
-                 patch('rclpy.node.Node.create_subscription'), \
-                 patch('rclpy.node.Node.create_service'):
+            with patch("rclpy.node.Node.create_timer"), patch(
+                "rclpy.node.Node.create_publisher"
+            ), patch("rclpy.node.Node.create_subscription"), patch(
+                "rclpy.node.Node.create_service"
+            ):
 
                 # Create adaptive state machine
                 adaptive_sm = AdaptiveStateMachine()
@@ -959,19 +999,19 @@ class TestAdaptiveIntegration:
                 # (This would be more comprehensive with actual ROS2 messaging)
 
                 # Verify state machine has adaptive components
-                assert hasattr(adaptive_sm, 'context_evaluator')
-                assert hasattr(adaptive_sm, 'policy_engine')
+                assert hasattr(adaptive_sm, "context_evaluator")
+                assert hasattr(adaptive_sm, "policy_engine")
                 assert adaptive_sm.enable_adaptive
 
                 # Test system status query
                 status = adaptive_sm.get_system_status()
-                assert status['adaptive_enabled'] == True
-                assert 'current_state' in status
+                assert status["adaptive_enabled"] == True
+                assert "current_state" in status
 
         finally:
             node.destroy_node()
             rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__])

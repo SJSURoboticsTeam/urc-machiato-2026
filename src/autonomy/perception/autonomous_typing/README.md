@@ -31,6 +31,7 @@ Autonomous Typing Node (main orchestrator)
 ### Core Components
 
 #### 1. Keyboard Localization (`keyboard_localization.py`)
+
 - **Purpose**: Detect ArUco markers on keyboard corners
 - **Inputs**: Camera image stream, camera intrinsics
 - **Outputs**:
@@ -42,6 +43,7 @@ Autonomous Typing Node (main orchestrator)
   - Robust marker tracking with fallback
 
 #### 2. Keyboard Dictionary (`keyboard_dictionary.py`)
+
 - **Purpose**: Manage keyboard layout and key positions
 - **Classes**:
   - `KeyboardDictionary`: QWERTY layout with 3D positions
@@ -52,6 +54,7 @@ Autonomous Typing Node (main orchestrator)
   - `get_key_press_trajectory()` - Generate approach/press/retract trajectory
 
 #### 3. Arm Controller (`arm_controller.py`)
+
 - **Purpose**: Control robotic arm for key pressing
 - **Components**:
   - `SimpleInverseKinematics`: Numerical IK solver
@@ -62,6 +65,7 @@ Autonomous Typing Node (main orchestrator)
   - `_plan_trajectory()` - Generate joint trajectories
 
 #### 4. Typing Executor (`typing_executor.py`)
+
 - **Purpose**: Orchestrate typing sequences with error handling
 - **Features**:
   - Character-by-character execution
@@ -74,6 +78,7 @@ Autonomous Typing Node (main orchestrator)
   - `validate_key_press()` - Verify press success
 
 #### 5. Main Node (`autonomous_typing_node.py`)
+
 - **Purpose**: Integrate all subsystems
 - **Inputs**:
   - `/keyboard_pose` - Keyboard location from localization
@@ -85,6 +90,7 @@ Autonomous Typing Node (main orchestrator)
 ## Installation & Setup
 
 ### Prerequisites
+
 ```bash
 # Install ROS 2 Humble
 sudo apt update && sudo apt install ros-humble-desktop
@@ -97,6 +103,7 @@ sudo apt install ros-humble-moveit-ros-planning-interface
 ```
 
 ### Build Package
+
 ```bash
 cd ~/robotics2025/autonomy/code
 colcon build --packages-select autonomy_autonomous_typing
@@ -118,6 +125,7 @@ ros2 topic echo /keyboard_pose
 ### 2. Execute Typing Sequence
 
 #### Via ROS 2 Action:
+
 ```python
 #!/usr/bin/env python3
 import rclpy
@@ -145,6 +153,7 @@ if __name__ == '__main__':
 ```
 
 #### Via Command Line:
+
 ```bash
 ros2 action send_goal perform_typing autonomy_interfaces/action/PerformTyping \
   "{sequence: 'HELLO'}"
@@ -167,15 +176,15 @@ tf2_echo world keyboard_frame
 
 ```yaml
 markers:
-  0: [0.0, 0.0, 0.0]      # Marker positions in keyboard frame
+  0: [0.0, 0.0, 0.0] # Marker positions in keyboard frame
   1: [0.3, 0.0, 0.0]
   2: [0.0, 0.15, 0.0]
   3: [0.3, 0.15, 0.0]
 
 pressing:
-  approach_height: 0.02   # 2cm above keyboard
-  press_depth: 0.015      # 1.5cm into key
-  dwell_time: 0.1         # 100ms hold at bottom
+  approach_height: 0.02 # 2cm above keyboard
+  press_depth: 0.015 # 1.5cm into key
+  dwell_time: 0.1 # 100ms hold at bottom
 
 retry:
   max_retries_per_key: 2
@@ -185,17 +194,20 @@ retry:
 ## ROS 2 Topics
 
 ### Published
+
 - `/keyboard_pose` (PoseStamped) - Keyboard position and orientation
 - `/keyboard_detection_image` (Image) - Debug visualization
 - `/autonomous_typing/status` (String) - System status
 - `/typing_result` (String) - Execution results
 
 ### Subscribed
+
 - `/camera/color/image_raw` (Image) - Camera stream
 - `/camera/color/camera_info` (CameraInfo) - Camera intrinsics
 - `/arm/joint_states` (JointState) - Arm feedback
 
 ### TF Frames
+
 - `world` - Global reference frame
 - `camera_optical_frame` - Camera sensor frame
 - `keyboard_frame` - Keyboard-centered frame
@@ -204,6 +216,7 @@ retry:
 ## ROS 2 Actions
 
 ### PerformTyping
+
 ```
 Goal:
   sequence: string          # Text to type (e.g., "HELLO")
@@ -227,24 +240,26 @@ Result:
 
 ## Performance Expectations
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| Marker Detection | >95% | Real-time at ~30fps |
-| Pose Accuracy | <5mm | ArUco-based PnP |
-| Key Position Error | <2mm | Relative to marker |
-| Key Press Time | 1.5-2s | Approach + press + retract |
-| Typing Speed | 2-3 chars/sec | With validation |
-| Sequence Success | >90% | For 6+ character sequences |
+| Metric             | Target        | Notes                      |
+| ------------------ | ------------- | -------------------------- |
+| Marker Detection   | >95%          | Real-time at ~30fps        |
+| Pose Accuracy      | <5mm          | ArUco-based PnP            |
+| Key Position Error | <2mm          | Relative to marker         |
+| Key Press Time     | 1.5-2s        | Approach + press + retract |
+| Typing Speed       | 2-3 chars/sec | With validation            |
+| Sequence Success   | >90%          | For 6+ character sequences |
 
 ## Debugging
 
 ### Check Marker Detection
+
 ```bash
 # View annotated image with detected markers
 ros2 topic echo /keyboard_detection_image
 ```
 
 ### Verify Transforms
+
 ```bash
 # List TF tree
 ros2 run tf2_tools view_frames.py
@@ -254,6 +269,7 @@ tf2_echo camera_optical_frame keyboard_frame
 ```
 
 ### Test Arm Controller
+
 ```python
 from autonomy_autonomous_typing.arm_controller import ArmController
 
@@ -263,6 +279,7 @@ success = ik.move_to_position(target)
 ```
 
 ### Monitor Typing Progress
+
 ```bash
 # See real-time character typing
 ros2 topic echo --once /autonomous_typing/status
@@ -271,30 +288,38 @@ ros2 topic echo --once /autonomous_typing/status
 ## Common Issues & Solutions
 
 ### Issue: Markers Not Detected
+
 **Cause**: Poor lighting, camera out of focus, incorrect marker size
 **Solution**:
+
 1. Check lighting conditions
 2. Verify marker size matches configuration (3cm)
 3. Confirm marker IDs match (0-3)
 4. Check camera focus and calibration
 
 ### Issue: Large Pose Error
+
 **Cause**: Camera calibration drift, marker placement inaccuracy
 **Solution**:
+
 1. Re-run camera calibration
 2. Verify marker positions are accurate
 3. Check that all 4 markers are visible
 
 ### Issue: Arm Reaches Wrong Position
+
 **Cause**: IK solver converging to local minimum
 **Solution**:
+
 1. Check arm joint limits configuration
 2. Provide better initial guess to IK
 3. Use analytical IK if available
 
 ### Issue: Keys Pressed at Wrong Positions
+
 **Cause**: Keyboard frame not properly aligned
 **Solution**:
+
 1. Re-place ArUco markers at exact corners
 2. Verify marker orientation
 3. Re-run calibration sequence
@@ -302,6 +327,7 @@ ros2 topic echo --once /autonomous_typing/status
 ## Testing
 
 ### Unit Tests
+
 ```bash
 # Test keyboard dictionary
 python3 autonomy_autonomous_typing/keyboard_dictionary.py
@@ -314,6 +340,7 @@ python3 autonomy_autonomous_typing/typing_executor.py
 ```
 
 ### Integration Test
+
 ```bash
 # Run with simulated arm and keyboard
 ros2 launch autonomy_autonomous_typing typing_system.launch.py use_sim:=true

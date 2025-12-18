@@ -5,6 +5,7 @@ A complete autonomous robotics system for the University Rover Challenge 2026, f
 ## 🚀 Quick Start
 
 ### One-Command Launch
+
 ```bash
 # Development frontend only
 ./start.py dev frontend
@@ -20,6 +21,7 @@ A complete autonomous robotics system for the University Rover Challenge 2026, f
 ```
 
 ### For Production Deployment
+
 See [`DEPLOYMENT.md`](DEPLOYMENT.md) for production deployment instructions.
 
 ## 📋 Requirements
@@ -42,6 +44,7 @@ See [`DEPLOYMENT.md`](DEPLOYMENT.md) for production deployment instructions.
 ## 📦 Installation
 
 ### Quick Install (Recommended)
+
 ```bash
 # Clone repository with submodules
 git clone --recurse-submodules https://github.com/your-org/urc-machiato-2026.git
@@ -64,6 +67,7 @@ pip install -e ".[docs]"
 ```
 
 ### Docker Deployment
+
 ```bash
 # Build and start services
 docker-compose -f docker-compose.prod.yml up -d
@@ -77,6 +81,7 @@ docker-compose ps
 ### Basic Operation
 
 #### Unified Launcher
+
 Use the single `./start.py` command for all components:
 
 ```bash
@@ -94,6 +99,7 @@ Use the single `./start.py` command for all components:
 ```
 
 #### Manual ROS2 Commands (Advanced)
+
 ```bash
 # Validate configuration
 python scripts/validate_config.py
@@ -108,9 +114,11 @@ ros2 topic echo /mission/status
 ```
 
 ### Web Interface
+
 Access the web interface at `http://localhost:5173` for real-time monitoring and control.
 
 ### Submodule Management
+
 ```bash
 # Update submodules to latest upstream
 ./scripts/manage_submodules.sh update
@@ -125,7 +133,9 @@ Access the web interface at `http://localhost:5173` for real-time monitoring and
 ## 📁 Directory Structure
 
 ### `/autonomy/`
+
 Main robotics autonomy codebase and development environment.
+
 - **`docs/`** - Technical documentation and guides
 - **`code/`** - Core autonomy subsystems (navigation, SLAM, computer vision, etc.)
 - **`config/`** - Autonomy-specific configuration files
@@ -134,30 +144,40 @@ Main robotics autonomy codebase and development environment.
 - **`tests/`** - Unit and integration tests
 
 ### `/bridges/`
+
 Data bridge components for inter-system communication:
+
 - `map_data_bridge.py` - Map data bridging
 - `slam_data_bridge.py` - SLAM data processing
 - `websocket_mission_bridge.py` - Mission control WebSocket bridge
 - `websocket_slam_bridge.py` - SLAM WebSocket bridge
 
 ### `/config/`
+
 Configuration files:
+
 - `rover.yaml` - Single unified configuration file with environment overrides
 
 ### `/docs/`
+
 Sphinx documentation system (regenerable from source).
 
 ### `/frontend/`
+
 Web interface for monitoring and control.
 
 ### `/launch/`
+
 ROS2 launch files for system components:
+
 - `mission_system.launch.py` - Complete mission system
 - `rover_simulation.launch.py` - Simulation environment
 - `slam_bridge.launch.py` - SLAM and mapping
 
 ### `/missions/`
+
 Mission implementations for URC competition:
+
 - `debug_mission.py` - Debug and testing mission
 - `delivery_mission.py` - Sample delivery mission
 - `follow_me_mission.py` - Follow-me mission
@@ -165,19 +185,25 @@ Mission implementations for URC competition:
 - `waypoint_navigation_mission.py` - GPS waypoint navigation
 
 ### `/robot_definition/`
+
 Robot hardware definitions, URDF files, and BOM.
 
 ### `/scripts/`
+
 Utility and management scripts:
+
 - `validate_config.py` - Configuration validation
 - `production_health_check.py` - System health checks
 - `extract-todos-to-issues.py` - GitHub issue management
 
 ### `/tests/`
+
 Comprehensive test suite with mocks and fixtures.
 
 ### `/vendor/`
+
 Git submodules for external components:
+
 - **`teleoperation/`**: Web-based teleoperation interface
 - **`control-systems/`**: STM32-based control systems for drive and arm motion
 

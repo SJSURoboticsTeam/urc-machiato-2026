@@ -11,22 +11,24 @@ Provides real-time terrain analysis for Mars-like environments using:
 Critical for URC competition terrain navigation.
 """
 
-import rclpy
-from rclpy.node import Node
-from sensor_msgs.msg import Image, PointCloud2, LaserScan
-from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import PoseStamped
-from std_msgs.msg import Header
-import cv2
-from cv_bridge import CvBridge
-import numpy as np
 import math
-from typing import Optional, Tuple, List, Dict
 import time
+from typing import Dict, List, Optional, Tuple
+
+import cv2
+import numpy as np
+import rclpy
+from cv_bridge import CvBridge
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import OccupancyGrid, Odometry
+from rclpy.node import Node
+from sensor_msgs.msg import Image, LaserScan, PointCloud2
+from std_msgs.msg import Header
 
 
 class TerrainType:
     """Terrain classification types for URC."""
+
     SAND = "sand"
     ROCK = "rock"
     SLOPE = "slope"
@@ -46,20 +48,20 @@ class TerrainAnalyzer(Node):
     """
 
     def __init__(self):
-        super().__init__('terrain_analyzer')
+        super().__init__("terrain_analyzer")
 
         # Parameters
-        self.declare_parameter('map_resolution', 0.1)  # meters per cell
-        self.declare_parameter('map_width', 20.0)      # meters
-        self.declare_parameter('map_height', 20.0)     # meters
-        self.declare_parameter('max_slope_angle', 30.0)  # degrees
-        self.declare_parameter('hazard_height_threshold', 0.3)  # meters
+        self.declare_parameter("map_resolution", 0.1)  # meters per cell
+        self.declare_parameter("map_width", 20.0)  # meters
+        self.declare_parameter("map_height", 20.0)  # meters
+        self.declare_parameter("max_slope_angle", 30.0)  # degrees
+        self.declare_parameter("hazard_height_threshold", 0.3)  # meters
 
-        self.map_resolution = self.get_parameter('map_resolution').value
-        self.map_width = self.get_parameter('map_width').value
-        self.map_height = self.get_parameter('map_height').value
-        self.max_slope = math.radians(self.get_parameter('max_slope_angle').value)
-        self.hazard_threshold = self.get_parameter('hazard_height_threshold').value
+        self.map_resolution = self.get_parameter("map_resolution").value
+        self.map_width = self.get_parameter("map_width").value
+        self.map_height = self.get_parameter("map_height").value
+        self.max_slope = math.radians(self.get_parameter("max_slope_angle").value)
+        self.hazard_threshold = self.get_parameter("hazard_height_threshold").value
 
         # CV bridge for image processing
         self.bridge = CvBridge()
@@ -71,23 +73,34 @@ class TerrainAnalyzer(Node):
 
         # Subscribers (optimized - use centralized vision processing)
         self.terrain_map_sub = self.create_subscription(
-            OccupancyGrid, '/vision/terrain_map', self.terrain_map_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            OccupancyGrid,
+            "/vision/terrain_map",
+            self.terrain_map_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.pointcloud_sub = self.create_subscription(
-            PointCloud2, '/camera/depth/points', self.pointcloud_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            PointCloud2,
+            "/camera/depth/points",
+            self.pointcloud_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.odom_sub = self.create_subscription(
-            Odometry, '/odom', self.odom_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            Odometry,
+            "/odom",
+            self.odom_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         # Publishers
         self.traversability_pub = self.create_publisher(
-            OccupancyGrid, '/terrain/traversability', 10)
+            OccupancyGrid, "/terrain/traversability", 10
+        )
 
         self.terrain_class_pub = self.create_publisher(
-            Image, '/terrain/classification', 10)
+            Image, "/terrain/classification", 10
+        )
 
         # Processing rate control
         self.last_processing_time = 0
@@ -97,7 +110,9 @@ class TerrainAnalyzer(Node):
         self.initialize_terrain_map()
 
         self.get_logger().info("Terrain Analyzer initialized")
-        self.get_logger().info(f"Map size: {self.map_width}x{self.map_height}m @ {self.map_resolution}m/cell")
+        self.get_logger().info(
+            f"Map size: {self.map_width}x{self.map_height}m @ {self.map_resolution}m/cell"
+        )
 
     def initialize_terrain_map(self):
         """Initialize the traversability map."""
@@ -105,7 +120,7 @@ class TerrainAnalyzer(Node):
         height_cells = int(self.map_height / self.map_resolution)
 
         self.terrain_map = OccupancyGrid()
-        self.terrain_map.header.frame_id = 'map'
+        self.terrain_map.header.frame_id = "map"
         self.terrain_map.info.resolution = self.map_resolution
         self.terrain_map.info.width = width_cells
         self.terrain_map.info.height = height_cells
@@ -158,7 +173,9 @@ class TerrainAnalyzer(Node):
             hazard_map = self.detect_hazards(height_map)
 
             # Update traversability map with 3D data
-            self.update_traversability_from_pointcloud(slope_map, hazard_map, msg.header)
+            self.update_traversability_from_pointcloud(
+                slope_map, hazard_map, msg.header
+            )
 
         except Exception as e:
             self.get_logger().error(f"Point cloud processing error: {e}")
@@ -249,7 +266,9 @@ class TerrainAnalyzer(Node):
 
         return hazard_map
 
-    def update_traversability_from_image(self, classification: np.ndarray, header: Header):
+    def update_traversability_from_image(
+        self, classification: np.ndarray, header: Header
+    ):
         """Update traversability map with image-based classification."""
         if not self.terrain_map or not self.robot_pose:
             return
@@ -265,14 +284,18 @@ class TerrainAnalyzer(Node):
                 terrain_type = classification[i, j]
 
                 # Convert pixel coordinates to world coordinates
-                world_x = self.robot_pose.position.x + (j - width/2) * 0.01  # 1cm per pixel
-                world_y = self.robot_pose.position.y + (i - height/2) * 0.01
+                world_x = (
+                    self.robot_pose.position.x + (j - width / 2) * 0.01
+                )  # 1cm per pixel
+                world_y = self.robot_pose.position.y + (i - height / 2) * 0.01
 
                 # Update map cell
                 cost = self.terrain_type_to_cost(terrain_type)
                 self.update_map_cell(world_x, world_y, cost)
 
-    def update_traversability_from_pointcloud(self, slope_map: np.ndarray, hazard_map: np.ndarray, header: Header):
+    def update_traversability_from_pointcloud(
+        self, slope_map: np.ndarray, hazard_map: np.ndarray, header: Header
+    ):
         """Update traversability map with 3D terrain data."""
         if not self.terrain_map:
             return
@@ -286,8 +309,10 @@ class TerrainAnalyzer(Node):
                 hazard = hazard_map[i, j]
 
                 # Convert grid coordinates to world coordinates
-                world_x = self.robot_pose.position.x + (j - width/2) * 0.1  # 10cm per cell
-                world_y = self.robot_pose.position.y + (i - height/2) * 0.1
+                world_x = (
+                    self.robot_pose.position.x + (j - width / 2) * 0.1
+                )  # 10cm per cell
+                world_y = self.robot_pose.position.y + (i - height / 2) * 0.1
 
                 # Calculate cost based on slope and hazards
                 cost = 0
@@ -296,7 +321,9 @@ class TerrainAnalyzer(Node):
                 elif hazard > 0:
                     cost = 100  # Hazard
                 else:
-                    cost = min(100, int(slope * 180.0 / math.pi))  # Cost based on slope angle
+                    cost = min(
+                        100, int(slope * 180.0 / math.pi)
+                    )  # Cost based on slope angle
 
                 self.update_map_cell(world_x, world_y, cost)
 
@@ -307,10 +334,10 @@ class TerrainAnalyzer(Node):
     def terrain_type_to_cost(self, terrain_type: int) -> int:
         """Convert terrain classification to traversability cost."""
         cost_map = {
-            0: 10,   # Sand - easy traversal
-            1: 50,   # Rock - moderate difficulty
-            2: 80,   # Slope - challenging
-            3: 100   # Hazard - avoid
+            0: 10,  # Sand - easy traversal
+            1: 50,  # Rock - moderate difficulty
+            2: 80,  # Slope - challenging
+            3: 100,  # Hazard - avoid
         }
         return cost_map.get(terrain_type, 50)  # Default moderate cost
 
@@ -325,8 +352,10 @@ class TerrainAnalyzer(Node):
         cell_y = int(map_y / self.map_resolution)
 
         # Check bounds
-        if (0 <= cell_x < self.terrain_map.info.width and
-            0 <= cell_y < self.terrain_map.info.height):
+        if (
+            0 <= cell_x < self.terrain_map.info.width
+            and 0 <= cell_y < self.terrain_map.info.height
+        ):
 
             # Update cell value (use maximum cost seen)
             cell_index = cell_y * self.terrain_map.info.width + cell_x
@@ -348,8 +377,10 @@ class TerrainAnalyzer(Node):
         cell_y = int(map_y / self.map_resolution)
 
         # Check bounds
-        if (0 <= cell_x < self.terrain_map.info.width and
-            0 <= cell_y < self.terrain_map.info.height):
+        if (
+            0 <= cell_x < self.terrain_map.info.width
+            and 0 <= cell_y < self.terrain_map.info.height
+        ):
 
             cell_index = cell_y * self.terrain_map.info.width + cell_x
             cost = self.terrain_map.data[cell_index]
@@ -373,5 +404,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,16 +12,16 @@ Author: URC 2026 Autonomy Team
 
 import asyncio
 import json
-import time
-import threading
-import unittest
-from unittest.mock import Mock, patch, MagicMock
-import sys
 import os
-from typing import Dict, List, Any, Optional
+import sys
+import threading
+import time
+import unittest
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock, patch
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 
 class EnhancedAdvancedSystemsTest(unittest.TestCase):
@@ -42,11 +42,11 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
     def _init_enhanced_systems(self):
         """Initialize all enhanced advanced systems."""
         # Import and initialize managers
-        from core.state_synchronization_manager import DistributedStateManager
+        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
         from core.recovery_coordinator import RecoveryCoordinator
+        from core.state_synchronization_manager import DistributedStateManager
 
         # Create state managers with enhanced election
         self.state_mgr_primary = DistributedStateManager("competition_bridge")
@@ -68,7 +68,9 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
         # Create recovery coordinator
         self.recovery_coordinator = RecoveryCoordinator()
-        self.recovery_coordinator.register_system_manager("state", self.state_mgr_primary)
+        self.recovery_coordinator.register_system_manager(
+            "state", self.state_mgr_primary
+        )
         self.recovery_coordinator.register_system_manager("dds", self.dds_mgr)
         self.recovery_coordinator.register_system_manager("config", self.config_mgr)
         self.recovery_coordinator.register_system_manager("websocket", self.ws_mgr)
@@ -96,23 +98,35 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         self.state_mgr_tertiary.register_node("tertiary_bridge")
 
         # Mark all nodes as healthy for testing
-        for mgr in [self.state_mgr_primary, self.state_mgr_secondary, self.state_mgr_tertiary]:
-            for node_id in ["competition_bridge", "secondary_bridge", "tertiary_bridge"]:
+        for mgr in [
+            self.state_mgr_primary,
+            self.state_mgr_secondary,
+            self.state_mgr_tertiary,
+        ]:
+            for node_id in [
+                "competition_bridge",
+                "secondary_bridge",
+                "tertiary_bridge",
+            ]:
                 if node_id in mgr.nodes:
                     mgr.nodes[node_id].is_healthy = True
 
         # Set up different state versions to test election priority
         # tertiary_bridge should win due to higher state version and name
-        self.state_mgr_primary.update_state('test_key', 'primary_value')
+        self.state_mgr_primary.update_state("test_key", "primary_value")
         time.sleep(0.01)
 
-        self.state_mgr_secondary.update_state('test_key', 'secondary_value')
-        self.state_mgr_secondary.update_state('test_key2', 'secondary_value2')  # Higher version
+        self.state_mgr_secondary.update_state("test_key", "secondary_value")
+        self.state_mgr_secondary.update_state(
+            "test_key2", "secondary_value2"
+        )  # Higher version
         time.sleep(0.01)
 
-        self.state_mgr_tertiary.update_state('test_key', 'tertiary_value')
-        self.state_mgr_tertiary.update_state('test_key2', 'tertiary_value2')
-        self.state_mgr_tertiary.update_state('test_key3', 'tertiary_value3')  # Highest version
+        self.state_mgr_tertiary.update_state("test_key", "tertiary_value")
+        self.state_mgr_tertiary.update_state("test_key2", "tertiary_value2")
+        self.state_mgr_tertiary.update_state(
+            "test_key3", "tertiary_value3"
+        )  # Highest version
         time.sleep(0.01)
 
         # Check state versions
@@ -125,8 +139,12 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         print(f"Tertiary version: {tertiary_status['state_version']}")
 
         # Tertiary should have highest version
-        self.assertGreater(tertiary_status['state_version'], secondary_status['state_version'])
-        self.assertGreater(tertiary_status['state_version'], primary_status['state_version'])
+        self.assertGreater(
+            tertiary_status["state_version"], secondary_status["state_version"]
+        )
+        self.assertGreater(
+            tertiary_status["state_version"], primary_status["state_version"]
+        )
 
         # Test enhanced election - tertiary should win
         self.state_mgr_primary._trigger_election()
@@ -140,14 +158,29 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         tertiary_status_after = self.state_mgr_tertiary.get_system_status()
 
         # Only one should be master
-        master_count = sum(1 for status in [primary_status_after, secondary_status_after, tertiary_status_after]
-                          if status['role'] == 'MASTER')
-        self.assertEqual(master_count, 1, "Should have exactly one master after election")
+        master_count = sum(
+            1
+            for status in [
+                primary_status_after,
+                secondary_status_after,
+                tertiary_status_after,
+            ]
+            if status["role"] == "MASTER"
+        )
+        self.assertEqual(
+            master_count, 1, "Should have exactly one master after election"
+        )
 
         # Tertiary should be the master (highest priority)
-        self.assertEqual(tertiary_status_after['role'], 'MASTER', "Tertiary should be master")
-        self.assertEqual(primary_status_after['role'], 'SLAVE', "Primary should be slave")
-        self.assertEqual(secondary_status_after['role'], 'SLAVE', "Secondary should be slave")
+        self.assertEqual(
+            tertiary_status_after["role"], "MASTER", "Tertiary should be master"
+        )
+        self.assertEqual(
+            primary_status_after["role"], "SLAVE", "Primary should be slave"
+        )
+        self.assertEqual(
+            secondary_status_after["role"], "SLAVE", "Secondary should be slave"
+        )
 
         # Cleanup
         self.state_mgr_primary.stop()
@@ -160,7 +193,10 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         """Test enhanced WebSocket health monitoring."""
         print("🌐 Testing Enhanced WebSocket Health Monitoring...")
 
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
 
         # Create endpoints with different characteristics
         endpoints = [
@@ -168,20 +204,20 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
                 name="primary",
                 port=8080,
                 priority=EndpointPriority.PRIMARY,
-                max_clients=50
+                max_clients=50,
             ),
             WebSocketEndpoint(
                 name="secondary",
                 port=8081,
                 priority=EndpointPriority.SECONDARY,
-                max_clients=25
+                max_clients=25,
             ),
             WebSocketEndpoint(
                 name="tertiary",
                 port=8082,
                 priority=EndpointPriority.TERTIARY,
-                max_clients=10
-            )
+                max_clients=10,
+            ),
         ]
 
         for endpoint in endpoints:
@@ -193,11 +229,15 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
         # Test initial health (all should be healthy)
         status = self.ws_mgr.get_system_status()
-        for ep_name, ep_data in status['endpoints'].items():
-            self.assertEqual(ep_data['health'], 'HEALTHY', f"{ep_name} should start healthy")
+        for ep_name, ep_data in status["endpoints"].items():
+            self.assertEqual(
+                ep_data["health"], "HEALTHY", f"{ep_name} should start healthy"
+            )
 
         # Simulate load on primary endpoint
-        primary_ep = next(ep for ep in self.ws_mgr.endpoints.values() if ep.name == 'primary')
+        primary_ep = next(
+            ep for ep in self.ws_mgr.endpoints.values() if ep.name == "primary"
+        )
         primary_ep.clients = [Mock()] * 45  # 90% capacity
 
         # Run health check
@@ -205,30 +245,42 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
         # Primary should be degraded due to high load
         status_after_load = self.ws_mgr.get_system_status()
-        primary_data = status_after_load['endpoints']['primary']
-        self.assertEqual(primary_data['health'], 'DEGRADED', "Primary should be degraded under high load")
+        primary_data = status_after_load["endpoints"]["primary"]
+        self.assertEqual(
+            primary_data["health"],
+            "DEGRADED",
+            "Primary should be degraded under high load",
+        )
 
         # Simulate very high load
         primary_ep.clients = [Mock()] * 55  # Over capacity
 
         self.ws_mgr._check_endpoint_health()
         status_overload = self.ws_mgr.get_system_status()
-        primary_overload = status_overload['endpoints']['primary']
-        self.assertEqual(primary_overload['health'], 'UNHEALTHY', "Primary should be unhealthy when overloaded")
+        primary_overload = status_overload["endpoints"]["primary"]
+        self.assertEqual(
+            primary_overload["health"],
+            "UNHEALTHY",
+            "Primary should be unhealthy when overloaded",
+        )
 
         # Simulate primary failure
         primary_ep.is_running = False
         self.ws_mgr._check_endpoint_health()
 
         status_failure = self.ws_mgr.get_system_status()
-        primary_failure = status_failure['endpoints']['primary']
-        self.assertEqual(primary_failure['health'], 'DOWN', "Primary should be down when not running")
+        primary_failure = status_failure["endpoints"]["primary"]
+        self.assertEqual(
+            primary_failure["health"], "DOWN", "Primary should be down when not running"
+        )
 
         # Test failover handling
         self.ws_mgr._handle_primary_failure()
 
         # Secondary should now have PRIMARY priority (simulated promotion)
-        secondary_ep = next(ep for ep in self.ws_mgr.endpoints.values() if ep.name == 'secondary')
+        secondary_ep = next(
+            ep for ep in self.ws_mgr.endpoints.values() if ep.name == "secondary"
+        )
         # Note: In real implementation, this would update routing/load balancers
 
         # Stop redundancy system
@@ -255,7 +307,9 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
         # Test recovery status before any recovery
         initial_status = self.recovery_coordinator.get_recovery_status()
-        self.assertFalse(initial_status['active'], "Recovery should not be active initially")
+        self.assertFalse(
+            initial_status["active"], "Recovery should not be active initially"
+        )
         # Phase may be ASSESSMENT if systems are being assessed, but that's OK
         # Just check that it's not in an active recovery state
 
@@ -266,24 +320,37 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         # Wait for recovery to complete
         timeout = 30
         start_time = time.time()
-        while self.recovery_coordinator.recovery_active and (time.time() - start_time) < timeout:
+        while (
+            self.recovery_coordinator.recovery_active
+            and (time.time() - start_time) < timeout
+        ):
             time.sleep(0.1)
 
         # Check that recovery completed
-        self.assertFalse(self.recovery_coordinator.recovery_active, "Recovery should complete")
+        self.assertFalse(
+            self.recovery_coordinator.recovery_active, "Recovery should complete"
+        )
 
         # Check progress updates
         self.assertGreater(len(progress_updates), 0, "Should have progress updates")
 
         # Check completion status
-        self.assertEqual(len(completion_status), 1, "Should have one completion callback")
+        self.assertEqual(
+            len(completion_status), 1, "Should have one completion callback"
+        )
         recovery_success, error_msg = completion_status[0]
-        self.assertTrue(recovery_success, f"Recovery should succeed, but got error: {error_msg}")
+        self.assertTrue(
+            recovery_success, f"Recovery should succeed, but got error: {error_msg}"
+        )
 
         # Check final status
         final_status = self.recovery_coordinator.get_recovery_status()
-        self.assertEqual(final_status['current_phase'], 'COMPLETE', "Recovery should be complete")
-        self.assertGreater(len(final_status['checkpoints']), 0, "Should have recovery checkpoints")
+        self.assertEqual(
+            final_status["current_phase"], "COMPLETE", "Recovery should be complete"
+        )
+        self.assertGreater(
+            len(final_status["checkpoints"]), 0, "Should have recovery checkpoints"
+        )
 
         print("  ✅ Coordinated recovery system test passed")
 
@@ -309,7 +376,11 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
         self.dds_mgr.register_node("competition_bridge", "test_command")
 
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
+
         primary_ep = WebSocketEndpoint("primary", 8080, EndpointPriority.PRIMARY)
         primary_ep.is_running = True  # Mark as running
         self.ws_mgr.add_endpoint(primary_ep)
@@ -330,19 +401,28 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         dds_status = self.dds_mgr.get_system_status()
         ws_status = self.ws_mgr.get_system_status()
 
-        print(f"    Pre-recovery: State master={state_status.get('master_node')}, DDS domain={dds_status.get('current_domain')}")
+        print(
+            f"    Pre-recovery: State master={state_status.get('master_node')}, DDS domain={dds_status.get('current_domain')}"
+        )
 
         # Initiate coordinated recovery
-        recovery_success = self.recovery_coordinator.initiate_recovery("Multi-system failure test")
+        recovery_success = self.recovery_coordinator.initiate_recovery(
+            "Multi-system failure test"
+        )
 
         # Wait for recovery
         timeout = 30
         start_time = time.time()
-        while self.recovery_coordinator.recovery_active and (time.time() - start_time) < timeout:
+        while (
+            self.recovery_coordinator.recovery_active
+            and (time.time() - start_time) < timeout
+        ):
             time.sleep(0.1)
 
         # Verify recovery worked
-        self.assertTrue(recovery_success, "Coordinated recovery should handle multi-system failure")
+        self.assertTrue(
+            recovery_success, "Coordinated recovery should handle multi-system failure"
+        )
 
         # Check systems are recovered
         final_state_status = self.state_mgr_primary.get_system_status()
@@ -350,17 +430,30 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         final_ws_status = self.ws_mgr.get_system_status()
 
         # State system should have a master
-        self.assertIsNotNone(final_state_status.get('master_node'), "State system should recover with master")
+        self.assertIsNotNone(
+            final_state_status.get("master_node"),
+            "State system should recover with master",
+        )
 
         # DDS system should be on a valid domain
-        self.assertIsNotNone(final_dds_status.get('current_domain'), "DDS system should recover with valid domain")
+        self.assertIsNotNone(
+            final_dds_status.get("current_domain"),
+            "DDS system should recover with valid domain",
+        )
 
         # WebSocket should have at least one healthy endpoint
-        healthy_endpoints = sum(1 for ep in final_ws_status.get('endpoints', {}).values()
-                              if ep.get('is_healthy', False))
-        self.assertGreater(healthy_endpoints, 0, "WebSocket system should have healthy endpoints")
+        healthy_endpoints = sum(
+            1
+            for ep in final_ws_status.get("endpoints", {}).values()
+            if ep.get("is_healthy", False)
+        )
+        self.assertGreater(
+            healthy_endpoints, 0, "WebSocket system should have healthy endpoints"
+        )
 
-        print(f"    Post-recovery: State master={final_state_status.get('master_node')}, DDS domain={final_dds_status.get('current_domain')}, WS healthy={healthy_endpoints}")
+        print(
+            f"    Post-recovery: State master={final_state_status.get('master_node')}, DDS domain={final_dds_status.get('current_domain')}, WS healthy={healthy_endpoints}"
+        )
 
         # Cleanup
         self.state_mgr_primary.stop()
@@ -382,7 +475,7 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
         # Perform many state updates
         for i in range(operations):
-            self.state_mgr_primary.update_state(f'perf_test_{i}', f'value_{i}')
+            self.state_mgr_primary.update_state(f"perf_test_{i}", f"value_{i}")
 
         state_time = time.time() - start_time
         state_ops_per_sec = operations / state_time
@@ -394,7 +487,9 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         operations = 50
 
         for i in range(operations):
-            self.config_mgr.update_node_config("competition_bridge", 'telemetry_rate_hz', 5.0 + i)
+            self.config_mgr.update_node_config(
+                "competition_bridge", "telemetry_rate_hz", 5.0 + i
+            )
 
         config_time = time.time() - start_time
         config_ops_per_sec = operations / config_time
@@ -414,9 +509,15 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         print(".2f")
 
         # Verify performance targets
-        self.assertGreater(state_ops_per_sec, 100, "State sync should handle >100 ops/sec")
-        self.assertGreater(config_ops_per_sec, 50, "Config updates should handle >50 ops/sec")
-        self.assertGreater(dds_ops_per_sec, 5, "DDS operations should handle >5 ops/sec")
+        self.assertGreater(
+            state_ops_per_sec, 100, "State sync should handle >100 ops/sec"
+        )
+        self.assertGreater(
+            config_ops_per_sec, 50, "Config updates should handle >50 ops/sec"
+        )
+        self.assertGreater(
+            dds_ops_per_sec, 5, "DDS operations should handle >5 ops/sec"
+        )
 
         # Cleanup
         self.state_mgr_primary.stop()
@@ -427,15 +528,18 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         """Clean up after tests."""
         # Stop any running systems
         try:
-            if hasattr(self, 'state_mgr_primary') and self.state_mgr_primary.running:
+            if hasattr(self, "state_mgr_primary") and self.state_mgr_primary.running:
                 self.state_mgr_primary.stop()
-            if hasattr(self, 'state_mgr_secondary') and self.state_mgr_secondary.running:
+            if (
+                hasattr(self, "state_mgr_secondary")
+                and self.state_mgr_secondary.running
+            ):
                 self.state_mgr_secondary.stop()
-            if hasattr(self, 'state_mgr_tertiary') and self.state_mgr_tertiary.running:
+            if hasattr(self, "state_mgr_tertiary") and self.state_mgr_tertiary.running:
                 self.state_mgr_tertiary.stop()
-            if hasattr(self, 'dds_mgr') and self.dds_mgr.running:
+            if hasattr(self, "dds_mgr") and self.dds_mgr.running:
                 self.dds_mgr.stop()
-            if hasattr(self, 'ws_mgr'):
+            if hasattr(self, "ws_mgr"):
                 self.ws_mgr.stop_redundancy_system()
         except:
             pass  # Ignore cleanup errors in tests
@@ -486,7 +590,9 @@ def run_enhanced_tests():
                 print(f"   - {test}: {traceback[:100]}...")
 
     print(f"\n⏱️  Total Tests Run: {result.testsRun}")
-    print(f"⏱️  Time Taken: {time.time() - time.time():.2f}s")  # This won't be accurate since we reset time
+    print(
+        f"⏱️  Time Taken: {time.time() - time.time():.2f}s"
+    )  # This won't be accurate since we reset time
 
     return result.wasSuccessful()
 

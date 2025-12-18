@@ -7,19 +7,20 @@ Based on teleoperation system CAN serial communication protocol.
 Integrates with vendor/control-systems STM32 firmware.
 """
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-from geometry_msgs.msg import Twist, TwistStamped
-from sensor_msgs.msg import JointState, BatteryState, Imu, NavSatFix
-from std_msgs.msg import Float32MultiArray, String, Bool
-from nav_msgs.msg import Odometry
-import serial
-import time
-import threading
 import json
-from typing import Optional, Dict, Any
 import math
+import threading
+import time
+from typing import Any, Dict, Optional
+
+import rclpy
+import serial
+from geometry_msgs.msg import Twist, TwistStamped
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import BatteryState, Imu, JointState, NavSatFix
+from std_msgs.msg import Bool, Float32MultiArray, String
 
 
 class HardwareInterfaceNode(Node):
@@ -31,19 +32,19 @@ class HardwareInterfaceNode(Node):
     """
 
     def __init__(self):
-        super().__init__('hardware_interface')
+        super().__init__("hardware_interface")
 
         # Declare parameters
-        self.declare_parameter('can_port', '/dev/ttyACM0')
-        self.declare_parameter('can_baudrate', 115200)
-        self.declare_parameter('control_rate_hz', 50.0)
-        self.declare_parameter('telemetry_rate_hz', 10.0)
+        self.declare_parameter("can_port", "/dev/ttyACM0")
+        self.declare_parameter("can_baudrate", 115200)
+        self.declare_parameter("control_rate_hz", 50.0)
+        self.declare_parameter("telemetry_rate_hz", 10.0)
 
         # Get parameters
-        self.can_port = self.get_parameter('can_port').value
-        self.can_baudrate = self.get_parameter('can_baudrate').value
-        self.control_rate = self.get_parameter('control_rate_hz').value
-        self.telemetry_rate = self.get_parameter('telemetry_rate_hz').value
+        self.can_port = self.get_parameter("can_port").value
+        self.can_baudrate = self.get_parameter("can_baudrate").value
+        self.control_rate = self.get_parameter("control_rate_hz").value
+        self.telemetry_rate = self.get_parameter("telemetry_rate_hz").value
 
         # CAN serial connection (based on teleoperation can_serial.py)
         self.can_serial = None
@@ -53,58 +54,70 @@ class HardwareInterfaceNode(Node):
         control_qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=5
+            depth=5,
         )
 
         sensor_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
-            depth=1
+            depth=1,
         )
 
         # Publishers (data FROM hardware TO autonomy)
         self.joint_state_pub = self.create_publisher(
-            JointState, '/hardware/joint_states', sensor_qos)
+            JointState, "/hardware/joint_states", sensor_qos
+        )
 
         self.chassis_velocity_pub = self.create_publisher(
-            TwistStamped, '/hardware/chassis_velocity', sensor_qos)
+            TwistStamped, "/hardware/chassis_velocity", sensor_qos
+        )
 
         self.motor_temperatures_pub = self.create_publisher(
-            Float32MultiArray, '/hardware/motor_temperatures', sensor_qos)
+            Float32MultiArray, "/hardware/motor_temperatures", sensor_qos
+        )
 
         self.battery_state_pub = self.create_publisher(
-            BatteryState, '/hardware/battery_state', sensor_qos)
+            BatteryState, "/hardware/battery_state", sensor_qos
+        )
 
-        self.imu_pub = self.create_publisher(
-            Imu, '/hardware/imu', sensor_qos)
+        self.imu_pub = self.create_publisher(Imu, "/hardware/imu", sensor_qos)
 
-        self.gps_pub = self.create_publisher(
-            NavSatFix, '/hardware/gps', sensor_qos)
+        self.gps_pub = self.create_publisher(NavSatFix, "/hardware/gps", sensor_qos)
 
         self.system_status_pub = self.create_publisher(
-            String, '/hardware/system_status', sensor_qos)
+            String, "/hardware/system_status", sensor_qos
+        )
 
         # Subscribers (commands FROM autonomy TO hardware)
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel', self.cmd_vel_callback, control_qos)
+            Twist, "/cmd_vel", self.cmd_vel_callback, control_qos
+        )
 
         self.arm_cmd_sub = self.create_subscription(
-            String, '/hardware/arm_command', self.arm_cmd_callback, control_qos)
+            String, "/hardware/arm_command", self.arm_cmd_callback, control_qos
+        )
 
         self.excavate_cmd_sub = self.create_subscription(
-            String, '/hardware/excavate_command', self.excavate_cmd_callback, control_qos)
+            String,
+            "/hardware/excavate_command",
+            self.excavate_cmd_callback,
+            control_qos,
+        )
 
         # Emergency stop subscriber
         self.emergency_stop_sub = self.create_subscription(
-            Bool, '/emergency_stop', self.emergency_stop_callback, control_qos)
+            Bool, "/emergency_stop", self.emergency_stop_callback, control_qos
+        )
 
         # Control loop timer
         self.control_timer = self.create_timer(
-            1.0 / self.control_rate, self.control_loop)
+            1.0 / self.control_rate, self.control_loop
+        )
 
         # Telemetry timer
         self.telemetry_timer = self.create_timer(
-            1.0 / self.telemetry_rate, self.telemetry_loop)
+            1.0 / self.telemetry_rate, self.telemetry_loop
+        )
 
         # Connect to CAN serial on startup
         self.connect_can_serial()
@@ -121,7 +134,10 @@ class HardwareInterfaceNode(Node):
         try:
             # Import the CAN serial class from teleoperation system
             import sys
-            sys.path.append('/home/ubuntu/urc-machiato-2026/vendor/teleoperation/server')
+
+            sys.path.append(
+                "/home/ubuntu/urc-machiato-2026/vendor/teleoperation/server"
+            )
             from can_serial import CanSerial
 
             self.can_serial = CanSerial(self.can_port)
@@ -281,8 +297,13 @@ class HardwareInterfaceNode(Node):
                 # For now, publish mock data
                 joint_state = JointState()
                 joint_state.header.stamp = self.get_clock().now().to_msg()
-                joint_state.header.frame_id = 'base_link'
-                joint_state.name = ['left_wheel', 'right_wheel', 'arm_joint1', 'arm_joint2']
+                joint_state.header.frame_id = "base_link"
+                joint_state.name = [
+                    "left_wheel",
+                    "right_wheel",
+                    "arm_joint1",
+                    "arm_joint2",
+                ]
                 joint_state.position = [0.0, 0.0, 0.0, 0.0]  # Mock positions
                 joint_state.velocity = [0.0, 0.0, 0.0, 0.0]  # Mock velocities
 
@@ -296,7 +317,7 @@ class HardwareInterfaceNode(Node):
         try:
             twist_stamped = TwistStamped()
             twist_stamped.header.stamp = self.get_clock().now().to_msg()
-            twist_stamped.header.frame_id = 'odom'
+            twist_stamped.header.frame_id = "odom"
 
             # Mock velocity data (would read from CAN)
             twist_stamped.twist.linear.x = 0.0
@@ -337,7 +358,7 @@ class HardwareInterfaceNode(Node):
         try:
             imu_msg = Imu()
             imu_msg.header.stamp = self.get_clock().now().to_msg()
-            imu_msg.header.frame_id = 'imu_link'
+            imu_msg.header.frame_id = "imu_link"
 
             # Mock IMU data
             imu_msg.linear_acceleration.x = 0.0
@@ -378,12 +399,14 @@ class HardwareInterfaceNode(Node):
 
         # Publish system status
         status_msg = String()
-        status_msg.data = json.dumps({
-            'hardware_connected': self.can_connected,
-            'system_healthy': self.system_healthy,
-            'emergency_stop': self.emergency_stop_active,
-            'timestamp': self.get_clock().now().nanoseconds / 1e9
-        })
+        status_msg.data = json.dumps(
+            {
+                "hardware_connected": self.can_connected,
+                "system_healthy": self.system_healthy,
+                "emergency_stop": self.emergency_stop_active,
+                "timestamp": self.get_clock().now().nanoseconds / 1e9,
+            }
+        )
         self.system_status_pub.publish(status_msg)
 
     def destroy_node(self):
@@ -414,5 +437,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

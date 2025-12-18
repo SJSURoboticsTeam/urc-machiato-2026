@@ -7,17 +7,13 @@ and critical system state broadcasting during communication failures.
 """
 
 import time
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import rclpy
+from constants import DEFAULT_TELEMETRY_RATE_HZ, WEBSOCKET_PING_INTERVAL
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 from std_msgs.msg import Bool
-
-from constants import (
-    DEFAULT_TELEMETRY_RATE_HZ,
-    WEBSOCKET_PING_INTERVAL,
-)
 
 
 class EmergencyCommunicator:
@@ -109,7 +105,7 @@ class EmergencyCommunicator:
         self.emergency_communication["low_bandwidth_mode"] = True
 
         # Reduce telemetry rate
-        original_rate = getattr(self, 'telemetry_rate', DEFAULT_TELEMETRY_RATE_HZ)
+        original_rate = getattr(self, "telemetry_rate", DEFAULT_TELEMETRY_RATE_HZ)
         self.emergency_communication["original_telemetry_rate"] = original_rate
         self._reduce_telemetry_rate()
 
@@ -136,7 +132,7 @@ class EmergencyCommunicator:
         # Restore normal telemetry rate
         if "original_telemetry_rate" in self.emergency_communication:
             original_rate = self.emergency_communication["original_telemetry_rate"]
-            setattr(self, 'telemetry_rate', original_rate)
+            setattr(self, "telemetry_rate", original_rate)
             self.logger.info(f"Restored normal telemetry rate: {original_rate}Hz")
 
         self.logger.info("Emergency communication mode deactivated")
@@ -147,10 +143,10 @@ class EmergencyCommunicator:
 
         # Store original rate if not already stored
         if "original_telemetry_rate" not in self.emergency_communication:
-            current_rate = getattr(self, 'telemetry_rate', DEFAULT_TELEMETRY_RATE_HZ)
+            current_rate = getattr(self, "telemetry_rate", DEFAULT_TELEMETRY_RATE_HZ)
             self.emergency_communication["original_telemetry_rate"] = current_rate
 
-        setattr(self, 'telemetry_rate', reduced_rate)
+        setattr(self, "telemetry_rate", reduced_rate)
         self.logger.info(
             f"Reduced telemetry rate to {reduced_rate}Hz for emergency mode"
         )
@@ -212,7 +208,9 @@ class EmergencyCommunicator:
             True if failover successful, False otherwise
         """
         current_time = time.time()
-        time_since_last_attempt = current_time - self.redundancy_manager["last_failover_attempt"]
+        time_since_last_attempt = (
+            current_time - self.redundancy_manager["last_failover_attempt"]
+        )
 
         if time_since_last_attempt < self.redundancy_manager["failover_cooldown"]:
             self.logger.info("Failover on cooldown")
@@ -228,7 +226,9 @@ class EmergencyCommunicator:
                 if success:
                     self.redundancy_manager["failover_active"] = True
                     self.redundancy_manager["current_failover_level"] = 1
-                    self.logger.info(f"Failover successful: switched to channel {channel}")
+                    self.logger.info(
+                        f"Failover successful: switched to channel {channel}"
+                    )
                     return True
 
         # Step 2: Failover to 900 MHz band
@@ -269,7 +269,7 @@ class EmergencyCommunicator:
             # Try to switch back to 2.4 GHz
             if self.safe_channel_switch(self.redundancy_manager["primary_channel"]):
                 # Switch back to 2.4 GHz band
-                setattr(self, 'current_urc_band', '2.4ghz')
+                setattr(self, "current_urc_band", "2.4ghz")
                 self.redundancy_manager["current_failover_level"] = 1
                 current_level = 1
 
@@ -295,9 +295,14 @@ class EmergencyCommunicator:
         """
         # Check cooldown
         current_time = time.time()
-        time_since_last_switch = current_time - self.channel_safety_manager["last_channel_switch"]
+        time_since_last_switch = (
+            current_time - self.channel_safety_manager["last_channel_switch"]
+        )
 
-        if time_since_last_switch < self.channel_safety_manager["channel_switch_cooldown"]:
+        if (
+            time_since_last_switch
+            < self.channel_safety_manager["channel_switch_cooldown"]
+        ):
             self.logger.info("Channel switch on cooldown")
             return False
 
@@ -345,7 +350,9 @@ class EmergencyCommunicator:
             True if channel is safe, False otherwise
         """
         # Check recent quality history
-        quality_history = self.channel_safety_manager["channel_quality_history"].get(channel, [])
+        quality_history = self.channel_safety_manager["channel_quality_history"].get(
+            channel, []
+        )
         if quality_history and len(quality_history) >= 3:
             recent_avg = sum(quality_history[-3:]) / 3
             return recent_avg > 0.5  # Minimum quality threshold
@@ -465,8 +472,8 @@ class EmergencyCommunicator:
         """
         try:
             # Switch URC band configuration
-            setattr(self, 'current_urc_band', '900mhz')
-            setattr(self, 'current_urc_subband', 'low')
+            setattr(self, "current_urc_band", "900mhz")
+            setattr(self, "current_urc_subband", "low")
             self.logger.info("Switched to 900 MHz emergency band")
             return True
         except Exception as e:
@@ -510,14 +517,14 @@ class EmergencyCommunicator:
         """Reduce communication load during high interference."""
         # Temporarily reduce telemetry rate
         if not self.emergency_communication["active"]:
-            current_rate = getattr(self, 'telemetry_rate', DEFAULT_TELEMETRY_RATE_HZ)
+            current_rate = getattr(self, "telemetry_rate", DEFAULT_TELEMETRY_RATE_HZ)
             reduced_rate = max(1.0, current_rate * 0.5)  # Reduce by half
 
             # Store original rate
             if "original_telemetry_rate" not in self.emergency_communication:
                 self.emergency_communication["original_telemetry_rate"] = current_rate
 
-            setattr(self, 'telemetry_rate', reduced_rate)
+            setattr(self, "telemetry_rate", reduced_rate)
             self.logger.info(
                 f"Temporarily reduced telemetry rate: {current_rate}Hz -> {reduced_rate}Hz"
             )
@@ -542,7 +549,9 @@ class EmergencyCommunicator:
             "low_bandwidth_mode": self.emergency_communication["low_bandwidth_mode"],
             "failover_active": self.redundancy_manager["failover_active"],
             "current_failover_level": self.redundancy_manager["current_failover_level"],
-            "communication_health_score": self.redundancy_manager["communication_health_score"],
+            "communication_health_score": self.redundancy_manager[
+                "communication_health_score"
+            ],
             "current_channel": self.channel_safety_manager["current_channel"],
             "last_heartbeat": self.emergency_communication["last_heartbeat"],
         }

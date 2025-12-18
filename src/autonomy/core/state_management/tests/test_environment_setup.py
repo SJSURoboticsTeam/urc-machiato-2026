@@ -7,8 +7,8 @@ and provides helpful diagnostics for troubleshooting.
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -27,7 +27,7 @@ def check_python_environment():
         print("[SUCCESS] Python version OK")
 
     # Required packages
-    required_packages = ['pytest', 'psutil']
+    required_packages = ["pytest", "psutil"]
     missing_packages = []
 
     for package in required_packages:
@@ -39,7 +39,9 @@ def check_python_environment():
             missing_packages.append(package)
 
     if missing_packages:
-        print(f"\nTo install missing packages: pip install {' '.join(missing_packages)}")
+        print(
+            f"\nTo install missing packages: pip install {' '.join(missing_packages)}"
+        )
         return False
 
     return True
@@ -51,7 +53,7 @@ def check_ros2_environment():
     print("-" * 30)
 
     # Check environment variables
-    ros_distro = os.environ.get('ROS_DISTRO')
+    ros_distro = os.environ.get("ROS_DISTRO")
     if ros_distro:
         print(f"ROS_DISTRO: {ros_distro}")
     else:
@@ -59,7 +61,7 @@ def check_ros2_environment():
         return False
 
     # Check setup script
-    setup_script = f'/opt/ros/{ros_distro}/setup.bash'
+    setup_script = f"/opt/ros/{ros_distro}/setup.bash"
     if os.path.exists(setup_script):
         print(f"[SUCCESS] ROS2 setup script found: {setup_script}")
     else:
@@ -69,11 +71,17 @@ def check_ros2_environment():
     # Try to source and test
     try:
         result = subprocess.run(
-            ['bash', '-c', f'source {setup_script} && python3 -c "import rclpy; print(\'OK\')"'],
-            capture_output=True, text=True, timeout=10
+            [
+                "bash",
+                "-c",
+                f"source {setup_script} && python3 -c \"import rclpy; print('OK')\"",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
 
-        if result.returncode == 0 and 'OK' in result.stdout:
+        if result.returncode == 0 and "OK" in result.stdout:
             print("[SUCCESS] ROS2 rclpy import successful")
             return True
         else:
@@ -103,13 +111,17 @@ def check_project_structure():
         test_dir / "run_adaptive_tests.py",
         test_dir / "test_adaptive_state_machine.py",
         test_dir / "mock_ros2.py",
-        Path("/home/ubuntu/urc-machiato-2026/src/autonomy/core/state_management/autonomy_state_machine"),
+        Path(
+            "/home/ubuntu/urc-machiato-2026/src/autonomy/core/state_management/autonomy_state_machine"
+        ),
     ]
 
     all_exist = True
     for path in required_paths:
         if path.exists():
-            print(f"[SUCCESS] {path.relative_to(project_root) if path.is_relative_to(project_root) else path.name}")
+            print(
+                f"[SUCCESS] {path.relative_to(project_root) if path.is_relative_to(project_root) else path.name}"
+            )
         else:
             print(f"[ERROR] Missing: {path}")
             all_exist = False
@@ -129,7 +141,8 @@ def check_test_runner():
         # Test syntax check
         result = subprocess.run(
             [sys.executable, "-m", "py_compile", str(runner_script)],
-            capture_output=True, text=True
+            capture_output=True,
+            text=True,
         )
 
         if result.returncode == 0:
@@ -143,10 +156,15 @@ def check_test_runner():
         # Test help output
         result = subprocess.run(
             [sys.executable, str(runner_script), "--help"],
-            capture_output=True, text=True, cwd=test_dir
+            capture_output=True,
+            text=True,
+            cwd=test_dir,
         )
 
-        if result.returncode == 0 and "Adaptive State Machine Test Runner" in result.stdout:
+        if (
+            result.returncode == 0
+            and "Adaptive State Machine Test Runner" in result.stdout
+        ):
             print("[SUCCESS] Test runner execution OK")
             return True
         else:
@@ -168,7 +186,7 @@ def check_mock_environment():
     try:
         # Import and test mock
         sys.path.insert(0, str(Path(__file__).parent))
-        from mock_ros2 import setup_mock_environment, MockNode
+        from mock_ros2 import MockNode, setup_mock_environment
 
         if setup_mock_environment():
             print("[SUCCESS] Mock environment setup successful")
@@ -203,10 +221,14 @@ def provide_recommendations(python_ok, ros2_ok, structure_ok, runner_ok, mock_ok
     issues = []
 
     if not python_ok:
-        issues.append("Install required Python packages: pip install pytest pytest-cov psutil numpy")
+        issues.append(
+            "Install required Python packages: pip install pytest pytest-cov psutil numpy"
+        )
 
     if not ros2_ok:
-        issues.append("Install ROS2 (Humble recommended) or use mock environment for testing")
+        issues.append(
+            "Install ROS2 (Humble recommended) or use mock environment for testing"
+        )
 
     if not structure_ok:
         issues.append("Ensure project structure is correct - check file paths")
@@ -250,7 +272,7 @@ def main():
         ("ROS2 Environment", ros2_ok),
         ("Project Structure", structure_ok),
         ("Test Runner", runner_ok),
-        ("Mock Environment", mock_ok)
+        ("Mock Environment", mock_ok),
     ]
 
     all_passed = True

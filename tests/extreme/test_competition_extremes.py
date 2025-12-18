@@ -11,20 +11,24 @@ Tests system behavior under competition-specific extreme conditions:
 Author: URC 2026 Autonomy Team
 """
 
+import os
+import sys
+import threading
 import time
 import unittest
-import threading
 from unittest.mock import Mock, patch
-import sys
-import os
 
 # Add src to path - go up two levels from tests/extreme/
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+from pathlib import Path
 
 from ros2_environment_manager import (
-    ROS2EnvironmentManager, ROSEnvironmentConfig, ResourceLimits, get_environment_manager
+    ResourceLimits,
+    ROS2EnvironmentManager,
+    ROSEnvironmentConfig,
+    get_environment_manager,
 )
-from pathlib import Path
 
 
 class CompetitionExtremeTest(unittest.TestCase):
@@ -40,13 +44,13 @@ class CompetitionExtremeTest(unittest.TestCase):
             domain_id=500,  # Competition domain
             use_sim_time=False,  # Real time for competition simulation
             discovery_timeout_sec=5.0,  # Fast discovery like competition
-            log_level="INFO"
+            log_level="INFO",
         )
 
         self.competition_limits = ResourceLimits(
             cpu_percent=80.0,  # Competition-level CPU usage
-            memory_mb=400,     # Competition memory constraints
-            max_processes=15   # Competition process limits
+            memory_mb=400,  # Competition memory constraints
+            max_processes=15,  # Competition process limits
         )
 
     def test_emergency_stop_under_load(self):
@@ -57,7 +61,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             name="emergency_stop_load_test",
             ros_config=self.ros_config,
             resource_limits=self.competition_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -81,8 +85,10 @@ class CompetitionExtremeTest(unittest.TestCase):
                 """Generate continuous operation load."""
                 count = 0
                 while not stop_load.is_set() and count < operation_count:
-                    mgr.update_state(f"load_operation_{threading.current_thread().ident}_{count}",
-                                   f"data_{count}")
+                    mgr.update_state(
+                        f"load_operation_{threading.current_thread().ident}_{count}",
+                        f"data_{count}",
+                    )
                     count += 1
                     time.sleep(0.001)  # High frequency
 
@@ -110,13 +116,19 @@ class CompetitionExtremeTest(unittest.TestCase):
 
             # Verify emergency stop was processed despite load
             emergency_state = mgr.get_state("emergency_stop")
-            self.assertTrue(emergency_state, "Emergency stop should be processed under load")
+            self.assertTrue(
+                emergency_state, "Emergency stop should be processed under load"
+            )
 
             emergency_response_time = time.time() - emergency_start
             print(".3f")
 
             # Emergency stop should be processed within 100ms even under load
-            self.assertLess(emergency_response_time, 0.1, "Emergency stop should respond within 100ms")
+            self.assertLess(
+                emergency_response_time,
+                0.1,
+                "Emergency stop should respond within 100ms",
+            )
 
             # Phase 3: Verify system stabilization after emergency
             print("  ✅ Phase 3: Verifying system stabilization...")
@@ -133,7 +145,11 @@ class CompetitionExtremeTest(unittest.TestCase):
             # System should still be responsive
             mgr.update_state("post_emergency_test", "responsive")
             post_emergency_state = mgr.get_state("post_emergency_test")
-            self.assertEqual(post_emergency_state, "responsive", "System should remain responsive after emergency")
+            self.assertEqual(
+                post_emergency_state,
+                "responsive",
+                "System should remain responsive after emergency",
+            )
 
             mgr.stop()
 
@@ -147,14 +163,14 @@ class CompetitionExtremeTest(unittest.TestCase):
         timeout_config = ROSEnvironmentConfig(
             domain_id=501,
             use_sim_time=True,  # Controlled timing
-            discovery_timeout_sec=2.0  # Short timeout for testing
+            discovery_timeout_sec=2.0,  # Short timeout for testing
         )
 
         with self.env_manager.create_environment(
             name="critical_timeout_test",
             ros_config=timeout_config,
             resource_limits=self.competition_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -200,18 +216,26 @@ class CompetitionExtremeTest(unittest.TestCase):
 
             if timeout_triggered:
                 final_status = mgr.get_state("operation_status")
-                self.assertEqual(final_status, "critical_timeout_fallback",
-                               "Operation should enter fallback mode on timeout")
+                self.assertEqual(
+                    final_status,
+                    "critical_timeout_fallback",
+                    "Operation should enter fallback mode on timeout",
+                )
 
                 print("  ✅ Critical operation timed out and entered fallback mode")
 
                 # Verify fallback operation
                 mgr.update_state("fallback_operation", "emergency_navigation")
                 fallback_state = mgr.get_state("fallback_operation")
-                self.assertEqual(fallback_state, "emergency_navigation",
-                               "Fallback operation should be activated")
+                self.assertEqual(
+                    fallback_state,
+                    "emergency_navigation",
+                    "Fallback operation should be activated",
+                )
             else:
-                self.fail("Critical operation should have timed out during network partition")
+                self.fail(
+                    "Critical operation should have timed out during network partition"
+                )
 
             mgr.stop()
 
@@ -225,7 +249,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             name="sensor_flood_test",
             ros_config=self.ros_config,
             resource_limits=self.competition_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -244,9 +268,9 @@ class CompetitionExtremeTest(unittest.TestCase):
             normal_sensor_count = 10
             for i in range(normal_sensor_count):
                 sensor_data = {
-                    'lidar_points': [1.0] * 1000,  # Simulated LiDAR data
-                    'camera_frames': 'x' * 50000,   # Simulated camera data (50KB)
-                    'imu_readings': [0.1, 0.2, 0.3] * 100  # Simulated IMU data
+                    "lidar_points": [1.0] * 1000,  # Simulated LiDAR data
+                    "camera_frames": "x" * 50000,  # Simulated camera data (50KB)
+                    "imu_readings": [0.1, 0.2, 0.3] * 100,  # Simulated IMU data
                 }
                 mgr.update_state(f"sensor_normal_{i}", str(sensor_data))
 
@@ -264,22 +288,25 @@ class CompetitionExtremeTest(unittest.TestCase):
                 """Generate flood of sensor data."""
                 count = 0
                 while not stop_flood.is_set():
-                    large_data = 'x' * data_size
+                    large_data = "x" * data_size
                     mgr.update_state(f"{sensor_type}_flood_{count}", large_data)
                     count += 1
 
             # Start multiple sensor flood generators
             flood_threads = []
             sensors = [
-                ("lidar", 50000),     # 50KB per reading
-                ("camera", 100000),   # 100KB per frame
-                ("imu", 1000),        # 1KB per reading
-                ("gps", 500),         # 500B per reading
+                ("lidar", 50000),  # 50KB per reading
+                ("camera", 100000),  # 100KB per frame
+                ("imu", 1000),  # 1KB per reading
+                ("gps", 500),  # 500B per reading
             ]
 
             for sensor_type, data_size in sensors:
-                thread = threading.Thread(target=sensor_flood_generator,
-                                        args=(sensor_type, data_size), daemon=True)
+                thread = threading.Thread(
+                    target=sensor_flood_generator,
+                    args=(sensor_type, data_size),
+                    daemon=True,
+                )
                 thread.start()
                 flood_threads.append(thread)
 
@@ -300,19 +327,24 @@ class CompetitionExtremeTest(unittest.TestCase):
             # System should still be responsive
             mgr.update_state("post_flood_test", "system_still_alive")
             post_flood_state = mgr.get_state("post_flood_test")
-            self.assertEqual(post_flood_state, "system_still_alive",
-                           "System should remain responsive after sensor flood")
+            self.assertEqual(
+                post_flood_state,
+                "system_still_alive",
+                "System should remain responsive after sensor flood",
+            )
 
             # Calculate flood statistics
             status = mgr.get_system_status()
-            total_updates = status['state_version']
+            total_updates = status["state_version"]
 
             flood_rate = total_updates / actual_flood_duration
             print(".1f")
             print(".1f")
 
             # System should handle at least 50 updates/second during flood
-            self.assertGreater(flood_rate, 50, "System should handle high-frequency sensor updates")
+            self.assertGreater(
+                flood_rate, 50, "System should handle high-frequency sensor updates"
+            )
 
             mgr.stop()
 
@@ -326,7 +358,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             name="navigation_cascade_test",
             ros_config=self.ros_config,
             resource_limits=self.competition_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -365,7 +397,9 @@ class CompetitionExtremeTest(unittest.TestCase):
             print("  🛑 Phase 4: Mission abort due to cascade...")
 
             mgr.update_state("mission_status", "aborted_cascade_failure")
-            mgr.update_state("mission_error", "Navigation failure cascaded to arm control")
+            mgr.update_state(
+                "mission_error", "Navigation failure cascaded to arm control"
+            )
 
             # Phase 5: Verify cascade handling
             print("  🔍 Phase 5: Verifying cascade handling...")
@@ -375,12 +409,21 @@ class CompetitionExtremeTest(unittest.TestCase):
             final_mission_status = mgr.get_state("mission_status")
 
             # Verify cascade progression
-            self.assertEqual(final_nav_status, "failed_gps_denied",
-                           "Navigation should be in failed state")
-            self.assertEqual(final_arm_status, "failed_navigation_dependency",
-                           "Arm should fail due to navigation dependency")
-            self.assertEqual(final_mission_status, "aborted_cascade_failure",
-                           "Mission should abort due to cascade")
+            self.assertEqual(
+                final_nav_status,
+                "failed_gps_denied",
+                "Navigation should be in failed state",
+            )
+            self.assertEqual(
+                final_arm_status,
+                "failed_navigation_dependency",
+                "Arm should fail due to navigation dependency",
+            )
+            self.assertEqual(
+                final_mission_status,
+                "aborted_cascade_failure",
+                "Mission should abort due to cascade",
+            )
 
             # Verify error reporting
             nav_error = mgr.get_state("navigation_error")

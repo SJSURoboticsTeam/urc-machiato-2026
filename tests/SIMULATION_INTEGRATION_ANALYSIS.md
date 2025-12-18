@@ -46,6 +46,7 @@
 ## Detailed Analysis
 
 ### test_navigation_comprehensive.py
+
 ```python
 # Creates simulators
 if EnvironmentSimulator:
@@ -62,6 +63,7 @@ def test_obstacle_avoidance_perfect_conditions(self, ros_context):
 **Issue**: Simulators created but never used.
 
 ### test_state_machine_comprehensive.py
+
 ```python
 # Creates network emulator
 if NetworkEmulator:
@@ -75,6 +77,7 @@ if NetworkEmulator:
 **Issue**: Network emulator started but not integrated into actual state machine communication.
 
 ### test_vision_degradation.py
+
 ```python
 # Has its own simulator instead of using EnvironmentSimulator
 class VisionDegradationSimulator:
@@ -116,6 +119,7 @@ class ComprehensiveSimulationTest:
 ### 2. Actually Apply Simulation
 
 Tests should:
+
 - Call `env_simulator.apply_gps_degradation()` on GPS data
 - Call `env_simulator.apply_sensor_noise()` on sensor readings
 - Use `network_emulator.send_message()` to simulate network conditions

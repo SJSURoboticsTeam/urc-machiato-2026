@@ -10,28 +10,30 @@ Author: URC 2026 Autonomy Team
 
 import asyncio
 import json
+import logging
+import statistics
 import threading
 import time
-import logging
 import zlib
-from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-import statistics
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class EndpointPriority(Enum):
     """WebSocket endpoint priority levels."""
-    PRIMARY = 1      # Main competition bridge - full telemetry
-    SECONDARY = 2    # State machine bridge - state + mission data
-    TERTIARY = 3     # Safety bridge - safety + emergency data
-    EMERGENCY = 4    # Minimal emergency endpoint
+
+    PRIMARY = 1  # Main competition bridge - full telemetry
+    SECONDARY = 2  # State machine bridge - state + mission data
+    TERTIARY = 3  # Safety bridge - safety + emergency data
+    EMERGENCY = 4  # Minimal emergency endpoint
 
 
 class EndpointHealth(Enum):
     """Health status of WebSocket endpoints."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -43,6 +45,7 @@ class NetworkQualityMonitor:
 
     def __init__(self):
         from collections import deque
+
         self.latency_history = deque(maxlen=100)
         self.packet_loss_history = deque(maxlen=100)
         self.bandwidth_history = deque(maxlen=100)
@@ -53,8 +56,12 @@ class NetworkQualityMonitor:
             return "unknown"
 
         avg_latency = statistics.mean(self.latency_history)
-        avg_loss = statistics.mean(self.packet_loss_history) if self.packet_loss_history else 0
-        avg_bandwidth = statistics.mean(self.bandwidth_history) if self.bandwidth_history else 1.0
+        avg_loss = (
+            statistics.mean(self.packet_loss_history) if self.packet_loss_history else 0
+        )
+        avg_bandwidth = (
+            statistics.mean(self.bandwidth_history) if self.bandwidth_history else 1.0
+        )
 
         if avg_latency < 50 and avg_loss < 0.01 and avg_bandwidth > 5.0:
             return "excellent"
@@ -81,13 +88,21 @@ class NetworkQualityMonitor:
 @dataclass
 class WebSocketEndpoint:
     """Configuration for a WebSocket endpoint."""
+
     name: str
     host: str = "0.0.0.0"
     port: int = 8080
     priority: EndpointPriority = EndpointPriority.PRIMARY
-    telemetry_scope: List[str] = field(default_factory=lambda: [
-        "full_telemetry", "commands", "state", "mission", "safety", "sensors"
-    ])
+    telemetry_scope: List[str] = field(
+        default_factory=lambda: [
+            "full_telemetry",
+            "commands",
+            "state",
+            "mission",
+            "safety",
+            "sensors",
+        ]
+    )
     max_clients: int = 50
     health_check_interval: float = 5.0
 
@@ -97,13 +112,14 @@ class WebSocketEndpoint:
     is_running: bool = False
     last_health_check: float = 0.0
     health_status: EndpointHealth = EndpointHealth.DOWN
-    response_time: float = float('inf')
+    response_time: float = float("inf")
     current_load: int = 0
 
 
 @dataclass
 class ClientConnection:
     """Represents a client connection with failover capability."""
+
     client_id: str
     current_endpoint: Optional[WebSocketEndpoint] = None
     websocket: Optional[Any] = None
@@ -139,8 +155,8 @@ class WebSocketRedundancyManager:
 
         # Configuration
         self.health_check_interval = 3.0  # Check endpoint health every 3 seconds
-        self.failover_timeout = 2.0       # Consider endpoint down after 2 seconds
-        self.max_failover_attempts = 3    # Max failover attempts per client per minute
+        self.failover_timeout = 2.0  # Consider endpoint down after 2 seconds
+        self.max_failover_attempts = 3  # Max failover attempts per client per minute
 
         # Network resilience features
         self.message_queue = asyncio.Queue(maxsize=1000)
@@ -150,12 +166,12 @@ class WebSocketRedundancyManager:
 
         # Compression settings
         self.compression_levels = {
-            'excellent': 0,     # No compression
-            'good': 6,          # Moderate compression
-            'fair': 9,          # Maximum compression
-            'poor': 9           # Maximum compression
+            "excellent": 0,  # No compression
+            "good": 6,  # Moderate compression
+            "fair": 9,  # Maximum compression
+            "poor": 9,  # Maximum compression
         }
-        self.client_timeout = 30.0        # Disconnect inactive clients after 30 seconds
+        self.client_timeout = 30.0  # Disconnect inactive clients after 30 seconds
 
         # Runtime state
         self.monitoring_thread: Optional[threading.Thread] = None
@@ -171,7 +187,9 @@ class WebSocketRedundancyManager:
             return True
 
         self.endpoints[endpoint.name] = endpoint
-        logger.info(f"Added WebSocket endpoint: {endpoint.name} on port {endpoint.port}")
+        logger.info(
+            f"Added WebSocket endpoint: {endpoint.name} on port {endpoint.port}"
+        )
         return True
 
     def remove_endpoint(self, endpoint_name: str) -> bool:
@@ -198,17 +216,23 @@ class WebSocketRedundancyManager:
                 success = await self._send_message(client_id, message)
                 if success:
                     # Record successful transmission
-                    self.network_quality_monitor.record_latency(10)  # Assume 10ms for success
+                    self.network_quality_monitor.record_latency(
+                        10
+                    )  # Assume 10ms for success
                     return True
             except Exception as e:
                 if attempt < self.max_retries:
-                    delay = self.retry_delays[min(attempt, len(self.retry_delays)-1)]
-                    logger.warning(f"Message send attempt {attempt + 1} failed for {client_id}: {e}. Retrying in {delay}s...")
+                    delay = self.retry_delays[min(attempt, len(self.retry_delays) - 1)]
+                    logger.warning(
+                        f"Message send attempt {attempt + 1} failed for {client_id}: {e}. Retrying in {delay}s..."
+                    )
                     await asyncio.sleep(delay)
                     # Record failed transmission
                     self.network_quality_monitor.record_packet_loss(1.0)
                     continue
-                logger.error(f"Message send failed after {self.max_retries} retries for {client_id}: {e}")
+                logger.error(
+                    f"Message send failed after {self.max_retries} retries for {client_id}: {e}"
+                )
                 return False
         return False
 
@@ -218,13 +242,13 @@ class WebSocketRedundancyManager:
         compression_level = self.compression_levels.get(network_quality, 6)
 
         # Apply compression based on network quality
-        if network_quality in ['fair', 'poor']:
+        if network_quality in ["fair", "poor"]:
             # Keep only critical data for poor networks
             compressed = {
-                'timestamp': data.get('timestamp'),
-                'position': data.get('position'),
-                'status': data.get('status'),
-                'critical_errors': data.get('critical_errors', [])
+                "timestamp": data.get("timestamp"),
+                "position": data.get("position"),
+                "status": data.get("status"),
+                "critical_errors": data.get("critical_errors", []),
             }
         else:
             compressed = data
@@ -246,7 +270,9 @@ class WebSocketRedundancyManager:
 
         # Start health monitoring
         self.health_monitor_active = True
-        self.monitoring_thread = threading.Thread(target=self._health_monitoring_loop, daemon=True)
+        self.monitoring_thread = threading.Thread(
+            target=self._health_monitoring_loop, daemon=True
+        )
         self.monitoring_thread.start()
 
         # Start load balancing
@@ -274,7 +300,9 @@ class WebSocketRedundancyManager:
         logger.info("WebSocket redundancy system stopped")
         return True
 
-    async def handle_client_connection(self, websocket, endpoint_name: str, client_id: str = None) -> None:
+    async def handle_client_connection(
+        self, websocket, endpoint_name: str, client_id: str = None
+    ) -> None:
         """Handle a new client connection to an endpoint."""
         if not client_id:
             client_id = f"client_{int(time.time() * 1000)}_{hash(websocket)}"
@@ -288,8 +316,7 @@ class WebSocketRedundancyManager:
         # Create or update client connection
         if client_id not in self.clients:
             self.clients[client_id] = ClientConnection(
-                client_id=client_id,
-                preferred_scopes=endpoint.telemetry_scope
+                client_id=client_id, preferred_scopes=endpoint.telemetry_scope
             )
 
         client = self.clients[client_id]
@@ -302,7 +329,9 @@ class WebSocketRedundancyManager:
         endpoint.clients.add(websocket)
         endpoint.current_load = len(endpoint.clients)
 
-        logger.info(f"Client {client_id} connected to {endpoint_name} (load: {endpoint.current_load}/{endpoint.max_clients})")
+        logger.info(
+            f"Client {client_id} connected to {endpoint_name} (load: {endpoint.current_load}/{endpoint.max_clients})"
+        )
 
         try:
             async for message in websocket:
@@ -335,18 +364,21 @@ class WebSocketRedundancyManager:
 
             # Prepare acknowledgment with network quality info
             response_data = {
-                'timestamp': time.time(),
-                'client_id': client_id,
-                'acknowledged': True,
-                'network_quality': self.network_quality_monitor.assess_network_quality(),
-                'compression_used': self.network_quality_monitor.assess_network_quality() in ['fair', 'poor']
+                "timestamp": time.time(),
+                "client_id": client_id,
+                "acknowledged": True,
+                "network_quality": self.network_quality_monitor.assess_network_quality(),
+                "compression_used": self.network_quality_monitor.assess_network_quality()
+                in ["fair", "poor"],
             }
 
             # Send acknowledgment with retry logic
             await self.send_with_retry(client_id, json.dumps(response_data))
 
             # Route original message to endpoint's message handler
-            logger.debug(f"Routing message from {client_id} to {client.current_endpoint.name}")
+            logger.debug(
+                f"Routing message from {client_id} to {client.current_endpoint.name}"
+            )
 
         except json.JSONDecodeError:
             logger.warning(f"Invalid JSON from client {client_id}")
@@ -373,7 +405,10 @@ class WebSocketRedundancyManager:
             return
 
         # Remove from endpoint
-        if client.current_endpoint and client.websocket in client.current_endpoint.clients:
+        if (
+            client.current_endpoint
+            and client.websocket in client.current_endpoint.clients
+        ):
             client.current_endpoint.clients.discard(client.websocket)
             client.current_endpoint.current_load = len(client.current_endpoint.clients)
 
@@ -396,8 +431,10 @@ class WebSocketRedundancyManager:
         # Find best alternative endpoint
         current_endpoint = client.current_endpoint
         available_endpoints = [
-            ep for ep in self.endpoints.values()
-            if ep != current_endpoint and ep.health_status in [EndpointHealth.HEALTHY, EndpointHealth.DEGRADED]
+            ep
+            for ep in self.endpoints.values()
+            if ep != current_endpoint
+            and ep.health_status in [EndpointHealth.HEALTHY, EndpointHealth.DEGRADED]
         ]
 
         if not available_endpoints:
@@ -405,13 +442,18 @@ class WebSocketRedundancyManager:
             return False
 
         # Select best endpoint (prioritize by health, then load, then priority)
-        best_endpoint = min(available_endpoints, key=lambda ep: (
-            0 if ep.health_status == EndpointHealth.HEALTHY else 1,  # Healthy first
-            ep.current_load / ep.max_clients,  # Lower load first
-            ep.priority.value  # Higher priority first (lower number)
-        ))
+        best_endpoint = min(
+            available_endpoints,
+            key=lambda ep: (
+                0 if ep.health_status == EndpointHealth.HEALTHY else 1,  # Healthy first
+                ep.current_load / ep.max_clients,  # Lower load first
+                ep.priority.value,  # Higher priority first (lower number)
+            ),
+        )
 
-        logger.info(f"Failing over client {client_id} from {current_endpoint.name if current_endpoint else 'unknown'} to {best_endpoint.name}")
+        logger.info(
+            f"Failing over client {client_id} from {current_endpoint.name if current_endpoint else 'unknown'} to {best_endpoint.name}"
+        )
 
         # Update client connection
         client.current_endpoint = best_endpoint
@@ -453,7 +495,9 @@ class WebSocketRedundancyManager:
         if health_tasks:
             await asyncio.gather(*health_tasks, return_exceptions=True)
 
-    async def _quick_health_check(self, endpoint: WebSocketEndpoint, current_time: float) -> None:
+    async def _quick_health_check(
+        self, endpoint: WebSocketEndpoint, current_time: float
+    ) -> None:
         """Perform quick health check on a single endpoint."""
         try:
             # Simplified health scoring for performance
@@ -522,18 +566,28 @@ class WebSocketRedundancyManager:
                     endpoint.is_healthy = False
 
                 # Update response time based on health score
-                endpoint.response_time = 0.05 + (1 - health_score) * 0.5  # Degraded = slower
+                endpoint.response_time = (
+                    0.05 + (1 - health_score) * 0.5
+                )  # Degraded = slower
 
                 # Update status if changed
                 if new_status != old_health:
-                    logger.info(f"Endpoint {endpoint_name} health changed: {old_health.value} -> {new_status.value}")
+                    logger.info(
+                        f"Endpoint {endpoint_name} health changed: {old_health.value} -> {new_status.value}"
+                    )
                     endpoint.health_status = new_status
 
                     # Trigger failover if primary goes down
-                    if (endpoint_name == 'primary' and
-                        old_health in [EndpointHealth.HEALTHY, EndpointHealth.DEGRADED] and
-                        new_status in [EndpointHealth.UNHEALTHY, EndpointHealth.DOWN]):
-                        logger.warning(f"[ALERT] Primary endpoint failed, triggering failover")
+                    if (
+                        endpoint_name == "primary"
+                        and old_health
+                        in [EndpointHealth.HEALTHY, EndpointHealth.DEGRADED]
+                        and new_status
+                        in [EndpointHealth.UNHEALTHY, EndpointHealth.DOWN]
+                    ):
+                        logger.warning(
+                            f"[ALERT] Primary endpoint failed, triggering failover"
+                        )
                         self._handle_primary_failure()
 
                 endpoint.last_health_check = current_time
@@ -555,11 +609,17 @@ class WebSocketRedundancyManager:
             # Factor 1: Client load (0.3 weight)
             load_factor = len(endpoint.clients) / max(endpoint.max_clients, 1)
             if load_factor > 0.85:
-                score -= 0.3 * (load_factor - 0.85) / 0.15  # Critical penalty for overload (>85%)
+                score -= (
+                    0.3 * (load_factor - 0.85) / 0.15
+                )  # Critical penalty for overload (>85%)
             elif load_factor > 0.7:
-                score -= 0.2 * (load_factor - 0.7) / 0.15  # Heavy penalty for high load (70-85%)
+                score -= (
+                    0.2 * (load_factor - 0.7) / 0.15
+                )  # Heavy penalty for high load (70-85%)
             elif load_factor > 0.5:
-                score -= 0.1 * (load_factor - 0.5) / 0.2  # Light penalty for medium load (50-70%)
+                score -= (
+                    0.1 * (load_factor - 0.5) / 0.2
+                )  # Light penalty for medium load (50-70%)
 
             # Factor 2: Response time (0.3 weight)
             if endpoint.response_time > 1.0:
@@ -588,8 +648,11 @@ class WebSocketRedundancyManager:
         logger.info("[UPDATE] Handling primary endpoint failure...")
 
         # Find best available backup
-        backup_endpoints = [(name, ep) for name, ep in self.endpoints.items()
-                           if name != 'primary' and ep.is_healthy]
+        backup_endpoints = [
+            (name, ep)
+            for name, ep in self.endpoints.items()
+            if name != "primary" and ep.is_healthy
+        ]
 
         if not backup_endpoints:
             logger.error("[ERROR] No healthy backup endpoints available!")
@@ -610,7 +673,8 @@ class WebSocketRedundancyManager:
             return
 
         healthy_endpoints = [
-            ep for ep in self.endpoints.values()
+            ep
+            for ep in self.endpoints.values()
             if ep.health_status == EndpointHealth.HEALTHY
         ]
 
@@ -622,85 +686,97 @@ class WebSocketRedundancyManager:
         avg_load = total_clients / len(healthy_endpoints)
 
         # Find overloaded and underloaded endpoints
-        overloaded = [ep for ep in healthy_endpoints if len(ep.clients) > avg_load * 1.2]
-        underloaded = [ep for ep in healthy_endpoints if len(ep.clients) < avg_load * 0.8]
+        overloaded = [
+            ep for ep in healthy_endpoints if len(ep.clients) > avg_load * 1.2
+        ]
+        underloaded = [
+            ep for ep in healthy_endpoints if len(ep.clients) < avg_load * 0.8
+        ]
 
         # Balance load by suggesting failovers (in real implementation, this would
         # coordinate with client-side failover logic)
         for overloaded_ep in overloaded:
             for underloaded_ep in underloaded:
                 if len(overloaded_ep.clients) > len(underloaded_ep.clients) + 5:
-                    logger.debug(f"Load balancing: {overloaded_ep.name} -> {underloaded_ep.name}")
+                    logger.debug(
+                        f"Load balancing: {overloaded_ep.name} -> {underloaded_ep.name}"
+                    )
                     # In practice, this would trigger client failovers
 
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive redundancy system status."""
         return {
-            'timestamp': time.time(),
-            'is_running': self.is_running,
-            'endpoints': {
+            "timestamp": time.time(),
+            "is_running": self.is_running,
+            "endpoints": {
                 name: {
-                    'port': ep.port,
-                    'priority': ep.priority.value,
-                    'health': ep.health_status.value,
-                    'is_healthy': ep.is_healthy,
-                    'clients': len(ep.clients),
-                    'max_clients': ep.max_clients,
-                    'load_percentage': (len(ep.clients) / ep.max_clients) * 100,
-                    'response_time_ms': ep.response_time * 1000
+                    "port": ep.port,
+                    "priority": ep.priority.value,
+                    "health": ep.health_status.value,
+                    "is_healthy": ep.is_healthy,
+                    "clients": len(ep.clients),
+                    "max_clients": ep.max_clients,
+                    "load_percentage": (len(ep.clients) / ep.max_clients) * 100,
+                    "response_time_ms": ep.response_time * 1000,
                 }
                 for name, ep in self.endpoints.items()
             },
-            'clients': {
+            "clients": {
                 client_id: {
-                    'endpoint': client.current_endpoint.name if client.current_endpoint else None,
-                    'connected_at': client.connected_at,
-                    'last_message': client.last_message,
-                    'failover_count': client.failover_count,
-                    'uptime_seconds': time.time() - client.connected_at
+                    "endpoint": client.current_endpoint.name
+                    if client.current_endpoint
+                    else None,
+                    "connected_at": client.connected_at,
+                    "last_message": client.last_message,
+                    "failover_count": client.failover_count,
+                    "uptime_seconds": time.time() - client.connected_at,
                 }
                 for client_id, client in self.clients.items()
             },
-            'system_health': self._calculate_system_health(),
-            'load_distribution': self._calculate_load_distribution()
+            "system_health": self._calculate_system_health(),
+            "load_distribution": self._calculate_load_distribution(),
         }
 
     def _calculate_system_health(self) -> Dict[str, Any]:
         """Calculate overall system health metrics."""
         endpoints = list(self.endpoints.values())
         if not endpoints:
-            return {'score': 0.0, 'status': 'no_endpoints'}
+            return {"score": 0.0, "status": "no_endpoints"}
 
-        healthy_count = sum(1 for ep in endpoints if ep.health_status == EndpointHealth.HEALTHY)
-        degraded_count = sum(1 for ep in endpoints if ep.health_status == EndpointHealth.DEGRADED)
+        healthy_count = sum(
+            1 for ep in endpoints if ep.health_status == EndpointHealth.HEALTHY
+        )
+        degraded_count = sum(
+            1 for ep in endpoints if ep.health_status == EndpointHealth.DEGRADED
+        )
 
         # Health score: 100% for all healthy, 50% for all degraded, 0% for any down
         if any(ep.health_status == EndpointHealth.DOWN for ep in endpoints):
             health_score = 0.0
-            status = 'critical'
+            status = "critical"
         elif healthy_count == len(endpoints):
             health_score = 100.0
-            status = 'excellent'
+            status = "excellent"
         elif degraded_count > 0:
             health_score = 50.0
-            status = 'degraded'
+            status = "degraded"
         else:
             health_score = 25.0
-            status = 'poor'
+            status = "poor"
 
         return {
-            'score': health_score,
-            'status': status,
-            'healthy_endpoints': healthy_count,
-            'degraded_endpoints': degraded_count,
-            'total_endpoints': len(endpoints)
+            "score": health_score,
+            "status": status,
+            "healthy_endpoints": healthy_count,
+            "degraded_endpoints": degraded_count,
+            "total_endpoints": len(endpoints),
         }
 
     def _calculate_load_distribution(self) -> Dict[str, Any]:
         """Calculate load distribution metrics."""
         endpoints = list(self.endpoints.values())
         if not endpoints:
-            return {'balance_score': 0.0}
+            return {"balance_score": 0.0}
 
         loads = [len(ep.clients) / max(ep.max_clients, 1) for ep in endpoints]
         avg_load = sum(loads) / len(loads)
@@ -710,10 +786,10 @@ class WebSocketRedundancyManager:
         balance_score = max(0.0, 100.0 - (load_variance * 1000))  # Arbitrary scaling
 
         return {
-            'balance_score': balance_score,
-            'average_load': avg_load * 100,
-            'max_load': max(loads) * 100 if loads else 0,
-            'min_load': min(loads) * 100 if loads else 0
+            "balance_score": balance_score,
+            "average_load": avg_load * 100,
+            "max_load": max(loads) * 100 if loads else 0,
+            "min_load": min(loads) * 100 if loads else 0,
         }
 
     def disconnect_client(self, client_id: str) -> bool:
@@ -765,13 +841,27 @@ if __name__ == "__main__":
 
     # Add endpoints
     endpoints = [
-        WebSocketEndpoint("competition_bridge", port=8080, priority=EndpointPriority.PRIMARY),
-        WebSocketEndpoint("state_machine_bridge", port=8081, priority=EndpointPriority.SECONDARY,
-                         telemetry_scope=["state", "mission", "emergency"]),
-        WebSocketEndpoint("safety_bridge", port=8082, priority=EndpointPriority.TERTIARY,
-                         telemetry_scope=["safety", "emergency", "location"]),
-        WebSocketEndpoint("emergency", port=8083, priority=EndpointPriority.EMERGENCY,
-                         telemetry_scope=["emergency", "location", "health"])
+        WebSocketEndpoint(
+            "competition_bridge", port=8080, priority=EndpointPriority.PRIMARY
+        ),
+        WebSocketEndpoint(
+            "state_machine_bridge",
+            port=8081,
+            priority=EndpointPriority.SECONDARY,
+            telemetry_scope=["state", "mission", "emergency"],
+        ),
+        WebSocketEndpoint(
+            "safety_bridge",
+            port=8082,
+            priority=EndpointPriority.TERTIARY,
+            telemetry_scope=["safety", "emergency", "location"],
+        ),
+        WebSocketEndpoint(
+            "emergency",
+            port=8083,
+            priority=EndpointPriority.EMERGENCY,
+            telemetry_scope=["emergency", "location", "health"],
+        ),
     ]
 
     for endpoint in endpoints:
@@ -785,7 +875,9 @@ if __name__ == "__main__":
         while True:
             time.sleep(10)
             status = manager.get_system_status()
-        self.get_logger().info(f"System Health: {status['system_health']['status']} ({status['system_health']['score']}%)")
+        self.get_logger().info(
+            f"System Health: {status['system_health']['status']} ({status['system_health']['score']}%)"
+        )
         self.get_logger().info(f"Active Clients: {len(status['clients'])}")
     except KeyboardInterrupt:
         manager.stop_redundancy_system()

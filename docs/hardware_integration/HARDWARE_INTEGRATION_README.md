@@ -30,6 +30,7 @@ hardware_integration_prep.py (Main Script)
 ## 🚀 Quick Start
 
 ### Run Complete Preparation
+
 ```bash
 # Run all preparation steps
 python3 hardware_integration_prep.py --action full_prep
@@ -42,6 +43,7 @@ python3 hardware_integration_prep.py --action monitor     # Performance monitori
 ```
 
 ### View Results
+
 ```bash
 # Results are saved to hardware_prep_output/
 ls hardware_prep_output/
@@ -58,12 +60,14 @@ ls hardware_prep_output/
 **Purpose**: Unified factory for creating hardware interfaces with seamless mock/hardware switching.
 
 **Key Features**:
+
 - Factory pattern for component creation
 - Runtime configuration switching
 - Component compatibility validation
 - Mock/hardware interface abstraction
 
 **Usage**:
+
 ```python
 from hardware_abstraction.hardware_interface_factory import HardwareInterfaceFactory
 
@@ -85,12 +89,14 @@ arm = HardwareInterfaceFactory.create_robotic_arm()
 **Purpose**: Validate and manage hardware/software configurations.
 
 **Key Features**:
+
 - YAML/JSON configuration validation
 - Schema-based validation rules
 - Default configuration generation
 - Hardware compatibility checking
 
 **Usage**:
+
 ```python
 from config.config_validator import ConfigurationValidator
 
@@ -105,15 +111,18 @@ else:
 ### 3. Performance Monitoring (`monitoring/`)
 
 #### Real-Time Monitor (`real_time_monitor.py`)
+
 **Purpose**: Monitor control loop timing and detect deadline misses.
 
 **Key Features**:
+
 - Control loop deadline monitoring
 - Jitter analysis
 - System health scoring
 - Automatic alerting
 
 **Usage**:
+
 ```python
 from monitoring.real_time_monitor import RealTimeMonitor, ControlLoopTimer
 
@@ -133,15 +142,18 @@ summary = monitor.get_performance_summary()
 ```
 
 #### Telemetry Collector (`telemetry_collector.py`)
+
 **Purpose**: Structured logging and performance analytics.
 
 **Key Features**:
+
 - Metric collection and aggregation
 - Event logging with severity levels
 - Performance analytics
 - Automatic data flushing
 
 **Usage**:
+
 ```python
 from monitoring.telemetry_collector import record_metric, record_event
 
@@ -161,12 +173,14 @@ summary = get_performance_summary()
 **Purpose**: Phased migration from mock to hardware components.
 
 **Key Features**:
+
 - Predefined migration phases
 - Component validation during migration
 - Rollback capabilities
 - Incremental migration support
 
 **Migration Phases**:
+
 1. `MOCK_ONLY` - All components mock
 2. `CAN_BUS_INTEGRATION` - CAN bus hardware
 3. `DRIVE_SYSTEM_INTEGRATION` - Drive system hardware
@@ -176,6 +190,7 @@ summary = get_performance_summary()
 7. `FULL_HARDWARE` - Complete hardware integration
 
 **Usage**:
+
 ```python
 from migration.migration_manager import MigrationManager, MigrationPhase
 
@@ -194,6 +209,7 @@ else:
 **Purpose**: Automated calibration procedures for all rover subsystems.
 
 **Calibration Types**:
+
 - `CAMERA_INTRINSICS` - Camera intrinsic parameters
 - `CAMERA_EXTRINSICS` - Camera-to-robot transformation
 - `ARM_KINEMATICS` - Robotic arm kinematics
@@ -203,6 +219,7 @@ else:
 - `WHEEL_ODOMETRY` - Wheel odometry calibration
 
 **Usage**:
+
 ```python
 from calibration.calibration_workflow import CalibrationWorkflow, CalibrationType
 
@@ -218,12 +235,14 @@ if result.success:
 ## 🎯 Integration Workflow
 
 ### Phase 1: Development (All Mock)
+
 ```bash
 # Start with all mock components
 python3 hardware_integration_prep.py --action full_prep
 ```
 
 ### Phase 2: CAN Bus Integration
+
 ```python
 from migration.migration_manager import migrate_to_phase, MigrationPhase
 
@@ -232,6 +251,7 @@ result = migrate_to_phase(MigrationPhase.CAN_BUS_INTEGRATION)
 ```
 
 ### Phase 3: Drive System Integration
+
 ```python
 # Add drive system
 result = migrate_to_phase(MigrationPhase.DRIVE_SYSTEM_INTEGRATION)
@@ -242,6 +262,7 @@ wheel_cal = run_calibration(CalibrationType.WHEEL_ODOMETRY)
 ```
 
 ### Phase 4: Full Hardware Integration
+
 ```python
 # Complete migration
 result = migrate_to_phase(MigrationPhase.FULL_HARDWARE)
@@ -254,12 +275,14 @@ cal_results = run_full_calibration_suite()
 ## 📊 Monitoring and Alerts
 
 ### Real-Time Performance Monitoring
+
 - Control loop deadline tracking
 - CPU/memory usage monitoring
 - Automatic performance regression detection
 - Configurable alerting thresholds
 
 ### Telemetry Collection
+
 - Structured event logging
 - Metric aggregation and analysis
 - Component health scoring
@@ -268,10 +291,11 @@ cal_results = run_full_calibration_suite()
 ## 🔧 Configuration Files
 
 ### Hardware Profiles (`config/`)
+
 ```yaml
 # config/hardware_config.yaml
 hardware:
-  can_bus: mock          # Options: mock, hardware
+  can_bus: mock # Options: mock, hardware
   motor_controller: mock
   drive_system: mock
   robotic_arm: mock
@@ -282,6 +306,7 @@ hardware:
 ```
 
 ### ROS2 Configuration (`config/ros2_config.yaml`)
+
 ```yaml
 ros2:
   domain_id: 42
@@ -295,12 +320,14 @@ ros2:
 ## 🚨 Error Handling and Recovery
 
 ### Automatic Recovery
+
 - Component failure detection
 - Automatic fallback to mock implementations
 - Graceful degradation strategies
 - Recovery attempt logging
 
 ### Manual Recovery
+
 ```python
 from migration.migration_manager import MigrationManager
 
@@ -313,12 +340,14 @@ result = manager.rollback_to_phase(MigrationPhase.CAN_BUS_INTEGRATION)
 ## 📈 Performance Benchmarks
 
 ### Control Loop Requirements
+
 - **Drive Control**: 50Hz (20ms period)
 - **Arm Control**: 100Hz (10ms period)
 - **Sensor Fusion**: 200Hz (5ms period)
 - **Safety Monitor**: 1000Hz (1ms period)
 
 ### Quality Gates
+
 - **Calibration Quality**: >0.8 for all procedures
 - **Control Loop Success Rate**: >99% for critical loops
 - **System Health Score**: >80% during operation
@@ -326,6 +355,7 @@ result = manager.rollback_to_phase(MigrationPhase.CAN_BUS_INTEGRATION)
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 # Test individual components
 python3 -m pytest tests/test_hardware_abstraction.py -v
@@ -334,12 +364,14 @@ python3 -m pytest tests/test_migration_manager.py -v
 ```
 
 ### Integration Tests
+
 ```bash
 # Test complete hardware integration
 python3 -m pytest tests/integration/test_hardware_integration.py -v
 ```
 
 ### Performance Tests
+
 ```bash
 # Run performance benchmarks
 python3 -m pytest tests/performance/test_control_loops.py -v
@@ -348,12 +380,14 @@ python3 -m pytest tests/performance/test_control_loops.py -v
 ## 📚 API Reference
 
 ### HardwareInterfaceFactory
+
 - `set_configuration(config: Dict[str, str]) -> bool`
 - `create_can_bus(**kwargs) -> CANBusInterface`
 - `create_drive_system(**kwargs) -> DriveSystemInterface`
 - `validate_configuration(config: Dict[str, str]) -> List[str]`
 
 ### RealTimeMonitor
+
 - `start_monitoring() -> bool`
 - `register_control_loop(name, target_period, deadline) -> bool`
 - `record_execution_start(loop_name) -> float`
@@ -361,11 +395,13 @@ python3 -m pytest tests/performance/test_control_loops.py -v
 - `get_performance_summary() -> Dict`
 
 ### MigrationManager
+
 - `migrate_to_phase(phase: MigrationPhase) -> MigrationResult`
 - `rollback_to_phase(phase: MigrationPhase) -> MigrationResult`
 - `get_current_phase() -> Optional[MigrationPhase]`
 
 ### CalibrationWorkflow
+
 - `run_calibration(cal_type: CalibrationType) -> CalibrationResult`
 - `run_full_calibration_suite() -> Dict[CalibrationType, CalibrationResult]`
 - `get_calibration_status() -> Dict[CalibrationType, Dict]`
@@ -381,6 +417,7 @@ python3 -m pytest tests/performance/test_control_loops.py -v
 ## 📞 Support
 
 For issues or questions:
+
 - Check the troubleshooting guide
 - Review component-specific documentation
 - Run diagnostic scripts: `python3 hardware_integration_prep.py --action validate`

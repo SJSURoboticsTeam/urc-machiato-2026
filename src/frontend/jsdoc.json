@@ -9,9 +9,7 @@
     "recurse": true,
     "readme": "README.md"
   },
-  "plugins": [
-    "plugins/markdown"
-  ],
+  "plugins": ["plugins/markdown"],
   "templates": {
     "cleverLinks": true,
     "monospaceLinks": true,

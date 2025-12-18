@@ -1,4 +1,5 @@
 # Camera Calibration System - URC 2026
+
 ## Complete Production-Ready Implementation
 
 A comprehensive calibration system for camera intrinsics, extrinsics, and IMU parameters with CLI tools, ROS2 integration, and extensive testing.
@@ -15,6 +16,7 @@ python3 calibration_cli.py list
 ```
 
 Output:
+
 ```
 ======================================================================
   AVAILABLE CAMERAS
@@ -34,6 +36,7 @@ python3 calibration_cli.py calibrate \
 ```
 
 **Controls during capture:**
+
 - `SPACE`: Capture frame (when 4+ markers visible)
 - `s`: Skip frame
 - `q`: Quit
@@ -94,6 +97,7 @@ calibration/
 ## Capture Modes
 
 ### MANUAL Mode (Best Quality)
+
 - **Time**: 12-15 minutes per camera
 - **Quality**: Excellent (0.3-0.6 px reprojection error)
 - **Use When**: Precision is critical (1-2 cameras)
@@ -104,6 +108,7 @@ python3 calibration_cli.py calibrate --camera 0 --mode manual --count 50
 ```
 
 ### VIDEO Mode (Fast)
+
 - **Time**: 3-5 minutes per camera
 - **Quality**: Good (0.5-1.0 px reprojection error)
 - **Use When**: Speed matters (3+ cameras)
@@ -114,6 +119,7 @@ python3 calibration_cli.py calibrate --camera 0 --mode video --count 30
 ```
 
 ### CONSERVATIVE Mode (Balanced)
+
 - **Time**: 5-8 minutes per camera
 - **Quality**: Excellent (0.3-0.7 px reprojection error)
 - **Use When**: Production systems need reliability
@@ -239,10 +245,12 @@ ros2 run autonomy_calibration calibration_node \
 ### Topics
 
 **Publish:**
+
 - `/calibration/status` (String) - Status updates
 - `/calibration/progress` (Float32) - Progress 0-100%
 
 **Subscribe:**
+
 - `/state_machine/state` (String) - State machine state
 - `/calibration/command` (String) - Commands (start, cancel, get_results)
 
@@ -313,12 +321,12 @@ python3 calibration_cli.py test
 
 ### Reprojection Error Standards
 
-| Quality Level | Error Range | Confidence |
-|---------------|-------------|-----------|
-| Excellent | < 0.5 px | Very high |
-| Good | 0.5-1.0 px | High |
-| Acceptable | 1.0-2.0 px | Medium |
-| Poor | > 2.0 px | Low (not recommended) |
+| Quality Level | Error Range | Confidence            |
+| ------------- | ----------- | --------------------- |
+| Excellent     | < 0.5 px    | Very high             |
+| Good          | 0.5-1.0 px  | High                  |
+| Acceptable    | 1.0-2.0 px  | Medium                |
+| Poor          | > 2.0 px    | Low (not recommended) |
 
 ### Example Output
 
@@ -375,7 +383,7 @@ reprojection_error: 0.345
 quality_score: 0.952
 capture_mode: manual
 image_count: 50
-timestamp: '2025-01-15T14:32:00'
+timestamp: "2025-01-15T14:32:00"
 ```
 
 ### Pickle Format (Python)
@@ -419,7 +427,8 @@ print(result.camera_matrix)
 print(result.distortion)
 print(result.reprojection_error)
 ```
->>>>>>> ba52654723152f45e46dfaeabf2aedadc10c49f2
+
+> > > > > > > ba52654723152f45e46dfaeabf2aedadc10c49f2
 
 ---
 
@@ -534,6 +543,7 @@ python3 -c "import cv2; cap = cv2.VideoCapture(0); print(cap.isOpened())"
 ### Issue: Low reprojection error (>2 px)
 
 **Solutions:**
+
 1. Ensure good lighting
 2. Keep board perpendicular to camera
 3. Vary distance and angles more
@@ -575,35 +585,39 @@ python3 calibration_cli.py list
 
 ## Performance Characteristics
 
-| Task | Time | Quality | Notes |
-|------|------|---------|-------|
-| Single camera (MANUAL) | 12-15 min | Excellent | Full control, best quality |
-| Single camera (VIDEO) | 3-5 min | Good | Fast, reasonable quality |
-| Single camera (CONSERVATIVE) | 5-8 min | Excellent | Fast + quality checks |
-| 5 cameras (VIDEO) | 20-30 min | Good | Parallel possible |
-| Hand-eye (10 poses) | 10-15 min | Good | Requires arm movement |
-| Multi-camera stereo | 15-20 min | Good | 2+ cameras synchronized |
+| Task                         | Time      | Quality   | Notes                      |
+| ---------------------------- | --------- | --------- | -------------------------- |
+| Single camera (MANUAL)       | 12-15 min | Excellent | Full control, best quality |
+| Single camera (VIDEO)        | 3-5 min   | Good      | Fast, reasonable quality   |
+| Single camera (CONSERVATIVE) | 5-8 min   | Excellent | Fast + quality checks      |
+| 5 cameras (VIDEO)            | 20-30 min | Good      | Parallel possible          |
+| Hand-eye (10 poses)          | 10-15 min | Good      | Requires arm movement      |
+| Multi-camera stereo          | 15-20 min | Good      | 2+ cameras synchronized    |
 
 ---
 
 ## Next Steps
 
 ### Immediate (Ready now)
+
 - ✅ Use CLI tool to calibrate cameras
 - ✅ Run unit tests (`pytest`)
 - ✅ Integrate with ROS2 workflow
 
 ### Short-term (2-3 weeks)
+
 - ⏳ Create generation module (board generators)
 - ⏳ Add more integration tests
 - ⏳ Create field validation scripts
 
 ### Medium-term (1-2 months)
+
 - 🔄 Temperature-compensated IMU calibration
 - 🔄 Auto-detection of camera-to-IMU alignment
 - 🔄 Calibration database for tracking
 
 ### Long-term (Future)
+
 - 📊 Web dashboard for calibration management
 - 🌍 Cloud-based calibration storage
 - 🤖 Machine learning for quality prediction
@@ -612,15 +626,15 @@ python3 calibration_cli.py list
 
 ## Files Summary
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `intrinsics/camera_intrinsics_calibrator.py` | 840 | Core intrinsics calibration |
-| `intrinsics/calibration_cli.py` | 600 | CLI tool for easy usage |
-| `extrinsics/hand_eye_imu_calibrator.py` | 600 | Extrinsics & IMU calibration |
-| `extrinsics/ros2_calibration_node.py` | 500 | ROS2 integration node |
-| `tests/unit/test_intrinsics.py` | 250 | Unit tests |
-| `tests/integration/test_end_to_end_calibration.py` | 600 | Integration tests |
-| Documentation | 1000+ | Guides and examples |
+| File                                               | Lines | Purpose                      |
+| -------------------------------------------------- | ----- | ---------------------------- |
+| `intrinsics/camera_intrinsics_calibrator.py`       | 840   | Core intrinsics calibration  |
+| `intrinsics/calibration_cli.py`                    | 600   | CLI tool for easy usage      |
+| `extrinsics/hand_eye_imu_calibrator.py`            | 600   | Extrinsics & IMU calibration |
+| `extrinsics/ros2_calibration_node.py`              | 500   | ROS2 integration node        |
+| `tests/unit/test_intrinsics.py`                    | 250   | Unit tests                   |
+| `tests/integration/test_end_to_end_calibration.py` | 600   | Integration tests            |
+| Documentation                                      | 1000+ | Guides and examples          |
 
 **Total**: 1,700+ lines of code, 1,000+ lines of documentation
 
@@ -629,6 +643,7 @@ python3 calibration_cli.py list
 ## Support
 
 For issues or questions:
+
 1. Check `CALIBRATION_SYSTEM.md` for detailed documentation
 2. Review `QUICK_START_NEW_SYSTEM.md` for examples
 3. Run tests: `pytest tests/ -v`

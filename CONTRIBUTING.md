@@ -18,6 +18,7 @@ Thank you for your interest in contributing to the URC 2026 Autonomy System! Thi
 ### Two-Workspace Architecture
 
 This project uses a **two-workspace development system**:
+
 - **`autonomy/code/`** = **Development workspace** (where you write code)
 - **`autonomy/ros2_ws/`** = **ROS2 workspace** (where ROS2 builds and runs code)
 
@@ -54,6 +55,7 @@ ros2 node list
 ### Python Code Style
 
 We follow **PEP 8** with some modifications:
+
 - **Line length**: 120 characters (not 79)
 - **Naming**: snake_case for variables/functions, PascalCase for classes
 - **Imports**: Group standard library, third-party, local imports
@@ -85,6 +87,7 @@ def calculate_trajectory(current_pose: Pose, target_pose: Pose) -> Trajectory:
 ### Commit Messages
 
 Follow conventional commit format:
+
 ```
 type(scope): description
 
@@ -96,6 +99,7 @@ type(scope): description
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 Examples:
+
 - `feat(navigation): add obstacle avoidance algorithm`
 - `fix(slam): resolve memory leak in point cloud processing`
 - `docs: update installation instructions`
@@ -103,6 +107,7 @@ Examples:
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 # Run Python unit tests
 cd autonomy/ros2_ws
@@ -112,6 +117,7 @@ colcon test-result --verbose
 ```
 
 ### Integration Tests
+
 ```bash
 # Run integration tests
 cd Autonomy
@@ -119,6 +125,7 @@ python tests/integration_test.py
 ```
 
 ### Manual Testing
+
 - Test in simulation before hardware deployment
 - Verify ROS2 topic/service communication
 - Check system performance under various conditions
@@ -143,6 +150,7 @@ python tests/integration_test.py
 ### PR Template
 
 All PRs must include:
+
 - [ ] Description of changes
 - [ ] Testing performed
 - [ ] Documentation updated
@@ -151,6 +159,7 @@ All PRs must include:
 ## 🐛 Issue Reporting
 
 When reporting bugs, please include:
+
 - **Environment**: ROS2 version, OS, hardware
 - **Steps to reproduce**: Detailed reproduction steps
 - **Expected vs actual behavior**
@@ -177,18 +186,21 @@ This project follows our [Code of Conduct](CODE_OF_CONDUCT.md). By participating
 ## 🎯 Areas for Contribution
 
 ### High Priority
+
 - Navigation system improvements
 - Computer vision enhancements
 - SLAM algorithm optimization
 - System integration testing
 
 ### Medium Priority
+
 - Documentation improvements
 - Additional sensor integrations
 - Performance optimizations
 - Docker environment enhancements
 
 ### Future Areas
+
 - Machine learning model development
 - Simulation environment expansion
 - Telemetry and monitoring systems

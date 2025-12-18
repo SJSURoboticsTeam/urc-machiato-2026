@@ -7,7 +7,7 @@ Handles interference detection, bandwidth monitoring, and compliance reporting.
 """
 
 import time
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from constants import URC_900MHZ_MAX_BANDWIDTH
 
@@ -90,7 +90,9 @@ class SpectrumMonitor:
         if current_band == "900mhz":
             max_bandwidth = self.urc_band_config["900mhz"]["max_bandwidth_mhz"]
             if max_bandwidth and current_usage > max_bandwidth:
-                self._report_bandwidth_violation(current_usage, max_bandwidth, current_band)
+                self._report_bandwidth_violation(
+                    current_usage, max_bandwidth, current_band
+                )
 
         # Check sub-band compliance for 900MHz
         if current_band == "900mhz":
@@ -105,7 +107,9 @@ class SpectrumMonitor:
             # Trigger safety protocols if interference is critical
             total_interference = sum(interference_sources.values())
             if total_interference > self.interference_monitor["interference_threshold"]:
-                self._trigger_2_4ghz_safety_protocol("critical_interference", interference_sources)
+                self._trigger_2_4ghz_safety_protocol(
+                    "critical_interference", interference_sources
+                )
 
         # Update compliance tracking
         self.spectrum_compliance["current_band"] = current_band
@@ -133,7 +137,9 @@ class SpectrumMonitor:
         else:
             return base_usage
 
-    def _report_bandwidth_violation(self, current_usage: float, limit: float, band: str) -> None:
+    def _report_bandwidth_violation(
+        self, current_usage: float, limit: float, band: str
+    ) -> None:
         """
         Report a bandwidth violation.
 
@@ -190,13 +196,18 @@ class SpectrumMonitor:
         }
 
         # Update interference monitor state
-        self.interference_monitor.update({
-            "wifi_congestion_detected": interference_sources["wifi_congestion"] > 0.5,
-            "competing_teams_detected": interference_sources["team_interference"] > 0.5,
-            "environmental_noise": interference_sources["environmental_noise"] > 0.5,
-            "channel_overlap": interference_sources["channel_overlap"] > 0.5,
-            "last_interference_check": time.time(),
-        })
+        self.interference_monitor.update(
+            {
+                "wifi_congestion_detected": interference_sources["wifi_congestion"]
+                > 0.5,
+                "competing_teams_detected": interference_sources["team_interference"]
+                > 0.5,
+                "environmental_noise": interference_sources["environmental_noise"]
+                > 0.5,
+                "channel_overlap": interference_sources["channel_overlap"] > 0.5,
+                "last_interference_check": time.time(),
+            }
+        )
 
         return interference_sources
 
@@ -244,7 +255,7 @@ class SpectrumMonitor:
         # In a real implementation, this would check if current channel
         # overlaps with adjacent channels
         # For simulation, check current channel
-        current_channel = getattr(self, 'current_wifi_channel', 6)
+        current_channel = getattr(self, "current_wifi_channel", 6)
 
         # Check if current channel overlaps with adjacent channels
         overlap_penalty = 0.0
@@ -255,8 +266,9 @@ class SpectrumMonitor:
 
         return overlap_penalty
 
-    def _trigger_2_4ghz_safety_protocol(self, trigger_type: str,
-                                      interference_sources: Optional[Dict[str, float]] = None) -> None:
+    def _trigger_2_4ghz_safety_protocol(
+        self, trigger_type: str, interference_sources: Optional[Dict[str, float]] = None
+    ) -> None:
         """
         Trigger 2.4 GHz safety protocol in response to interference.
 
@@ -269,17 +281,23 @@ class SpectrumMonitor:
         if trigger_type == "critical_interference":
             # Immediate channel switch
             # In a real implementation, this would trigger emergency communicator
-            self.logger.warning("Triggering emergency channel switch due to critical interference")
+            self.logger.warning(
+                "Triggering emergency channel switch due to critical interference"
+            )
 
         elif trigger_type == "communication_loss":
             # Activate emergency communication mode
             # In a real implementation, this would activate emergency communicator
-            self.logger.warning("Activating emergency communication mode due to communication loss")
+            self.logger.warning(
+                "Activating emergency communication mode due to communication loss"
+            )
 
         elif trigger_type == "bandwidth_degradation":
             # Reduce communication load
             # In a real implementation, this would reduce telemetry rate
-            self.logger.warning("Reducing communication load due to bandwidth degradation")
+            self.logger.warning(
+                "Reducing communication load due to bandwidth degradation"
+            )
 
         elif trigger_type == "jitter":
             # Handle latency variation
@@ -388,6 +406,8 @@ class SpectrumMonitor:
         return {
             "spectrum_compliance": self.get_spectrum_status(),
             "urc_band_config": self.urc_band_config.copy(),
-            "compliance_violations": self.spectrum_compliance["compliance_violations"].copy(),
+            "compliance_violations": self.spectrum_compliance[
+                "compliance_violations"
+            ].copy(),
             "generated_at": time.time(),
         }

@@ -7,6 +7,7 @@ This directory contains templates and examples for writing clean, maintainable R
 ### Python Code Standards
 
 #### Naming Conventions
+
 ```python
 # Classes: PascalCase
 class NavigationNode(Node):
@@ -34,6 +35,7 @@ DEFAULT_FRAME_ID = "base_link"
 ```
 
 #### Code Structure
+
 ```python
 # File header
 """
@@ -243,6 +245,7 @@ if __name__ == '__main__':
 ### Error Handling Patterns
 
 #### Exception Handling
+
 ```python
 def safe_sensor_callback(self, msg):
     """Safely handle sensor callbacks with error recovery."""
@@ -262,6 +265,7 @@ def _handle_sensor_error(self):
 ```
 
 #### Validation Functions
+
 ```python
 def validate_pose(self, pose):
     """Validate pose message integrity."""
@@ -289,6 +293,7 @@ def _is_finite_pose(self, pose):
 ### Logging Standards
 
 #### Log Levels and Usage
+
 ```python
 # DEBUG: Detailed diagnostic information
 self.get_logger().debug(f'Control loop iteration: dt={dt:.3f}')
@@ -307,6 +312,7 @@ self.get_logger().fatal('Critical sensor failure, shutting down')
 ```
 
 #### Structured Logging
+
 ```python
 def log_navigation_status(self):
     """Log current navigation status with context."""
@@ -324,6 +330,7 @@ def log_navigation_status(self):
 ## 📋 What Else Should Be Included
 
 ### Testing Framework
+
 ```python
 # tests/test_navigation_node.py
 import pytest
@@ -381,6 +388,7 @@ class TestNavigationNode:
 ```
 
 ### Documentation Standards
+
 ```python
 class NavigationNode(Node):
     """ROS 2 node for autonomous navigation.
@@ -415,6 +423,7 @@ class NavigationNode(Node):
 ```
 
 ### Configuration Management
+
 ```python
 # config/navigation_config.yaml
 navigation:
@@ -439,6 +448,7 @@ navigation:
 ```
 
 ### Performance Monitoring
+
 ```python
 class PerformanceMonitor:
     """Monitor node performance metrics."""
@@ -484,6 +494,7 @@ class PerformanceMonitor:
 ```
 
 ### Health Monitoring
+
 ```python
 class HealthMonitor(Node):
     """Monitor system health and publish diagnostics."""
@@ -538,6 +549,7 @@ class HealthMonitor(Node):
 ## 🧪 Testing Standards
 
 ### Unit Testing
+
 ```python
 # tests/test_terrain_classifier.py
 import pytest
@@ -581,6 +593,7 @@ class TestTerrainClassifier:
 ```
 
 ### Integration Testing
+
 ```python
 # tests/integration/test_navigation_stack.py
 import pytest
@@ -641,6 +654,7 @@ class TestNavigationStack:
 ## 📊 Code Quality Standards
 
 ### Code Metrics
+
 ```bash
 # Run code quality checks
 flake8 autonomy/ --max-line-length=88 --extend-ignore=E203,W503
@@ -650,6 +664,7 @@ mypy autonomy/ --ignore-missing-imports
 ```
 
 ### Performance Benchmarks
+
 ```python
 # benchmarks/benchmark_navigation.py
 import time
@@ -707,6 +722,7 @@ if __name__ == "__main__":
 ```
 
 ### Continuous Integration
+
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -718,37 +734,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
 
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install pytest pytest-cov flake8 black isort mypy
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8 black isort mypy
 
-    - name: Lint with flake8
-      run: flake8 autonomy/ --max-line-length=88
+      - name: Lint with flake8
+        run: flake8 autonomy/ --max-line-length=88
 
-    - name: Check formatting with black
-      run: black --check autonomy/
+      - name: Check formatting with black
+        run: black --check autonomy/
 
-    - name: Check imports with isort
-      run: isort --check-only autonomy/
+      - name: Check imports with isort
+        run: isort --check-only autonomy/
 
-    - name: Type check with mypy
-      run: mypy autonomy/ --ignore-missing-imports
+      - name: Type check with mypy
+        run: mypy autonomy/ --ignore-missing-imports
 
-    - name: Run tests
-      run: pytest --cov=autonomy --cov-report=xml
+      - name: Run tests
+        run: pytest --cov=autonomy --cov-report=xml
 
-    - name: Upload coverage
-      uses: codecov/codecov-action@v2
-      with:
-        file: ./coverage.xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
 ```
 
 This comprehensive template and style guide provides the foundation for writing clean, maintainable, and testable ROS 2 code for the URC 2026 autonomy system.

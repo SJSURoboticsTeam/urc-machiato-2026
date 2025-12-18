@@ -8,18 +8,19 @@ replication model with automatic failover and conflict resolution.
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import threading
+import hashlib
 import json
 import logging
-from typing import Dict, List, Any, Optional, Callable
+import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import hashlib
+from typing import Any, Callable, Dict, List, Optional
 
 
 class NodeRole(Enum):
     """Node roles in the distributed state system."""
+
     MASTER = "master"
     SLAVE = "slave"
     CANDIDATE = "candidate"
@@ -27,6 +28,7 @@ class NodeRole(Enum):
 
 class StateOperation(Enum):
     """Types of state operations."""
+
     SET = "set"
     UPDATE = "update"
     DELETE = "delete"
@@ -36,6 +38,7 @@ class StateOperation(Enum):
 @dataclass
 class StateEntry:
     """A single state entry with metadata."""
+
     key: str
     value: Any
     timestamp: float
@@ -61,6 +64,7 @@ class StateEntry:
 @dataclass
 class NodeStatus:
     """Status information for a distributed node."""
+
     node_id: str
     role: NodeRole
     last_heartbeat: float
@@ -105,7 +109,7 @@ class DistributedStateManager:
         self.heartbeat_thread: Optional[threading.Thread] = None
 
         # Testing support - slave manager references for direct state sync
-        self._slave_managers: Dict[str, 'DistributedStateManager'] = {}
+        self._slave_managers: Dict[str, "DistributedStateManager"] = {}
 
         # Configuration
         self.heartbeat_timeout = heartbeat_interval * 3
@@ -125,7 +129,9 @@ class DistributedStateManager:
 
         # Start monitoring threads
         self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
-        self.heartbeat_thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
+        self.heartbeat_thread = threading.Thread(
+            target=self._heartbeat_loop, daemon=True
+        )
 
         self.monitor_thread.start()
         self.heartbeat_thread.start()
@@ -151,7 +157,7 @@ class DistributedStateManager:
                     node_id=node_id,
                     role=initial_role,
                     last_heartbeat=time.time(),
-                    state_version=0
+                    state_version=0,
                 )
 
                 # If this is the first node, make it master
@@ -168,7 +174,9 @@ class DistributedStateManager:
                 if self.master_node_id == node_id:
                     self._trigger_election()
 
-    def update_state(self, key: str, value: Any, operation: StateOperation = StateOperation.UPDATE) -> bool:
+    def update_state(
+        self, key: str, value: Any, operation: StateOperation = StateOperation.UPDATE
+    ) -> bool:
         """Update local state and propagate to other nodes."""
         with self.state_lock:
             # Create new state entry
@@ -178,7 +186,7 @@ class DistributedStateManager:
                 timestamp=time.time(),
                 node_id=self.node_id,
                 operation=operation,
-                version=self.state_version + 1
+                version=self.state_version + 1,
             )
 
             # Update local state
@@ -211,14 +219,17 @@ class DistributedStateManager:
             if master_version > self.state_version:
                 # Apply master's state
                 for key, value in master_state.items():
-                    if key not in self.local_state or self.local_state[key].version < master_version:
+                    if (
+                        key not in self.local_state
+                        or self.local_state[key].version < master_version
+                    ):
                         entry = StateEntry(
                             key=key,
                             value=value,
                             timestamp=time.time(),
                             node_id="master_sync",
                             operation=StateOperation.SYNC,
-                            version=master_version
+                            version=master_version,
                         )
                         self.local_state[key] = entry
 
@@ -233,7 +244,9 @@ class DistributedStateManager:
         """Add a callback for state changes."""
         self.sync_callbacks.append(callback)
 
-    def add_conflict_callback(self, callback: Callable[[str, StateEntry, StateEntry], StateEntry]):
+    def add_conflict_callback(
+        self, callback: Callable[[str, StateEntry, StateEntry], StateEntry]
+    ):
         """Add a callback for conflict resolution."""
         self.conflict_resolution_callbacks.append(callback)
 
@@ -312,13 +325,16 @@ class DistributedStateManager:
 
     def _trigger_election(self):
         """Trigger a master election using improved consensus logic."""
-        self.get_logger().info(f"Triggering master election (current master: {self.master_node_id})")
+        self.get_logger().info(
+            f"Triggering master election (current master: {self.master_node_id})"
+        )
         # Become candidate
         self.role = NodeRole.CANDIDATE
 
         # Get all healthy nodes including self
-        healthy_nodes = [node_id for node_id, status in self.nodes.items()
-                        if status.is_healthy]
+        healthy_nodes = [
+            node_id for node_id, status in self.nodes.items() if status.is_healthy
+        ]
 
         if not healthy_nodes:
             self.get_logger().info(f"No healthy nodes available for election")
@@ -339,8 +355,12 @@ class DistributedStateManager:
         # Sort by priority (highest first)
         candidates_with_priority.sort(key=lambda x: x[1], reverse=True)
         winner_id = candidates_with_priority[0][0]
-        self.get_logger().info(f"Election candidates: {[c[0] for c in candidates_with_priority]}, winner: {winner_id}")
-        self.get_logger().info(f"Winner priority: state_v{candidates_with_priority[0][1][0]}, node_id:{candidates_with_priority[0][1][1]}")
+        self.get_logger().info(
+            f"Election candidates: {[c[0] for c in candidates_with_priority]}, winner: {winner_id}"
+        )
+        self.get_logger().info(
+            f"Winner priority: state_v{candidates_with_priority[0][1][0]}, node_id:{candidates_with_priority[0][1][1]}"
+        )
         # Update all nodes' knowledge of the master
         for node_id in healthy_nodes:
             if node_id == winner_id:
@@ -351,7 +371,9 @@ class DistributedStateManager:
             else:
                 # Everyone else becomes slave
                 if node_id == self.node_id:
-                    self.get_logger().info(f"Node {self.node_id} becoming slave (master will be {winner_id})")
+                    self.get_logger().info(
+                        f"Node {self.node_id} becoming slave (master will be {winner_id})"
+                    )
                     self.role = NodeRole.SLAVE
                     self.master_node_id = winner_id
 
@@ -389,17 +411,23 @@ class DistributedStateManager:
             if node_id != self.node_id and node_status.role == NodeRole.SLAVE:
                 # For testing purposes, find the slave manager instance and sync
                 # In real ROS2, this would be done via ROS2 topics/services
-                if hasattr(self, '_slave_managers'):
+                if hasattr(self, "_slave_managers"):
                     slave_manager = self._slave_managers.get(node_id)
                     if slave_manager:
                         # Sync the state entry to the slave
                         slave_manager._receive_state_update(entry)
-                        self.get_logger().info(f"Propagated state update {entry.key} to slave {node_id}")
+                        self.get_logger().info(
+                            f"Propagated state update {entry.key} to slave {node_id}"
+                        )
+
     def _broadcast_master_change(self):
         """Broadcast master change to all nodes."""
         for node_id, node_status in self.nodes.items():
             if node_id != self.node_id:
-                self.get_logger().info(f"Notifying {node_id} of new master {self.master_node_id}")
+                self.get_logger().info(
+                    f"Notifying {node_id} of new master {self.master_node_id}"
+                )
+
     def _trigger_state_callbacks(self, key: str, entry: StateEntry):
         """Trigger callbacks for state changes."""
         for callback in self.sync_callbacks:
@@ -407,13 +435,11 @@ class DistributedStateManager:
                 callback(key, entry)
             except Exception as e:
                 self.get_logger().info(f"State callback error: {e}")
+
     def _register_node(self, node_id: str, role: NodeRole):
         """Register a node internally."""
         self.nodes[node_id] = NodeStatus(
-            node_id=node_id,
-            role=role,
-            last_heartbeat=time.time(),
-            state_version=0
+            node_id=node_id, role=role, last_heartbeat=time.time(), state_version=0
         )
 
     def _receive_state_update(self, entry: StateEntry):
@@ -426,7 +452,7 @@ class DistributedStateManager:
                 # Trigger callbacks
                 self._trigger_state_callbacks(entry.key, entry)
 
-    def register_slave_manager(self, slave_manager: 'DistributedStateManager'):
+    def register_slave_manager(self, slave_manager: "DistributedStateManager"):
         """Register a slave manager for direct state sync (testing only)."""
         self._slave_managers[slave_manager.node_id] = slave_manager
 
@@ -434,21 +460,21 @@ class DistributedStateManager:
         """Get comprehensive system status."""
         with self.state_lock:
             return {
-                'node_id': self.node_id,
-                'role': self.role.value,
-                'master_node': self.master_node_id,
-                'state_version': self.state_version,
-                'state_keys': list(self.local_state.keys()),
-                'nodes': {
+                "node_id": self.node_id,
+                "role": self.role.value,
+                "master_node": self.master_node_id,
+                "state_version": self.state_version,
+                "state_keys": list(self.local_state.keys()),
+                "nodes": {
                     node_id: {
-                        'role': status.role.value,
-                        'healthy': status.is_healthy,
-                        'last_heartbeat': status.last_heartbeat,
-                        'state_version': status.state_version
+                        "role": status.role.value,
+                        "healthy": status.is_healthy,
+                        "last_heartbeat": status.last_heartbeat,
+                        "state_version": status.state_version,
                     }
                     for node_id, status in self.nodes.items()
                 },
-                'timestamp': time.time()
+                "timestamp": time.time(),
             }
 
 

@@ -6,10 +6,10 @@ Provides mock implementations of ROS2 components to enable testing
 without requiring full ROS2 environment setup.
 """
 
-import time
-from typing import Dict, Any, List, Optional, Callable
-from dataclasses import dataclass
 import threading
+import time
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional
 
 
 @dataclass
@@ -120,10 +120,10 @@ class MockTimer:
         while not self.cancelled:
             time.sleep(self.period)
             if not self.cancelled:
-                try:
-                    self.callback()
-                except Exception as e:
-        self.get_logger().info(f"Timer callback error: {e}")
+        try:
+            self.get_logger().info(f"Timer callback error: {e}")
+            self.get_logger().info(f"Timer callback error: {e}")
+            self.get_logger().info(f"Timer callback error: {e}")
 class MockNode:
     """Mock ROS2 node for testing."""
 
@@ -298,6 +298,7 @@ def setup_mock_environment():
     """Setup mock environment when ROS2 is not available."""
     try:
         import rclpy
+
         # ROS2 is available, don't mock
         return False
     except ImportError:

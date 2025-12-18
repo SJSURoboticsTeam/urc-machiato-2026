@@ -1,7 +1,7 @@
 # Universal Docker Compose for URC 2026 Robotics Platform
 # Development environment with all services
 
-version: '3.8'
+version: "3.8"
 
 services:
   # ==================================================
@@ -20,7 +20,13 @@ services:
       - ROS_DOMAIN_ID=42
       - URC_ENV=development
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); from bridges.can_mock_simulator import CANBusMockSimulator; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); from bridges.can_mock_simulator import CANBusMockSimulator; print('OK')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -122,7 +128,13 @@ services:
     volumes:
       - ./config:/home/urc/config:ro
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); from safety_system.safety_manager import SafetyManager; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); from safety_system.safety_manager import SafetyManager; print('OK')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -149,7 +161,13 @@ services:
     volumes:
       - ./config:/home/urc/config:ro
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); import navigation; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); import navigation; print('OK')",
+        ]
       interval: 15s
       timeout: 10s
       retries: 3
@@ -203,7 +221,13 @@ services:
     volumes:
       - ./config:/home/urc/config:ro
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); import led_status; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); import led_status; print('OK')",
+        ]
       interval: 20s
       timeout: 10s
       retries: 3
@@ -230,7 +254,13 @@ services:
     volumes:
       - ./config:/home/urc/config:ro
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); import sensor_bridge; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); import sensor_bridge; print('OK')",
+        ]
       interval: 15s
       timeout: 10s
       retries: 3
@@ -257,7 +287,13 @@ services:
     volumes:
       - ./config:/home/urc/config:ro
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); import slam; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); import slam; print('OK')",
+        ]
       interval: 20s
       timeout: 10s
       retries: 3
@@ -286,7 +322,13 @@ services:
     volumes:
       - ./config:/home/urc/config:ro
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); import missions.mission_executor; print('OK')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import sys; sys.path.append('.'); import missions.mission_executor; print('OK')",
+        ]
       interval: 20s
       timeout: 10s
       retries: 3
@@ -319,7 +361,8 @@ services:
       - ./config:/home/urc/config:ro
       - /tmp/.X11-unix:/tmp/.X11-unix:rw # For GUI display
     healthcheck:
-      test: ["CMD", "python3", "-c", "import gazebo_msgs; print('Simulation OK')"]
+      test:
+        ["CMD", "python3", "-c", "import gazebo_msgs; print('Simulation OK')"]
       interval: 15s
       timeout: 10s
       retries: 3
@@ -372,4 +415,3 @@ networks:
 volumes:
   ros2_logs:
     driver: local
-

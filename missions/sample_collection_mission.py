@@ -12,26 +12,28 @@ URC Requirements:
 - Science payload integration
 """
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from sensor_msgs.msg import Image, CameraInfo
-from std_msgs.msg import String, Bool, Float32, Float32MultiArray
-from nav_msgs.msg import Odometry
-from tf2_ros import Buffer, TransformListener
-import cv2
-from cv_bridge import CvBridge
-import numpy as np
+import json
 import math
 import time
-import json
-from typing import Optional, Tuple, List, Dict
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+import cv2
+import numpy as np
+import rclpy
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import CameraInfo, Image
+from std_msgs.msg import Bool, Float32, Float32MultiArray, String
+from tf2_ros import Buffer, TransformListener
 
 
 class SampleCollectionState(Enum):
     """States for sample collection mission."""
+
     IDLE = "idle"
     SEARCHING = "searching"
     APPROACHING = "approaching"
@@ -55,25 +57,25 @@ class SampleCollectionMission(Node):
     """
 
     def __init__(self):
-        super().__init__('sample_collection_mission')
+        super().__init__("sample_collection_mission")
 
         # Mission parameters
-        self.declare_parameter('max_samples', 5)                    # Maximum samples to collect
-        self.declare_parameter('sample_search_timeout', 300.0)      # 5 minutes search time
-        self.declare_parameter('approach_timeout', 60.0)            # 1 minute approach time
-        self.declare_parameter('excavation_timeout', 120.0)         # 2 minutes excavation time
-        self.declare_parameter('sample_approach_distance', 0.2)     # 20cm from sample
-        self.declare_parameter('excavation_depth', 0.15)            # 15cm excavation depth
-        self.declare_parameter('sample_cache_slots', 6)             # Available cache slots
+        self.declare_parameter("max_samples", 5)  # Maximum samples to collect
+        self.declare_parameter("sample_search_timeout", 300.0)  # 5 minutes search time
+        self.declare_parameter("approach_timeout", 60.0)  # 1 minute approach time
+        self.declare_parameter("excavation_timeout", 120.0)  # 2 minutes excavation time
+        self.declare_parameter("sample_approach_distance", 0.2)  # 20cm from sample
+        self.declare_parameter("excavation_depth", 0.15)  # 15cm excavation depth
+        self.declare_parameter("sample_cache_slots", 6)  # Available cache slots
 
         # Get parameters
-        self.max_samples = self.get_parameter('max_samples').value
-        self.search_timeout = self.get_parameter('sample_search_timeout').value
-        self.approach_timeout = self.get_parameter('approach_timeout').value
-        self.excavation_timeout = self.get_parameter('excavation_timeout').value
-        self.approach_distance = self.get_parameter('sample_approach_distance').value
-        self.excavation_depth = self.get_parameter('excavation_depth').value
-        self.cache_slots = self.get_parameter('sample_cache_slots').value
+        self.max_samples = self.get_parameter("max_samples").value
+        self.search_timeout = self.get_parameter("sample_search_timeout").value
+        self.approach_timeout = self.get_parameter("approach_timeout").value
+        self.excavation_timeout = self.get_parameter("excavation_timeout").value
+        self.approach_distance = self.get_parameter("sample_approach_distance").value
+        self.excavation_depth = self.get_parameter("excavation_depth").value
+        self.cache_slots = self.get_parameter("sample_cache_slots").value
 
         # Mission state
         self.state = SampleCollectionState.IDLE
@@ -91,36 +93,48 @@ class SampleCollectionMission(Node):
         self.bridge = CvBridge()
 
         # Publishers
-        self.goal_pub = self.create_publisher(
-            PoseStamped, '/goal_pose', 10)
+        self.goal_pub = self.create_publisher(PoseStamped, "/goal_pose", 10)
 
         self.excavate_cmd_pub = self.create_publisher(
-            String, '/hardware/excavate_command', 10)
+            String, "/hardware/excavate_command", 10
+        )
 
         self.mission_status_pub = self.create_publisher(
-            String, '/mission/sample_collection_status', 10)
+            String, "/mission/sample_collection_status", 10
+        )
 
-        self.sample_data_pub = self.create_publisher(
-            String, '/science/sample_data', 10)
+        self.sample_data_pub = self.create_publisher(String, "/science/sample_data", 10)
 
         # Subscribers (optimized - use centralized vision processing)
         self.obstacle_sub = self.create_subscription(
-            Float32MultiArray, '/vision/obstacles', self.obstacle_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            Float32MultiArray,
+            "/vision/obstacles",
+            self.obstacle_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.odom_sub = self.create_subscription(
-            Odometry, '/odom', self.odom_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            Odometry,
+            "/odom",
+            self.odom_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.excavate_status_sub = self.create_subscription(
-            String, '/hardware/excavate_status', self.excavate_status_callback, 10)
+            String, "/hardware/excavate_status", self.excavate_status_callback, 10
+        )
 
         self.mission_cmd_sub = self.create_subscription(
-            String, '/mission/sample_collection_command', self.mission_command_callback, 10)
+            String,
+            "/mission/sample_collection_command",
+            self.mission_command_callback,
+            10,
+        )
 
         # Mission control integration
         self.control_sub = self.create_subscription(
-            String, '/mission/commands', self.control_callback, 10)
+            String, "/mission/commands", self.control_callback, 10
+        )
 
         # State tracking
         self.current_pose = None
@@ -134,7 +148,9 @@ class SampleCollectionMission(Node):
         self.excavation_timer = None
 
         self.get_logger().info("Sample Collection Mission initialized")
-        self.get_logger().info(f"Target: {self.max_samples} samples, {self.cache_slots} cache slots available")
+        self.get_logger().info(
+            f"Target: {self.max_samples} samples, {self.cache_slots} cache slots available"
+        )
 
     def mission_command_callback(self, msg: String):
         """Handle sample collection mission specific commands."""
@@ -168,7 +184,9 @@ class SampleCollectionMission(Node):
     def start_mission(self):
         """Start the sample collection mission."""
         if self.state != SampleCollectionState.IDLE:
-            self.get_logger().warn(f"Cannot start mission from state {self.state.value}")
+            self.get_logger().warn(
+                f"Cannot start mission from state {self.state.value}"
+            )
             return
 
         self.get_logger().info("🚀 Starting Sample Collection Mission")
@@ -179,7 +197,9 @@ class SampleCollectionMission(Node):
         self.potential_samples = []
 
         # Start search timeout
-        self.search_timer = self.create_timer(self.search_timeout, self.search_timeout_callback)
+        self.search_timer = self.create_timer(
+            self.search_timeout, self.search_timeout_callback
+        )
 
         self.publish_status()
 
@@ -207,7 +227,7 @@ class SampleCollectionMission(Node):
 
         # Convert lat/lng to map coordinates (simplified)
         sample_pose = PoseStamped()
-        sample_pose.header.frame_id = 'map'
+        sample_pose.header.frame_id = "map"
         sample_pose.header.stamp = self.get_clock().now().to_msg()
         sample_pose.pose.position.x = longitude * 1000  # Rough conversion
         sample_pose.pose.position.y = latitude * 1000
@@ -225,7 +245,9 @@ class SampleCollectionMission(Node):
         """Handle sample search timeout."""
         if self.state == SampleCollectionState.SEARCHING:
             if len(self.potential_samples) > 0:
-                self.get_logger().info(f"Search timeout - proceeding with {len(self.potential_samples)} detected samples")
+                self.get_logger().info(
+                    f"Search timeout - proceeding with {len(self.potential_samples)} detected samples"
+                )
                 self.state = SampleCollectionState.APPROACHING
                 self.approach_sample()
             else:
@@ -242,10 +264,12 @@ class SampleCollectionMission(Node):
             # Use obstacle detections as potential sample locations
             # Format: [center_x, center_y, width, height, area, ...]
             obstacles = msg.data
-            
+
             if len(obstacles) >= 5:  # At least one obstacle detected
                 num_obstacles = len(obstacles) // 5
-                self.get_logger().info(f"🔍 Detected {num_obstacles} potential sample locations via vision processor")
+                self.get_logger().info(
+                    f"🔍 Detected {num_obstacles} potential sample locations via vision processor"
+                )
 
                 # Convert obstacle coordinates to world poses
                 for i in range(0, len(obstacles), 5):
@@ -253,22 +277,27 @@ class SampleCollectionMission(Node):
                         center_x = obstacles[i]
                         center_y = obstacles[i + 1]
                         area = obstacles[i + 4]
-                        
+
                         # Only consider large obstacles as potential samples
                         if area > 0.1:  # Threshold for sample size
                             # Create sample pose (simplified - would need proper transform)
                             sample_pose = PoseStamped()
-                            sample_pose.header.frame_id = 'camera_link'
+                            sample_pose.header.frame_id = "camera_link"
                             sample_pose.header.stamp = self.get_clock().now().to_msg()
-                            sample_pose.pose.position.x = (center_x - 0.5) * 2.0  # Convert normalized to meters
+                            sample_pose.pose.position.x = (
+                                center_x - 0.5
+                            ) * 2.0  # Convert normalized to meters
                             sample_pose.pose.position.y = (center_y - 0.5) * 2.0
                             sample_pose.pose.position.z = 0.0
                             sample_pose.pose.orientation.w = 1.0
-                            
+
                             # Transform to map frame
                             try:
-                                world_pose = self.tf_buffer.transform(sample_pose, 'map', 
-                                    timeout=rclpy.duration.Duration(seconds=1.0))
+                                world_pose = self.tf_buffer.transform(
+                                    sample_pose,
+                                    "map",
+                                    timeout=rclpy.duration.Duration(seconds=1.0),
+                                )
                                 self.potential_samples.append(world_pose)
                             except:
                                 pass
@@ -292,7 +321,9 @@ class SampleCollectionMission(Node):
         sample_mask = cv2.inRange(hsv, (5, 50, 50), (15, 255, 200))  # Reddish colors
 
         # Find contours of potential sample areas
-        contours, _ = cv2.findContours(sample_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            sample_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         sample_locations = []
         for contour in contours:
@@ -307,7 +338,9 @@ class SampleCollectionMission(Node):
 
         return sample_locations
 
-    def image_to_world_coordinates(self, image_coords: Tuple[int, int], header) -> Optional[PoseStamped]:
+    def image_to_world_coordinates(
+        self, image_coords: Tuple[int, int], header
+    ) -> Optional[PoseStamped]:
         """Convert image pixel coordinates to world coordinates."""
         try:
             # This is a simplified conversion
@@ -336,7 +369,9 @@ class SampleCollectionMission(Node):
 
             # Transform to map frame
             try:
-                transformed_pose = self.tf_buffer.transform(sample_pose, 'map', timeout=rclpy.duration.Duration(seconds=1.0))
+                transformed_pose = self.tf_buffer.transform(
+                    sample_pose, "map", timeout=rclpy.duration.Duration(seconds=1.0)
+                )
                 return transformed_pose
             except Exception as tf_error:
                 self.get_logger().warn(f"TF sample transform failed: {tf_error}")
@@ -369,23 +404,32 @@ class SampleCollectionMission(Node):
         # Create approach pose (close but not too close for excavation)
         approach_pose = PoseStamped()
         approach_pose.header = self.current_sample_location.header
-        approach_pose.header.frame_id = 'map'
+        approach_pose.header.frame_id = "map"
 
         # Calculate approach position
-        dx = self.current_sample_location.pose.position.x - (self.current_pose.pose.pose.position.x if self.current_pose else 0)
-        dy = self.current_sample_location.pose.position.y - (self.current_pose.pose.pose.position.y if self.current_pose else 0)
-        distance = math.sqrt(dx*dx + dy*dy)
+        dx = self.current_sample_location.pose.position.x - (
+            self.current_pose.pose.pose.position.x if self.current_pose else 0
+        )
+        dy = self.current_sample_location.pose.position.y - (
+            self.current_pose.pose.pose.position.y if self.current_pose else 0
+        )
+        distance = math.sqrt(dx * dx + dy * dy)
 
         if distance > 0:
             # Position approach_distance meters from sample
             scale = (distance - self.approach_distance) / distance
-            approach_pose.pose.position.x = self.current_pose.pose.pose.position.x + dx * scale
-            approach_pose.pose.position.y = self.current_pose.pose.pose.position.y + dy * scale
+            approach_pose.pose.position.x = (
+                self.current_pose.pose.pose.position.x + dx * scale
+            )
+            approach_pose.pose.position.y = (
+                self.current_pose.pose.pose.position.y + dy * scale
+            )
             approach_pose.pose.position.z = 0.0
 
             # Face the sample
             approach_pose.pose.orientation = self.calculate_facing_orientation(
-                approach_pose.pose.position, self.current_sample_location.pose.position)
+                approach_pose.pose.position, self.current_sample_location.pose.position
+            )
         else:
             # Already close
             approach_pose.pose = self.current_sample_location.pose
@@ -394,9 +438,13 @@ class SampleCollectionMission(Node):
         self.goal_pub.publish(approach_pose)
 
         # Start approach timeout
-        self.approach_timer = self.create_timer(self.approach_timeout, self.approach_timeout_callback)
+        self.approach_timer = self.create_timer(
+            self.approach_timeout, self.approach_timeout_callback
+        )
 
-    def calculate_facing_orientation(self, from_pos: Point, to_pos: Point) -> Quaternion:
+    def calculate_facing_orientation(
+        self, from_pos: Point, to_pos: Point
+    ) -> Quaternion:
         """Calculate quaternion to face from one position to another."""
         dx = to_pos.x - from_pos.x
         dy = to_pos.y - from_pos.y
@@ -420,8 +468,11 @@ class SampleCollectionMission(Node):
         self.current_pose = msg
 
         # Check if we've reached the sample
-        if (self.state == SampleCollectionState.APPROACHING and
-            self.current_sample_location and self.is_at_sample_location()):
+        if (
+            self.state == SampleCollectionState.APPROACHING
+            and self.current_sample_location
+            and self.is_at_sample_location()
+        ):
 
             self.get_logger().info("📍 Reached sample location")
             self.state = SampleCollectionState.ANALYZING
@@ -435,9 +486,15 @@ class SampleCollectionMission(Node):
         if not self.current_sample_location or not self.current_pose:
             return False
 
-        dx = self.current_sample_location.pose.position.x - self.current_pose.pose.pose.position.x
-        dy = self.current_sample_location.pose.position.y - self.current_pose.pose.pose.position.y
-        distance = math.sqrt(dx*dx + dy*dy)
+        dx = (
+            self.current_sample_location.pose.position.x
+            - self.current_pose.pose.pose.position.x
+        )
+        dy = (
+            self.current_sample_location.pose.position.y
+            - self.current_pose.pose.pose.position.y
+        )
+        distance = math.sqrt(dx * dx + dy * dy)
 
         return distance < self.approach_distance
 
@@ -465,14 +522,16 @@ class SampleCollectionMission(Node):
         self.state = SampleCollectionState.EXCAVATING
 
         # Start excavation timeout
-        self.excavation_timer = self.create_timer(self.excavation_timeout, self.excavation_timeout_callback)
+        self.excavation_timer = self.create_timer(
+            self.excavation_timeout, self.excavation_timeout_callback
+        )
 
     def excavate_status_callback(self, msg: String):
         """Handle excavation status updates from hardware."""
         try:
             status = json.loads(msg.data)
 
-            if status.get('complete', False):
+            if status.get("complete", False):
                 self.get_logger().info("✅ Excavation completed")
                 self.excavation_active = False
                 self.sample_in_gripper = True
@@ -482,7 +541,7 @@ class SampleCollectionMission(Node):
                 # Proceed to caching
                 self.cache_sample()
 
-            elif status.get('error'):
+            elif status.get("error"):
                 self.get_logger().error(f"Excavation error: {status['error']}")
                 self.excavation_active = False
                 self.state = SampleCollectionState.FAILED
@@ -530,15 +589,15 @@ class SampleCollectionMission(Node):
 
         # Publish sample data for science analysis
         sample_data = {
-            'sample_id': self.samples_collected,
-            'collection_time': time.time(),
-            'location': {
-                'x': self.current_sample_location.pose.position.x,
-                'y': self.current_sample_location.pose.position.y,
-                'z': self.current_sample_location.pose.position.z
+            "sample_id": self.samples_collected,
+            "collection_time": time.time(),
+            "location": {
+                "x": self.current_sample_location.pose.position.x,
+                "y": self.current_sample_location.pose.position.y,
+                "z": self.current_sample_location.pose.position.z,
             },
-            'type': 'unknown',  # Would be determined by analysis
-            'cache_slot': self.cache_used - 1
+            "type": "unknown",  # Would be determined by analysis
+            "cache_slot": self.cache_used - 1,
         }
 
         sample_msg = String()
@@ -547,28 +606,36 @@ class SampleCollectionMission(Node):
 
         # Check if mission complete
         if self.samples_collected >= self.max_samples:
-            self.get_logger().info(f"🎉 Mission complete! Collected {self.samples_collected} samples")
+            self.get_logger().info(
+                f"🎉 Mission complete! Collected {self.samples_collected} samples"
+            )
             self.state = SampleCollectionState.COMPLETED
 
             # Publish mission completion
             completion_msg = String()
-            completion_msg.data = json.dumps({
-                'mission': 'sample_collection',
-                'status': 'completed',
-                'samples_collected': self.samples_collected,
-                'cache_used': self.cache_used,
-                'timestamp': time.time()
-            })
+            completion_msg.data = json.dumps(
+                {
+                    "mission": "sample_collection",
+                    "status": "completed",
+                    "samples_collected": self.samples_collected,
+                    "cache_used": self.cache_used,
+                    "timestamp": time.time(),
+                }
+            )
             self.mission_status_pub.publish(completion_msg)
         else:
             # Continue with next sample
-            self.get_logger().info(f"Continuing mission - {self.samples_collected}/{self.max_samples} samples collected")
+            self.get_logger().info(
+                f"Continuing mission - {self.samples_collected}/{self.max_samples} samples collected"
+            )
             if self.potential_samples:
                 self.state = SampleCollectionState.APPROACHING
                 self.approach_sample()
             else:
                 self.state = SampleCollectionState.SEARCHING
-                self.search_timer = self.create_timer(self.search_timeout, self.search_timeout_callback)
+                self.search_timer = self.create_timer(
+                    self.search_timeout, self.search_timeout_callback
+                )
 
         self.publish_status()
 
@@ -587,25 +654,27 @@ class SampleCollectionMission(Node):
     def publish_status(self):
         """Publish current mission status."""
         status_data = {
-            'mission': 'sample_collection',
-            'state': self.state.value,
-            'samples_collected': self.samples_collected,
-            'cache_used': self.cache_used,
-            'cache_slots': self.cache_slots,
-            'potential_samples': len(self.potential_samples),
-            'excavation_active': self.excavation_active,
-            'sample_in_gripper': self.sample_in_gripper,
-            'timestamp': time.time()
+            "mission": "sample_collection",
+            "state": self.state.value,
+            "samples_collected": self.samples_collected,
+            "cache_used": self.cache_used,
+            "cache_slots": self.cache_slots,
+            "potential_samples": len(self.potential_samples),
+            "excavation_active": self.excavation_active,
+            "sample_in_gripper": self.sample_in_gripper,
+            "timestamp": time.time(),
         }
 
         if self.start_time:
-            status_data['elapsed_time'] = time.time() - self.start_time
+            status_data["elapsed_time"] = time.time() - self.start_time
 
         status_msg = String()
         status_msg.data = json.dumps(status_data)
         self.mission_status_pub.publish(status_msg)
 
-        self.get_logger().info(f"Mission status: {self.state.value} ({self.samples_collected}/{self.max_samples} samples)")
+        self.get_logger().info(
+            f"Mission status: {self.state.value} ({self.samples_collected}/{self.max_samples} samples)"
+        )
 
 
 def main(args=None):
@@ -622,5 +691,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

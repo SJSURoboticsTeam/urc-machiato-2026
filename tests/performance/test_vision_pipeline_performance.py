@@ -11,24 +11,25 @@ Tests complete vision processing pipeline performance:
 Critical for autonomous navigation and terrain analysis.
 """
 
-import time
 import statistics
+import threading
+import time
+import tracemalloc
 import unittest
-import psutil
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Tuple
+
 import cv2
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Any
+import psutil
 import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from sensor_msgs.msg import Image, CameraInfo, PointCloud2
-from geometry_msgs.msg import PoseStamped, Point
-from std_msgs.msg import Header, Float32MultiArray, Bool
-from nav_msgs.msg import OccupancyGrid
 from cv_bridge import CvBridge
-import threading
-from concurrent.futures import ThreadPoolExecutor
-import tracemalloc
+from geometry_msgs.msg import Point, PoseStamped
+from nav_msgs.msg import OccupancyGrid
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import CameraInfo, Image, PointCloud2
+from std_msgs.msg import Bool, Float32MultiArray, Header
 
 
 class VisionPipelinePerformanceTest(unittest.TestCase):
@@ -58,9 +59,9 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
 
     def tearDown(self):
         """Clean up resources."""
-        if hasattr(self, 'image_generator'):
+        if hasattr(self, "image_generator"):
             self.image_generator.destroy_node()
-        if hasattr(self, 'result_consumer'):
+        if hasattr(self, "result_consumer"):
             self.result_consumer.destroy_node()
         rclpy.shutdown()
 
@@ -135,7 +136,7 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
 
             while time.time() - result_wait_start < timeout and not result_received:
                 rclpy.spin_once(self.result_consumer, timeout_sec=0.001)
-                if hasattr(self.result_consumer, 'last_result_time'):
+                if hasattr(self.result_consumer, "last_result_time"):
                     result_received = True
 
             # Record total frame time
@@ -160,13 +161,15 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
     def _start_resource_monitoring(self):
         """Start monitoring system resources."""
         self.monitoring_active = True
-        self.monitor_thread = threading.Thread(target=self._monitor_resources, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitor_resources, daemon=True
+        )
         self.monitor_thread.start()
 
     def _stop_resource_monitoring(self):
         """Stop resource monitoring."""
         self.monitoring_active = False
-        if hasattr(self, 'monitor_thread'):
+        if hasattr(self, "monitor_thread"):
             self.monitor_thread.join(timeout=2.0)
 
     def _monitor_resources(self):
@@ -200,9 +203,17 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
         target_fps = 1000.0 / self.target_frame_time_ms
 
         # Resource usage statistics
-        avg_memory_mb = statistics.mean(self.memory_usage_readings) if self.memory_usage_readings else 0
-        max_memory_mb = max(self.memory_usage_readings) if self.memory_usage_readings else 0
-        avg_cpu_percent = statistics.mean(self.cpu_usage_readings) if self.cpu_usage_readings else 0
+        avg_memory_mb = (
+            statistics.mean(self.memory_usage_readings)
+            if self.memory_usage_readings
+            else 0
+        )
+        max_memory_mb = (
+            max(self.memory_usage_readings) if self.memory_usage_readings else 0
+        )
+        avg_cpu_percent = (
+            statistics.mean(self.cpu_usage_readings) if self.cpu_usage_readings else 0
+        )
         max_cpu_percent = max(self.cpu_usage_readings) if self.cpu_usage_readings else 0
 
         # Print detailed results
@@ -225,15 +236,21 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
         print("-" * 50)
 
         requirements = {
-            'Average Frame Time': (avg_frame_time, self.target_frame_time_ms),
-            '95th Percentile Frame Time': (p95_frame_time, self.target_frame_time_ms * 1.2),
-            '99th Percentile Frame Time': (p99_frame_time, self.target_frame_time_ms * 1.5),
-            'Maximum Frame Time': (max_frame_time, self.target_frame_time_ms * 2.0),
-            'Average FPS': (avg_fps, target_fps),
-            'Memory Usage (avg)': (avg_memory_mb, self.target_memory_mb),
-            'Memory Usage (max)': (max_memory_mb, self.target_memory_mb * 1.2),
-            'CPU Usage (avg)': (avg_cpu_percent, self.target_cpu_percent),
-            'CPU Usage (max)': (max_cpu_percent, self.target_cpu_percent * 1.2),
+            "Average Frame Time": (avg_frame_time, self.target_frame_time_ms),
+            "95th Percentile Frame Time": (
+                p95_frame_time,
+                self.target_frame_time_ms * 1.2,
+            ),
+            "99th Percentile Frame Time": (
+                p99_frame_time,
+                self.target_frame_time_ms * 1.5,
+            ),
+            "Maximum Frame Time": (max_frame_time, self.target_frame_time_ms * 2.0),
+            "Average FPS": (avg_fps, target_fps),
+            "Memory Usage (avg)": (avg_memory_mb, self.target_memory_mb),
+            "Memory Usage (max)": (max_memory_mb, self.target_memory_mb * 1.2),
+            "CPU Usage (avg)": (avg_cpu_percent, self.target_cpu_percent),
+            "CPU Usage (max)": (max_cpu_percent, self.target_cpu_percent * 1.2),
         }
 
         all_passed = True
@@ -272,26 +289,23 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
 
         # Store results for regression testing
         self.test_results = {
-            'avg_frame_time_ms': avg_frame_time,
-            'max_frame_time_ms': max_frame_time,
-            'p95_frame_time_ms': p95_frame_time,
-            'p99_frame_time_ms': p99_frame_time,
-            'avg_fps': avg_fps,
-            'avg_memory_mb': avg_memory_mb,
-            'max_memory_mb': max_memory_mb,
-            'avg_cpu_percent': avg_cpu_percent,
-            'max_cpu_percent': max_cpu_percent,
-            'requirements_met': all_passed,
-            'frames_processed': len(self.frame_processing_times)
+            "avg_frame_time_ms": avg_frame_time,
+            "max_frame_time_ms": max_frame_time,
+            "p95_frame_time_ms": p95_frame_time,
+            "p99_frame_time_ms": p99_frame_time,
+            "avg_fps": avg_fps,
+            "avg_memory_mb": avg_memory_mb,
+            "max_memory_mb": max_memory_mb,
+            "avg_cpu_percent": avg_cpu_percent,
+            "max_cpu_percent": max_cpu_percent,
+            "requirements_met": all_passed,
+            "frames_processed": len(self.frame_processing_times),
         }
 
         # Assert critical requirements
-        self.assertLess(avg_frame_time, self.target_frame_time_ms * 2.0,
-                       ".3f")
-        self.assertLess(avg_memory_mb, self.target_memory_mb * 1.5,
-                       ".2f")
-        self.assertLess(avg_cpu_percent, self.target_cpu_percent * 1.5,
-                       ".1f")
+        self.assertLess(avg_frame_time, self.target_frame_time_ms * 2.0, ".3f")
+        self.assertLess(avg_memory_mb, self.target_memory_mb * 1.5, ".2f")
+        self.assertLess(avg_cpu_percent, self.target_cpu_percent * 1.5, ".1f")
 
     def test_vision_pipeline_under_load(self):
         """Test vision pipeline performance under concurrent load."""
@@ -353,7 +367,7 @@ class ImageGeneratorNode(Node):
     """Generates test images for vision pipeline testing."""
 
     def __init__(self):
-        super().__init__('image_generator')
+        super().__init__("image_generator")
 
         # QoS for real-time vision data
         vision_qos = QoSProfile(
@@ -365,8 +379,10 @@ class ImageGeneratorNode(Node):
         )
 
         # Publishers
-        self.image_pub = self.create_publisher(Image, '/camera/image_raw', vision_qos)
-        self.camera_info_pub = self.create_publisher(CameraInfo, '/camera/camera_info', vision_qos)
+        self.image_pub = self.create_publisher(Image, "/camera/image_raw", vision_qos)
+        self.camera_info_pub = self.create_publisher(
+            CameraInfo, "/camera/camera_info", vision_qos
+        )
 
         # CV Bridge
         self.bridge = CvBridge()
@@ -401,9 +417,9 @@ class ImageGeneratorNode(Node):
         image = cv2.add(image, noise)
 
         # Convert to ROS2 Image message
-        ros_image = self.bridge.cv2_to_imgmsg(image, encoding='bgr8')
+        ros_image = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
         ros_image.header.stamp = self.get_clock().now().to_msg()
-        ros_image.header.frame_id = 'camera_link'
+        ros_image.header.frame_id = "camera_link"
 
         # Publish image
         self.image_pub.publish(ros_image)
@@ -428,8 +444,8 @@ class VisionProcessorSimulator:
 
         # Simulated processing parameters (based on real vision processing)
         self.feature_extraction_time = 0.015  # 15ms
-        self.classification_time = 0.020     # 20ms
-        self.terrain_analysis_time = 0.025   # 25ms
+        self.classification_time = 0.020  # 20ms
+        self.terrain_analysis_time = 0.025  # 25ms
 
     def process_frame(self) -> Dict[str, Any]:
         """Simulate complete vision processing pipeline."""
@@ -440,38 +456,38 @@ class VisionProcessorSimulator:
         # Simulate feature extraction (corners, edges, etc.)
         time.sleep(self.feature_extraction_time)
         features = {
-            'corners': np.random.rand(50, 2) * 640,  # 50 corner points
-            'edges': np.random.rand(100, 2) * 640,   # 100 edge points
+            "corners": np.random.rand(50, 2) * 640,  # 50 corner points
+            "edges": np.random.rand(100, 2) * 640,  # 100 edge points
         }
 
         # Simulate classification (terrain types, obstacles)
         time.sleep(self.classification_time)
         classification = {
-            'terrain_type': 'sand',
-            'confidence': 0.85,
-            'obstacles': [
-                {'type': 'rock', 'position': [300, 200], 'size': 50},
-                {'type': 'crater', 'position': [150, 350], 'size': 80}
-            ]
+            "terrain_type": "sand",
+            "confidence": 0.85,
+            "obstacles": [
+                {"type": "rock", "position": [300, 200], "size": 50},
+                {"type": "crater", "position": [150, 350], "size": 80},
+            ],
         }
 
         # Simulate terrain analysis
         time.sleep(self.terrain_analysis_time)
         terrain_analysis = {
-            'traversability_map': np.random.rand(48, 64),  # 64x48 grid
-            'slope_angles': np.random.normal(0, 5, (48, 64)),  # Slope in degrees
-            'roughness_map': np.random.rand(48, 64)
+            "traversability_map": np.random.rand(48, 64),  # 64x48 grid
+            "slope_angles": np.random.normal(0, 5, (48, 64)),  # Slope in degrees
+            "roughness_map": np.random.rand(48, 64),
         }
 
         processing_time = time.time() - start_time
 
         return {
-            'frame_id': self.frame_count,
-            'processing_time': processing_time,
-            'features': features,
-            'classification': classification,
-            'terrain_analysis': terrain_analysis,
-            'timestamp': time.time()
+            "frame_id": self.frame_count,
+            "processing_time": processing_time,
+            "features": features,
+            "classification": classification,
+            "terrain_analysis": terrain_analysis,
+            "timestamp": time.time(),
         }
 
 
@@ -479,23 +495,29 @@ class ResultConsumerNode(Node):
     """Consumes vision processing results for latency testing."""
 
     def __init__(self):
-        super().__init__('result_consumer')
+        super().__init__("result_consumer")
 
         # QoS for vision results
         result_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # Subscribers for vision results (would be published by real vision processor)
         self.terrain_map_sub = self.create_subscription(
-            OccupancyGrid, '/vision/terrain_map', self.terrain_map_callback, result_qos)
+            OccupancyGrid, "/vision/terrain_map", self.terrain_map_callback, result_qos
+        )
         self.features_sub = self.create_subscription(
-            Float32MultiArray, '/vision/features', self.features_callback, result_qos)
+            Float32MultiArray, "/vision/features", self.features_callback, result_qos
+        )
         self.detections_sub = self.create_subscription(
-            Float32MultiArray, '/vision/detections', self.detections_callback, result_qos)
+            Float32MultiArray,
+            "/vision/detections",
+            self.detections_callback,
+            result_qos,
+        )
 
         # State
         self.last_result_time = None
@@ -515,7 +537,5 @@ class ResultConsumerNode(Node):
         self.last_result_time = time.time()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-

@@ -6,17 +6,17 @@ Tests end-to-end integration between state machine, safety manager,
 monitoring service, and error handling components.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 import time
+from unittest.mock import MagicMock, Mock, patch
 
-from autonomy_state_machine.adaptive_state_machine import AdaptiveStateMachine
-from autonomy_state_machine.safety_manager import SafetyManager, SafetyTriggerType
-from autonomy_state_machine.monitoring_service import MonitoringService
-from autonomy_state_machine.context_evaluator import ContextEvaluator
-from autonomy_state_machine.adaptive_policy_engine import AdaptivePolicyEngine
-from autonomy_state_machine.states import RoverState
+import pytest
 from autonomy_interfaces.msg import ContextState
+from autonomy_state_machine.adaptive_policy_engine import AdaptivePolicyEngine
+from autonomy_state_machine.adaptive_state_machine import AdaptiveStateMachine
+from autonomy_state_machine.context_evaluator import ContextEvaluator
+from autonomy_state_machine.monitoring_service import MonitoringService
+from autonomy_state_machine.safety_manager import SafetyManager, SafetyTriggerType
+from autonomy_state_machine.states import RoverState
 
 
 class TestSystemIntegration:
@@ -33,19 +33,19 @@ class TestSystemIntegration:
         policy_engine = AdaptivePolicyEngine(state_machine)
 
         return {
-            'state_machine': state_machine,
-            'safety_manager': safety_manager,
-            'monitoring_service': monitoring_service,
-            'context_evaluator': context_evaluator,
-            'policy_engine': policy_engine
+            "state_machine": state_machine,
+            "safety_manager": safety_manager,
+            "monitoring_service": monitoring_service,
+            "context_evaluator": context_evaluator,
+            "policy_engine": policy_engine,
         }
 
     def test_emergency_battery_scenario_integration(self, integrated_system):
         """Test complete emergency battery scenario - CRITICAL INTEGRATION."""
         system = integrated_system
-        sm = system['state_machine']
-        safety = system['safety_manager']
-        monitoring = system['monitoring_service']
+        sm = system["state_machine"]
+        safety = system["safety_manager"]
+        monitoring = system["monitoring_service"]
 
         # Start in autonomous mission
         success, _ = sm.transition_to_state(RoverState.AUTO, "start mission")
@@ -65,10 +65,12 @@ class TestSystemIntegration:
         monitoring._context_callback(context)
 
         # Evaluate policies for emergency response
-        policies = system['policy_engine'].evaluate_policies(context)
+        policies = system["policy_engine"].evaluate_policies(context)
 
         # Should generate emergency return policy
-        emergency_policies = [p for p in policies if p.action_type.value == "emergency_return"]
+        emergency_policies = [
+            p for p in policies if p.action_type.value == "emergency_return"
+        ]
         assert len(emergency_policies) > 0
 
         # Execute emergency transition
@@ -83,8 +85,8 @@ class TestSystemIntegration:
     def test_safety_integration_with_state_machine(self, integrated_system):
         """Test safety manager integration with state machine - CRITICAL."""
         system = integrated_system
-        sm = system['state_machine']
-        safety = system['safety_manager']
+        sm = system["state_machine"]
+        safety = system["safety_manager"]
 
         # Start autonomous operation
         success, _ = sm.transition_to_state(RoverState.AUTO, "autonomous operation")
@@ -95,7 +97,9 @@ class TestSystemIntegration:
         safety.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL)
 
         # Attempt transition that safety should block
-        success, message = sm.transition_to_state(RoverState.TELEOP, "unsafe transition")
+        success, message = sm.transition_to_state(
+            RoverState.TELEOP, "unsafe transition"
+        )
 
         # Transition should be blocked by safety system
         # Note: This depends on the exact blocking logic implementation
@@ -110,8 +114,8 @@ class TestSystemIntegration:
     def test_monitoring_integration_with_adaptation(self, integrated_system):
         """Test monitoring service integration with adaptation engine."""
         system = integrated_system
-        monitoring = system['monitoring_service']
-        policy_engine = system['policy_engine']
+        monitoring = system["monitoring_service"]
+        policy_engine = system["policy_engine"]
 
         # Create context with issues that should trigger adaptations
         context = ContextState()
@@ -144,7 +148,7 @@ class TestSystemIntegration:
     def test_error_handling_integration(self, integrated_system):
         """Test error handling integration across components."""
         system = integrated_system
-        sm = system['state_machine']
+        sm = system["state_machine"]
 
         # Test error boundary in state transitions
         from autonomy_state_machine.error_handling import error_boundary
@@ -171,7 +175,7 @@ class TestSystemIntegration:
             sm.get_logger(),
             "IntegrationTest",
             "network operation",
-            default_return="offline"
+            default_return="offline",
         )
 
         assert result == "offline"  # Should return default on error
@@ -179,16 +183,16 @@ class TestSystemIntegration:
     def test_context_monitoring_lifecycle(self, integrated_system):
         """Test complete context monitoring lifecycle."""
         system = integrated_system
-        context_eval = system['context_evaluator']
-        monitoring = system['monitoring_service']
+        context_eval = system["context_evaluator"]
+        monitoring = system["monitoring_service"]
 
         # Create series of context updates
         contexts = []
         for i in range(5):
             context = ContextState()
             context.battery_level = 100.0 - (i * 15)  # Declining battery
-            context.cpu_usage = 20.0 + (i * 10)       # Increasing CPU
-            context.mission_progress = i * 0.2         # Increasing progress
+            context.cpu_usage = 20.0 + (i * 10)  # Increasing CPU
+            context.mission_progress = i * 0.2  # Increasing progress
             contexts.append(context)
 
         # Feed contexts through the system
@@ -216,10 +220,11 @@ class TestSystemIntegration:
     def test_performance_under_load(self, integrated_system):
         """Test system performance under load conditions."""
         system = integrated_system
-        sm = system['state_machine']
-        monitoring = system['monitoring_service']
+        sm = system["state_machine"]
+        monitoring = system["monitoring_service"]
 
         import time
+
         start_time = time.time()
 
         # Simulate high-frequency operations
@@ -245,14 +250,14 @@ class TestSystemIntegration:
 
         # Check performance metrics were computed
         monitoring._compute_performance_metrics()
-        assert 'avg_cpu_usage' in monitoring.performance_metrics
+        assert "avg_cpu_usage" in monitoring.performance_metrics
 
     def test_recovery_scenario_full_cycle(self, integrated_system):
         """Test complete recovery scenario from failure to normal operation."""
         system = integrated_system
-        sm = system['state_machine']
-        safety = system['safety_manager']
-        monitoring = system['monitoring_service']
+        sm = system["state_machine"]
+        safety = system["safety_manager"]
+        monitoring = system["monitoring_service"]
 
         # Phase 1: Normal operation
         success, _ = sm.transition_to_state(RoverState.AUTO, "normal operation")
@@ -287,9 +292,9 @@ class TestSystemIntegration:
     def test_concurrent_component_interaction(self, integrated_system):
         """Test concurrent interactions between multiple components."""
         system = integrated_system
-        sm = system['state_machine']
-        safety = system['safety_manager']
-        monitoring = system['monitoring_service']
+        sm = system["state_machine"]
+        safety = system["safety_manager"]
+        monitoring = system["monitoring_service"]
 
         # Set up initial state
         sm.transition_to_state(RoverState.AUTO, "concurrent test setup")
@@ -298,7 +303,7 @@ class TestSystemIntegration:
         triggers = [
             SafetyTriggerType.BATTERY_CRITICAL,
             SafetyTriggerType.OBSTACLE_CRITICAL,
-            SafetyTriggerType.COMMUNICATION_LOSS
+            SafetyTriggerType.COMMUNICATION_LOSS,
         ]
 
         contexts = []
@@ -332,8 +337,8 @@ class TestSystemIntegration:
         system = integrated_system
 
         # Use components extensively
-        sm = system['state_machine']
-        monitoring = system['monitoring_service']
+        sm = system["state_machine"]
+        monitoring = system["monitoring_service"]
 
         # Generate significant monitoring data
         for i in range(20):
@@ -343,8 +348,9 @@ class TestSystemIntegration:
 
         # Perform multiple state transitions
         for i in range(5):
-            sm.transition_to_state(RoverState.READY if i % 2 == 0 else RoverState.AUTO,
-                                 f"cleanup_test_{i}")
+            sm.transition_to_state(
+                RoverState.READY if i % 2 == 0 else RoverState.AUTO, f"cleanup_test_{i}"
+            )
 
         # Verify cleanup functionality
         initial_context_count = len(monitoring.context_history)
@@ -367,9 +373,9 @@ class TestSystemIntegration:
     def test_safety_monitoring_state_machine_interaction(self, integrated_system):
         """Test safety triggers affect monitoring and state transitions - CRITICAL."""
         system = integrated_system
-        sm = system['state_machine']
-        safety = system['safety_manager']
-        monitoring = system['monitoring_service']
+        sm = system["state_machine"]
+        safety = system["safety_manager"]
+        monitoring = system["monitoring_service"]
 
         # Start with clean slate
         sm.current_state = RoverState.READY
@@ -378,11 +384,11 @@ class TestSystemIntegration:
         safety.trigger_safety(
             SafetyTriggerType.BATTERY_CRITICAL,
             SafetySeverity.CRITICAL,
-            "Critical battery level detected"
+            "Critical battery level detected",
         )
 
         # Monitoring should detect the safety condition
-        context = system['context_evaluator'].evaluate_system_context()
+        context = system["context_evaluator"].evaluate_system_context()
         monitoring._context_callback(context)
 
         # Safety state should be reflected in monitoring
@@ -392,12 +398,12 @@ class TestSystemIntegration:
     def test_adaptive_policies_under_system_stress(self, integrated_system):
         """Test policy effectiveness during high system load."""
         system = integrated_system
-        policy_engine = system['policy_engine']
+        policy_engine = system["policy_engine"]
 
         # Create high-stress context
-        context = system['context_evaluator'].context_state
+        context = system["context_evaluator"].context_state
         context.battery_level = 10.0  # Critical
-        context.cpu_usage = 90.0     # High load
+        context.cpu_usage = 90.0  # High load
         context.memory_usage = 85.0  # High memory
         context.obstacle_detected = True
         context.obstacle_distance = 0.5  # Very close
@@ -411,7 +417,9 @@ class TestSystemIntegration:
 
         # All policies should be high priority
         for policy in policies:
-            assert policy.priority >= 70, f"Policy {policy.action_type} has low priority under stress: {policy.priority}"
+            assert (
+                policy.priority >= 70
+            ), f"Policy {policy.action_type} has low priority under stress: {policy.priority}"
 
     def test_cross_component_data_consistency(self, integrated_system):
         """Test data consistency across component boundaries."""
@@ -422,12 +430,12 @@ class TestSystemIntegration:
         test_cpu_usage = 60.0
 
         # Update context evaluator
-        context = system['context_evaluator'].context_state
+        context = system["context_evaluator"].context_state
         context.battery_level = test_battery_level
         context.cpu_usage = test_cpu_usage
 
         # Update monitoring
-        monitoring = system['monitoring_service']
+        monitoring = system["monitoring_service"]
         monitoring._context_callback(context)
 
         # Data should be consistent across components
@@ -437,31 +445,41 @@ class TestSystemIntegration:
     def test_performance_degradation_under_multi_failure(self, integrated_system):
         """Test performance during multiple simultaneous failures."""
         system = integrated_system
-        monitoring = system['monitoring_service']
+        monitoring = system["monitoring_service"]
 
         import time
 
         # Establish baseline performance
         start_time = time.time()
         for i in range(10):
-            context = system['context_evaluator'].evaluate_system_context()
+            context = system["context_evaluator"].evaluate_system_context()
             monitoring._context_callback(context)
         baseline_time = time.time() - start_time
 
         # Simulate multiple failures
-        safety = system['safety_manager']
-        safety.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.CRITICAL, "Battery failure")
-        safety.trigger_safety(SafetyTriggerType.COMMUNICATION_LOSS, SafetySeverity.CRITICAL, "Comm failure")
+        safety = system["safety_manager"]
+        safety.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Battery failure",
+        )
+        safety.trigger_safety(
+            SafetyTriggerType.COMMUNICATION_LOSS,
+            SafetySeverity.CRITICAL,
+            "Comm failure",
+        )
 
         # Test performance under failure conditions
         start_time = time.time()
         for i in range(10):
-            context = system['context_evaluator'].evaluate_system_context()
+            context = system["context_evaluator"].evaluate_system_context()
             monitoring._context_callback(context)
-            policies = system['policy_engine'].evaluate_policies(context)
+            policies = system["policy_engine"].evaluate_policies(context)
         failure_time = time.time() - start_time
 
         # Performance degradation should be reasonable (< 5x slower)
         if baseline_time > 0:
             degradation_ratio = failure_time / baseline_time
-            assert degradation_ratio < 5.0, f"Performance degraded too much: {degradation_ratio:.2f}x slower"
+            assert (
+                degradation_ratio < 5.0
+            ), f"Performance degraded too much: {degradation_ratio:.2f}x slower"

@@ -5,6 +5,7 @@ This directory contains comprehensive test scenarios for validating autonomous n
 ## Overview
 
 The test scenarios are designed to assess:
+
 - SLAM performance and accuracy
 - Sensor data quality and fidelity
 - Navigation capability in various environments
@@ -17,12 +18,14 @@ The test scenarios are designed to assess:
 **Purpose**: Validate SLAM performance during autonomous navigation through a 5-waypoint course.
 
 **Test Profile**:
+
 - 5-waypoint course over 500m in desert terrain
 - Mix of GPS-available and GPS-denied sections
 - Obstacles requiring path planning
 - Loop closure opportunity (return near start)
 
 **Validation Metrics**:
+
 - SLAM pose drift vs ground truth (< 1m over 500m)
 - Loop closure detection success (> 95%)
 - Waypoint arrival accuracy (< 2m)
@@ -31,6 +34,7 @@ The test scenarios are designed to assess:
 - Real-time performance (> 5Hz pose updates)
 
 **Usage**:
+
 ```bash
 # Launch Gazebo with desert terrain
 ros2 launch autonomy_simulation rover_gazebo.launch.py world:=urc_desert_terrain
@@ -44,12 +48,14 @@ python3 autonomous_waypoint_navigation.py
 **Purpose**: Validate visual-inertial SLAM performance during GPS-denied operation.
 
 **Test Profile**:
+
 - Start with GPS, transition to GPS-denied warehouse
 - Navigate 200m indoor course
 - Multiple turns and feature-rich environment
 - Exit back to GPS-available area
 
 **Validation Metrics**:
+
 - SLAM-only drift during GPS-denied period (< 2% distance)
 - GPS reacquisition and fusion time (< 30s)
 - Visual feature count (> 200 features in indoor environment)
@@ -57,6 +63,7 @@ python3 autonomous_waypoint_navigation.py
 - Navigation continuity across GPS transitions
 
 **Usage**:
+
 ```bash
 # Launch Gazebo with GPS-denied area
 ros2 launch autonomy_simulation rover_gazebo.launch.py world:=gps_denied_area
@@ -70,12 +77,14 @@ python3 gps_denied_slam.py
 **Purpose**: Validate real-time mapping and obstacle avoidance capabilities.
 
 **Test Profile**:
+
 - Navigate cluttered obstacle field
 - Real-time map updates from LiDAR
 - Dynamic path replanning
 - Narrow passage navigation
 
 **Validation Metrics**:
+
 - Obstacle detection range (> 3m for large objects)
 - Map update latency (< 100ms)
 - Path replan success rate (> 90%)
@@ -83,6 +92,7 @@ python3 gps_denied_slam.py
 - LiDAR scan quality (< 3cm accuracy)
 
 **Usage**:
+
 ```bash
 # Launch Gazebo with obstacles course
 ros2 launch autonomy_simulation rover_gazebo.launch.py world:=urc_obstacles
@@ -96,12 +106,14 @@ python3 dynamic_obstacle_avoidance.py
 **Purpose**: Validate long-duration operation stability and performance.
 
 **Test Profile**:
+
 - 30-minute continuous operation
 - Multiple loops over same terrain
 - Mix of GPS and SLAM operation
 - Gradual environmental changes (simulated lighting)
 
 **Validation Metrics**:
+
 - Memory usage growth (< 500MB total, < 50MB/10min growth)
 - CPU utilization stability (< 70% sustained)
 - SLAM confidence over time (> 0.7 maintained)
@@ -109,6 +121,7 @@ python3 dynamic_obstacle_avoidance.py
 - Pose estimate stability (no catastrophic failures)
 
 **Usage**:
+
 ```bash
 # Launch Gazebo with any world
 ros2 launch autonomy_simulation rover_gazebo.launch.py
@@ -122,6 +135,7 @@ python3 endurance_slam_test.py
 **Purpose**: Validate graceful degradation and recovery from sensor failures.
 
 **Test Profile**:
+
 - Normal operation with sequential sensor failures
 - GPS dropout simulation
 - Camera occlusion (simulated dust on lens)
@@ -129,6 +143,7 @@ python3 endurance_slam_test.py
 - IMU noise injection
 
 **Validation Metrics**:
+
 - Sensor failure detection time (< 5s)
 - Graceful degradation response (no crashes)
 - Recovery time after sensor restoration (< 30s)
@@ -136,6 +151,7 @@ python3 endurance_slam_test.py
 - Navigation continuation capability
 
 **Usage**:
+
 ```bash
 # Launch Gazebo with any world
 ros2 launch autonomy_simulation rover_gazebo.launch.py
@@ -158,6 +174,7 @@ python3 sensor_failure_recovery.py
 ### Quick Start
 
 1. **Build the simulation package**:
+
    ```bash
    cd /path/to/urc-machiato-2026/autonomy/simulation
    colcon build --packages-select autonomy_simulation
@@ -165,6 +182,7 @@ python3 sensor_failure_recovery.py
    ```
 
 2. **Launch Gazebo with rover**:
+
    ```bash
    ros2 launch autonomy_simulation rover_gazebo.launch.py world:=urc_desert_terrain
    ```
@@ -203,6 +221,7 @@ ros2 launch autonomy_simulation rover_gazebo.launch.py \
 ### Test Output
 
 Each test generates:
+
 - **Console output**: Real-time status and metrics
 - **JSON results file**: Detailed test data saved to `/tmp/`
 - **Log files**: ROS2 logs for debugging
@@ -210,6 +229,7 @@ Each test generates:
 ### Key Metrics
 
 #### SLAM Performance
+
 - **Pose Drift**: Distance error between SLAM estimate and ground truth
 - **Loop Closure Success**: Percentage of successful loop closures
 - **Waypoint Accuracy**: Average distance error when reaching waypoints
@@ -217,6 +237,7 @@ Each test generates:
 - **Map Consistency**: Error in map after loop closure
 
 #### Navigation Capability
+
 - **Waypoint Success Rate**: Percentage of waypoints successfully reached
 - **Obstacle Avoidance Success**: Percentage of obstacles successfully avoided
 - **Path Planning Quality**: Smoothness and efficiency of planned paths
@@ -224,6 +245,7 @@ Each test generates:
 - **Collision Count**: Number of collisions during test
 
 #### Sensor Quality
+
 - **Update Rate**: Frequency of sensor data updates (Hz)
 - **Noise Level**: Standard deviation of sensor noise
 - **Data Completeness**: Percentage of expected data received
@@ -232,18 +254,21 @@ Each test generates:
 ### Pass/Fail Criteria
 
 #### High Confidence (Proceed with Development)
+
 - Overall fidelity > 80%
 - SLAM pose drift < 1m over 500m
 - Waypoint success rate > 90%
 - All sensors have fidelity > 70%
 
 #### Medium Confidence (Validate Critical Paths)
+
 - Overall fidelity 60-80%
 - SLAM pose drift 1-2m over 500m
 - Waypoint success rate 80-90%
 - Some sensors have fidelity 60-70%
 
 #### Low Confidence (Hardware Required)
+
 - Overall fidelity < 60%
 - SLAM pose drift > 2m over 500m
 - Waypoint success rate < 80%
@@ -276,6 +301,7 @@ Each test generates:
 ### Debug Mode
 
 Enable debug output:
+
 ```bash
 # Set ROS2 log level
 export RCUTILS_LOGGING_SEVERITY_THRESHOLD=DEBUG
@@ -287,6 +313,7 @@ python3 autonomous_waypoint_navigation.py --verbose
 ### Performance Monitoring
 
 Monitor system resources during tests:
+
 ```bash
 # Monitor CPU and memory
 htop
@@ -326,6 +353,7 @@ For a well-configured simulation, expect:
 ### Performance Variations
 
 Performance may vary based on:
+
 - **Hardware**: CPU, GPU, RAM available
 - **Configuration**: Sensor noise levels, update rates
 - **Environment**: World complexity, lighting conditions
@@ -344,6 +372,7 @@ When adding new test scenarios:
 ## Support
 
 For issues or questions:
+
 1. Check the troubleshooting section
 2. Review test logs and error messages
 3. Verify system requirements

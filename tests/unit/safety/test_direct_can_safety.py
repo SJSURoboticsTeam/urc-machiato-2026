@@ -6,17 +6,20 @@ Validates critical safety functionality that bypasses ROS2 middleware
 for immediate hardware response to emergency conditions.
 """
 
-import unittest
-from unittest.mock import Mock, patch
-import serial
-import time
-import threading
-from typing import Optional
-
 # Add autonomy to path
 import os
 import sys
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+import threading
+import time
+import unittest
+from typing import Optional
+from unittest.mock import Mock, patch
+
+import serial
+
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 AUTONOMY_ROOT = os.path.join(PROJECT_ROOT, "src", "autonomy")
 sys.path.insert(0, AUTONOMY_ROOT)
 
@@ -32,24 +35,24 @@ except ImportError:
 class TestDirectCANSafety(unittest.TestCase):
     """Test direct CAN safety functionality."""
 
-    @patch('serial.Serial')
+    @patch("serial.Serial")
     def setUp(self, mock_serial):
         """Set up test fixtures."""
         self.mock_serial = mock_serial
         # Mock the CanSerial import
-        with patch('core.safety_system.direct_can_safety.CanSerial'):
-            self.can_safety = DirectCANSafety(can_port='/dev/ttyACM0')
+        with patch("core.safety_system.direct_can_safety.CanSerial"):
+            self.can_safety = DirectCANSafety(can_port="/dev/ttyACM0")
 
     def test_initialization(self):
         """Test DirectCANSafety initialization."""
-        with patch('core.safety_system.direct_can_safety.CanSerial') as mock_can_serial:
-            safety = DirectCANSafety(can_port='/dev/ttyACM0')
+        with patch("core.safety_system.direct_can_safety.CanSerial") as mock_can_serial:
+            safety = DirectCANSafety(can_port="/dev/ttyACM0")
 
             # Verify initialization
             self.assertIsInstance(safety, DirectCANSafety)
-            self.assertEqual(safety.can_port, '/dev/ttyACM0')
+            self.assertEqual(safety.can_port, "/dev/ttyACM0")
             self.assertIsInstance(safety.command_lock, threading.Lock)
-            mock_can_serial.assert_called_once_with('/dev/ttyACM0')
+            mock_can_serial.assert_called_once_with("/dev/ttyACM0")
 
     def test_emergency_stop(self):
         """Test emergency stop command."""
@@ -129,6 +132,7 @@ class TestDirectCANSafety(unittest.TestCase):
 
         # Test concurrent emergency stops
         results = []
+
         def emergency_worker():
             result = self.can_safety.emergency_stop("THREAD_TEST")
             results.append(result)
@@ -172,7 +176,9 @@ class TestDirectCANSafety(unittest.TestCase):
     def test_send_command_exception(self):
         """Test command sending with exception."""
         self.can_safety.can_serial = Mock()
-        self.can_safety.can_serial.send_command = Mock(side_effect=Exception("CAN Error"))
+        self.can_safety.can_serial.send_command = Mock(
+            side_effect=Exception("CAN Error")
+        )
 
         result = self.can_safety._send_command("TEST_COMMAND")
 
@@ -192,24 +198,24 @@ class TestDirectCANSafety(unittest.TestCase):
 
     def test_connect_success(self):
         """Test successful CAN connection."""
-        with patch('core.safety_system.direct_can_safety.CanSerial') as mock_can_serial:
+        with patch("core.safety_system.direct_can_safety.CanSerial") as mock_can_serial:
             safety = DirectCANSafety.__new__(DirectCANSafety)
-            safety.can_port = '/dev/ttyACM0'
+            safety.can_port = "/dev/ttyACM0"
             safety.logger = Mock()
 
             result = safety.connect()
 
             self.assertTrue(result)
             self.assertTrue(safety.connected)
-            mock_can_serial.assert_called_once_with('/dev/ttyACM0')
+            mock_can_serial.assert_called_once_with("/dev/ttyACM0")
 
     def test_connect_failure(self):
         """Test CAN connection failure."""
-        with patch('core.safety_system.direct_can_safety.CanSerial') as mock_can_serial:
+        with patch("core.safety_system.direct_can_safety.CanSerial") as mock_can_serial:
             mock_can_serial.side_effect = Exception("Connection failed")
 
             safety = DirectCANSafety.__new__(DirectCANSafety)
-            safety.can_port = '/dev/ttyACM0'
+            safety.can_port = "/dev/ttyACM0"
             safety.logger = Mock()
 
             result = safety.connect()
@@ -219,12 +225,12 @@ class TestDirectCANSafety(unittest.TestCase):
 
     def test_reconnect_after_failure(self):
         """Test reconnection after initial failure."""
-        with patch('core.safety_system.direct_can_safety.CanSerial') as mock_can_serial:
+        with patch("core.safety_system.direct_can_safety.CanSerial") as mock_can_serial:
             # First call fails
             mock_can_serial.side_effect = [Exception("Connection failed"), Mock()]
 
             safety = DirectCANSafety.__new__(DirectCANSafety)
-            safety.can_port = '/dev/ttyACM0'
+            safety.can_port = "/dev/ttyACM0"
             safety.logger = Mock()
 
             # Initial connection fails
@@ -266,10 +272,12 @@ class TestDirectCANSafety(unittest.TestCase):
         """Test SafetyCommand enum values."""
         if SafetyCommand:
             self.assertEqual(SafetyCommand.EMERGENCY_STOP.value, "EMERGENCY_STOP")
-            self.assertEqual(SafetyCommand.BOUNDARY_VIOLATION_STOP.value, "BOUNDARY_VIOLATION_STOP")
+            self.assertEqual(
+                SafetyCommand.BOUNDARY_VIOLATION_STOP.value, "BOUNDARY_VIOLATION_STOP"
+            )
             self.assertEqual(SafetyCommand.MOTOR_BRAKE.value, "MOTOR_BRAKE")
 
-    @patch('time.sleep')
+    @patch("time.sleep")
     def test_command_retry_logic(self, mock_sleep):
         """Test command retry logic on failure."""
         # Note: Current implementation doesn't have retry logic,
@@ -289,8 +297,8 @@ class TestDirectCANSafetyIntegration(unittest.TestCase):
 
     def test_safety_system_initialization(self):
         """Test safety system initializes correctly."""
-        with patch('core.safety_system.direct_can_safety.CanSerial'):
-            safety = DirectCANSafety(can_port='/dev/ttyACM0')
+        with patch("core.safety_system.direct_can_safety.CanSerial"):
+            safety = DirectCANSafety(can_port="/dev/ttyACM0")
 
             # Verify safety system is ready
             self.assertIsNotNone(safety.command_lock)
@@ -298,7 +306,7 @@ class TestDirectCANSafetyIntegration(unittest.TestCase):
 
     def test_competition_safety_scenario(self):
         """Test safety response in competition scenario."""
-        with patch('core.safety_system.direct_can_safety.CanSerial'):
+        with patch("core.safety_system.direct_can_safety.CanSerial"):
             safety = DirectCANSafety()
 
             # Simulate competition emergency stop sequence
@@ -324,14 +332,13 @@ class TestDirectCANSafetyIntegration(unittest.TestCase):
             expected_calls = [
                 "PRIORITY:EMERGENCY_STOP:COMPETITION_ESTOP",
                 "PRIORITY:BOUNDARY_VIOLATION_STOP",
-                "PRIORITY:MOTOR_BRAKE"
+                "PRIORITY:MOTOR_BRAKE",
             ]
-            actual_calls = [call[0][0] for call in safety.can_serial.send_command.call_args_list]
+            actual_calls = [
+                call[0][0] for call in safety.can_serial.send_command.call_args_list
+            ]
             self.assertEqual(actual_calls, expected_calls)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

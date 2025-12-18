@@ -4,5 +4,3 @@ float64 latency_ms
 float64 packet_loss_rate
 string current_band
 float64 signal_strength
-
-

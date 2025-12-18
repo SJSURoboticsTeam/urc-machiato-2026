@@ -27,4 +27,3 @@ geometry_msgs/PoseStamped typing_location  # Where to perform typing
 # Environmental parameters
 string terrain_type  # "rough", "smooth", "mixed"
 float32 max_incline  # Maximum allowed terrain incline (degrees)
-

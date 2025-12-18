@@ -7,4 +7,3 @@ float32 safety_distance  # Safe following distance in meters
 float32 max_speed  # Maximum following speed in m/s
 bool enable_following  # Start/stop following
 string operator_id  # ID of operator requesting control
-

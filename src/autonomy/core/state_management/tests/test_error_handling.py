@@ -5,16 +5,23 @@ Comprehensive tests for Error Handling System
 Tests error boundaries, safe execution, logging, and error aggregation.
 """
 
-import pytest
-from unittest.mock import Mock, patch, call
 import time
+from unittest.mock import Mock, call, patch
 
+import pytest
 from autonomy_state_machine.error_handling import (
-    handle_service_error, error_boundary, safe_execute, validate_transition_request,
-    log_operation_start, log_operation_complete, create_error_summary
-)
-from autonomy_state_machine.error_handling import (
-    StateMachineError, TransitionError, ContextError, PolicyError, MonitoringError
+    ContextError,
+    MonitoringError,
+    PolicyError,
+    StateMachineError,
+    TransitionError,
+    create_error_summary,
+    error_boundary,
+    handle_service_error,
+    log_operation_complete,
+    log_operation_start,
+    safe_execute,
+    validate_transition_request,
 )
 from autonomy_state_machine.states import RoverState
 
@@ -65,8 +72,11 @@ class TestErrorHandling:
         test_error = RuntimeError("Runtime error")
 
         handle_service_error(
-            mock_logger, test_error, "complex operation",
-            "ComplexComponent", include_traceback=True
+            mock_logger,
+            test_error,
+            "complex operation",
+            "ComplexComponent",
+            include_traceback=True,
         )
 
         # Should have called error and debug (for traceback)
@@ -100,7 +110,9 @@ class TestErrorHandling:
         execution_count = 0
 
         with pytest.raises(ValueError):
-            with error_boundary(mock_logger, "TestComponent", "failing operation", reraise=True):
+            with error_boundary(
+                mock_logger, "TestComponent", "failing operation", reraise=True
+            ):
                 execution_count += 1
                 raise ValueError("Test failure")
 
@@ -112,7 +124,9 @@ class TestErrorHandling:
         """Test error boundary that doesn't re-raise exceptions."""
         execution_count = 0
 
-        with error_boundary(mock_logger, "TestComponent", "failing operation", reraise=False):
+        with error_boundary(
+            mock_logger, "TestComponent", "failing operation", reraise=False
+        ):
             execution_count += 1
             raise RuntimeError("Test failure")
 
@@ -122,22 +136,29 @@ class TestErrorHandling:
 
     def test_safe_execute_success(self, mock_logger):
         """Test safe_execute with successful function."""
+
         def successful_function():
             return "success"
 
-        result = safe_execute(successful_function, mock_logger, "TestComponent", "test operation")
+        result = safe_execute(
+            successful_function, mock_logger, "TestComponent", "test operation"
+        )
 
         assert result == "success"
         mock_logger.error.assert_not_called()
 
     def test_safe_execute_failure(self, mock_logger):
         """Test safe_execute with failing function."""
+
         def failing_function():
             raise ValueError("Function failed")
 
         result = safe_execute(
-            failing_function, mock_logger, "TestComponent",
-            "failing operation", default_return="default"
+            failing_function,
+            mock_logger,
+            "TestComponent",
+            "failing operation",
+            default_return="default",
         )
 
         assert result == "default"
@@ -145,13 +166,18 @@ class TestErrorHandling:
 
     def test_safe_execute_custom_exception_type(self, mock_logger):
         """Test safe_execute with specific exception type."""
+
         def failing_function():
             raise KeyError("Key not found")
 
         # Should catch KeyError specifically
         result = safe_execute(
-            failing_function, mock_logger, "TestComponent",
-            "key operation", default_return="default", error_type=KeyError
+            failing_function,
+            mock_logger,
+            "TestComponent",
+            "key operation",
+            default_return="default",
+            error_type=KeyError,
         )
 
         assert result == "default"
@@ -159,13 +185,18 @@ class TestErrorHandling:
 
     def test_safe_execute_wrong_exception_type(self, mock_logger):
         """Test safe_execute with wrong exception type (should catch and return default)."""
+
         def failing_function():
             raise ValueError("Value error")
 
         # Should catch ValueError when expecting Exception (default)
         result = safe_execute(
-            failing_function, mock_logger, "TestComponent",
-            "value operation", default_return="handled", error_type=Exception
+            failing_function,
+            mock_logger,
+            "TestComponent",
+            "value operation",
+            default_return="handled",
+            error_type=Exception,
         )
 
         assert result == "handled"
@@ -174,7 +205,9 @@ class TestErrorHandling:
     def test_validate_transition_request_valid(self):
         """Test validation of valid transition requests."""
         # Should not raise
-        validate_transition_request(RoverState.READY, RoverState.AUTO, "valid transition")
+        validate_transition_request(
+            RoverState.READY, RoverState.AUTO, "valid transition"
+        )
 
     def test_validate_transition_request_no_current_state(self):
         """Test validation with None current state."""
@@ -198,8 +231,9 @@ class TestErrorHandling:
 
     def test_log_operation_start(self, mock_logger):
         """Test operation start logging."""
-        log_operation_start(mock_logger, "test_operation", "TestComponent",
-                          param1="value1", param2=42)
+        log_operation_start(
+            mock_logger, "test_operation", "TestComponent", param1="value1", param2=42
+        )
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
@@ -210,8 +244,14 @@ class TestErrorHandling:
 
     def test_log_operation_complete(self, mock_logger):
         """Test operation completion logging."""
-        log_operation_complete(mock_logger, "test_operation", "TestComponent",
-                             duration=1.5, result="success", items_processed=100)
+        log_operation_complete(
+            mock_logger,
+            "test_operation",
+            "TestComponent",
+            duration=1.5,
+            result="success",
+            items_processed=100,
+        )
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
@@ -223,8 +263,9 @@ class TestErrorHandling:
 
     def test_log_operation_complete_no_duration(self, mock_logger):
         """Test operation completion logging without duration."""
-        log_operation_complete(mock_logger, "test_operation", "TestComponent",
-                             result="success")
+        log_operation_complete(
+            mock_logger, "test_operation", "TestComponent", result="success"
+        )
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
@@ -245,18 +286,18 @@ class TestErrorHandling:
             {
                 "type": "ValueError",
                 "component": "TestComponent",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             },
             {
                 "type": "RuntimeError",
                 "component": "TestComponent",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             },
             {
                 "type": "ValueError",
                 "component": "OtherComponent",
-                "timestamp": time.time()
-            }
+                "timestamp": time.time(),
+            },
         ]
 
         summary = create_error_summary(mock_errors)
@@ -288,10 +329,14 @@ class TestErrorHandling:
         inner_executed = False
         outer_executed = False
 
-        with error_boundary(mock_logger, "OuterComponent", "outer operation", reraise=False):
+        with error_boundary(
+            mock_logger, "OuterComponent", "outer operation", reraise=False
+        ):
             outer_executed = True
 
-            with error_boundary(mock_logger, "InnerComponent", "inner operation", reraise=False):
+            with error_boundary(
+                mock_logger, "InnerComponent", "inner operation", reraise=False
+            ):
                 inner_executed = True
                 raise ValueError("Inner failure")
 
@@ -305,13 +350,15 @@ class TestErrorHandling:
         # Should have logged the inner error
         mock_logger.error.assert_called_once()
 
-    @patch('time.time')
+    @patch("time.time")
     def test_error_boundary_with_timing(self, mock_time, mock_logger):
         """Test error boundary timing and context."""
         mock_time.return_value = 1000.0
 
         with pytest.raises(ConnectionError):
-            with error_boundary(mock_logger, "TimedComponent", "timed operation", reraise=True):
+            with error_boundary(
+                mock_logger, "TimedComponent", "timed operation", reraise=True
+            ):
                 time.sleep(0.1)  # Simulate work
                 raise ConnectionError("Connection failed")
 
@@ -331,7 +378,9 @@ class TestErrorHandling:
             side_effects.append("calculated")
             return result
 
-        result = safe_execute(complex_function, mock_logger, "ComplexComponent", "complex calc")
+        result = safe_execute(
+            complex_function, mock_logger, "ComplexComponent", "complex calc"
+        )
 
         assert result == 21.0
         assert side_effects == ["started", "calculated"]
@@ -339,15 +388,20 @@ class TestErrorHandling:
 
     def test_safe_execute_function_exception_in_cleanup(self, mock_logger):
         """Test safe_execute when function fails during cleanup."""
+
         def failing_function():
             class CustomException(Exception):
                 def __str__(self):
                     raise RuntimeError("Cleanup failed")
+
             raise CustomException("Original failure")
 
         result = safe_execute(
-            failing_function, mock_logger, "CleanupComponent",
-            "failing operation", default_return="recovered"
+            failing_function,
+            mock_logger,
+            "CleanupComponent",
+            "failing operation",
+            default_return="recovered",
         )
 
         # Should still return default value even if error handling has issues

@@ -7,6 +7,7 @@
 ### The Issue
 
 1. **Tests import from wrong location**:
+
    ```python
    # Tests are doing this:
    sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
@@ -38,6 +39,7 @@ All these tests have **broken imports**:
 ### Working Test
 
 ✅ **`test_ros_topic_comprehensive.py`** - Uses correct imports:
+
 ```python
 from simulation.environments.environment_factory import EnvironmentFactory
 from simulation.network.network_factory import NetworkFactory
@@ -46,10 +48,12 @@ from simulation.network.network_factory import NetworkFactory
 ## Root Cause
 
 Tests were written expecting a `tests/simulation/` directory with:
+
 - `environment_tiers.py` (with `EnvironmentSimulator` class)
 - `network_emulator.py` (with `NetworkEmulator` class)
 
 But the actual simulation framework uses:
+
 - Factory pattern (`EnvironmentFactory`, `NetworkFactory`)
 - Different class names and structure
 - Located in `simulation/` (root level), not `tests/simulation/`
@@ -59,6 +63,7 @@ But the actual simulation framework uses:
 **ALL comprehensive integration tests will fail to import simulation components!**
 
 Tests will:
+
 - Skip simulation gracefully (due to try/except)
 - Run without actual simulation/degradation
 - Not test across environment tiers properly
@@ -92,6 +97,7 @@ class EnvironmentSimulator:
 ### Option 2: Update All Tests
 
 Update all tests to use the actual simulation framework:
+
 - Change imports to use factories
 - Update code to use factory-created objects
 - More work but uses actual framework

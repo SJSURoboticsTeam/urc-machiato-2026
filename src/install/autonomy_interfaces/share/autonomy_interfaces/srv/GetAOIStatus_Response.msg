@@ -12,4 +12,3 @@ builtin_interfaces/Time[] timestamp_history  # Corresponding timestamps
 
 # System summary
 autonomy_interfaces/AOIMetrics system_metrics  # Overall system AoI metrics
-

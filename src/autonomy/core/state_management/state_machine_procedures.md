@@ -20,6 +20,7 @@
 ### Phase 1: Environment Setup
 
 #### Prerequisites Check
+
 ```bash
 # 1. Verify ROS2 environment
 echo "ROS2 Distribution: $ROS_DISTRO"
@@ -39,6 +40,7 @@ df -h .  # At least 2GB free disk space
 ```
 
 #### Network Configuration
+
 ```bash
 # 5. Set up ROS2 networking (if using multiple machines)
 export ROS_DOMAIN_ID=42  # Use unique ID for your team
@@ -52,6 +54,7 @@ ros2 multicast send "test"  # Should be visible on other machines
 ### Phase 2: Build & Launch
 
 #### Build System
+
 ```bash
 # 1. Navigate to workspace
 cd ~/ros2_ws
@@ -68,6 +71,7 @@ ros2 pkg list | grep autonomy
 ```
 
 #### Launch State Machine
+
 ```bash
 # 1. Launch with default configuration
 ros2 launch autonomy_state_machine state_machine.launch.py
@@ -84,6 +88,7 @@ ros2 topic echo /state_machine/current_state --once
 ### Phase 3: Boot Sequence Validation
 
 #### Monitor Boot Progress
+
 ```bash
 # Watch boot sequence
 ros2 topic hz /state_machine/current_state
@@ -96,6 +101,7 @@ timeout 30 ros2 topic echo /state_machine/transitions | head -5
 ```
 
 #### Expected Boot Sequence
+
 ```
 Time 0s:   State: BOOT, Substate: NONE
 Time 5s:   Subsystem Coordinator: INITIALIZING
@@ -113,6 +119,7 @@ Time 30s:  State: IDLE, Ready for commands
 ### Basic State Transitions
 
 #### BOOT → IDLE (Automatic)
+
 **Duration:** 25-35 seconds
 **Trigger:** System initialization complete
 **Validation:** All core subsystems operational
@@ -123,6 +130,7 @@ ros2 topic echo /state_machine/transitions --filter "yaml msg.data =~ '*BOOT*IDL
 ```
 
 #### IDLE → CALIBRATION (Manual)
+
 **Purpose:** Perform sensor calibration
 **Requirements:** System booted, sensors available
 
@@ -139,6 +147,7 @@ ros2 topic echo /state_machine/current_state
 ```
 
 #### CALIBRATION → IDLE (Automatic/Manual)
+
 **Trigger:** Calibration complete or manual abort
 
 ```bash
@@ -153,7 +162,9 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ### Autonomous Mission Transitions
 
 #### IDLE → AUTONOMOUS (Mission Start)
+
 **Requirements:**
+
 - All required subsystems active
 - No safety conditions
 - Mission parameters valid
@@ -185,7 +196,9 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ```
 
 #### AUTONOMOUS → IDLE (Mission Complete)
+
 **Triggers:**
+
 - Mission objectives achieved
 - Timeout reached
 - Manual abort requested
@@ -202,6 +215,7 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ### Teleoperation Transitions
 
 #### IDLE → TELEOPERATION (Manual Control)
+
 **Requirements:** Communication link established
 
 ```bash
@@ -213,6 +227,7 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ```
 
 #### TELEOPERATION ↔ AUTONOMOUS (Mode Switching)
+
 ```bash
 # Autonomous → Teleoperation
 ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeState "{
@@ -236,6 +251,7 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ### Science Mission Execution
 
 #### Mission Phases
+
 ```
 1. APPROACH: Navigate to sample location
 2. SAMPLE: Collect soil/rock sample
@@ -245,11 +261,13 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ```
 
 #### State Flow
+
 ```
 IDLE → AUTONOMOUS_SCIENCE → SCIENCE substates → IDLE
 ```
 
 #### Execution Commands
+
 ```bash
 # Start science mission
 ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeState "{
@@ -265,6 +283,7 @@ ros2 topic echo /state_machine/current_state
 ```
 
 #### Success Criteria
+
 - Sample successfully collected
 - Analysis completed
 - Sample properly stored
@@ -274,6 +293,7 @@ ros2 topic echo /state_machine/current_state
 ### Delivery Mission Execution
 
 #### Mission Phases
+
 ```
 1. APPROACH: Navigate to pickup location
 2. ACQUIRE: Pick up delivery object
@@ -284,6 +304,7 @@ ros2 topic echo /state_machine/current_state
 ```
 
 #### State Flow
+
 ```
 IDLE → AUTONOMOUS_DELIVERY → DELIVERY substates → IDLE
 ```
@@ -291,17 +312,20 @@ IDLE → AUTONOMOUS_DELIVERY → DELIVERY substates → IDLE
 ### Equipment Servicing Mission
 
 #### Mission Types
+
 - **Solar Panel Servicing**: Clean/adjust panels
 - **Cable Management**: Organize/connect cables
 - **Sensor Maintenance**: Clean/replace sensors
 - **Sample Return**: Load samples for return
 
 #### Equipment Servicing Substates
+
 ```
 TRAVELING → SAMPLE_DELIVERY → PANEL_OPERATIONS → AUTONOMOUS_TYPING → USB_CONNECTION → FUEL_CONNECTION → BUTTON_OPERATIONS
 ```
 
 #### Execution Flow
+
 ```bash
 # Start equipment servicing
 ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeState "{
@@ -322,7 +346,9 @@ ros2 topic echo /state_machine/current_state --filter "yaml msg.sub_substate"
 ### Emergency State Transitions
 
 #### Any State → SAFETY (Emergency Trigger)
+
 **Triggers:**
+
 - Battery critical (< 10%)
 - Motor overheat (> 80°C)
 - Obstacle collision detected
@@ -336,6 +362,7 @@ ros2 service call /state_machine/emergency_stop std_srvs/srv/Empty
 ```
 
 #### SAFETY State Behavior
+
 - **LED Status:** Red fast blink
 - **All autonomous operations:** Stopped
 - **Safety systems:** Active monitoring
@@ -345,6 +372,7 @@ ros2 service call /state_machine/emergency_stop std_srvs/srv/Empty
 ### Safety Recovery Procedures
 
 #### Option 1: Automatic Recovery
+
 ```bash
 # Request automatic recovery
 ros2 service call /state_machine/recover_from_safety autonomy_interfaces/srv/RecoverFromSafety "{
@@ -359,6 +387,7 @@ ros2 topic echo /state_machine/safety_status
 ```
 
 #### Option 2: Manual Guided Recovery
+
 ```bash
 # Request manual recovery
 ros2 service call /state_machine/recover_from_safety autonomy_interfaces/srv/RecoverFromSafety "{
@@ -377,6 +406,7 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ```
 
 #### Option 3: Full System Reset
+
 ```bash
 # Full reset (use only as last resort)
 ros2 service call /state_machine/recover_from_safety autonomy_interfaces/srv/RecoverFromSafety "{
@@ -393,6 +423,7 @@ ros2 topic echo /state_machine/current_state  # Should show BOOT
 ### Emergency Response Validation
 
 #### Post-Recovery Checklist
+
 ```bash
 # 1. Verify system state
 ros2 service call /state_machine/get_system_state autonomy_interfaces/srv/GetSystemState "{}"
@@ -418,6 +449,7 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ### Subsystem Lifecycle
 
 #### Activation Sequence
+
 ```bash
 # Monitor subsystem activation during boot
 ros2 topic echo /state_machine/subsystem_status
@@ -431,6 +463,7 @@ ros2 topic echo /state_machine/subsystem_status
 ```
 
 #### Readiness Validation
+
 ```python
 # Check subsystem readiness programmatically
 import rclpy
@@ -456,6 +489,7 @@ def check_subsystem_readiness():
 ### Subsystem Health Monitoring
 
 #### Continuous Monitoring
+
 ```bash
 # Monitor subsystem health in real-time
 ros2 topic hz /state_machine/subsystem_status
@@ -465,6 +499,7 @@ ros2 topic echo /state_machine/subsystem_status --filter "yaml msg.status != 'AC
 ```
 
 #### Health Check Commands
+
 ```bash
 # Manual health check
 ros2 service call /state_machine/get_system_state autonomy_interfaces/srv/GetSystemState "{
@@ -478,11 +513,13 @@ ros2 topic echo /state_machine/subsystem_status --filter "yaml msg.name == 'navi
 ### Subsystem Recovery
 
 #### Automatic Recovery
+
 - State machine automatically attempts recovery
 - Failed subsystems are restarted
 - Alternative configurations used if available
 
 #### Manual Recovery
+
 ```bash
 # Force subsystem restart
 ros2 service call /state_machine/restart_subsystem autonomy_interfaces/srv/RestartSubsystem "{
@@ -499,28 +536,28 @@ ros2 service call /state_machine/restart_subsystem autonomy_interfaces/srv/Resta
 ### Configuration File Structure
 
 #### Main Configuration File
+
 ```yaml
 # config/state_machine_config.yaml
 state_machine_director:
   ros__parameters:
-
     # Timing parameters
-    update_rate: 10.0                    # State update frequency (Hz)
-    boot_timeout: 30.0                   # Boot completion timeout (s)
-    transition_timeout: 5.0              # State transition timeout (s)
+    update_rate: 10.0 # State update frequency (Hz)
+    boot_timeout: 30.0 # Boot completion timeout (s)
+    transition_timeout: 5.0 # State transition timeout (s)
 
     # Safety parameters
-    battery_critical_threshold: 10.0     # Battery emergency threshold (%)
-    temperature_warning_threshold: 70.0  # Temperature warning (°C)
+    battery_critical_threshold: 10.0 # Battery emergency threshold (%)
+    temperature_warning_threshold: 70.0 # Temperature warning (°C)
     temperature_critical_threshold: 85.0 # Temperature emergency (°C)
-    obstacle_stop_distance: 0.3          # Emergency stop distance (m)
+    obstacle_stop_distance: 0.3 # Emergency stop distance (m)
 
     # Mission timeouts
     mission_timeouts:
-      autonomous_navigation: 1800.0      # 30 minutes
-      science: 900.0                     # 15 minutes
-      delivery: 1200.0                   # 20 minutes
-      equipment_servicing: 2400.0        # 40 minutes
+      autonomous_navigation: 1800.0 # 30 minutes
+      science: 900.0 # 15 minutes
+      delivery: 1200.0 # 20 minutes
+      equipment_servicing: 2400.0 # 40 minutes
 
     # Subsystem requirements
     required_subsystems:
@@ -530,10 +567,10 @@ state_machine_director:
 
     # LED configuration
     led_enabled: true
-    led_update_rate: 5.0                 # LED update frequency (Hz)
+    led_update_rate: 5.0 # LED update frequency (Hz)
 
     # Logging configuration
-    log_level: "INFO"                    # ROS2 log level
+    log_level: "INFO" # ROS2 log level
     enable_state_history: true
     max_history_entries: 100
 ```
@@ -541,6 +578,7 @@ state_machine_director:
 ### Dynamic Reconfiguration
 
 #### Runtime Parameter Changes
+
 ```bash
 # Update safety thresholds
 ros2 param set /state_machine_director battery_critical_threshold 15.0
@@ -553,6 +591,7 @@ ros2 param set /state_machine_director led_enabled false
 ```
 
 #### Configuration Validation
+
 ```bash
 # Validate current configuration
 ros2 param dump /state_machine_director > current_config.yaml
@@ -564,6 +603,7 @@ ros2 param list /state_machine_director | grep -v "^/" | sort
 ### Configuration Backup & Restore
 
 #### Backup Current Configuration
+
 ```bash
 # Create configuration backup
 ros2 param dump /state_machine_director > config_backup_$(date +%Y%m%d_%H%M%S).yaml
@@ -573,6 +613,7 @@ ros2 param dump > full_system_backup.yaml
 ```
 
 #### Restore Configuration
+
 ```bash
 # Load configuration from file
 ros2 param load /state_machine_director config_backup_20241201_143000.yaml
@@ -588,6 +629,7 @@ ros2 param get /state_machine_director battery_critical_threshold
 ### State Machine Analysis
 
 #### Transition History Analysis
+
 ```bash
 # Get recent transition history
 ros2 service call /state_machine/get_transition_history autonomy_interfaces/srv/GetTransitionHistory "{
@@ -611,6 +653,7 @@ result = subprocess.run(['ros2', 'service', 'call', '/state_machine/get_transiti
 ```
 
 #### Performance Profiling
+
 ```bash
 # Profile state transition performance
 ros2 topic hz /state_machine/transitions
@@ -625,6 +668,7 @@ ros2 topic echo /state_machine/current_state | head -1000 | wc -l
 ### Custom Mission Integration
 
 #### Adding Custom Mission States
+
 ```python
 # Extend state definitions
 from autonomy_state_machine.states import AutonomousSubstate
@@ -647,19 +691,20 @@ state_machine.register_mission_state(CustomExplorationMission())
 ```
 
 #### Mission Parameter Configuration
+
 ```yaml
 # Custom mission parameters
 custom_missions:
   exploration:
     search_pattern: "spiral"
-    exploration_radius: 50.0  # meters
-    data_collection_interval: 5.0  # seconds
-    return_threshold: 0.8  # battery level
+    exploration_radius: 50.0 # meters
+    data_collection_interval: 5.0 # seconds
+    return_threshold: 0.8 # battery level
 
   survey:
-    waypoints: [[0,0], [10,0], [10,10], [0,10]]
+    waypoints: [[0, 0], [10, 0], [10, 10], [0, 10]]
     sensor_config: "high_resolution"
-    data_rate: 10.0  # Hz
+    data_rate: 10.0 # Hz
 ```
 
 ---
@@ -667,6 +712,7 @@ custom_missions:
 ## ✅ Operational Checklists
 
 ### Pre-Mission Checklist
+
 - [ ] System booted successfully (BOOT → IDLE)
 - [ ] All required subsystems active
 - [ ] Safety systems operational
@@ -678,6 +724,7 @@ custom_missions:
 - [ ] Emergency procedures reviewed
 
 ### Mission Execution Checklist
+
 - [ ] State transition to AUTONOMOUS successful
 - [ ] Mission substate correct
 - [ ] LED status shows red (autonomous)
@@ -688,6 +735,7 @@ custom_missions:
 - [ ] Communication maintained
 
 ### Post-Mission Checklist
+
 - [ ] Mission completed successfully
 - [ ] State returned to IDLE
 - [ ] LED status shows green/idle
@@ -699,4 +747,4 @@ custom_missions:
 
 ---
 
-*"The state machine is the conductor of the rover orchestra - ensuring every component plays its part in perfect harmony."*
+_"The state machine is the conductor of the rover orchestra - ensuring every component plays its part in perfect harmony."_

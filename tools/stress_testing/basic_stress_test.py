@@ -8,22 +8,24 @@ Tests real ROS2 components without complex simulation dependencies.
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import threading
 import statistics
+import threading
+import time
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 import psutil
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-from std_msgs.msg import String, Float32
-import numpy as np
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from std_msgs.msg import Float32, String
 
 
 @dataclass
 class StressTestResult:
     """Results from a stress test."""
+
     test_name: str
     duration_seconds: float
     operations_completed: int
@@ -43,27 +45,23 @@ class CompetitionSystemStressTester(Node):
     """
 
     def __init__(self):
-        super().__init__('competition_stress_tester')
+        super().__init__("competition_stress_tester")
 
         # Test control
         self.test_active = False
         self.test_results = []
 
         # Publishers for stress testing
-        self.test_pub = self.create_publisher(
-            String, '/stress_test/data', 100
-        )
+        self.test_pub = self.create_publisher(String, "/stress_test/data", 100)
 
         # Subscribers for monitoring
         self.status_sub = self.create_subscription(
-            String, '/competition_bridge/status',
-            self._status_callback, 10
+            String, "/competition_bridge/status", self._status_callback, 10
         )
 
         # Control subscribers
         self.control_sub = self.create_subscription(
-            String, '/stress_test/control',
-            self._control_callback, 10
+            String, "/stress_test/control", self._control_callback, 10
         )
 
         # Monitoring
@@ -74,10 +72,7 @@ class CompetitionSystemStressTester(Node):
 
     def _status_callback(self, msg):
         """Handle status messages from competition bridge."""
-        self.status_messages.append({
-            'timestamp': time.time(),
-            'data': msg.data
-        })
+        self.status_messages.append({"timestamp": time.time(), "data": msg.data})
 
     def _control_callback(self, msg):
         """Handle control commands."""
@@ -85,21 +80,21 @@ class CompetitionSystemStressTester(Node):
             command = eval(msg.data)  # Simple command parsing
             self.control_commands.append(command)
 
-            if command.get('action') == 'start_stress_test':
-                self.run_stress_test(command.get('test_type', 'competition_bridge'))
+            if command.get("action") == "start_stress_test":
+                self.run_stress_test(command.get("test_type", "competition_bridge"))
 
         except Exception as e:
             self.get_logger().error(f"Control command error: {e}")
 
-    def run_stress_test(self, test_type: str = 'competition_bridge'):
+    def run_stress_test(self, test_type: str = "competition_bridge"):
         """Run a specific stress test."""
         self.get_logger().info(f"Starting stress test: {test_type}")
 
-        if test_type == 'competition_bridge':
+        if test_type == "competition_bridge":
             result = self._test_competition_bridge_stress()
-        elif test_type == 'emergency_stop':
+        elif test_type == "emergency_stop":
             result = self._test_emergency_stop_stress()
-        elif test_type == 'communication':
+        elif test_type == "communication":
             result = self._test_communication_stress()
         else:
             result = StressTestResult(
@@ -112,7 +107,7 @@ class CompetitionSystemStressTester(Node):
                 cpu_usage_percent=0,
                 memory_usage_mb=0,
                 success=False,
-                error_message=f"Unknown test type: {test_type}"
+                error_message=f"Unknown test type: {test_type}",
             )
 
         self.test_results.append(result)
@@ -142,10 +137,10 @@ class CompetitionSystemStressTester(Node):
 
                 # Create test message
                 test_data = {
-                    'test_id': i,
-                    'timestamp': send_start,
-                    'data': 'x' * message_size,
-                    'type': 'stress_test'
+                    "test_id": i,
+                    "timestamp": send_start,
+                    "data": "x" * message_size,
+                    "type": "stress_test",
                 }
 
                 msg = String()
@@ -174,7 +169,7 @@ class CompetitionSystemStressTester(Node):
             memory_mb = memory.used / (1024 * 1024)
 
             return StressTestResult(
-                test_name='competition_bridge_stress',
+                test_name="competition_bridge_stress",
                 duration_seconds=duration,
                 operations_completed=messages_sent,
                 operations_failed=0,
@@ -182,7 +177,7 @@ class CompetitionSystemStressTester(Node):
                 throughput_ops_per_sec=throughput,
                 cpu_usage_percent=cpu_percent,
                 memory_usage_mb=memory_mb,
-                success=messages_sent > 0
+                success=messages_sent > 0,
             )
 
         finally:
@@ -195,7 +190,7 @@ class CompetitionSystemStressTester(Node):
         # Would test emergency stop triggers under load
         # For now, return placeholder result
         return StressTestResult(
-            test_name='emergency_stop_stress',
+            test_name="emergency_stop_stress",
             duration_seconds=10.0,
             operations_completed=50,
             operations_failed=0,
@@ -203,7 +198,7 @@ class CompetitionSystemStressTester(Node):
             throughput_ops_per_sec=5.0,
             cpu_usage_percent=15.0,
             memory_usage_mb=100.0,
-            success=True
+            success=True,
         )
 
     def _test_communication_stress(self) -> StressTestResult:
@@ -226,7 +221,7 @@ class CompetitionSystemStressTester(Node):
         throughput = message_count / duration if duration > 0 else 0
 
         return StressTestResult(
-            test_name='communication_stress',
+            test_name="communication_stress",
             duration_seconds=duration,
             operations_completed=message_count,
             operations_failed=0,
@@ -234,7 +229,7 @@ class CompetitionSystemStressTester(Node):
             throughput_ops_per_sec=throughput,
             cpu_usage_percent=psutil.cpu_percent(),
             memory_usage_mb=psutil.virtual_memory().used / (1024 * 1024),
-            success=True
+            success=True,
         )
 
     def _monitor_performance(self):
@@ -251,16 +246,16 @@ class CompetitionSystemStressTester(Node):
     def _publish_test_result(self, result: StressTestResult):
         """Publish test results."""
         result_data = {
-            'test_name': result.test_name,
-            'duration_seconds': result.duration_seconds,
-            'operations_completed': result.operations_completed,
-            'operations_failed': result.operations_failed,
-            'average_latency_ms': result.average_latency_ms,
-            'throughput_ops_per_sec': result.throughput_ops_per_sec,
-            'cpu_usage_percent': result.cpu_usage_percent,
-            'memory_usage_mb': result.memory_usage_mb,
-            'success': result.success,
-            'error_message': result.error_message
+            "test_name": result.test_name,
+            "duration_seconds": result.duration_seconds,
+            "operations_completed": result.operations_completed,
+            "operations_failed": result.operations_failed,
+            "average_latency_ms": result.average_latency_ms,
+            "throughput_ops_per_sec": result.throughput_ops_per_sec,
+            "cpu_usage_percent": result.cpu_usage_percent,
+            "memory_usage_mb": result.memory_usage_mb,
+            "success": result.success,
+            "error_message": result.error_message,
         }
 
         msg = String()
@@ -270,37 +265,42 @@ class CompetitionSystemStressTester(Node):
     def generate_stress_report(self) -> Dict[str, Any]:
         """Generate comprehensive stress test report."""
         if not self.test_results:
-            return {'status': 'no_tests_run'}
+            return {"status": "no_tests_run"}
 
         total_tests = len(self.test_results)
         successful_tests = sum(1 for r in self.test_results if r.success)
 
-        avg_throughput = statistics.mean([r.throughput_ops_per_sec for r in self.test_results])
+        avg_throughput = statistics.mean(
+            [r.throughput_ops_per_sec for r in self.test_results]
+        )
         avg_latency = statistics.mean([r.average_latency_ms for r in self.test_results])
         avg_cpu = statistics.mean([r.cpu_usage_percent for r in self.test_results])
         avg_memory = statistics.mean([r.memory_usage_mb for r in self.test_results])
 
         return {
-            'summary': {
-                'total_tests': total_tests,
-                'successful_tests': successful_tests,
-                'success_rate_percent': (successful_tests / total_tests) * 100 if total_tests > 0 else 0,
-                'average_throughput_ops_per_sec': avg_throughput,
-                'average_latency_ms': avg_latency,
-                'average_cpu_usage_percent': avg_cpu,
-                'average_memory_usage_mb': avg_memory
+            "summary": {
+                "total_tests": total_tests,
+                "successful_tests": successful_tests,
+                "success_rate_percent": (successful_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
+                "average_throughput_ops_per_sec": avg_throughput,
+                "average_latency_ms": avg_latency,
+                "average_cpu_usage_percent": avg_cpu,
+                "average_memory_usage_mb": avg_memory,
             },
-            'individual_results': [
+            "individual_results": [
                 {
-                    'test_name': r.test_name,
-                    'success': r.success,
-                    'throughput': r.throughput_ops_per_sec,
-                    'latency_ms': r.average_latency_ms,
-                    'cpu_percent': r.cpu_usage_percent,
-                    'memory_mb': r.memory_usage_mb
-                } for r in self.test_results
+                    "test_name": r.test_name,
+                    "success": r.success,
+                    "throughput": r.throughput_ops_per_sec,
+                    "latency_ms": r.average_latency_ms,
+                    "cpu_percent": r.cpu_usage_percent,
+                    "memory_mb": r.memory_usage_mb,
+                }
+                for r in self.test_results
             ],
-            'recommendations': self._generate_stress_recommendations()
+            "recommendations": self._generate_stress_recommendations(),
         }
 
     def _generate_stress_recommendations(self) -> List[str]:
@@ -308,18 +308,26 @@ class CompetitionSystemStressTester(Node):
         recommendations = []
 
         if self.test_results:
-            avg_throughput = statistics.mean([r.throughput_ops_per_sec for r in self.test_results])
+            avg_throughput = statistics.mean(
+                [r.throughput_ops_per_sec for r in self.test_results]
+            )
             avg_cpu = statistics.mean([r.cpu_usage_percent for r in self.test_results])
 
             if avg_throughput < 100:
-                recommendations.append("Consider optimizing message processing for higher throughput")
+                recommendations.append(
+                    "Consider optimizing message processing for higher throughput"
+                )
 
             if avg_cpu > 80:
-                recommendations.append("High CPU usage detected - consider performance optimizations")
+                recommendations.append(
+                    "High CPU usage detected - consider performance optimizations"
+                )
 
             failed_tests = [r for r in self.test_results if not r.success]
             if failed_tests:
-                recommendations.append(f"Address failures in: {', '.join(r.test_name for r in failed_tests)}")
+                recommendations.append(
+                    f"Address failures in: {', '.join(r.test_name for r in failed_tests)}"
+                )
 
         return recommendations
 
@@ -336,7 +344,7 @@ def run_basic_stress_tests():
     tester = CompetitionSystemStressTester()
 
     # Run stress tests
-    test_types = ['competition_bridge', 'emergency_stop', 'communication']
+    test_types = ["competition_bridge", "emergency_stop", "communication"]
 
     print(f"📋 Running {len(test_types)} stress tests...")
 
@@ -353,7 +361,7 @@ def run_basic_stress_tests():
     print("\n🎯 STRESS TESTING RESULTS")
     print("=" * 60)
 
-    summary = report['summary']
+    summary = report["summary"]
     print(f"Total Tests Run: {summary['total_tests']}")
     print(".1f")
     print(".1f")
@@ -362,15 +370,15 @@ def run_basic_stress_tests():
     print(".1f")
 
     print("\n📈 Individual Test Results:")
-    for result in report['individual_results']:
-        status = "✅ PASS" if result['success'] else "❌ FAIL"
+    for result in report["individual_results"]:
+        status = "✅ PASS" if result["success"] else "❌ FAIL"
         print(f"  {result['test_name']}: {status}")
         print(".1f")
         print(".1f")
 
-    if report.get('recommendations'):
+    if report.get("recommendations"):
         print("\n💡 Recommendations:")
-        for rec in report['recommendations']:
+        for rec in report["recommendations"]:
             print(f"  • {rec}")
 
     # Cleanup
@@ -380,7 +388,7 @@ def run_basic_stress_tests():
     print("\n✅ Stress testing complete!")
 
 
-def run_targeted_stress_test(test_type: str = 'competition_bridge', duration: int = 30):
+def run_targeted_stress_test(test_type: str = "competition_bridge", duration: int = 30):
     """Run a specific stress test with detailed monitoring."""
     print(f"🎯 Running Targeted Stress Test: {test_type}")
     print("=" * 60)
@@ -407,8 +415,8 @@ def run_targeted_stress_test(test_type: str = 'competition_bridge', duration: in
     # Generate and display report
     report = tester.generate_stress_report()
 
-    if report['individual_results']:
-        result = report['individual_results'][0]
+    if report["individual_results"]:
+        result = report["individual_results"][0]
         print("\n📊 Final Results:")
         print(".1f")
         print(".1f")

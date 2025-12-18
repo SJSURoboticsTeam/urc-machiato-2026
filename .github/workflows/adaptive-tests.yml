@@ -2,15 +2,15 @@ name: Adaptive State Machine Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'src/autonomy/core/state_management/**'
-      - 'tests/**'
+      - "src/autonomy/core/state_management/**"
+      - "tests/**"
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'src/autonomy/core/state_management/**'
-      - 'tests/**'
+      - "src/autonomy/core/state_management/**"
+      - "tests/**"
 
 jobs:
   test:
@@ -28,74 +28,72 @@ jobs:
       image: ${{ matrix.container }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: Install system dependencies
-      run: |
-        apt-get update && apt-get install -y \
-          python3-pip \
-          python3-dev \
-          build-essential \
-          git
+      - name: Install system dependencies
+        run: |
+          apt-get update && apt-get install -y \
+            python3-pip \
+            python3-dev \
+            build-essential \
+            git
 
-    - name: Install Python dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        pip3 install \
-          pytest \
-          pytest-cov \
-          pytest-html \
-          pytest-xdist \
-          psutil \
-          numpy
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install \
+            pytest \
+            pytest-cov \
+            pytest-html \
+            pytest-xdist \
+            psutil \
+            numpy
 
-    - name: Setup ROS2 environment
-      run: |
-        echo "ROS_DISTRO=${{ matrix.ros-distro }}" >> $GITHUB_ENV
-        source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-        echo "source /opt/ros/${{ matrix.ros-distro }}/setup.bash" >> ~/.bashrc
+      - name: Setup ROS2 environment
+        run: |
+          echo "ROS_DISTRO=${{ matrix.ros-distro }}" >> $GITHUB_ENV
+          source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+          echo "source /opt/ros/${{ matrix.ros-distro }}/setup.bash" >> ~/.bashrc
 
-    - name: Install test dependencies
-      run: |
-        source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-        pip3 install pytest-benchmark pytest-asyncio
+      - name: Install test dependencies
+        run: |
+          source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+          pip3 install pytest-benchmark pytest-asyncio
 
-    - name: Create test environment
-      run: |
-        mkdir -p ~/ros2_ws/src
-        ln -sf $(pwd) ~/ros2_ws/src/urc-machiato-2026
-        cd ~/ros2_ws
-        source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-        colcon build --packages-select autonomy_interfaces --cmake-args -DCMAKE_BUILD_TYPE=Release
+      - name: Create test environment
+        run: |
+          mkdir -p ~/ros2_ws/src
+          ln -sf $(pwd) ~/ros2_ws/src/urc-machiato-2026
+          cd ~/ros2_ws
+          source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+          colcon build --packages-select autonomy_interfaces --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-    - name: Run Adaptive Tests
-      run: |
-        cd ~/ros2_ws/src/urc-machiato-2026/src/autonomy/core/state_management/tests
-        source /opt/ros/${{ matrix.ros-distro }}/setup.bash
-        export PYTHONPATH=$PYTHONPATH:$(pwd)/../:$(pwd)/../../../../autonomy/interfaces
-        python3 run_adaptive_tests.py ci
+      - name: Run Adaptive Tests
+        run: |
+          cd ~/ros2_ws/src/urc-machiato-2026/src/autonomy/core/state_management/tests
+          source /opt/ros/${{ matrix.ros-distro }}/setup.bash
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/../:$(pwd)/../../../../autonomy/interfaces
+          python3 run_adaptive_tests.py ci
 
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results-${{ matrix.ros-distro }}
-        path: |
-          src/autonomy/core/state_management/tests/reports/
-        retention-days: 30
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ matrix.ros-distro }}
+          path: |
+            src/autonomy/core/state_management/tests/reports/
+          retention-days: 30
 
-    - name: Publish Test Summary
-      if: always()
-      run: |
-        if [ -f "src/autonomy/core/state_management/tests/reports/test_summary.html" ]; then
-          echo "## Test Results for ROS2 ${{ matrix.ros-distro }}" >> $GITHUB_STEP_SUMMARY
-          echo "📊 [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)" >> $GITHUB_STEP_SUMMARY
-        fi
-
-
+      - name: Publish Test Summary
+        if: always()
+        run: |
+          if [ -f "src/autonomy/core/state_management/tests/reports/test_summary.html" ]; then
+            echo "## Test Results for ROS2 ${{ matrix.ros-distro }}" >> $GITHUB_STEP_SUMMARY
+            echo "📊 [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)" >> $GITHUB_STEP_SUMMARY
+          fi

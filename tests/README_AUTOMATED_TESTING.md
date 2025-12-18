@@ -7,18 +7,21 @@ The URC 2026 autonomy system now features a **fully automated testing platform**
 ## 🚀 Quick Start
 
 ### Run Automated AoI Tests
+
 ```bash
 cd /home/ubuntu/urc-machiato-2026
 python3 tests/run_tests.py --aoi
 ```
 
 ### Run Complete Automated Test Suite
+
 ```bash
 cd /home/ubuntu/urc-machiato-2026
 python3 tests/run_tests.py --automated
 ```
 
 ### Direct Platform Usage
+
 ```bash
 # Run AoI tests directly
 python3 tests/automated_test_platform.py aoi_tests
@@ -30,12 +33,14 @@ python3 tests/automated_test_platform.py all --output-dir test_results/
 ## 🎯 What Makes It Automated?
 
 ### ✅ **Complete Lifecycle Management**
+
 - **Automatic System Spin-up**: Launches ROS2 nodes and configures environments
 - **Intelligent Test Execution**: Runs tests in dependency order with proper sequencing
 - **Smart Validation**: Automated result checking and metric collection
 - **Clean Spin-down**: Guaranteed cleanup even on failures
 
 ### ✅ **Zero Manual Intervention**
+
 ```bash
 # OLD WAY (Manual):
 ./scripts/system_launch.sh --minimal  # Manual start
@@ -49,6 +54,7 @@ python3 tests/run_tests.py --aoi  # Everything automatic!
 ```
 
 ### ✅ **Production-Ready Features**
+
 - **Resource Monitoring**: CPU, memory, bandwidth tracking per test phase
 - **Failure Recovery**: Automatic retry and cleanup on failures
 - **Parallel Execution**: Run multiple test suites simultaneously
@@ -58,22 +64,26 @@ python3 tests/run_tests.py --aoi  # Everything automatic!
 ## 📊 Available Test Suites
 
 ### **AoI Tests** (`--aoi`)
+
 - Age of Information monitoring validation
 - Sensor freshness tracking
 - Safety system AoI integration
 - Performance impact assessment
 
 ### **Full System Tests** (`--automated`)
+
 - Complete autonomy system integration
 - End-to-end mission validation
 - Multi-subsystem coordination testing
 
 ### **Performance Tests** (included in `--automated`)
+
 - Resource usage benchmarking
 - Data volume analysis
 - Timing constraint validation
 
 ### **Safety Critical Tests** (included in `--automated`)
+
 - Safety system integrity validation
 - Emergency stop responsiveness
 - Failure mode handling
@@ -110,6 +120,7 @@ graph TD
 ## 📈 Results & Reporting
 
 ### **Live Output Example**
+
 ```
 🤖 Automated Testing Platform Starting
 ==================================================
@@ -130,15 +141,16 @@ graph TD
 ```
 
 ### **JSON Results Format**
+
 ```json
 {
   "suite_name": "aoi_tests",
   "status": "completed",
   "duration": 125.43,
   "phases": {
-    "setup": {"status": "completed", "duration": 15.23},
-    "execution": {"status": "completed", "duration": 98.45},
-    "cleanup": {"status": "completed", "duration": 2.12}
+    "setup": { "status": "completed", "duration": 15.23 },
+    "execution": { "status": "completed", "duration": 98.45 },
+    "cleanup": { "status": "completed", "duration": 2.12 }
   },
   "metrics": {
     "cpu_overhead_percent": 0.8,
@@ -150,16 +162,19 @@ graph TD
 ## 🔧 Advanced Usage
 
 ### **Custom Output Directory**
+
 ```bash
 python3 tests/automated_test_platform.py aoi_tests --output-dir /tmp/my_tests/
 ```
 
 ### **CI/CD Mode** (JSON output, no interactive prompts)
+
 ```bash
 python3 tests/automated_test_platform.py all --ci-mode --output-dir artifacts/
 ```
 
 ### **Parallel Execution** (when implemented)
+
 ```bash
 python3 tests/automated_test_platform.py all --parallel
 ```
@@ -167,11 +182,13 @@ python3 tests/automated_test_platform.py all --parallel
 ## 🛡️ Safety & Reliability
 
 ### **Safety Validation**
+
 - **Response Time Monitoring**: Ensures safety systems remain <50ms responsive
 - **Failure Mode Testing**: Validates graceful degradation when components fail
 - **Resource Limits**: Prevents test runaway resource consumption
 
 ### **Reliability Features**
+
 - **Automatic Cleanup**: Guaranteed system cleanup even on crashes
 - **Timeout Protection**: Prevents hanging tests (5-minute default per phase)
 - **Dependency Checking**: Validates required services before test execution
@@ -180,18 +197,21 @@ python3 tests/automated_test_platform.py all --parallel
 ## 📋 Integration Checklist
 
 ### **Prerequisites**
+
 - [x] ROS2 Humble installed and configured
 - [x] Python 3.8+ with required packages
 - [x] System launch/stop scripts functional
 - [x] Test directories and fixtures in place
 
 ### **AoI-Specific Setup**
+
 - [x] AoI message definitions compiled
 - [x] AoI monitor node available
 - [x] Safety system AoI integration complete
 - [x] Automated test platform implemented
 
 ### **Validation Tests**
+
 ```bash
 # Quick validation
 python3 tests/run_tests.py --status
@@ -208,6 +228,7 @@ python3 tests/run_tests.py --automated
 ### **Common Issues**
 
 #### **System Won't Start**
+
 ```bash
 # Check ROS2 environment
 source autonomy/ros2_ws/install/setup.bash
@@ -218,6 +239,7 @@ ros2 doctor
 ```
 
 #### **Tests Time Out**
+
 ```bash
 # Increase timeout in test configuration
 # Check system resource usage
@@ -225,6 +247,7 @@ top  # Look for high CPU/memory processes
 ```
 
 #### **AoI Monitor Not Found**
+
 ```bash
 # Check if AoI package is built
 colcon build --packages-select autonomy_interfaces autonomy_safety_system
@@ -236,6 +259,7 @@ ros2 pkg executables autonomy_safety_system
 ## 🎯 Success Metrics
 
 ### **Performance Targets**
+
 - **Spin-up Time**: <30 seconds for minimal system
 - **Test Execution**: <10 minutes for complete AoI suite
 - **Spin-down Time**: <15 seconds guaranteed
@@ -243,6 +267,7 @@ ros2 pkg executables autonomy_safety_system
 - **Data Volume**: <1KB/s AoI monitoring traffic
 
 ### **Reliability Targets**
+
 - **Success Rate**: >95% test pass rate in clean environment
 - **Safety Impact**: Zero impact on safety system responsiveness
 - **Cleanup Success**: 100% guaranteed cleanup completion
@@ -251,6 +276,7 @@ ros2 pkg executables autonomy_safety_system
 ## 📚 API Reference
 
 ### **AutomatedTestPlatform Class**
+
 ```python
 class AutomatedTestPlatform:
     def run_automated_test_suite(self, suite_name: str, output_dir: Path = None) -> Dict[str, Any]:
@@ -258,6 +284,7 @@ class AutomatedTestPlatform:
 ```
 
 ### **Command Line Interface**
+
 ```bash
 python3 tests/automated_test_platform.py [suite] [options]
 

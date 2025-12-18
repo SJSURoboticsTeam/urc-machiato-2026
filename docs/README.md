@@ -225,6 +225,7 @@ make github-pages
 ### Common Issues
 
 **Import errors in Sphinx build:**
+
 ```bash
 # Ensure all Python dependencies are installed
 pip install -r requirements.txt
@@ -234,6 +235,7 @@ export PYTHONPATH="${PYTHONPATH}:.."
 ```
 
 **Doxygen build fails:**
+
 ```bash
 # Verify Doxygen installation
 doxygen --version
@@ -243,6 +245,7 @@ make doxygen 2>&1 | head -20
 ```
 
 **JSDoc build fails:**
+
 ```bash
 # Verify Node.js and JSDoc
 node --version

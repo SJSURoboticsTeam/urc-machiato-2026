@@ -8,21 +8,22 @@ Target: <50ms control loop latency for competition requirements
 Critical for autonomous navigation and real-time control systems.
 """
 
-import time
 import statistics
-import unittest
-from typing import Dict, List, Optional, Tuple
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from sensor_msgs.msg import Imu, LaserScan
-from geometry_msgs.msg import Twist, PoseStamped
-from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32, Bool, Header
-import psutil
 import threading
-import numpy as np
+import time
+import unittest
 from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+import psutil
+import rclpy
+from geometry_msgs.msg import PoseStamped, Twist
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import Imu, LaserScan
+from std_msgs.msg import Bool, Float32, Header
 
 
 class ControlLoopLatencyTest(unittest.TestCase):
@@ -153,7 +154,7 @@ class ControlLoopLatencyTest(unittest.TestCase):
 
             while time.time() - processing_start < timeout and not actuator_received:
                 rclpy.spin_once(self.actuator_simulator, timeout_sec=0.001)
-                if hasattr(self.actuator_simulator, 'last_command_time'):
+                if hasattr(self.actuator_simulator, "last_command_time"):
                     actuator_received = True
 
             processing_time = (time.time() - processing_start) * 1000
@@ -181,8 +182,12 @@ class ControlLoopLatencyTest(unittest.TestCase):
         p99_latency = statistics.quantiles(self.latencies, n=100)[98]  # 99th percentile
 
         # Calculate processing statistics
-        avg_processing = statistics.mean(self.processing_times) if self.processing_times else 0
-        avg_sensor_delay = statistics.mean(self.sensor_delays) if self.sensor_delays else 0
+        avg_processing = (
+            statistics.mean(self.processing_times) if self.processing_times else 0
+        )
+        avg_sensor_delay = (
+            statistics.mean(self.sensor_delays) if self.sensor_delays else 0
+        )
 
         # Print detailed results
         print("\n📈 Control Loop Latency Results:")
@@ -200,10 +205,19 @@ class ControlLoopLatencyTest(unittest.TestCase):
         print("-" * 40)
 
         requirements = {
-            'Average Latency': (avg_latency, self.target_latency_ms),
-            '95th Percentile': (p95_latency, self.target_latency_ms * 1.2),  # 20% tolerance
-            '99th Percentile': (p99_latency, self.target_latency_ms * 1.5),  # 50% tolerance
-            'Maximum Latency': (max_latency, self.target_latency_ms * 2.0),  # 100% tolerance
+            "Average Latency": (avg_latency, self.target_latency_ms),
+            "95th Percentile": (
+                p95_latency,
+                self.target_latency_ms * 1.2,
+            ),  # 20% tolerance
+            "99th Percentile": (
+                p99_latency,
+                self.target_latency_ms * 1.5,
+            ),  # 50% tolerance
+            "Maximum Latency": (
+                max_latency,
+                self.target_latency_ms * 2.0,
+            ),  # 100% tolerance
         }
 
         all_passed = True
@@ -241,18 +255,17 @@ class ControlLoopLatencyTest(unittest.TestCase):
 
         # Store results for regression testing
         self.test_results = {
-            'average_latency_ms': avg_latency,
-            'max_latency_ms': max_latency,
-            'p95_latency_ms': p95_latency,
-            'p99_latency_ms': p99_latency,
-            'processing_time_ms': avg_processing,
-            'sensor_delay_ms': avg_sensor_delay,
-            'requirements_met': all_passed,
-            'sample_count': len(self.latencies)
+            "average_latency_ms": avg_latency,
+            "max_latency_ms": max_latency,
+            "p95_latency_ms": p95_latency,
+            "p99_latency_ms": p99_latency,
+            "processing_time_ms": avg_processing,
+            "sensor_delay_ms": avg_sensor_delay,
+            "requirements_met": all_passed,
+            "sample_count": len(self.latencies),
         }
 
-        self.assertLess(avg_latency, self.target_latency_ms * 2.0,
-                       ".3f")
+        self.assertLess(avg_latency, self.target_latency_ms * 2.0, ".3f")
 
     def test_control_loop_under_load(self):
         """Test control loop performance under concurrent load."""
@@ -293,7 +306,7 @@ class ControlLoopLatencyTest(unittest.TestCase):
             # Perform CPU-intensive computation
             result = 0
             for i in range(10000):
-                result += i ** 2
+                result += i**2
             time.sleep(0.001)  # Small delay to prevent complete CPU saturation
 
 
@@ -301,20 +314,20 @@ class SensorSimulatorNode(Node):
     """Simulates sensor data for control loop testing."""
 
     def __init__(self):
-        super().__init__('sensor_simulator')
+        super().__init__("sensor_simulator")
 
         # QoS for real-time sensor data
         sensor_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Publishers
-        self.imu_pub = self.create_publisher(Imu, '/imu/data', sensor_qos)
-        self.lidar_pub = self.create_publisher(LaserScan, '/scan', sensor_qos)
-        self.odom_pub = self.create_publisher(Odometry, '/odom', sensor_qos)
+        self.imu_pub = self.create_publisher(Imu, "/imu/data", sensor_qos)
+        self.lidar_pub = self.create_publisher(LaserScan, "/scan", sensor_qos)
+        self.odom_pub = self.create_publisher(Odometry, "/odom", sensor_qos)
 
         self.get_logger().info("Sensor simulator ready")
 
@@ -325,7 +338,7 @@ class SensorSimulatorNode(Node):
         # Publish IMU data
         imu_msg = Imu()
         imu_msg.header.stamp = current_time.to_msg()
-        imu_msg.header.frame_id = 'imu_link'
+        imu_msg.header.frame_id = "imu_link"
         imu_msg.linear_acceleration.x = 0.0
         imu_msg.linear_acceleration.y = 0.0
         imu_msg.linear_acceleration.z = 9.81
@@ -337,7 +350,7 @@ class SensorSimulatorNode(Node):
         # Publish LiDAR scan
         scan_msg = LaserScan()
         scan_msg.header.stamp = current_time.to_msg()
-        scan_msg.header.frame_id = 'lidar_link'
+        scan_msg.header.frame_id = "lidar_link"
         scan_msg.angle_min = -np.pi / 2
         scan_msg.angle_max = np.pi / 2
         scan_msg.angle_increment = np.pi / 180
@@ -349,7 +362,7 @@ class SensorSimulatorNode(Node):
         # Publish odometry
         odom_msg = Odometry()
         odom_msg.header.stamp = current_time.to_msg()
-        odom_msg.header.frame_id = 'odom'
+        odom_msg.header.frame_id = "odom"
         odom_msg.pose.pose.position.x = 1.0
         odom_msg.pose.pose.position.y = 2.0
         odom_msg.pose.pose.orientation.w = 1.0
@@ -360,33 +373,36 @@ class ControlProcessorNode(Node):
     """Simulates control processing for latency testing."""
 
     def __init__(self):
-        super().__init__('control_processor')
+        super().__init__("control_processor")
 
         # QoS profiles
         sensor_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         command_qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Subscribers
         self.imu_sub = self.create_subscription(
-            Imu, '/imu/data', self.imu_callback, sensor_qos)
+            Imu, "/imu/data", self.imu_callback, sensor_qos
+        )
         self.scan_sub = self.create_subscription(
-            LaserScan, '/scan', self.scan_callback, sensor_qos)
+            LaserScan, "/scan", self.scan_callback, sensor_qos
+        )
         self.odom_sub = self.create_subscription(
-            Odometry, '/odom', self.odom_callback, sensor_qos)
+            Odometry, "/odom", self.odom_callback, sensor_qos
+        )
 
         # Publisher
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', command_qos)
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", command_qos)
 
         # State
         self.latest_imu = None
@@ -438,18 +454,19 @@ class ActuatorSimulatorNode(Node):
     """Simulates actuator response for latency testing."""
 
     def __init__(self):
-        super().__init__('actuator_simulator')
+        super().__init__("actuator_simulator")
 
         command_qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Subscriber
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel', self.cmd_vel_callback, command_qos)
+            Twist, "/cmd_vel", self.cmd_vel_callback, command_qos
+        )
 
         # State
         self.last_command_time = None
@@ -464,7 +481,5 @@ class ActuatorSimulatorNode(Node):
         time.sleep(0.001)  # 1ms actuator response
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-

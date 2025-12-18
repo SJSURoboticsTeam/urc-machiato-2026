@@ -6,14 +6,16 @@ Tests safety-critical functionality including emergency scenarios,
 recovery behaviors, and safety state management.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
 
-from autonomy_state_machine.safety_manager import (
-    SafetyManager, SafetyTriggerType, SafetySeverity,
-    RecoveryBehavior
-)
+import pytest
 from autonomy_state_machine.error_handling import StateMachineError
+from autonomy_state_machine.safety_manager import (
+    RecoveryBehavior,
+    SafetyManager,
+    SafetySeverity,
+    SafetyTriggerType,
+)
 from autonomy_state_machine.states import RoverState
 
 
@@ -42,7 +44,7 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.EMERGENCY_STOP,
             SafetySeverity.EMERGENCY,
-            "Emergency stop button pressed"
+            "Emergency stop button pressed",
         )
 
         # Verify trigger is active
@@ -51,16 +53,16 @@ class TestSafetyManager:
 
         # Verify trigger details
         trigger_info = safety_manager.active_triggers[SafetyTriggerType.EMERGENCY_STOP]
-        assert trigger_info['type'] == SafetyTriggerType.EMERGENCY_STOP
-        assert trigger_info['severity'] == SafetySeverity.EMERGENCY
-        assert 'timestamp' in trigger_info
+        assert trigger_info["type"] == SafetyTriggerType.EMERGENCY_STOP
+        assert trigger_info["severity"] == SafetySeverity.EMERGENCY
+        assert "timestamp" in trigger_info
 
     def test_battery_critical_trigger(self, safety_manager):
         """Test battery critical trigger - CRITICAL."""
         safety_manager.trigger_safety(
             SafetyTriggerType.BATTERY_CRITICAL,
             SafetySeverity.CRITICAL,
-            "Battery level below critical threshold"
+            "Battery level below critical threshold",
         )
 
         assert SafetyTriggerType.BATTERY_CRITICAL in safety_manager.active_triggers
@@ -71,7 +73,7 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.OBSTACLE_CRITICAL,
             SafetySeverity.CRITICAL,
-            "Critical obstacle detected"
+            "Critical obstacle detected",
         )
 
         assert SafetyTriggerType.OBSTACLE_CRITICAL in safety_manager.active_triggers
@@ -82,7 +84,7 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.COMMUNICATION_LOSS,
             SafetySeverity.CRITICAL,
-            "Communication link lost"
+            "Communication link lost",
         )
 
         assert SafetyTriggerType.COMMUNICATION_LOSS in safety_manager.active_triggers
@@ -91,9 +93,21 @@ class TestSafetyManager:
     def test_multiple_concurrent_triggers(self, safety_manager):
         """Test multiple concurrent safety triggers - CRITICAL."""
         # Trigger multiple safety conditions
-        safety_manager.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
-        safety_manager.trigger_safety(SafetyTriggerType.OBSTACLE_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
-        safety_manager.trigger_safety(SafetyTriggerType.THERMAL_WARNING, SafetySeverity.CRITICAL, "Test safety trigger")
+        safety_manager.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
+        safety_manager.trigger_safety(
+            SafetyTriggerType.OBSTACLE_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
+        safety_manager.trigger_safety(
+            SafetyTriggerType.THERMAL_WARNING,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
 
         # Verify all triggers are active
         active = safety_manager.get_active_triggers()
@@ -107,20 +121,40 @@ class TestSafetyManager:
     def test_severity_hierarchy(self, safety_manager):
         """Test safety severity hierarchy."""
         # Test severity levels
-        safety_manager.trigger_safety(SafetyTriggerType.THERMAL_WARNING, SafetySeverity.CRITICAL, "Test safety trigger")  # WARNING
+        safety_manager.trigger_safety(
+            SafetyTriggerType.THERMAL_WARNING,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )  # WARNING
         assert safety_manager.get_highest_severity() == SafetySeverity.WARNING
 
-        safety_manager.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")  # CRITICAL
+        safety_manager.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )  # CRITICAL
         assert safety_manager.get_highest_severity() == SafetySeverity.CRITICAL
 
-        safety_manager.trigger_safety(SafetyTriggerType.EMERGENCY_STOP, SafetySeverity.CRITICAL, "Test safety trigger")  # EMERGENCY
+        safety_manager.trigger_safety(
+            SafetyTriggerType.EMERGENCY_STOP,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )  # EMERGENCY
         assert safety_manager.get_highest_severity() == SafetySeverity.EMERGENCY
 
     def test_clear_specific_trigger(self, safety_manager):
         """Test clearing specific safety triggers."""
         # Set up multiple triggers
-        safety_manager.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
-        safety_manager.trigger_safety(SafetyTriggerType.OBSTACLE_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
+        safety_manager.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
+        safety_manager.trigger_safety(
+            SafetyTriggerType.OBSTACLE_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
 
         assert len(safety_manager.get_active_triggers()) == 2
 
@@ -135,9 +169,21 @@ class TestSafetyManager:
     def test_clear_all_triggers(self, safety_manager):
         """Test clearing all safety triggers."""
         # Set up multiple triggers
-        safety_manager.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
-        safety_manager.trigger_safety(SafetyTriggerType.OBSTACLE_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
-        safety_manager.trigger_safety(SafetyTriggerType.THERMAL_WARNING, SafetySeverity.CRITICAL, "Test safety trigger")
+        safety_manager.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
+        safety_manager.trigger_safety(
+            SafetyTriggerType.OBSTACLE_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
+        safety_manager.trigger_safety(
+            SafetyTriggerType.THERMAL_WARNING,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
 
         assert len(safety_manager.get_active_triggers()) == 3
 
@@ -150,21 +196,19 @@ class TestSafetyManager:
     def test_emergency_stop_recovery_behavior(self, safety_manager):
         """Test emergency stop recovery behavior determination - CRITICAL."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.EMERGENCY_STOP,
-            RoverState.AUTO
+            SafetyTriggerType.EMERGENCY_STOP, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
         assert recovery.requires_manual_intervention == True
         assert recovery.can_auto_recover == False
         # Emergency stop recovery doesn't specify a target state
-        assert "EMERGENCY" in recovery.action_parameters['action']
+        assert "EMERGENCY" in recovery.action_parameters["action"]
 
     def test_battery_critical_recovery_auto_mode(self, safety_manager):
         """Test battery critical recovery in autonomous mode - CRITICAL."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.BATTERY_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.BATTERY_CRITICAL, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -175,19 +219,19 @@ class TestSafetyManager:
     def test_battery_critical_recovery_teleop_mode(self, safety_manager):
         """Test battery critical recovery in teleop mode."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.BATTERY_CRITICAL,
-            RoverState.TELEOP
+            SafetyTriggerType.BATTERY_CRITICAL, RoverState.TELEOP
         )
 
         assert isinstance(recovery, RecoveryBehavior)
-        assert recovery.requires_manual_intervention == True  # Manual intervention needed
+        assert (
+            recovery.requires_manual_intervention == True
+        )  # Manual intervention needed
         assert recovery.can_auto_recover == False
 
     def test_obstacle_critical_recovery_auto_mode(self, safety_manager):
         """Test obstacle critical recovery in autonomous mode - CRITICAL."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.OBSTACLE_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.OBSTACLE_CRITICAL, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -198,8 +242,7 @@ class TestSafetyManager:
     def test_obstacle_critical_recovery_teleop_mode(self, safety_manager):
         """Test obstacle critical recovery in teleop mode."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.OBSTACLE_CRITICAL,
-            RoverState.TELEOP
+            SafetyTriggerType.OBSTACLE_CRITICAL, RoverState.TELEOP
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -210,8 +253,7 @@ class TestSafetyManager:
     def test_communication_loss_recovery(self, safety_manager):
         """Test communication loss recovery behavior."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.COMMUNICATION_LOSS,
-            RoverState.AUTO
+            SafetyTriggerType.COMMUNICATION_LOSS, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -222,8 +264,7 @@ class TestSafetyManager:
     def test_system_overload_recovery(self, safety_manager):
         """Test system overload recovery behavior."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.SYSTEM_FAULT,
-            RoverState.AUTO
+            SafetyTriggerType.SYSTEM_FAULT, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -234,8 +275,7 @@ class TestSafetyManager:
     def test_mission_timeout_recovery(self, safety_manager):
         """Test mission timeout recovery behavior."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.TIMING_VIOLATION,
-            RoverState.AUTO
+            SafetyTriggerType.TIMING_VIOLATION, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -246,8 +286,7 @@ class TestSafetyManager:
     def test_hazardous_area_recovery(self, safety_manager):
         """Test hazardous area recovery - CRITICAL."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.OBSTACLE_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.OBSTACLE_CRITICAL, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -261,7 +300,7 @@ class TestSafetyManager:
         try:
             recovery = safety_manager.determine_recovery(
                 SafetyTriggerType.EMERGENCY_STOP,  # Use a valid trigger but test error handling
-                "invalid_state"  # Invalid state type
+                "invalid_state",  # Invalid state type
             )
         except AttributeError:
             # Expected to fail with invalid state type
@@ -274,25 +313,29 @@ class TestSafetyManager:
         """Test safety status reporting functionality."""
         # Initially safe
         status = safety_manager.get_safety_status()
-        assert status['is_safe'] == True
-        assert len(status['active_triggers']) == 0
-        assert status['highest_severity'] is None
+        assert status["is_safe"] == True
+        assert len(status["active_triggers"]) == 0
+        assert status["highest_severity"] is None
 
         # Trigger safety condition
-        safety_manager.trigger_safety(SafetyTriggerType.BATTERY_CRITICAL, SafetySeverity.CRITICAL, "Test safety trigger")
+        safety_manager.trigger_safety(
+            SafetyTriggerType.BATTERY_CRITICAL,
+            SafetySeverity.CRITICAL,
+            "Test safety trigger",
+        )
 
         status = safety_manager.get_safety_status()
-        assert status['is_safe'] == False
-        assert SafetyTriggerType.BATTERY_CRITICAL in status['active_triggers']
-        assert status['highest_severity'] == SafetySeverity.CRITICAL
+        assert status["is_safe"] == False
+        assert SafetyTriggerType.BATTERY_CRITICAL in status["active_triggers"]
+        assert status["highest_severity"] == SafetySeverity.CRITICAL
 
     def test_system_health_updates(self, safety_manager):
         """Test system health status updates."""
         # Update system health parameters
         safety_manager.update_system_health(
-            battery_level=15.0,      # Low battery
-            temperature=80.0,        # High temp
-            communication_ok=False   # Communication lost
+            battery_level=15.0,  # Low battery
+            temperature=80.0,  # High temp
+            communication_ok=False,  # Communication lost
         )
 
         # Should trigger appropriate safety conditions
@@ -306,13 +349,13 @@ class TestSafetyManager:
             SafetyTriggerType.SENSOR_FAILURE,
             SafetySeverity.WARNING,
             "Sensor failure in lidar system",
-            source="lidar_system"
+            source="lidar_system",
         )
 
         assert SafetyTriggerType.SENSOR_FAILURE in safety_manager.get_active_triggers()
         trigger_info = safety_manager.active_triggers[SafetyTriggerType.SENSOR_FAILURE]
-        assert trigger_info['severity'] == SafetySeverity.WARNING
-        assert trigger_info['source'] == "lidar_system"
+        assert trigger_info["severity"] == SafetySeverity.WARNING
+        assert trigger_info["source"] == "lidar_system"
 
     def test_trigger_with_different_sources(self, safety_manager):
         """Test triggering safety from different sources."""
@@ -321,23 +364,25 @@ class TestSafetyManager:
             SafetyTriggerType.OBSTACLE_CRITICAL,
             SafetySeverity.CRITICAL,
             "Obstacle detected by front lidar",
-            source="lidar_front"
+            source="lidar_front",
         )
 
         safety_manager.trigger_safety(
             SafetyTriggerType.BATTERY_CRITICAL,
             SafetySeverity.CRITICAL,
             "Battery critical from power management",
-            source="power_system"
+            source="power_system",
         )
 
         # Verify both triggers with their sources
         active_triggers = safety_manager.get_active_triggers()
         obstacle_info = active_triggers[SafetyTriggerType.OBSTACLE_CRITICAL]
-        battery_info = safety_manager.active_triggers[SafetyTriggerType.BATTERY_CRITICAL]
+        battery_info = safety_manager.active_triggers[
+            SafetyTriggerType.BATTERY_CRITICAL
+        ]
 
-        assert obstacle_info['source'] == "lidar_front"
-        assert battery_info['source'] == "power_system"
+        assert obstacle_info["source"] == "lidar_front"
+        assert battery_info["source"] == "power_system"
 
     def test_multiple_simultaneous_triggers(self, safety_manager):
         """Test multiple simultaneous safety triggers."""
@@ -345,7 +390,7 @@ class TestSafetyManager:
         trigger_types = [
             SafetyTriggerType.BATTERY_CRITICAL,
             SafetyTriggerType.OBSTACLE_CRITICAL,
-            SafetyTriggerType.COMMUNICATION_LOSS
+            SafetyTriggerType.COMMUNICATION_LOSS,
         ]
 
         # Trigger all at once
@@ -353,7 +398,7 @@ class TestSafetyManager:
             safety_manager.trigger_safety(
                 trigger_type,
                 SafetySeverity.CRITICAL,
-                f"Test trigger for {trigger_type.value}"
+                f"Test trigger for {trigger_type.value}",
             )
 
         # Verify all triggers were recorded
@@ -374,12 +419,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.THERMAL_WARNING,
             SafetySeverity.WARNING,
-            "System temperature elevated"
+            "System temperature elevated",
         )
 
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.THERMAL_WARNING,
-            RoverState.AUTO
+            SafetyTriggerType.THERMAL_WARNING, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -392,12 +436,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.SENSOR_FAILURE,
             SafetySeverity.CRITICAL,
-            "Critical sensor failure detected"
+            "Critical sensor failure detected",
         )
 
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.SENSOR_FAILURE,
-            RoverState.AUTO
+            SafetyTriggerType.SENSOR_FAILURE, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -409,12 +452,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.NAV_INTEGRITY_LOSS,
             SafetySeverity.CRITICAL,
-            "Navigation integrity compromised"
+            "Navigation integrity compromised",
         )
 
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.NAV_INTEGRITY_LOSS,
-            RoverState.AUTO
+            SafetyTriggerType.NAV_INTEGRITY_LOSS, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -426,12 +468,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.TIMING_VIOLATION,
             SafetySeverity.WARNING,
-            "Mission timing constraint violated"
+            "Mission timing constraint violated",
         )
 
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.TIMING_VIOLATION,
-            RoverState.AUTO
+            SafetyTriggerType.TIMING_VIOLATION, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -444,12 +485,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.SYSTEM_FAULT,
             SafetySeverity.CRITICAL,
-            "General system fault detected"
+            "General system fault detected",
         )
 
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.SYSTEM_FAULT,
-            RoverState.AUTO
+            SafetyTriggerType.SYSTEM_FAULT, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -461,12 +501,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.MANUAL_INTERVENTION,
             SafetySeverity.WARNING,
-            "Manual intervention requested"
+            "Manual intervention requested",
         )
 
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.MANUAL_INTERVENTION,
-            RoverState.AUTO
+            SafetyTriggerType.MANUAL_INTERVENTION, RoverState.AUTO
         )
 
         assert isinstance(recovery, RecoveryBehavior)
@@ -479,22 +518,20 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.BATTERY_CRITICAL,
             SafetySeverity.CRITICAL,
-            "Battery critical"
+            "Battery critical",
         )
         safety_manager.trigger_safety(
             SafetyTriggerType.OBSTACLE_CRITICAL,
             SafetySeverity.CRITICAL,
-            "Obstacle critical"
+            "Obstacle critical",
         )
 
         # Recovery should prioritize the most critical condition
         recovery_battery = safety_manager.determine_recovery(
-            SafetyTriggerType.BATTERY_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.BATTERY_CRITICAL, RoverState.AUTO
         )
         recovery_obstacle = safety_manager.determine_recovery(
-            SafetyTriggerType.OBSTACLE_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.OBSTACLE_CRITICAL, RoverState.AUTO
         )
 
         # Both should require immediate action
@@ -505,12 +542,11 @@ class TestSafetyManager:
         safety_manager.trigger_safety(
             SafetyTriggerType.EMERGENCY_STOP,
             SafetySeverity.EMERGENCY,
-            "Emergency stop activated"
+            "Emergency stop activated",
         )
 
         recovery_emergency = safety_manager.determine_recovery(
-            SafetyTriggerType.EMERGENCY_STOP,
-            RoverState.AUTO
+            SafetyTriggerType.EMERGENCY_STOP, RoverState.AUTO
         )
 
         assert recovery_emergency.can_auto_recover == False
@@ -523,7 +559,11 @@ class TestSafetyManager:
         # Test various recovery scenarios lead to valid states
         test_cases = [
             (SafetyTriggerType.BATTERY_CRITICAL, RoverState.AUTO, RoverState.READY),
-            (SafetyTriggerType.OBSTACLE_CRITICAL, RoverState.AUTO, RoverState.AUTO),  # Stay in AUTO
+            (
+                SafetyTriggerType.OBSTACLE_CRITICAL,
+                RoverState.AUTO,
+                RoverState.AUTO,
+            ),  # Stay in AUTO
             (SafetyTriggerType.EMERGENCY_STOP, RoverState.AUTO, RoverState.ESTOP),
             (SafetyTriggerType.COMMUNICATION_LOSS, RoverState.AUTO, RoverState.PAUSED),
         ]
@@ -537,32 +577,32 @@ class TestSafetyManager:
         # This would test timeout scenarios, but since the current implementation
         # doesn't have timeout logic, we'll test the framework exists
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.BATTERY_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.BATTERY_CRITICAL, RoverState.AUTO
         )
 
         # Recovery should have reasonable expectations
-        assert hasattr(recovery, 'safe_mode_config')
+        assert hasattr(recovery, "safe_mode_config")
         if recovery.safe_mode_config is not None:
             assert isinstance(recovery.safe_mode_config, dict)
 
         # Should include timing information
-        assert 'estimated_recovery_time' in recovery.action_parameters or \
-               len(recovery.recovery_steps) > 0
+        assert (
+            "estimated_recovery_time" in recovery.action_parameters
+            or len(recovery.recovery_steps) > 0
+        )
 
     def test_recovery_behavior_properties(self, safety_manager):
         """Test recovery behavior object properties."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.BATTERY_CRITICAL,
-            RoverState.AUTO
+            SafetyTriggerType.BATTERY_CRITICAL, RoverState.AUTO
         )
 
         # Verify all required properties exist
-        assert hasattr(recovery, 'requires_manual_intervention')
-        assert hasattr(recovery, 'can_auto_recover')
-        assert hasattr(recovery, 'recovery_steps')
-        assert hasattr(recovery, 'safe_mode_config')
-        assert hasattr(recovery, 'action_parameters')
+        assert hasattr(recovery, "requires_manual_intervention")
+        assert hasattr(recovery, "can_auto_recover")
+        assert hasattr(recovery, "recovery_steps")
+        assert hasattr(recovery, "safe_mode_config")
+        assert hasattr(recovery, "action_parameters")
 
         # Verify types
         assert isinstance(recovery.requires_manual_intervention, bool)
@@ -577,12 +617,16 @@ class TestSafetyManager:
     def test_recovery_context_awareness(self, safety_manager):
         """Test that recovery considers current system context."""
         # Test recovery in different states
-        states_to_test = [RoverState.BOOT, RoverState.READY, RoverState.AUTO, RoverState.TELEOP]
+        states_to_test = [
+            RoverState.BOOT,
+            RoverState.READY,
+            RoverState.AUTO,
+            RoverState.TELEOP,
+        ]
 
         for state in states_to_test:
             recovery = safety_manager.determine_recovery(
-                SafetyTriggerType.BATTERY_CRITICAL,
-                state.value
+                SafetyTriggerType.BATTERY_CRITICAL, state.value
             )
 
             # Recovery should be valid for the current state
@@ -594,8 +638,7 @@ class TestSafetyManager:
     def test_recovery_step_detailing(self, safety_manager):
         """Test that recovery steps are detailed and actionable."""
         recovery = safety_manager.determine_recovery(
-            SafetyTriggerType.EMERGENCY_STOP,
-            RoverState.ESTOP
+            SafetyTriggerType.EMERGENCY_STOP, RoverState.ESTOP
         )
 
         # Emergency stop should have clear, detailed steps
@@ -604,4 +647,4 @@ class TestSafetyManager:
         # Steps should be clear instructions
         for step in recovery.recovery_steps:
             assert len(step.strip()) > 10  # Steps should be detailed, not just "stop"
-            assert not step.endswith('.') or len(step) > 15  # Meaningful content
+            assert not step.endswith(".") or len(step) > 15  # Meaningful content

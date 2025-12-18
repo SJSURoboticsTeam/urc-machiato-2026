@@ -6,13 +6,18 @@ Manages state transitions, validation, blocking logic, and execution
 for the adaptive state machine.
 """
 
-from typing import Optional, List, Tuple, Dict, Any
 import time
+from typing import Any, Dict, List, Optional, Tuple
 
-from .states import RoverState, can_transition as basic_can_transition
 from .adaptive_policy_engine import AdaptiveAction, AdaptiveActionType
-from .error_handling import TransitionError, handle_service_error, validate_transition_request
 from .config import PolicyConfig
+from .error_handling import (
+    TransitionError,
+    handle_service_error,
+    validate_transition_request,
+)
+from .states import RoverState
+from .states import can_transition as basic_can_transition
 
 
 class TransitionManager:
@@ -30,7 +35,7 @@ class TransitionManager:
         current_state: RoverState,
         target_state: RoverState,
         reason: str = "",
-        force: bool = False
+        force: bool = False,
     ) -> Tuple[bool, str]:
         """
         Validate a transition request and check for blocking conditions.
@@ -50,21 +55,32 @@ class TransitionManager:
 
             # Skip validation if forced
             if force:
-                return True, f"Forced transition from {current_state.value} to {target_state.value}"
+                return (
+                    True,
+                    f"Forced transition from {current_state.value} to {target_state.value}",
+                )
 
             # Check basic state machine rules
             if not basic_can_transition(current_state, target_state):
-                return False, f"Invalid transition from {current_state.value} to {target_state.value}"
+                return (
+                    False,
+                    f"Invalid transition from {current_state.value} to {target_state.value}",
+                )
 
             # Check for adaptive action blocking
             blocking_reason = self._check_adaptive_blocking(current_state, target_state)
             if blocking_reason:
                 return False, blocking_reason
 
-            return True, f"Transition from {current_state.value} to {target_state.value} is valid"
+            return (
+                True,
+                f"Transition from {current_state.value} to {target_state.value} is valid",
+            )
 
         except Exception as e:
-            handle_service_error(self.logger, e, "transition validation", "TransitionManager")
+            handle_service_error(
+                self.logger, e, "transition validation", "TransitionManager"
+            )
             return False, f"Transition validation failed: {str(e)}"
 
     def execute_transition(
@@ -73,7 +89,7 @@ class TransitionManager:
         target_state: RoverState,
         reason: str = "",
         pre_transition_actions: Optional[List[callable]] = None,
-        post_transition_actions: Optional[List[callable]] = None
+        post_transition_actions: Optional[List[callable]] = None,
     ) -> Tuple[bool, str]:
         """
         Execute a state transition with optional hooks.
@@ -128,13 +144,13 @@ class TransitionManager:
             return True, f"Successfully transitioned to {current_state.value}"
 
         except Exception as e:
-            handle_service_error(self.logger, e, "transition execution", "TransitionManager")
+            handle_service_error(
+                self.logger, e, "transition execution", "TransitionManager"
+            )
             return False, f"Transition execution failed: {str(e)}"
 
     def _check_adaptive_blocking(
-        self,
-        current_state: RoverState,
-        target_state: RoverState
+        self, current_state: RoverState, target_state: RoverState
     ) -> Optional[str]:
         """
         Check if any active adaptive actions should block this transition.
@@ -157,15 +173,16 @@ class TransitionManager:
 
             elif action.priority >= PolicyConfig.COMMUNICATION_SAFE_MODE_PRIORITY:
                 # Medium priority actions block specific dangerous transitions
-                if target_state == RoverState.TELEOP and action.action_type == AdaptiveActionType.COMMUNICATION_SAFE_MODE:
+                if (
+                    target_state == RoverState.TELEOP
+                    and action.action_type == AdaptiveActionType.COMMUNICATION_SAFE_MODE
+                ):
                     return "Teleop blocked during communication safe mode"
 
         return None
 
     def _should_block_for_action(
-        self,
-        action: AdaptiveAction,
-        target_state: RoverState
+        self, action: AdaptiveAction, target_state: RoverState
     ) -> bool:
         """
         Determine if a specific action should block transition to target state.
@@ -243,5 +260,3 @@ class TransitionManager:
         # Only allow forcing to safe states
         safe_states = {RoverState.READY, RoverState.ESTOP, RoverState.SHUTDOWN}
         return target_state in safe_states
-
-
