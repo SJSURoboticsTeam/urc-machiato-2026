@@ -17,7 +17,7 @@ import time
 import zlib
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .constants import HEALTH_SCORE_THRESHOLD, LOAD_DEGRADED_THRESHOLD
 
@@ -239,7 +239,8 @@ class WebSocketRedundancyManager:
                 if attempt < self.max_retries:
                     delay = self.retry_delays[min(attempt, len(self.retry_delays) - 1)]
                     logger.warning(
-                        f"Message send attempt {attempt + 1} failed for {client_id}: {e}. Retrying in {delay}s..."
+                        f"Message send attempt {attempt + 1} failed for "
+                        f"{client_id}: {e}. Retrying in {delay}s..."
                     )
                     await asyncio.sleep(delay)
                     # Record failed transmission
@@ -370,6 +371,7 @@ class WebSocketRedundancyManager:
         try:
             # Parse and validate message
             data = json.loads(message)
+            _ = data  # Message parsed but not currently processed
 
             # Forward to appropriate endpoint handler based on client connection
             client = self.clients.get(client_id)
