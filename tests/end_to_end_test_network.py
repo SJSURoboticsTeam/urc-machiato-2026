@@ -303,8 +303,9 @@ class EndToEndNetworkTest(unittest.TestCase):
 
         # Check if WebSocket server is listening
         import socket
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex(('127.0.0.1', 8080))
+        result = sock.connect_ex(("127.0.0.1", 8080))
         sock.close()
         if result == 0:
             print("   ✅ WebSocket server is listening on port 8080")
@@ -314,7 +315,9 @@ class EndToEndNetworkTest(unittest.TestCase):
             if bridge_process.poll() is None:
                 print("   ℹ️  Bridge process is still running")
             else:
-                print(f"   ❌ Bridge process exited with code: {bridge_process.returncode}")
+                print(
+                    f"   ❌ Bridge process exited with code: {bridge_process.returncode}"
+                )
 
         # Phase 3: Start WebSocket Clients
         print("[PLUG] Phase 3: Starting WebSocket Clients...")
@@ -374,11 +377,12 @@ rclpy.spin(publisher)
         """Start competition bridge."""
         # Use bash to source ROS2 environment and run the bridge
         cmd = [
-            "bash", "-c",
+            "bash",
+            "-c",
             "source /opt/ros/humble/setup.bash && "
             "source install/setup.bash && "
             f"export ROS_DOMAIN_ID={self.ros_domain_id} && "
-            "python3 -m bridges.competition_bridge"
+            "python3 -m bridges.competition_bridge",
         ]
 
         env = os.environ.copy()

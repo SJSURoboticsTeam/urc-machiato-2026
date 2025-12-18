@@ -182,7 +182,7 @@ class CompetitionBridge(Node):
             self.logger,
             self.telemetry_manager.telemetry_data,
             port=self.websocket_port,
-            max_clients=self.max_clients
+            max_clients=self.max_clients,
         )
 
         # Register command handlers

@@ -8,8 +8,6 @@ including state machine, mission control, hardware sensors, and services.
 
 import os
 import subprocess
-import sys
-import time
 
 
 def run_cmd(cmd, description=""):
