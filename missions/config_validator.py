@@ -153,7 +153,7 @@ def validate_startup_configuration():
             errors = _validator.get_errors()
             warnings = _validator.get_warnings()
 
-            print("❌ Configuration validation failed:")
+            print("[FAIL] Configuration validation failed:")
             for error in errors:
                 print(f"  • {error}")
 

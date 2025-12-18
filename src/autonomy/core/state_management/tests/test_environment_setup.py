@@ -14,7 +14,7 @@ from pathlib import Path
 
 def check_python_environment():
     """Check Python environment setup."""
-    print("🐍 Python Environment Check")
+    print(" Python Environment Check")
     print("-" * 30)
 
     # Python version
@@ -100,7 +100,7 @@ def check_ros2_environment():
 
 def check_project_structure():
     """Check project structure and paths."""
-    print("\n📁 Project Structure Check")
+    print("\n Project Structure Check")
     print("-" * 30)
 
     test_dir = Path(__file__).parent
@@ -131,7 +131,7 @@ def check_project_structure():
 
 def check_test_runner():
     """Check that test runner can be executed."""
-    print("\n🏃 Test Runner Check")
+    print("\n Test Runner Check")
     print("-" * 30)
 
     test_dir = Path(__file__).parent
@@ -205,7 +205,7 @@ def check_mock_environment():
                 print("[ERROR] Mock ROS2 interface test failed")
                 return False
         else:
-            print("ℹ️  ROS2 available, mock not needed")
+            print("ℹ  ROS2 available, mock not needed")
             return True
 
     except Exception as e:
@@ -254,7 +254,7 @@ def provide_recommendations(python_ok, ros2_ok, structure_ok, runner_ok, mock_ok
 
 def main():
     """Run all environment checks."""
-    print("🔬 Adaptive State Machine Environment Validation")
+    print("[LAB] Adaptive State Machine Environment Validation")
     print("=" * 55)
 
     # Run all checks

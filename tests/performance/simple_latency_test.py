@@ -131,7 +131,7 @@ def run_latency_test(topic_name: str, use_intra_process: bool, num_messages: int
 
 def main():
     """Run the latency comparison test."""
-    print("🚀 ROS2 Intra-Process vs Inter-Process Latency Test")
+    print("[IGNITE] ROS2 Intra-Process vs Inter-Process Latency Test")
     print("=" * 55)
 
     # Test parameters
@@ -139,7 +139,7 @@ def main():
 
     # Run intra-process test
     intra_topic = "latency_test_intra"
-    print("\n🔗 Testing INTRA-PROCESS communication...")
+    print("\n Testing INTRA-PROCESS communication...")
     intra_results = run_latency_test(
         intra_topic, use_intra_process=True, num_messages=num_messages
     )
@@ -149,29 +149,29 @@ def main():
 
     # Run inter-process test
     inter_topic = "latency_test_inter"
-    print("\n🌐 Testing INTER-PROCESS communication...")
+    print("\n[NETWORK] Testing INTER-PROCESS communication...")
     inter_results = run_latency_test(
         inter_topic, use_intra_process=False, num_messages=num_messages
     )
 
     # Results
-    print("\n📊 TEST RESULTS")
+    print("\n[GRAPH] TEST RESULTS")
     print("=" * 30)
 
-    print("\n🔗 INTRA-PROCESS:")
+    print("\n INTRA-PROCESS:")
     print(f"  Messages sent: {intra_results['messages_sent']}")
     print(f"  Messages received: {intra_results['messages_received']}")
     print(".1f")
     print(".3f")
 
-    print("\n🌐 INTER-PROCESS:")
+    print("\n[NETWORK] INTER-PROCESS:")
     print(f"  Messages sent: {inter_results['messages_sent']}")
     print(f"  Messages received: {inter_results['messages_received']}")
     print(".1f")
     print(".3f")
 
     # Performance comparison
-    print("\n⚡ PERFORMANCE COMPARISON:")
+    print("\n[LIGHTNING] PERFORMANCE COMPARISON:")
 
     if intra_results["avg_latency_ms"] > 0 and inter_results["avg_latency_ms"] > 0:
         latency_reduction = (
@@ -185,19 +185,19 @@ def main():
         print(".1f")
 
         if latency_improvement > 0:
-            print("  ✅ Intra-process communication is FASTER")
+            print("  [PASS] Intra-process communication is FASTER")
         else:
-            print("  ⚠️  No significant performance difference detected")
+            print("    No significant performance difference detected")
     else:
-        print("  ⚠️  Unable to measure latency difference (no messages received)")
+        print("    Unable to measure latency difference (no messages received)")
 
-    print("\n🎯 URC 2026 SYSTEM IMPACT:")
+    print("\n[OBJECTIVE] URC 2026 SYSTEM IMPACT:")
     print("  • /imu (100Hz): State estimation accuracy")
     print("  • /cmd_vel (50Hz): Rover control responsiveness")
     print("  • Safety topics: Critical safety response times")
     print("  • Vision topics: Real-time obstacle avoidance")
 
-    print("\n✨ Test completed!")
+    print("\n[SHINE] Test completed!")
 
 
 if __name__ == "__main__":

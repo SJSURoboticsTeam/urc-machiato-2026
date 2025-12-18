@@ -81,7 +81,7 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def test_message_throughput(self):
         """Test message processing throughput."""
-        print("\n⚡ Testing Message Throughput")
+        print("\n[LIGHTNING] Testing Message Throughput")
 
         # Test parameters
         num_messages = 1000
@@ -129,7 +129,7 @@ class PerformanceLoadTest(unittest.TestCase):
             "memory_delta_mb": memory_delta,
         }
 
-        print(f"✅ Processed {processed} messages in {total_time:.3f}s")
+        print(f"[PASS] Processed {processed} messages in {total_time:.3f}s")
         print(".2f")
         print(".2f")
         self.assertEqual(processed, num_messages)
@@ -137,7 +137,7 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def test_can_sensor_data_latency(self):
         """Test CAN sensor data retrieval latency."""
-        print("\n🏁 Testing CAN Sensor Data Latency")
+        print("\n[FLAG] Testing CAN Sensor Data Latency")
 
         sensor_types = ["imu", "gps", "battery", "motor_left", "motor_right"]
         num_samples = 100
@@ -170,7 +170,7 @@ class PerformanceLoadTest(unittest.TestCase):
             "p95_latency_ms": p95_latency,
         }
 
-        print(f"✅ Tested {len(latencies)} sensor readings")
+        print(f"[PASS] Tested {len(latencies)} sensor readings")
         print(".3f")
         print(".3f")
         print(".3f")
@@ -182,7 +182,7 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def test_concurrent_operations(self):
         """Test system performance under concurrent operations."""
-        print("\n🔄 Testing Concurrent Operations")
+        print("\n[REFRESH] Testing Concurrent Operations")
 
         num_threads = 4
         operations_per_thread = 250
@@ -245,7 +245,7 @@ class PerformanceLoadTest(unittest.TestCase):
             "cpu_usage_percent": cpu_delta,
         }
 
-        print(f"✅ Executed {total_operations} concurrent operations")
+        print(f"[PASS] Executed {total_operations} concurrent operations")
         print(".1f")
         print(".2f")
         print(".2f")
@@ -258,7 +258,7 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def test_memory_leak_detection(self):
         """Test for memory leaks during prolonged operation."""
-        print("\n💧 Testing Memory Leak Detection")
+        print("\n Testing Memory Leak Detection")
 
         num_iterations = 100
         memory_readings = []
@@ -308,7 +308,7 @@ class PerformanceLoadTest(unittest.TestCase):
             "memory_readings": memory_readings,
         }
 
-        print("✅ Memory leak test completed")
+        print("[PASS] Memory leak test completed")
         print(".2f")
         print(".2f")
         print(".4f")
@@ -319,7 +319,7 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def test_network_stress_simulation(self):
         """Test system under simulated network stress."""
-        print("\n🌐 Testing Network Stress Simulation")
+        print("\n[NETWORK] Testing Network Stress Simulation")
 
         # Simulate high-frequency message traffic
         num_messages = 500
@@ -379,7 +379,7 @@ class PerformanceLoadTest(unittest.TestCase):
             "max_queue_size": max_queue_size,
         }
 
-        print("✅ Network stress test completed")
+        print("[PASS] Network stress test completed")
         print(".1f")
         print(".3f")
         print(".3f")
@@ -393,7 +393,7 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def test_system_resource_monitoring(self):
         """Test system resource usage monitoring."""
-        print("\n📊 Testing System Resource Monitoring")
+        print("\n[GRAPH] Testing System Resource Monitoring")
 
         monitoring_duration = 5.0  # 5 seconds
         sample_interval = 0.1  # 100ms
@@ -435,7 +435,7 @@ class PerformanceLoadTest(unittest.TestCase):
             "memory_variance": memory_variance,
         }
 
-        print("✅ Resource monitoring completed")
+        print("[PASS] Resource monitoring completed")
         print(f"   CPU Usage: {avg_cpu:.1f}% avg, {max_cpu:.1f}% max")
         print(f"   Memory Usage: {avg_memory:.1f}MB avg, {max_memory:.1f}MB max")
 
@@ -446,11 +446,11 @@ class PerformanceLoadTest(unittest.TestCase):
 
     def generate_performance_report(self):
         """Generate comprehensive performance report."""
-        print("\n📋 Performance Test Results Summary")
+        print("\n[CLIPBOARD] Performance Test Results Summary")
         print("=" * 50)
 
         for test_name, results in self.results.items():
-            print(f"\n🔹 {test_name.replace('_', ' ').title()}:")
+            print(f"\n {test_name.replace('_', ' ').title()}:")
             for key, value in results.items():
                 if isinstance(value, float):
                     print(f"   {key}: {value:.3f}")
@@ -469,22 +469,22 @@ class PerformanceLoadTest(unittest.TestCase):
         )
         total_tests = len(self.results)
 
-        print("\n🎯 Overall Performance Assessment:")
+        print("\n[OBJECTIVE] Overall Performance Assessment:")
         print(f"   Tests Passed: {passed_tests}/{total_tests}")
         print(".1f")
 
         if passed_tests == total_tests:
-            print("   ✅ ALL PERFORMANCE REQUIREMENTS MET")
+            print("   [PASS] ALL PERFORMANCE REQUIREMENTS MET")
         elif passed_tests >= total_tests * 0.8:
-            print("   ⚠️ MOST PERFORMANCE REQUIREMENTS MET")
+            print("    MOST PERFORMANCE REQUIREMENTS MET")
         else:
-            print("   ❌ PERFORMANCE ISSUES DETECTED")
+            print("   [FAIL] PERFORMANCE ISSUES DETECTED")
 
         return self.results
 
 
 if __name__ == "__main__":
-    print("🚀 URC 2026 Performance & Load Testing Suite")
+    print("[IGNITE] URC 2026 Performance & Load Testing Suite")
     print("=" * 50)
 
     # Create test suite
@@ -507,4 +507,4 @@ if __name__ == "__main__":
         test_instance.generate_performance_report()
         test_instance.tearDown()
 
-    print("\n🏁 Performance testing completed!")
+    print("\n[FLAG] Performance testing completed!")

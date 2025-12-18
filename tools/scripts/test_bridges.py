@@ -27,11 +27,11 @@ def test_simulation_config():
     success = bridge.start_simulation()
 
     if success:
-        print("✅ Simulation started successfully")
+        print("[PASS] Simulation started successfully")
         bridge.stop_simulation()
         return True
     else:
-        print("❌ Simulation failed to start")
+        print("[FAIL] Simulation failed to start")
         return False
 
 
@@ -52,12 +52,12 @@ def test_state_machine_bridge():
 
         # Test transition
         success = state_machine.transition_to(SystemState.IDLE)
-        print(f"Transition to IDLE: {'✅' if success else '❌'}")
+        print(f"Transition to IDLE: {'[PASS]' if success else '[FAIL]'}")
         print(f"Current state: {state_machine.state.value}")
 
         return True
     except Exception as e:
-        print(f"❌ State machine bridge error: {e}")
+        print(f"[FAIL] State machine bridge error: {e}")
         return False
 
 
@@ -69,15 +69,15 @@ def test_mission_bridge():
         from bridges.ros2_mission_bridge import ROS2MissionBridge
         from missions.mission_executor import MissionExecutor
 
-        print("✅ Mission bridge imports successful")
+        print("[PASS] Mission bridge imports successful")
         return True
     except Exception as e:
-        print(f"❌ Mission bridge error: {e}")
+        print(f"[FAIL] Mission bridge error: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("🧪 Testing Bridge Configurations")
+    print("[EXPERIMENT] Testing Bridge Configurations")
     print("=" * 40)
 
     results = []
@@ -87,10 +87,10 @@ if __name__ == "__main__":
     results.append(("State Machine", test_state_machine_bridge()))
     results.append(("Mission", test_mission_bridge()))
 
-    print("\n📊 Test Results:")
+    print("\n[GRAPH] Test Results:")
     for name, success in results:
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[PASS] PASS" if success else "[FAIL] FAIL"
         print(f"  {name}: {status}")
 
     all_pass = all(success for _, success in results)
-    print(f"\n{'🎉 All tests passed!' if all_pass else '⚠️ Some tests failed'}")
+    print(f"\n{'[PARTY] All tests passed!' if all_pass else ' Some tests failed'}")

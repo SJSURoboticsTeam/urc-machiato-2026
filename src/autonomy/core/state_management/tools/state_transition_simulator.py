@@ -137,7 +137,7 @@ class StateTransitionSimulator:
         # Update substate if applicable
         if to_substate:
             self.current_substate = to_substate
-            self.logger.info(f"📍 Substate updated to {to_substate.value}")
+            self.logger.info(f" Substate updated to {to_substate.value}")
         elif to_state != SystemState.AUTONOMOUS:
             self.current_substate = AutonomousSubstate.NONE
             self.current_sub_substate = EquipmentServicingSubstate.NONE

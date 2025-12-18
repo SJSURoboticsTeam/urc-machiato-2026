@@ -18,7 +18,7 @@ try:
     ROS2_AVAILABLE = True
 except ImportError:
     ROS2_AVAILABLE = False
-    print("⚠️  ROS2 not available - some tests will be skipped")
+    print("  ROS2 not available - some tests will be skipped")
 
 
 class TestTeleoperationCompatibility(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             try:
                 self.py_server_available = True
             except ImportError as e:
-                print(f"⚠️  Cannot import py_server: {e}")
+                print(f"  Cannot import py_server: {e}")
                 self.py_server_available = False
 
     def test_ros2_topic_requirements(self):
@@ -59,7 +59,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             self.assertTrue(topic.startswith("/"), f"Topic {topic} should start with /")
             self.assertIn("/", topic[1:], f"Topic {topic} should have namespace")
 
-        print("✅ ROS2 topic naming conventions verified")
+        print("[PASS] ROS2 topic naming conventions verified")
 
     def test_message_type_compatibility(self):
         """Test that message types are compatible"""
@@ -91,7 +91,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             self.assertTrue(hasattr(battery_state, "current"))
             self.assertTrue(hasattr(battery_state, "percentage"))
 
-            print("✅ ROS2 message types available and compatible")
+            print("[PASS] ROS2 message types available and compatible")
 
         except ImportError as e:
             self.fail(f"Required ROS2 message types not available: {e}")
@@ -180,7 +180,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             self.assertEqual(battery_state.voltage, 24.0)
             self.assertEqual(battery_state.percentage, 85.0)
 
-            print("✅ Integration guide message formats verified")
+            print("[PASS] Integration guide message formats verified")
 
         except Exception as e:
             self.fail(f"Integration guide compliance test failed: {e}")
@@ -212,21 +212,21 @@ class TestTeleoperationCompatibility(unittest.TestCase):
                 len(parts), 2, f"Topic {topic} should have namespace/subtopic"
             )
 
-        print("✅ Topic naming and structure verified")
+        print("[PASS] Topic naming and structure verified")
 
     def test_dependency_compatibility(self):
         """Test that teleoperation dependencies are compatible"""
 
         # Check that required packages can be imported
         try:
-            print("✅ Core dependencies available")
+            print("[PASS] Core dependencies available")
         except ImportError as e:
             self.fail(f"Required dependency missing: {e}")
 
         # Check ROS2 compatibility
         if ROS2_AVAILABLE:
             try:
-                print("✅ ROS2 dependencies available")
+                print("[PASS] ROS2 dependencies available")
             except ImportError as e:
                 self.fail(f"ROS2 dependency missing: {e}")
         else:
@@ -252,7 +252,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             self.assertEqual(len(joint_state.position), 4)
             self.assertEqual(len(joint_state.velocity), 4)
 
-            print("✅ Data format compatibility verified")
+            print("[PASS] Data format compatibility verified")
 
     def test_performance_requirements(self):
         """Test that performance requirements can be met"""
@@ -286,7 +286,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
                 avg_time, 0.001, f"Message creation too slow: {avg_time:.6f}s"
             )
 
-            print(f"✅ Performance requirements met: {avg_time:.6f}s per message")
+            print(f"[PASS] Performance requirements met: {avg_time:.6f}s per message")
 
 
 def run_compatibility_tests():
@@ -300,23 +300,25 @@ def run_compatibility_tests():
 
 
 if __name__ == "__main__":
-    print("🔗 Teleoperation Compatibility Test")
+    print(" Teleoperation Compatibility Test")
     print("=" * 50)
 
     success = run_compatibility_tests()
 
     print(
-        f"\n{'✅' if success else '❌'} Teleoperation compatibility test {'PASSED' if success else 'FAILED'}"
+        f"\n{'[PASS]' if success else '[FAIL]'} Teleoperation compatibility test {'PASSED' if success else 'FAILED'}"
     )
 
     if success:
-        print("\n🎉 Teleoperation submodule is compatible with the autonomy system!")
-        print("📋 Next steps:")
+        print(
+            "\n[PARTY] Teleoperation submodule is compatible with the autonomy system!"
+        )
+        print("[CLIPBOARD] Next steps:")
         print("1. Implement ROS2 publishers in teleoperation/server/")
         print("2. Integrate CAN parsing with ROS2 publishing")
         print("3. Test end-to-end data flow")
         print("4. Add joint state and velocity publishing")
     else:
-        print("\n⚠️  Compatibility issues found - see test output above")
+        print("\n  Compatibility issues found - see test output above")
 
     exit(0 if success else 1)

@@ -541,7 +541,7 @@ def test_state_synchronization():
             logger.info("    [ERROR] State synchronization failed!")
 
         # Test master failure simulation
-        logger.info("  🏥 Testing master failure handling...")
+        logger.info("   Testing master failure handling...")
         # Simulate master failure by stopping it
         node1.stop()
 

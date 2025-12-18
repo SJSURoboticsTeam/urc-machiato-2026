@@ -21,7 +21,7 @@ except ImportError:
     WEBSOCKET_AVAILABLE = False
     WebSocketServerProtocol = Any
 
-from constants import (
+from .constants import (
     DEFAULT_WEBSOCKET_PORT,
     WEBSOCKET_CLOSE_TIMEOUT,
     WEBSOCKET_PING_INTERVAL,

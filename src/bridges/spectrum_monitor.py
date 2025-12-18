@@ -9,7 +9,7 @@ Handles interference detection, bandwidth monitoring, and compliance reporting.
 import time
 from typing import Any, Dict, List, Optional
 
-from constants import URC_900MHZ_MAX_BANDWIDTH
+from .constants import URC_900MHZ_MAX_BANDWIDTH
 
 
 class SpectrumMonitor:

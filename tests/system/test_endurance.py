@@ -39,9 +39,7 @@ except ImportError:
     EnvironmentSimulator = None
     NetworkEmulator = None
 
-
-@pytest.fixture
-def ros_context():
+    # ROS2 context managed by session fixture
     """Initialize and cleanup ROS context."""
     rclpy.init()
     yield
@@ -138,7 +136,9 @@ class TestEndurance:
             os.getenv("ENDURANCE_TEST_DURATION", "60.0")
         )  # Default 1 min for CI
 
-        print(f"\n⏱️  Starting {test_duration_sec/60:.1f}-minute endurance test...")
+        print(
+            f"\n[CLOCK]  Starting {test_duration_sec/60:.1f}-minute endurance test..."
+        )
 
         self.monitor.start_monitoring(interval_sec=5.0)
 
@@ -185,10 +185,10 @@ class TestEndurance:
         max_memory_delta = self.monitor.get_max_memory_delta()
         avg_cpu = self.monitor.get_avg_cpu()
 
-        print(f"  ✅ Test completed: {elapsed_time:.1f}s")
-        print(f"  📊 Memory trend: {memory_trend:.4f} MB/reading")
-        print(f"  📊 Max memory delta: {max_memory_delta:.2f} MB")
-        print(f"  📊 Avg CPU: {avg_cpu:.1f}%")
+        print(f"  [PASS] Test completed: {elapsed_time:.1f}s")
+        print(f"  [GRAPH] Memory trend: {memory_trend:.4f} MB/reading")
+        print(f"  [GRAPH] Max memory delta: {max_memory_delta:.2f} MB")
+        print(f"  [GRAPH] Avg CPU: {avg_cpu:.1f}%")
 
         # Assertions
         assert len(errors) == 0, f"System errors during endurance test: {errors}"
@@ -205,7 +205,7 @@ class TestEndurance:
 
     def test_memory_leak_detection(self, ros_context):
         """Test for memory leaks during prolonged operation."""
-        print("\n💧 Testing Memory Leak Detection")
+        print("\n Testing Memory Leak Detection")
 
         test_duration_sec = float(
             os.getenv("MEMORY_LEAK_TEST_DURATION", "120.0")
@@ -249,8 +249,8 @@ class TestEndurance:
         memory_trend = self.monitor.get_memory_trend()
         max_memory_delta = self.monitor.get_max_memory_delta()
 
-        print(f"  📊 Memory trend: {memory_trend:.4f} MB/reading")
-        print(f"  📊 Max memory delta: {max_memory_delta:.2f} MB")
+        print(f"  [GRAPH] Memory trend: {memory_trend:.4f} MB/reading")
+        print(f"  [GRAPH] Max memory delta: {max_memory_delta:.2f} MB")
 
         # Memory leak detection: trend should be near zero
         assert (
@@ -262,7 +262,7 @@ class TestEndurance:
 
     def test_performance_degradation(self, ros_context):
         """Test for performance degradation over time."""
-        print("\n📉 Testing Performance Degradation")
+        print("\n Testing Performance Degradation")
 
         test_duration_sec = float(
             os.getenv("PERF_DEGRADATION_TEST_DURATION", "180.0")
@@ -299,9 +299,13 @@ class TestEndurance:
             avg_last = np.mean(last_quarter)
             degradation_ratio = avg_last / avg_first if avg_first > 0 else 1.0
 
-            print(f"  📊 Avg operation time (first quarter): {avg_first*1000:.2f} ms")
-            print(f"  📊 Avg operation time (last quarter): {avg_last*1000:.2f} ms")
-            print(f"  📊 Performance degradation ratio: {degradation_ratio:.2f}x")
+            print(
+                f"  [GRAPH] Avg operation time (first quarter): {avg_first*1000:.2f} ms"
+            )
+            print(
+                f"  [GRAPH] Avg operation time (last quarter): {avg_last*1000:.2f} ms"
+            )
+            print(f"  [GRAPH] Performance degradation ratio: {degradation_ratio:.2f}x")
 
             # Performance should not degrade more than 2x
             assert (
@@ -310,7 +314,7 @@ class TestEndurance:
 
     def test_resource_exhaustion_scenarios(self, ros_context):
         """Test system behavior under resource exhaustion."""
-        print("\n⚠️  Testing Resource Exhaustion Scenarios")
+        print("\n  Testing Resource Exhaustion Scenarios")
 
         # Test 1: High message rate
         print("  Testing high message rate...")
@@ -345,7 +349,7 @@ class TestEndurance:
 
     def test_network_reconnection_cycles(self, ros_context):
         """Test network reconnection cycles."""
-        print("\n🔄 Testing Network Reconnection Cycles")
+        print("\n[REFRESH] Testing Network Reconnection Cycles")
 
         if not NetworkEmulator:
             pytest.skip("NetworkEmulator not available")

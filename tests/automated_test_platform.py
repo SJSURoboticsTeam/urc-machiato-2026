@@ -383,7 +383,7 @@ class AutomatedTestPlatform:
 
     def _emergency_cleanup(self):
         """Emergency cleanup on test failure."""
-        print("🚨 Emergency cleanup initiated...")
+        print(" Emergency cleanup initiated...")
 
         # Kill all test processes
         subprocess.run(["pkill", "-f", "autonomy"], check=False)
@@ -393,7 +393,7 @@ class AutomatedTestPlatform:
         # Reset ROS environment
         os.environ.pop("ROS_DOMAIN_ID", None)
 
-        print("✅ Emergency cleanup completed")
+        print("[PASS] Emergency cleanup completed")
 
     def _parse_junit_results(self, junit_file: Path) -> Dict[str, Any]:
         """Parse JUnit XML results."""
@@ -573,7 +573,7 @@ def main():
     output_dir = Path(args.output_dir) if args.output_dir else None
 
     try:
-        print("🤖 Automated Testing Platform Starting")
+        print(" Automated Testing Platform Starting")
         print("=" * 50)
 
         if args.suite == "all":
@@ -593,40 +593,40 @@ def main():
             else:
                 # Run sequentially
                 for suite_name in suites_to_run:
-                    print(f"\n🏃 Running {suite_name}...")
+                    print(f"\n Running {suite_name}...")
                     result = platform.run_automated_test_suite(suite_name, output_dir)
                     all_results[suite_name] = result
 
                     if result["status"] != "completed":
                         print(
-                            f"❌ {suite_name} failed: {result.get('error', 'Unknown error')}"
+                            f"[FAIL] {suite_name} failed: {result.get('error', 'Unknown error')}"
                         )
                         if not args.ci_mode:
                             break
 
             # Summary report
-            print("\n📊 Complete Test Suite Results:")
+            print("\n[GRAPH] Complete Test Suite Results:")
             for suite_name, result in all_results.items():
-                status_icon = "✅" if result["status"] == "completed" else "❌"
+                status_icon = "[PASS]" if result["status"] == "completed" else "[FAIL]"
                 duration = result.get("duration", 0)
                 print(f"  {status_icon} {suite_name}: {duration:.1f}s")
 
         else:
             # Run single test suite
-            print(f"🏃 Running {args.suite}...")
+            print(f" Running {args.suite}...")
             result = platform.run_automated_test_suite(args.suite, output_dir)
 
             # Print summary
-            status_icon = "✅" if result["status"] == "completed" else "❌"
+            status_icon = "[PASS]" if result["status"] == "completed" else "[FAIL]"
             print(
                 f"\n{status_icon} {args.suite} completed in {result.get('duration', 0):.1f}s"
             )
 
             if result["status"] != "completed":
-                print(f"❌ Error: {result.get('error', 'Unknown error')}")
+                print(f"[FAIL] Error: {result.get('error', 'Unknown error')}")
                 return 1
 
-        print("\n📄 Test artifacts saved to:")
+        print("\n Test artifacts saved to:")
         if output_dir:
             print(f"   {output_dir}")
         else:
@@ -635,10 +635,10 @@ def main():
         return 0
 
     except KeyboardInterrupt:
-        print("\n⚠️ Testing interrupted by user")
+        print("\n Testing interrupted by user")
         return 1
     except Exception as e:
-        print(f"\n❌ Testing platform error: {e}")
+        print(f"\n[FAIL] Testing platform error: {e}")
         return 1
     finally:
         # Ensure clean shutdown

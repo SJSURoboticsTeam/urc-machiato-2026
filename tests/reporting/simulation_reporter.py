@@ -41,7 +41,7 @@ class SimulationTestReport:
             net_profile = result.get("network_profile", "UNKNOWN")
 
             result["warnings"].append(
-                f"⚠️ {env_tier.upper()} SIMULATION PASS "
+                f" {env_tier.upper()} SIMULATION PASS "
                 f"(network: {net_profile}) - Hardware validation required"
             )
 
@@ -52,7 +52,7 @@ class SimulationTestReport:
         report = {
             "generated_at": datetime.now().isoformat(),
             "report_type": "SIMULATION_TEST_REPORT",
-            "simulation_warning": "🚨 ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment",
+            "simulation_warning": " ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment",
             "summary": self._generate_summary(),
             "by_environment_tier": self._aggregate_by_tier(),
             "by_network_profile": self._aggregate_by_network(),
@@ -180,7 +180,7 @@ class SimulationTestReport:
         """Collect all unique warnings."""
         warnings = set()
         warnings.add(
-            "🚨 ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment"
+            " ALL TESTS ARE SIMULATION-BASED - Hardware validation required before deployment"
         )
 
         for result in self.results:
@@ -304,17 +304,17 @@ class SimulationTestReport:
 </head>
 <body>
     <div class="header">
-        <h1>🧪 URC 2026 Simulation Test Report</h1>
+        <h1>[EXPERIMENT] URC 2026 Simulation Test Report</h1>
         <p>Generated: {report_data['generated_at']}</p>
     </div>
 
     <div class="critical-warning">
-        <h3>🚨 CRITICAL WARNING</h3>
+        <h3> CRITICAL WARNING</h3>
         <p><strong>{report_data['simulation_warning']}</strong></p>
     </div>
 
     <div class="summary-card">
-        <h2>📊 Test Summary</h2>
+        <h2>[GRAPH] Test Summary</h2>
         <div class="metric">
             <div class="metric-value">{summary['total_tests']}</div>
             <div class="metric-label">Total Tests</div>
@@ -334,26 +334,26 @@ class SimulationTestReport:
     </div>
 
     <div class="validation-status {validation['status'].lower().replace('_', '-')}">
-        <h2>✅ Hardware Validation Status</h2>
+        <h2>[PASS] Hardware Validation Status</h2>
         <p><strong>Status: {validation['status'].replace('_', ' ').title()}</strong></p>
         <p>Hardware Validated: {validation['hardware_validated']} / {validation['total_tests']}
            ({validation['hardware_coverage_percent']:.1f}%)</p>
         <p>Simulation Only: {validation['simulation_only']} tests</p>
-        {"<p style='color: #28a745;'><strong>✅ Ready for production deployment</strong></p>" if validation['ready_for_production'] else "<p style='color: #dc3545;'><strong>❌ NOT ready for production - more hardware validation needed</strong></p>"}
+        {"<p style='color: #28a745;'><strong>[PASS] Ready for production deployment</strong></p>" if validation['ready_for_production'] else "<p style='color: #dc3545;'><strong>[FAIL] NOT ready for production - more hardware validation needed</strong></p>"}
     </div>
 
-    <h2>🌍 Results by Environment Tier</h2>
+    <h2> Results by Environment Tier</h2>
     {self._generate_tier_html(report_data['by_environment_tier'])}
 
-    <h2>📡 Results by Network Profile</h2>
+    <h2>[ANTENNA] Results by Network Profile</h2>
     {self._generate_network_html(report_data['by_network_profile'])}
 
-    <h2>⚠️ Warnings and Notices</h2>
+    <h2> Warnings and Notices</h2>
     <ul>
         {"".join(f"<li>{warning}</li>" for warning in report_data['warnings'][:10])}
     </ul>
 
-    <h2>📋 Detailed Results</h2>
+    <h2>[CLIPBOARD] Detailed Results</h2>
     <table>
         <tr>
             <th>Test Name</th>
@@ -443,25 +443,25 @@ class SimulationTestReport:
 
 **Generated**: {report_data['generated_at']}
 
-## 🚨 CRITICAL WARNING
+##  CRITICAL WARNING
 
 {report_data['simulation_warning']}
 
-## 📊 Test Summary
+## [GRAPH] Test Summary
 
 - **Total Tests**: {summary['total_tests']}
 - **Passed**: {summary['passed']}
 - **Failed**: {summary['failed']}
 - **Pass Rate**: {summary['pass_rate']:.1f}%
 
-## ✅ Hardware Validation Status
+## [PASS] Hardware Validation Status
 
 - **Status**: {validation['status'].replace('_', ' ').title()}
 - **Hardware Validated**: {validation['hardware_validated']} / {validation['total_tests']} ({validation['hardware_coverage_percent']:.1f}%)
 - **Simulation Only**: {validation['simulation_only']} tests
-- **Production Ready**: {'✅ Yes' if validation['ready_for_production'] else '❌ No'}
+- **Production Ready**: {'[PASS] Yes' if validation['ready_for_production'] else '[FAIL] No'}
 
-## 🌍 Results by Environment Tier
+##  Results by Environment Tier
 
 """
 
@@ -471,7 +471,7 @@ class SimulationTestReport:
             )
             md += f"- **{tier.replace('_', ' ').title()}**: {data['passed']}/{data['total']} passed ({pass_rate:.1f}%)\n"
 
-        md += "\n## ⚠️ Warnings\n\n"
+        md += "\n##  Warnings\n\n"
         for warning in report_data["warnings"][:5]:
             md += f"- {warning}\n"
 
@@ -482,23 +482,23 @@ class SimulationTestReport:
         report_data = self._load_or_generate_json()
 
         print("\n" + "=" * 70)
-        print("🧪 SIMULATION TEST REPORT")
+        print("[EXPERIMENT] SIMULATION TEST REPORT")
         print("=" * 70)
-        print(f"\n🚨 {report_data['simulation_warning']}")
+        print(f"\n {report_data['simulation_warning']}")
         print("\n" + "=" * 70)
 
         summary = report_data["summary"]
         print(
-            f"\n📊 Summary: {summary['passed']}/{summary['total_tests']} passed ({summary['pass_rate']:.1f}%)"
+            f"\n[GRAPH] Summary: {summary['passed']}/{summary['total_tests']} passed ({summary['pass_rate']:.1f}%)"
         )
 
         validation = report_data["validation_status"]
         print(
-            f"\n✅ Hardware Validation: {validation['hardware_validated']}/{validation['total_tests']} "
+            f"\n[PASS] Hardware Validation: {validation['hardware_validated']}/{validation['total_tests']} "
         )
         print(f"   Status: {validation['status'].replace('_', ' ').title()}")
         print(
-            f"   Production Ready: {'✅ Yes' if validation['ready_for_production'] else '❌ No'}"
+            f"   Production Ready: {'[PASS] Yes' if validation['ready_for_production'] else '[FAIL] No'}"
         )
 
         print("\n" + "=" * 70)
@@ -506,7 +506,7 @@ class SimulationTestReport:
 
 if __name__ == "__main__":
     # Test reporter
-    print("📊 Testing Simulation Reporter")
+    print("[GRAPH] Testing Simulation Reporter")
 
     reporter = SimulationTestReport(Path("test_reports"))
 
@@ -543,8 +543,8 @@ if __name__ == "__main__":
     html_file = reporter.generate_html_report()
     md_file = reporter.generate_markdown_summary()
 
-    print(f"✅ JSON report: {json_file}")
-    print(f"✅ HTML report: {html_file}")
-    print(f"✅ Markdown summary: {md_file}")
+    print(f"[PASS] JSON report: {json_file}")
+    print(f"[PASS] HTML report: {html_file}")
+    print(f"[PASS] Markdown summary: {md_file}")
 
     reporter.print_summary()

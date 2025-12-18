@@ -50,9 +50,10 @@ class ConfigurationManager:
             return self.config_cache[environment]
 
         config_files = [
-            self.config_dir / f"{environment}.yaml",
-            self.config_dir / "local.yaml",
-            self.config_dir / "rover.yaml",
+            self.config_dir / "rover.yaml",  # Base config (lowest priority)
+            self.config_dir / "local.yaml",  # Local overrides
+            self.config_dir
+            / f"{environment}.yaml",  # Environment specific (highest priority)
         ]
 
         merged_config = {}
@@ -106,9 +107,8 @@ class ConfigurationManager:
         # Set the value
         target[keys[-1]] = value
 
-        # Clear cache to force reload
-        if environment in self.config_cache:
-            del self.config_cache[environment]
+        # Save the modified config
+        self.save_config(config, environment)
 
     def validate_config(self, environment: str = "development") -> bool:
         """Validate configuration for an environment."""
@@ -130,6 +130,23 @@ class ConfigurationManager:
     def get_validation_errors(self) -> List[str]:
         """Get list of validation errors."""
         return self.validation_errors.copy()
+
+    def clear_cache(self):
+        """Clear all cached configurations for fresh state."""
+        self.config_cache.clear()
+        self.validation_errors.clear()
+
+    def reset(self):
+        """Reset manager to clean state."""
+        self.clear_cache()
+        # Reinitialize schemas if needed
+        self.schemas = {
+            "simulation": self._get_simulation_schema(),
+            "mission": self._get_mission_schema(),
+            "safety": self._get_safety_schema(),
+            "network": self._get_network_schema(),
+            "performance": self._get_performance_schema(),
+        }
 
     def _deep_merge(
         self, base: Dict[str, Any], overlay: Dict[str, Any]
@@ -391,6 +408,14 @@ def set_config(key: str, value: Any, environment: str = None):
     get_config_manager().set_value(key, value, environment)
 
 
+def reset_global_config():
+    """Reset the global configuration manager for clean testing."""
+    global _config_manager
+    if _config_manager is not None:
+        _config_manager.reset()
+    _config_manager = None
+
+
 if __name__ == "__main__":
     # Test configuration management
     import sys
@@ -405,9 +430,9 @@ if __name__ == "__main__":
     # Test validation
     print("Validating configuration...")
     if manager.validate_config("development"):
-        print("✅ Configuration is valid")
+        print("[PASS] Configuration is valid")
     else:
-        print("❌ Configuration validation failed:")
+        print("[FAIL] Configuration validation failed:")
         for error in manager.get_validation_errors():
             print(f"  - {error}")
 
@@ -415,15 +440,15 @@ if __name__ == "__main__":
     print("Creating competition configuration...")
     comp_config = create_competition_config()
     manager.save_config(comp_config, "competition")
-    print("✅ Competition configuration saved")
+    print("[PASS] Competition configuration saved")
 
     # Test competition config validation
     print("Validating competition configuration...")
     if manager.validate_config("competition"):
-        print("✅ Competition configuration is valid")
+        print("[PASS] Competition configuration is valid")
         sys.exit(0)
     else:
-        print("❌ Competition configuration validation failed:")
+        print("[FAIL] Competition configuration validation failed:")
         for error in manager.get_validation_errors():
             print(f"  - {error}")
         sys.exit(1)

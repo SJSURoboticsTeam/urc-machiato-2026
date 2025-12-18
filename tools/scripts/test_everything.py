@@ -38,7 +38,7 @@ class CompleteValidator:
 
     def run_test_suite(self, suite_name: str, command: list, description: str) -> dict:
         """Run a test suite and capture results."""
-        print(f"\n🚀 Running {suite_name}")
+        print(f"\n[IGNITE] Running {suite_name}")
         print(f"   {description}")
         print("   " + "=" * 50)
 
@@ -68,9 +68,9 @@ class CompleteValidator:
             }
 
             if success:
-                print(f"✅ {suite_name} PASSED ({duration:.1f}s)")
+                print(f"[PASS] {suite_name} PASSED ({duration:.1f}s)")
             else:
-                print(f"❌ {suite_name} FAILED ({duration:.1f}s)")
+                print(f"[FAIL] {suite_name} FAILED ({duration:.1f}s)")
                 if result.stderr:
                     print(f"   Error: {result.stderr.strip()}")
 
@@ -87,7 +87,7 @@ class CompleteValidator:
                 "description": description,
             }
         except Exception as e:
-            print(f"💥 {suite_name} ERROR: {e}")
+            print(f" {suite_name} ERROR: {e}")
             return {
                 "success": False,
                 "duration": time.time() - start_time,
@@ -100,7 +100,7 @@ class CompleteValidator:
     def run_all_tests(self) -> bool:
         """Run all test suites in sequence."""
 
-        print("🎯 URC 2026 COMPLETE SYSTEM VALIDATION")
+        print("[OBJECTIVE] URC 2026 COMPLETE SYSTEM VALIDATION")
         print("=" * 60)
         print("Testing all components: Unit → Integration → Dashboard → End-to-End")
         print("=" * 60)
@@ -145,7 +145,7 @@ class CompleteValidator:
     def generate_final_report(self):
         """Generate comprehensive final report."""
         print("\n" + "=" * 60)
-        print("📊 FINAL VALIDATION REPORT")
+        print("[GRAPH] FINAL VALIDATION REPORT")
         print("=" * 60)
 
         total_suites = len(self.results["test_suites"])
@@ -158,13 +158,13 @@ class CompleteValidator:
 
         # Overall status
         if passed_suites == total_suites:
-            status = "🟢 ALL TESTS PASSED"
+            status = " ALL TESTS PASSED"
             success_rate = 100.0
         elif passed_suites >= total_suites * 0.8:
-            status = "🟡 MOSTLY SUCCESSFUL"
+            status = " MOSTLY SUCCESSFUL"
             success_rate = (passed_suites / total_suites) * 100
         else:
-            status = "🔴 ISSUES DETECTED"
+            status = " ISSUES DETECTED"
             success_rate = (passed_suites / total_suites) * 100
 
         print(f"Status: {status}")
@@ -177,48 +177,48 @@ class CompleteValidator:
         )
 
         # Detailed results
-        print("\n📋 TEST SUITE RESULTS:")
+        print("\n[CLIPBOARD] TEST SUITE RESULTS:")
         for suite_name, result in self.results["test_suites"].items():
-            status_icon = "✅" if result["success"] else "❌"
+            status_icon = "[PASS]" if result["success"] else "[FAIL]"
             print(f"   {status_icon} {suite_name} ({result['duration']:.1f}s)")
             if not result["success"] and result["stderr"]:
-                print(f"      └─ {result['stderr'].strip()[:100]}...")
+                print(f"       {result['stderr'].strip()[:100]}...")
 
         # Component status summary
-        print("\n🏗️  COMPONENT STATUS:")
+        print("\n[CONSTRUCTION]  COMPONENT STATUS:")
         components = {
-            "State Machine": "✅ Working (Simple & ROS2 implementations)",
-            "Mission System": "✅ Working (4 mission types implemented)",
-            "Navigation": "🟡 Limited (Requires autonomy_interfaces build)",
-            "Safety System": "✅ Working (Multi-layer safety)",
-            "Simulation": "✅ Working (Environment & physics models)",
-            "Dashboard": "🟡 Unit Tested (Requires services for full E2E)",
-            "ROS2 Integration": "✅ Working (Bridges & topic communication)",
-            "Computer Vision": "✅ Working (ArUco detection & processing)",
+            "State Machine": "[PASS] Working (Simple & ROS2 implementations)",
+            "Mission System": "[PASS] Working (4 mission types implemented)",
+            "Navigation": " Limited (Requires autonomy_interfaces build)",
+            "Safety System": "[PASS] Working (Multi-layer safety)",
+            "Simulation": "[PASS] Working (Environment & physics models)",
+            "Dashboard": " Unit Tested (Requires services for full E2E)",
+            "ROS2 Integration": "[PASS] Working (Bridges & topic communication)",
+            "Computer Vision": "[PASS] Working (ArUco detection & processing)",
         }
 
         for component, status in components.items():
             print(f"   • {component}: {status}")
 
         # Recommendations
-        print("\n💡 RECOMMENDATIONS:")
+        print("\n RECOMMENDATIONS:")
         if success_rate >= 90:
-            print("   ✅ System is ready for integration testing")
-            print("   ✅ Core functionality validated")
+            print("   [PASS] System is ready for integration testing")
+            print("   [PASS] Core functionality validated")
             print(
-                "   🔄 Consider building autonomy_interfaces for full navigation testing"
+                "   [REFRESH] Consider building autonomy_interfaces for full navigation testing"
             )
         elif success_rate >= 70:
-            print("   🟡 System mostly functional")
-            print("   🔧 Address remaining import/configuration issues")
-            print("   🧪 Run with ROS2 services for full validation")
+            print("    System mostly functional")
+            print("   [TOOL] Address remaining import/configuration issues")
+            print("   [EXPERIMENT] Run with ROS2 services for full validation")
         else:
-            print("   🔴 Critical issues need attention")
-            print("   🐛 Check import paths and dependencies")
-            print("   📞 Review error messages for specific failures")
+            print("    Critical issues need attention")
+            print("    Check import paths and dependencies")
+            print("    Review error messages for specific failures")
 
         print(
-            f"\n📄 Detailed results saved to: validation_report_{int(self.results['timestamp'])}.json"
+            f"\n Detailed results saved to: validation_report_{int(self.results['timestamp'])}.json"
         )
 
         # Save detailed results
@@ -232,7 +232,7 @@ class CompleteValidator:
 
 def main():
     """Main validation entry point."""
-    print("🧪 URC 2026 Complete System Validation Suite")
+    print("[EXPERIMENT] URC 2026 Complete System Validation Suite")
     print("Testing: Unit → Integration → Dashboard → End-to-End")
     print("Requirements: Python 3.10+, ROS2 (optional for some tests)")
     print()
@@ -240,7 +240,7 @@ def main():
     validator = CompleteValidator()
     success = validator.run_all_tests()
 
-    print(f"\n🎯 VALIDATION {'COMPLETE' if success else 'INCOMPLETE'}")
+    print(f"\n[OBJECTIVE] VALIDATION {'COMPLETE' if success else 'INCOMPLETE'}")
     return 0 if success else 1
 
 

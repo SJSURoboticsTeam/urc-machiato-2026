@@ -34,7 +34,7 @@ def run_command(cmd, timeout=10):
 def test_led_coordination():
     """Test LED coordination functionality"""
 
-    print("🧪 Testing LED Coordination System")
+    print("[EXPERIMENT] Testing LED Coordination System")
     print("=" * 50)
 
     # Set environment
@@ -49,9 +49,9 @@ def test_led_coordination():
         print("1. Starting ROS2 daemon...")
         success, out, err = run_command("ros2 daemon start", timeout=5)
         if not success:
-            print(f"   ❌ Failed to start ROS2 daemon: {err}")
+            print(f"   [FAIL] Failed to start ROS2 daemon: {err}")
             return False
-        print("   ✅ ROS2 daemon started")
+        print("   [PASS] ROS2 daemon started")
 
         # Step 2: Start state management node in background
         print("2. Starting state management node...")
@@ -69,10 +69,10 @@ def test_led_coordination():
             "ros2 node list | grep state_management", timeout=5
         )
         if not success:
-            print(f"   ❌ State management node not found: {err}")
+            print(f"   [FAIL] State management node not found: {err}")
             state_proc.terminate()
             return False
-        print("   ✅ State management node running")
+        print("   [PASS] State management node running")
 
         # Step 3: Start LED controller node in background
         print("3. Starting LED controller node...")
@@ -88,11 +88,11 @@ def test_led_coordination():
         # Check if LED controller node is running
         success, out, err = run_command("ros2 node list | grep led", timeout=5)
         if not success:
-            print(f"   ❌ LED controller node not found: {err}")
+            print(f"   [FAIL] LED controller node not found: {err}")
             state_proc.terminate()
             led_proc.terminate()
             return False
-        print("   ✅ LED controller node running")
+        print("   [PASS] LED controller node running")
 
         # Step 4: Test initial state (should be idle)
         print("4. Testing initial state...")
@@ -100,9 +100,9 @@ def test_led_coordination():
             "ros2 topic echo --once /system_mode", timeout=5
         )
         if success and "idle" in out:
-            print("   ✅ Initial system mode: idle")
+            print("   [PASS] Initial system mode: idle")
         else:
-            print(f"   ❌ Initial system mode incorrect: {out}")
+            print(f"   [FAIL] Initial system mode incorrect: {out}")
             return False
 
         # Step 5: Start mission (should switch to autonomous mode - red LED)
@@ -111,9 +111,9 @@ def test_led_coordination():
             "ros2 service call /start_mission std_srvs/srv/Trigger", timeout=5
         )
         if success and "success: true" in out.lower():
-            print("   ✅ Mission started successfully")
+            print("   [PASS] Mission started successfully")
         else:
-            print(f"   ❌ Failed to start mission: {err}")
+            print(f"   [FAIL] Failed to start mission: {err}")
             return False
 
         # Wait for mode change and check system mode
@@ -122,9 +122,9 @@ def test_led_coordination():
             "ros2 topic echo --once /system_mode", timeout=5
         )
         if success and "autonomous" in out:
-            print("   ✅ System mode switched to autonomous (🔴 Red LED)")
+            print("   [PASS] System mode switched to autonomous ( Red LED)")
         else:
-            print(f"   ❌ System mode not autonomous: {out}")
+            print(f"   [FAIL] System mode not autonomous: {out}")
             return False
 
         # Step 6: Simulate target reached (should switch to completed - flashing green LED)
@@ -133,9 +133,9 @@ def test_led_coordination():
             "ros2 service call /simulate_target_reached std_srvs/srv/Trigger", timeout=5
         )
         if success and "success: true" in out.lower():
-            print("   ✅ Target reached simulation successful")
+            print("   [PASS] Target reached simulation successful")
         else:
-            print(f"   ❌ Failed to simulate target reached: {err}")
+            print(f"   [FAIL] Failed to simulate target reached: {err}")
             return False
 
         # Wait for mission status change and check mission status
@@ -144,9 +144,9 @@ def test_led_coordination():
             "ros2 topic echo --once /mission_status", timeout=5
         )
         if success and "completed" in out:
-            print("   ✅ Mission status: completed (🟢 Flashing Green LED)")
+            print("   [PASS] Mission status: completed ( Flashing Green LED)")
         else:
-            print(f"   ❌ Mission status not completed: {out}")
+            print(f"   [FAIL] Mission status not completed: {out}")
             return False
 
         # Step 7: Stop mission (should return to idle)
@@ -155,9 +155,9 @@ def test_led_coordination():
             "ros2 service call /stop_mission std_srvs/srv/Trigger", timeout=5
         )
         if success and "success: true" in out.lower():
-            print("   ✅ Mission stopped successfully")
+            print("   [PASS] Mission stopped successfully")
         else:
-            print(f"   ❌ Failed to stop mission: {err}")
+            print(f"   [FAIL] Failed to stop mission: {err}")
             return False
 
         # Wait for mode change and check final state
@@ -166,26 +166,26 @@ def test_led_coordination():
             "ros2 topic echo --once /system_mode", timeout=5
         )
         if success and "idle" in out:
-            print("   ✅ Final system mode: idle (LED off)")
+            print("   [PASS] Final system mode: idle (LED off)")
         else:
-            print(f"   ❌ Final system mode not idle: {out}")
+            print(f"   [FAIL] Final system mode not idle: {out}")
             return False
 
         print("\n" + "=" * 50)
-        print("🎉 LED Coordination Test PASSED!")
-        print("✅ All competition requirements verified:")
-        print("   🔴 Red LED during autonomous operation")
-        print("   🟢 Flashing Green LED on mission success")
+        print("[PARTY] LED Coordination Test PASSED!")
+        print("[PASS] All competition requirements verified:")
+        print("    Red LED during autonomous operation")
+        print("    Flashing Green LED on mission success")
         print("   LED off when idle")
         return True
 
     except Exception as e:
-        print(f"❌ Test failed with exception: {e}")
+        print(f"[FAIL] Test failed with exception: {e}")
         return False
 
     finally:
         # Cleanup
-        print("\n🧹 Cleaning up...")
+        print("\n[SWEEP] Cleaning up...")
         try:
             if "state_proc" in locals():
                 state_proc.terminate()

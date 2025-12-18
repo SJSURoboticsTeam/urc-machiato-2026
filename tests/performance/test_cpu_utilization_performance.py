@@ -55,13 +55,13 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
     def test_cpu_utilization_by_operational_mode(self):
         """Test CPU utilization across different operational modes."""
-        print("\n⚡ Testing CPU Utilization by Operational Mode")
+        print("\n[LIGHTNING] Testing CPU Utilization by Operational Mode")
         print("=" * 60)
 
         results_by_mode = {}
 
         for mode, target_cpu in self.operational_modes.items():
-            print(f"\n🔄 Testing {mode.replace('_', ' ').title()} Mode...")
+            print(f"\n[REFRESH] Testing {mode.replace('_', ' ').title()} Mode...")
             cpu_usage = self._test_operational_mode_cpu(mode, target_cpu)
             results_by_mode[mode] = cpu_usage
 
@@ -432,7 +432,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             avg_load = np.mean(self.system_load_readings, axis=0)
 
         # Print mode-specific results
-        print(f"  📊 {mode.replace('_', ' ').title()} Mode CPU Usage:")
+        print(f"  [GRAPH] {mode.replace('_', ' ').title()} Mode CPU Usage:")
         print(".1f")
         print(".1f")
         print(".1f")
@@ -442,7 +442,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
         # Check against target
         passed = avg_cpu <= target_cpu
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[PASS] PASS" if passed else "[FAIL] FAIL"
         print(".1f")
 
         return {
@@ -460,7 +460,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
     def _analyze_cpu_mode_comparison(self, results_by_mode: Dict[str, Any]):
         """Analyze CPU usage across different operational modes."""
-        print("\n🚀 CPU Utilization Performance Summary:")
+        print("\n[IGNITE] CPU Utilization Performance Summary:")
         print("=" * 50)
 
         # Overall assessment
@@ -469,14 +469,14 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         )
 
         if all_passed:
-            print("✅ ALL CPU UTILIZATION TARGETS MET")
+            print("[PASS] ALL CPU UTILIZATION TARGETS MET")
             print("   System CPU usage within competition requirements")
         else:
-            print("❌ SOME CPU UTILIZATION TARGETS NOT MET")
+            print("[FAIL] SOME CPU UTILIZATION TARGETS NOT MET")
             print("   CPU optimization required before competition")
 
         # Detailed mode comparison
-        print("\n📋 Mode-by-Mode CPU Analysis:")
+        print("\n[CLIPBOARD] Mode-by-Mode CPU Analysis:")
         print("-" * 40)
 
         for mode, result in results_by_mode.items():
@@ -484,11 +484,11 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
                 print(f"  {mode.replace('_', ' ').title()}: ERROR - {result['error']}")
                 continue
 
-            status = "✅" if result["passed"] else "❌"
+            status = "[PASS]" if result["passed"] else "[FAIL]"
             print("20" ".1f")
 
         # Performance trends and recommendations
-        print("\n💡 CPU Optimization Analysis:")
+        print("\n CPU Optimization Analysis:")
         print("-" * 40)
 
         # Check for concerning patterns
@@ -497,12 +497,12 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
         if idle_result.get("avg_cpu_percent", 0) > self.target_idle_cpu_percent * 2:
             print(
-                "   ⚠️  High idle CPU usage detected - investigate background processes"
+                "     High idle CPU usage detected - investigate background processes"
             )
 
         if peak_result.get("max_cpu_percent", 0) > 90:
             print(
-                "   ⚠️  Peak CPU usage approaching system limits - consider load balancing"
+                "     Peak CPU usage approaching system limits - consider load balancing"
             )
 
         # CPU efficiency analysis
@@ -510,15 +510,15 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
         vision_eff = results_by_mode.get("vision", {}).get("avg_cpu_percent", 0)
 
         if navigation_eff > self.target_navigation_cpu_percent:
-            print("   📈 Navigation CPU usage high - optimize path planning algorithms")
+            print("    Navigation CPU usage high - optimize path planning algorithms")
 
         if vision_eff > self.target_vision_cpu_percent:
             print(
-                "   📈 Vision CPU usage high - consider image resolution reduction or algorithm optimization"
+                "    Vision CPU usage high - consider image resolution reduction or algorithm optimization"
             )
 
         print(
-            "   🎯 Target CPU utilization ensures thermal management and battery efficiency"
+            "   [OBJECTIVE] Target CPU utilization ensures thermal management and battery efficiency"
         )
 
         # Store comprehensive results
@@ -538,7 +538,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
 
     def test_cpu_profiling_detailed_analysis(self):
         """Perform detailed CPU profiling for performance bottleneck identification."""
-        print("\n🔍 Performing Detailed CPU Profiling")
+        print("\n[MAGNIFY] Performing Detailed CPU Profiling")
 
         # Profile key components
         components_to_profile = [
@@ -576,7 +576,7 @@ class CPUUtilizationPerformanceTest(unittest.TestCase):
             }
 
         # Print profiling summary
-        print("\n🔬 CPU Profiling Summary:")
+        print("\n[LAB] CPU Profiling Summary:")
         print("-" * 40)
 
         for component, results in profiling_results.items():

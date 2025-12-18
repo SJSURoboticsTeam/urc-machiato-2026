@@ -86,7 +86,7 @@ def print_section(text: str):
 
 def print_success(text: str):
     """Print success message."""
-    print(f"✓ {text}")
+    print(f" {text}")
 
 
 def print_info(text: str):
@@ -96,12 +96,12 @@ def print_info(text: str):
 
 def print_warning(text: str):
     """Print warning message."""
-    print(f"⚠ {text}")
+    print(f" {text}")
 
 
 def print_error(text: str):
     """Print error message."""
-    print(f"✗ {text}", file=sys.stderr)
+    print(f" {text}", file=sys.stderr)
 
 
 def detect_available_cameras(max_cameras: int = 5) -> dict:

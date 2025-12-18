@@ -44,13 +44,13 @@ def generate_aruco_tag(
             getattr(cv2.aruco, aruco_dict_name)
         )
     except AttributeError:
-        print(f"❌ Error: Dictionary '{aruco_dict_name}' not found.")
+        print(f"[FAIL] Error: Dictionary '{aruco_dict_name}' not found.")
         return
 
     num_markers = aruco_dict.bytesList.shape[0]
     if not 0 <= marker_id < num_markers:
         print(
-            f"❌ Error: Invalid marker ID '{marker_id}' for dictionary '{aruco_dict_name}'."
+            f"[FAIL] Error: Invalid marker ID '{marker_id}' for dictionary '{aruco_dict_name}'."
         )
         print(f"   Valid IDs are 0 to {num_markers - 1}.")
         return
@@ -108,9 +108,9 @@ def generate_aruco_tag(
 
     try:
         pil_image.save(output_filename, format="PDF")
-        print(f"\n✅ Successfully generated tag: '{output_filename}'")
+        print(f"\n[PASS] Successfully generated tag: '{output_filename}'")
     except Exception as e:
-        print(f"\n❌ Error saving file: {e}")
+        print(f"\n[FAIL] Error saving file: {e}")
 
 
 def main():

@@ -22,31 +22,31 @@ class DeploymentValidator:
 
     def run_full_validation(self) -> Dict[str, Any]:
         """Run complete deployment validation."""
-        print("🚀 STARTING FULL DEPLOYMENT VALIDATION")
+        print("[IGNITE] STARTING FULL DEPLOYMENT VALIDATION")
         print("=" * 60)
 
         # Phase 1: Code Quality & Unit Tests
-        print("\n📋 Phase 1: Code Quality & Unit Tests")
+        print("\n[CLIPBOARD] Phase 1: Code Quality & Unit Tests")
         self._run_unit_tests()
 
         # Phase 2: Competition Critical Tests
-        print("\n🏆 Phase 2: Competition Critical Tests")
+        print("\n[ACHIEVEMENT] Phase 2: Competition Critical Tests")
         self._run_competition_tests()
 
         # Phase 3: Integration Tests
-        print("\n🔗 Phase 3: Integration Tests")
+        print("\n Phase 3: Integration Tests")
         self._run_integration_tests()
 
         # Phase 4: Performance Validation
-        print("\n⚡ Phase 4: Performance Validation")
+        print("\n[LIGHTNING] Phase 4: Performance Validation")
         self._run_performance_tests()
 
         # Phase 5: System Integration
-        print("\n🔧 Phase 5: System Integration")
+        print("\n[TOOL] Phase 5: System Integration")
         self._run_system_integration()
 
         # Phase 6: Deployment Readiness
-        print("\n🎯 Phase 6: Deployment Readiness")
+        print("\n[OBJECTIVE] Phase 6: Deployment Readiness")
         self._assess_deployment_readiness()
 
         # Generate final report
@@ -80,17 +80,17 @@ class DeploymentValidator:
                         "test-results/unit-results.json"
                     ),
                 }
-                print("✅ Unit tests: PASSED")
+                print("[PASS] Unit tests: PASSED")
             else:
                 self.results["unit_tests"] = {
                     "status": "FAILED",
                     "output": result.stdout + result.stderr,
                 }
-                print("❌ Unit tests: FAILED")
+                print("[FAIL] Unit tests: FAILED")
 
         except Exception as e:
             self.results["unit_tests"] = {"status": "ERROR", "error": str(e)}
-            print(f"❌ Unit tests error: {e}")
+            print(f"[FAIL] Unit tests error: {e}")
 
     def _run_competition_tests(self):
         """Run competition-critical tests."""
@@ -118,17 +118,17 @@ class DeploymentValidator:
                         "test-results/competition-results.json"
                     ),
                 }
-                print("✅ Competition tests: PASSED")
+                print("[PASS] Competition tests: PASSED")
             else:
                 self.results["competition_tests"] = {
                     "status": "FAILED",
                     "output": result.stdout + result.stderr,
                 }
-                print("❌ Competition tests: FAILED")
+                print("[FAIL] Competition tests: FAILED")
 
         except Exception as e:
             self.results["competition_tests"] = {"status": "ERROR", "error": str(e)}
-            print(f"❌ Competition tests error: {e}")
+            print(f"[FAIL] Competition tests error: {e}")
 
     def _run_integration_tests(self):
         """Run integration tests."""
@@ -156,17 +156,17 @@ class DeploymentValidator:
                         "test-results/integration-results.json"
                     ),
                 }
-                print("✅ Integration tests: PASSED")
+                print("[PASS] Integration tests: PASSED")
             else:
                 self.results["integration_tests"] = {
                     "status": "FAILED",
                     "output": result.stdout + result.stderr,
                 }
-                print("❌ Integration tests: FAILED")
+                print("[FAIL] Integration tests: FAILED")
 
         except Exception as e:
             self.results["integration_tests"] = {"status": "ERROR", "error": str(e)}
-            print(f"❌ Integration tests error: {e}")
+            print(f"[FAIL] Integration tests error: {e}")
 
     def _run_performance_tests(self):
         """Run performance tests with standards validation."""
@@ -197,23 +197,23 @@ class DeploymentValidator:
                     "status": "PASSED",
                     "standards_check": "PASSED",
                 }
-                print("✅ Performance tests: PASSED (meets standards)")
+                print("[PASS] Performance tests: PASSED (meets standards)")
             elif standards_violations:
                 self.results["performance_tests"] = {
                     "status": "FAILED",
                     "standards_violations": standards_violations,
                 }
-                print("❌ Performance tests: FAILED (violates standards)")
+                print("[FAIL] Performance tests: FAILED (violates standards)")
             else:
                 self.results["performance_tests"] = {
                     "status": "FAILED",
                     "output": result.stdout + result.stderr,
                 }
-                print("❌ Performance tests: FAILED")
+                print("[FAIL] Performance tests: FAILED")
 
         except Exception as e:
             self.results["performance_tests"] = {"status": "ERROR", "error": str(e)}
-            print(f"❌ Performance tests error: {e}")
+            print(f"[FAIL] Performance tests error: {e}")
 
     def _run_system_integration(self):
         """Run system integration validation."""
@@ -242,13 +242,13 @@ class DeploymentValidator:
             }
 
             if all_passed:
-                print("✅ System integration: PASSED")
+                print("[PASS] System integration: PASSED")
             else:
-                print("❌ System integration: FAILED")
+                print("[FAIL] System integration: FAILED")
 
         except Exception as e:
             self.results["system_integration"] = {"status": "ERROR", "error": str(e)}
-            print(f"❌ System integration error: {e}")
+            print(f"[FAIL] System integration error: {e}")
 
     def _assess_deployment_readiness(self):
         """Assess overall deployment readiness."""
@@ -270,11 +270,11 @@ class DeploymentValidator:
 
         if competition_ready:
             print(
-                f"🎉 DEPLOYMENT READINESS: {readiness_score:.1f}% - COMPETITION READY!"
+                f"[PARTY] DEPLOYMENT READINESS: {readiness_score:.1f}% - COMPETITION READY!"
             )
         else:
             print(
-                f"⚠️ DEPLOYMENT READINESS: {readiness_score:.1f}% - NOT READY FOR COMPETITION"
+                f" DEPLOYMENT READINESS: {readiness_score:.1f}% - NOT READY FOR COMPETITION"
             )
 
     def _parse_test_results(self, results_file: str) -> Dict[str, Any]:
@@ -516,16 +516,16 @@ def main():
     print(".2f")
 
     if report["recommendations"]:
-        print("\n📋 RECOMMENDATIONS:")
+        print("\n[CLIPBOARD] RECOMMENDATIONS:")
         for rec in report["recommendations"]:
             print(f"  • {rec}")
 
     # Exit with appropriate code
     if report["validation_summary"]["competition_ready"]:
-        print("\n🎉 SYSTEM IS READY FOR URC 2026 COMPETITION DEPLOYMENT!")
+        print("\n[PARTY] SYSTEM IS READY FOR URC 2026 COMPETITION DEPLOYMENT!")
         sys.exit(0)
     else:
-        print("\n⚠️ SYSTEM REQUIRES ADDITIONAL VALIDATION BEFORE COMPETITION")
+        print("\n SYSTEM REQUIRES ADDITIONAL VALIDATION BEFORE COMPETITION")
         sys.exit(1)
 
 

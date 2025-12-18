@@ -15,7 +15,7 @@ import pytest
 
 def test_full_integration():
     """Test full autonomy-teleoperation integration"""
-    print("🚀 Full Autonomy-Teleoperation Integration Test")
+    print("[IGNITE] Full Autonomy-Teleoperation Integration Test")
     print("=" * 60)
 
     success = True
@@ -23,7 +23,7 @@ def test_full_integration():
 
     try:
         # 1. Start mock teleoperation data publisher
-        print("📡 Starting mock teleoperation publisher...")
+        print("[ANTENNA] Starting mock teleoperation publisher...")
         env = os.environ.copy()
         env["PYTHONPATH"] = "/home/ubuntu/urc-machiato-2026"
         teleop_process = subprocess.Popen(
@@ -40,13 +40,13 @@ def test_full_integration():
 
         # Check if teleoperation is running
         if teleop_process.poll() is not None:
-            print("❌ Mock teleoperation publisher failed to start")
+            print("[FAIL] Mock teleoperation publisher failed to start")
             success = False
         else:
-            print("✅ Mock teleoperation publisher started")
+            print("[PASS] Mock teleoperation publisher started")
 
         # 2. Test ROS2 topic publishing
-        print("\n🔍 Testing ROS2 topic publishing...")
+        print("\n[MAGNIFY] Testing ROS2 topic publishing...")
         try:
             result = subprocess.run(
                 ["ros2", "topic", "list"],
@@ -66,21 +66,21 @@ def test_full_integration():
 
             found_topics = [t for t in topics if t in teleop_topics]
             if len(found_topics) == len(teleop_topics):
-                print("✅ All teleoperation topics are publishing")
+                print("[PASS] All teleoperation topics are publishing")
                 for topic in teleop_topics:
-                    print(f"   ✓ {topic}")
+                    print(f"    {topic}")
             else:
-                print("❌ Missing teleoperation topics")
+                print("[FAIL] Missing teleoperation topics")
                 print(f"   Expected: {teleop_topics}")
                 print(f"   Found: {found_topics}")
                 success = False
 
         except Exception as e:
-            print(f"❌ ROS2 topic check failed: {e}")
+            print(f"[FAIL] ROS2 topic check failed: {e}")
             success = False
 
         # 3. Test ROS2 message rates
-        print("\n⏱️  Testing message publishing rates...")
+        print("\n[CLOCK]  Testing message publishing rates...")
         try:
             # Check joint_states rate
             result = subprocess.run(
@@ -104,15 +104,15 @@ def test_full_integration():
                             success = False
                         break
             else:
-                print("❌ No rate data for joint_states")
+                print("[FAIL] No rate data for joint_states")
                 success = False
 
         except Exception as e:
-            print(f"❌ Rate check failed: {e}")
+            print(f"[FAIL] Rate check failed: {e}")
             success = False
 
         # 4. Test autonomy code import and structure
-        print("\n🤖 Testing autonomy code structure...")
+        print("\n Testing autonomy code structure...")
         try:
             # Test that our modified mission executor can be imported
             sys.path.insert(0, "/home/ubuntu/urc-machiato-2026")
@@ -134,19 +134,19 @@ def test_full_integration():
                     missing_methods.append(method_name)
 
             if not missing_methods:
-                print("✅ All required autonomy methods present")
+                print("[PASS] All required autonomy methods present")
             else:
-                print("❌ Missing autonomy methods:")
+                print("[FAIL] Missing autonomy methods:")
                 for method in missing_methods:
-                    print(f"   ✗ {method}")
+                    print(f"    {method}")
                 success = False
 
         except Exception as e:
-            print(f"❌ Autonomy code test failed: {e}")
+            print(f"[FAIL] Autonomy code test failed: {e}")
             success = False
 
         # 5. Test configuration loading
-        print("\n⚙️  Testing configuration loading...")
+        print("\n  Testing configuration loading...")
         try:
             import yaml
 
@@ -163,19 +163,19 @@ def test_full_integration():
                     s for s in required_sections if s not in teleop_config
                 ]
                 if not missing_sections:
-                    print("✅ Teleoperation configuration loaded correctly")
+                    print("[PASS] Teleoperation configuration loaded correctly")
                     print(f"   Config has {len(teleop_config)} sections")
                 else:
-                    print("❌ Missing configuration sections:")
+                    print("[FAIL] Missing configuration sections:")
                     for section in missing_sections:
-                        print(f"   ✗ {section}")
+                        print(f"    {section}")
                     success = False
             else:
-                print("❌ No teleoperation configuration found")
+                print("[FAIL] No teleoperation configuration found")
                 success = False
 
         except Exception as e:
-            print(f"❌ Configuration test failed: {e}")
+            print(f"[FAIL] Configuration test failed: {e}")
             success = False
 
         # Wait a bit more to let everything stabilize
@@ -184,20 +184,20 @@ def test_full_integration():
         # Final status check
         all_processes_running = all(p.poll() is None for _, p in processes)
         if not all_processes_running:
-            print("❌ Some processes died during testing")
+            print("[FAIL] Some processes died during testing")
             success = False
 
     except Exception as e:
-        print(f"💥 Test suite failed with exception: {e}")
+        print(f" Test suite failed with exception: {e}")
         success = False
 
     finally:
         # Cleanup
-        print("\n🧹 Cleaning up test processes...")
+        print("\n[SWEEP] Cleaning up test processes...")
         for name, process in processes:
             try:
                 if process.poll() is None:
-                    print(f"🛑 Stopping {name}...")
+                    print(f" Stopping {name}...")
                     process.terminate()
                     process.wait(timeout=5)
             except Exception as e:
@@ -214,18 +214,18 @@ def test_full_integration():
     # Final results
     print("\n" + "=" * 60)
     if success:
-        print("🎉 FULL AUTONOMY-TELEOPERATION INTEGRATION TEST PASSED!")
-        print("✅ All components working correctly:")
-        print("   ✓ Mock teleoperation publishing ROS2 topics")
-        print("   ✓ ROS2 topics available and publishing at correct rates")
-        print("   ✓ Autonomy code structure with teleoperation callbacks")
-        print("   ✓ Configuration system with teleoperation settings")
-        print("   ✓ All processes running stably")
-        print("\n🚀 Autonomy team is ready for teleoperation integration!")
+        print("[PARTY] FULL AUTONOMY-TELEOPERATION INTEGRATION TEST PASSED!")
+        print("[PASS] All components working correctly:")
+        print("    Mock teleoperation publishing ROS2 topics")
+        print("    ROS2 topics available and publishing at correct rates")
+        print("    Autonomy code structure with teleoperation callbacks")
+        print("    Configuration system with teleoperation settings")
+        print("    All processes running stably")
+        print("\n[IGNITE] Autonomy team is ready for teleoperation integration!")
     else:
-        print("❌ FULL AUTONOMY-TELEOPERATION INTEGRATION TEST FAILED!")
-        print("❌ Some components need attention")
-        print("\n🔧 Check the errors above and fix issues before proceeding")
+        print("[FAIL] FULL AUTONOMY-TELEOPERATION INTEGRATION TEST FAILED!")
+        print("[FAIL] Some components need attention")
+        print("\n[TOOL] Check the errors above and fix issues before proceeding")
 
     return success
 
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         # Try to source ROS if not already done
         ros_setup = "/opt/ros/humble/setup.bash"
         if os.path.exists(ros_setup):
-            print("📦 Sourcing ROS2 environment...")
+            print(" Sourcing ROS2 environment...")
             result = subprocess.run(
                 ["bash", "-c", f"source {ros_setup} && env"],
                 capture_output=True,

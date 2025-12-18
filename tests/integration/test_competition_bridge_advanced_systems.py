@@ -37,7 +37,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
     def test_competition_bridge_state_sync_integration(self):
         """Test Competition Bridge integration with state synchronization."""
-        print("🔄 Testing Competition Bridge + State Sync Integration...")
+        print("[REFRESH] Testing Competition Bridge + State Sync Integration...")
 
         # Create state manager
         from core.state_synchronization_manager import DistributedStateManager
@@ -75,12 +75,12 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         self.assertEqual(status["role"], "master", "State manager should be master")
         self.assertIsNotNone(status["master_node"], "Master node should be set")
 
-        print("  ✅ Competition Bridge + State Sync integration works")
+        print("  [PASS] Competition Bridge + State Sync integration works")
         state_mgr.stop()
 
     def test_competition_bridge_dds_domain_integration(self):
         """Test Competition Bridge integration with DDS domain redundancy."""
-        print("🌐 Testing Competition Bridge + DDS Domain Integration...")
+        print("[NETWORK] Testing Competition Bridge + DDS Domain Integration...")
 
         # Create DDS manager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
@@ -121,7 +121,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
             failover_status["current_domain"], 101, "Should failover to backup domain"
         )
 
-        print("  ✅ Competition Bridge + DDS Domain integration works")
+        print("  [PASS] Competition Bridge + DDS Domain integration works")
 
         # Restore and cleanup
         dds_mgr._measure_domain_health = original_measure
@@ -129,7 +129,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
     def test_competition_bridge_config_integration(self):
         """Test Competition Bridge integration with dynamic configuration."""
-        print("⚙️ Testing Competition Bridge + Dynamic Config Integration...")
+        print(" Testing Competition Bridge + Dynamic Config Integration...")
 
         # Create config manager
         from core.dynamic_config_manager import DynamicConfigManager
@@ -179,11 +179,13 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         history = config_mgr.get_config_history()
         self.assertGreater(len(history), 0, "Should have configuration history")
 
-        print("  ✅ Competition Bridge + Dynamic Config integration works")
+        print("  [PASS] Competition Bridge + Dynamic Config integration works")
 
     def test_competition_bridge_websocket_integration(self):
         """Test Competition Bridge integration with WebSocket redundancy."""
-        print("🌐 Testing Competition Bridge + WebSocket Redundancy Integration...")
+        print(
+            "[NETWORK] Testing Competition Bridge + WebSocket Redundancy Integration..."
+        )
 
         # Create WebSocket manager
         from bridges.websocket_redundancy_manager import (
@@ -237,12 +239,14 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
             "Primary should be degraded under high load",
         )
 
-        print("  ✅ Competition Bridge + WebSocket Redundancy integration works")
+        print("  [PASS] Competition Bridge + WebSocket Redundancy integration works")
         ws_mgr.stop_redundancy_system()
 
     def test_competition_bridge_recovery_integration(self):
         """Test Competition Bridge integration with recovery coordination."""
-        print("🔧 Testing Competition Bridge + Recovery Coordination Integration...")
+        print(
+            "[TOOL] Testing Competition Bridge + Recovery Coordination Integration..."
+        )
 
         # Create recovery coordinator
         from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
@@ -311,7 +315,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
             "Recovery phase should be complete",
         )
 
-        print("  ✅ Competition Bridge + Recovery Coordination integration works")
+        print("  [PASS] Competition Bridge + Recovery Coordination integration works")
 
         # Cleanup
         state_mgr.stop()
@@ -320,7 +324,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
     def test_end_to_end_competition_scenario(self):
         """Test end-to-end competition scenario with all systems integrated."""
-        print("🏁 Testing End-to-End Competition Scenario...")
+        print("[FLAG] Testing End-to-End Competition Scenario...")
 
         # Setup all systems
         systems = {}
@@ -374,7 +378,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
                 systems["recovery"].register_system_manager(name, system)
 
         # Simulate competition telemetry flow
-        print("  📊 Simulating competition telemetry flow...")
+        print("  [GRAPH] Simulating competition telemetry flow...")
 
         telemetry_updates = [
             ("battery_level", "95"),
@@ -447,7 +451,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
             "Recovery should complete for healthy systems",
         )
 
-        print("  ✅ End-to-end competition scenario integration works")
+        print("  [PASS] End-to-end competition scenario integration works")
 
         # Cleanup all systems
         for name, system in systems.items():

@@ -47,7 +47,7 @@ def create_monitoring_config():
 
 def display_dashboard(sim_manager, duration_seconds=30):
     """Display real-time monitoring dashboard."""
-    print("📊 Real-time Simulation Monitoring Dashboard")
+    print("[GRAPH] Real-time Simulation Monitoring Dashboard")
     print("=" * 60)
     print("Monitoring for {} seconds...".format(duration_seconds))
     print("Press Ctrl+C to stop early")
@@ -65,7 +65,7 @@ def display_dashboard(sim_manager, duration_seconds=30):
                 dashboard_data = sim_manager.monitor.get_dashboard_data()
 
                 print("\033[2J\033[H", end="")  # Clear screen
-                print("📊 Real-time Simulation Monitoring Dashboard")
+                print("[GRAPH] Real-time Simulation Monitoring Dashboard")
                 print("=" * 60)
                 print(".1f")
 
@@ -74,12 +74,12 @@ def display_dashboard(sim_manager, duration_seconds=30):
                 system = current.get("system", {})
                 simulation = current.get("simulation", {})
 
-                print("💻 System Resources:")
+                print(" System Resources:")
                 print(".1f")
                 print(".1f")
                 print(".1f")
 
-                print("\n🎮 Simulation Status:")
+                print("\n Simulation Status:")
                 print(f"   Steps: {simulation.get('simulation_step_count', 0)}")
                 print(".1f")
                 print(f"   Active Sensors: {simulation.get('active_sensors', 0)}")
@@ -91,29 +91,29 @@ def display_dashboard(sim_manager, duration_seconds=30):
                     memory = trends.get("memory_usage", {})
                     cpu = trends.get("cpu_usage", {})
 
-                    print("\n📈 Performance Trends (last 100 measurements):")
+                    print("\n Performance Trends (last 100 measurements):")
                     print(".1f")
                     print(".1f")
 
                 # Recent alerts
                 alerts = dashboard_data.get("recent_alerts", [])
                 if alerts:
-                    print("\n🚨 Recent Alerts:")
+                    print("\n Recent Alerts:")
                     for alert in alerts[-3:]:  # Show last 3
                         level = alert.get("level", "info")
                         emoji = {
-                            "critical": "🔴",
-                            "warning": "🟡",
-                            "error": "🔴",
-                            "info": "ℹ️",
-                        }.get(level, "❓")
+                            "critical": "",
+                            "warning": "",
+                            "error": "",
+                            "info": "ℹ",
+                        }.get(level, "")
                         print(f"   {emoji} {alert.get('message', 'Unknown alert')}")
 
                 # Active operations (if tracing enabled)
                 if hasattr(sim_manager.tracer, "get_active_operations"):
                     active_ops = sim_manager.tracer.get_active_operations()
                     if active_ops:
-                        print("\n🔍 Active Operations:")
+                        print("\n[MAGNIFY] Active Operations:")
                         for op in active_ops[:3]:  # Show first 3
                             duration = op.get("duration_so_far", 0)
                             print(".2f")
@@ -121,7 +121,7 @@ def display_dashboard(sim_manager, duration_seconds=30):
                 # RL stats if available
                 rl_stats = dashboard_data.get("simulation_stats", {}).get("rl_training")
                 if rl_stats:
-                    print("\n🤖 RL Training Stats:")
+                    print("\n RL Training Stats:")
                     print(f"   Episodes: {rl_stats.get('total_episodes', 0)}")
                     print(".3f")
                     print(".1f")
@@ -133,19 +133,19 @@ def display_dashboard(sim_manager, duration_seconds=30):
             time.sleep(0.1)
 
     except KeyboardInterrupt:
-        print("\n⏹️  Monitoring stopped by user")
+        print("\n⏹  Monitoring stopped by user")
 
     # Final summary
-    print("\n📋 Final Monitoring Summary")
+    print("\n[CLIPBOARD] Final Monitoring Summary")
     print("=" * 60)
 
     final_data = sim_manager.monitor.get_dashboard_data()
     performance_report = sim_manager.monitor.get_performance_report()
 
-    print("⏱️  Total Monitoring Time:")
+    print("[CLOCK]  Total Monitoring Time:")
     print(".1f")
 
-    print("\n📊 Performance Summary:")
+    print("\n[GRAPH] Performance Summary:")
     sys_perf = performance_report.get("system_performance", {})
     sim_perf = performance_report.get("simulation_performance", {})
 
@@ -160,26 +160,26 @@ def display_dashboard(sim_manager, duration_seconds=30):
     # Alert summary
     alert_counts = final_data.get("alert_counts", {})
     if any(alert_counts.values()):
-        print("\n🚨 Alert Summary:")
+        print("\n Alert Summary:")
         for level, count in alert_counts.items():
             if count > 0:
                 emoji = {
-                    "critical": "🔴",
-                    "warning": "🟡",
-                    "error": "🔴",
-                    "info": "ℹ️",
-                }.get(level, "❓")
+                    "critical": "",
+                    "warning": "",
+                    "error": "",
+                    "info": "ℹ",
+                }.get(level, "")
                 print(f"   {emoji} {level.capitalize()}: {count}")
 
     # Export monitoring data
     export_file = "monitoring_dashboard_data.json"
     sim_manager.monitor.export_metrics(export_file)
-    print(f"\n💾 Monitoring data exported to: {export_file}")
+    print(f"\n Monitoring data exported to: {export_file}")
 
     if hasattr(sim_manager.tracer, "export_traces"):
         trace_file = "monitoring_traces.json"
         sim_manager.tracer.export_traces(trace_file)
-        print(f"🔍 Trace data exported to: {trace_file}")
+        print(f"[MAGNIFY] Trace data exported to: {trace_file}")
 
 
 def run_monitoring_demo():
@@ -195,14 +195,14 @@ def run_monitoring_demo():
     config = create_monitoring_config()
     sim_manager = SimulationManager()
 
-    print("🚀 Initializing simulation for monitoring demo...")
+    print("[IGNITE] Initializing simulation for monitoring demo...")
     if not sim_manager.initialize(config):
-        print("❌ Failed to initialize simulation")
+        print("[FAIL] Failed to initialize simulation")
         return
 
     # Start simulation in background
     if not sim_manager.start():
-        print("❌ Failed to start simulation")
+        print("[FAIL] Failed to start simulation")
         return
 
     try:
@@ -211,10 +211,10 @@ def run_monitoring_demo():
 
     finally:
         # Cleanup
-        print("\n🧹 Cleaning up...")
+        print("\n[SWEEP] Cleaning up...")
         sim_manager.monitor.stop_monitoring()
         sim_manager.stop()
-        print("✅ Demo complete!")
+        print("[PASS] Demo complete!")
 
 
 if __name__ == "__main__":

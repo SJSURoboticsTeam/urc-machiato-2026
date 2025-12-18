@@ -409,7 +409,7 @@ class DashboardSimulationBridge:
 
     def run(self):
         """Main entry point to run the bridge."""
-        self.get_logger().info("🌟 Starting Dashboard Simulation Bridge...")
+        self.get_logger().info(" Starting Dashboard Simulation Bridge...")
         self.get_logger().info(
             "This bridge connects the simulation framework to your web dashboard"
         )
@@ -428,7 +428,7 @@ class DashboardSimulationBridge:
             self.get_logger().info(f"[ERROR] WebSocket server error: {e}")
         finally:
             self.stop_simulation()
-        self.get_logger().info("👋 Dashboard Simulation Bridge shut down.")
+        self.get_logger().info(" Dashboard Simulation Bridge shut down.")
 
 
 def main():

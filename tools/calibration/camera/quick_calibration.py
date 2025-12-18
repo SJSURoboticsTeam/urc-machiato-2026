@@ -39,7 +39,7 @@ def quick_calibrate_camera(
     Returns:
         True if successful, False otherwise
     """
-    print("🎯 Quick Webcam Calibration")
+    print("[OBJECTIVE] Quick Webcam Calibration")
     print("=" * 50)
 
     # Try to open camera with fallback backends
@@ -48,12 +48,12 @@ def quick_calibrate_camera(
     for backend in backends:
         cap = cv2.VideoCapture(camera_index, backend)
         if cap.isOpened():
-            print(f"✅ Camera opened with backend: {backend}")
+            print(f"[PASS] Camera opened with backend: {backend}")
             break
         cap.release()
 
     if not cap or not cap.isOpened():
-        print("❌ Failed to open camera")
+        print("[FAIL] Failed to open camera")
         return False
 
     # Configure camera
@@ -63,7 +63,7 @@ def quick_calibrate_camera(
 
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    print(f"📷 Camera: {width}x{height}")
+    print(f" Camera: {width}x{height}")
 
     # Setup ArUco detector
     aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
@@ -83,8 +83,8 @@ def quick_calibrate_camera(
     all_charuco_ids = []
     calibration_frames = 0
 
-    print(f"\n📹 Capturing frames for {duration} seconds...")
-    print("🎯 Point camera at ChArUco board and move it around")
+    print(f"\n Capturing frames for {duration} seconds...")
+    print("[OBJECTIVE] Point camera at ChArUco board and move it around")
     print("Press 'q' to stop early or wait for automatic completion\n")
 
     # Create CharucoDetector once
@@ -98,7 +98,7 @@ def quick_calibrate_camera(
         while time.time() - start_time < duration:
             ret, frame = cap.read()
             if not ret:
-                print("❌ Failed to read frame")
+                print("[FAIL] Failed to read frame")
                 break
 
             frame_count += 1
@@ -131,7 +131,7 @@ def quick_calibrate_camera(
                         # Draw detected markers
                         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-                        status = f"✓ Frame {calibration_frames} - Detected {len(charuco_ids)} ChArUco corners"
+                        status = f" Frame {calibration_frames} - Detected {len(charuco_ids)} ChArUco corners"
                         color = (0, 255, 0)
                 except Exception:
                     pass
@@ -154,29 +154,29 @@ def quick_calibrate_camera(
             # Handle keyboard
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
-                print("⏹️ User requested exit")
+                print("⏹ User requested exit")
                 break
 
             # Progress indicator
             if frame_count % 30 == 0:
                 print(
-                    f"  📊 {frame_count} frames captured, {calibration_frames} with valid board detections"
+                    f"  [GRAPH] {frame_count} frames captured, {calibration_frames} with valid board detections"
                 )
 
     finally:
         cap.release()
         cv2.destroyAllWindows()
 
-    print("\n✅ Capture complete")
+    print("\n[PASS] Capture complete")
     print(f"   Total frames: {frame_count}")
     print(f"   Valid detections: {calibration_frames}")
 
     if calibration_frames < 5:
-        print("❌ Not enough valid detections for calibration (need at least 5)")
+        print("[FAIL] Not enough valid detections for calibration (need at least 5)")
         return False
 
     # Perform calibration
-    print("\n🔧 Performing calibration...")
+    print("\n[TOOL] Performing calibration...")
     try:
         camera_matrix = np.zeros((3, 3))
         dist_coeffs = np.zeros((4, 1))
@@ -198,10 +198,10 @@ def quick_calibrate_camera(
         )
 
         if not ret:
-            print("❌ Calibration failed")
+            print("[FAIL] Calibration failed")
             return False
 
-        print("✅ Calibration successful!")
+        print("[PASS] Calibration successful!")
 
         # Prepare output data
         calib_data = {
@@ -226,8 +226,8 @@ def quick_calibrate_camera(
         with open(output_file, "w") as f:
             json.dump(calib_data, f, indent=2)
 
-        print(f"💾 Calibration saved to: {output_file}")
-        print("\n📊 Calibration Results:")
+        print(f" Calibration saved to: {output_file}")
+        print("\n[GRAPH] Calibration Results:")
         print(f"   Image size: {width}x{height}")
         print(f"   Frames used: {calibration_frames}")
         print("   Camera Matrix:")
@@ -238,7 +238,7 @@ def quick_calibrate_camera(
         return True
 
     except Exception as e:
-        print(f"❌ Calibration failed: {e}")
+        print(f"[FAIL] Calibration failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -317,8 +317,8 @@ Examples:
     )
 
     if success:
-        print("\n🎉 Calibration complete!")
-        print("\n📌 Next steps:")
+        print("\n[PARTY] Calibration complete!")
+        print("\n Next steps:")
         print("1. Test ArUco detection with distance measurement:")
         print("   cd ../aruco_tags/")
         print(
@@ -326,7 +326,7 @@ Examples:
         )
         return 0
     else:
-        print("\n❌ Calibration failed")
+        print("\n[FAIL] Calibration failed")
         return 1
 
 

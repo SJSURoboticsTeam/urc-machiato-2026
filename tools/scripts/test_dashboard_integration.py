@@ -54,14 +54,14 @@ class DashboardTester:
                 data = json.loads(response)
 
                 if data.get("type") == "pong":
-                    print("✅ WebSocket ping/pong working")
+                    print("[PASS] WebSocket ping/pong working")
                     return True
                 else:
-                    print(f"❌ Unexpected response: {data}")
+                    print(f"[FAIL] Unexpected response: {data}")
                     return False
 
         except Exception as e:
-            print(f"❌ WebSocket connection failed: {e}")
+            print(f"[FAIL] WebSocket connection failed: {e}")
             return False
 
     async def test_simulation_data_stream(self) -> bool:
@@ -76,7 +76,7 @@ class DashboardTester:
                 data = json.loads(response)
 
                 if data.get("type") == "simulation_state":
-                    print("✅ Simulation data streaming working")
+                    print("[PASS] Simulation data streaming working")
                     # Check for expected data fields
                     expected_fields = [
                         "sensor_data",
@@ -85,15 +85,15 @@ class DashboardTester:
                     ]
                     for field in expected_fields:
                         if field not in data:
-                            print(f"❌ Missing field: {field}")
+                            print(f"[FAIL] Missing field: {field}")
                             return False
                     return True
                 else:
-                    print(f"❌ Unexpected response type: {data.get('type')}")
+                    print(f"[FAIL] Unexpected response type: {data.get('type')}")
                     return False
 
         except Exception as e:
-            print(f"❌ Simulation data test failed: {e}")
+            print(f"[FAIL] Simulation data test failed: {e}")
             return False
 
     async def test_environment_control(self) -> bool:
@@ -113,24 +113,24 @@ class DashboardTester:
                     data.get("type") == "environment_changed"
                     and data.get("tier") == "extreme"
                 ):
-                    print("✅ Environment control working")
+                    print("[PASS] Environment control working")
                     return True
                 else:
-                    print(f"❌ Environment change failed: {data}")
+                    print(f"[FAIL] Environment change failed: {data}")
                     return False
 
         except Exception as e:
-            print(f"❌ Environment control test failed: {e}")
+            print(f"[FAIL] Environment control test failed: {e}")
             return False
 
     def test_frontend_imports(self) -> bool:
         """Test that frontend components can be imported."""
         try:
             # Test React component imports (simplified)
-            print("✅ Frontend component imports accessible")
+            print("[PASS] Frontend component imports accessible")
             return True
         except Exception as e:
-            print(f"❌ Frontend import test failed: {e}")
+            print(f"[FAIL] Frontend import test failed: {e}")
             return False
 
     def test_message_routing(self) -> bool:
@@ -149,14 +149,14 @@ class DashboardTester:
                     expected_endpoint = "ros2_topic"
 
                 if not expected_endpoint:
-                    print(f"❌ No endpoint for target: {target}")
+                    print(f"[FAIL] No endpoint for target: {target}")
                     return False
 
-            print("✅ Message routing logic working")
+            print("[PASS] Message routing logic working")
             return True
 
         except Exception as e:
-            print(f"❌ Message routing test failed: {e}")
+            print(f"[FAIL] Message routing test failed: {e}")
             return False
 
     def test_state_visualization(self) -> bool:
@@ -167,7 +167,7 @@ class DashboardTester:
 
             states = list(SystemState)
             if len(states) < 7:  # Should have at least BOOT, READY, TELEOP, AUTO, etc.
-                print(f"❌ Insufficient states: {len(states)}")
+                print(f"[FAIL] Insufficient states: {len(states)}")
                 return False
 
             # Test state transitions
@@ -178,14 +178,14 @@ class DashboardTester:
 
             # Test some basic transitions
             if not can_transition(RoverState.BOOT, RoverState.READY):
-                print("❌ Basic state transition failed")
+                print("[FAIL] Basic state transition failed")
                 return False
 
-            print("✅ State visualization data structures working")
+            print("[PASS] State visualization data structures working")
             return True
 
         except Exception as e:
-            print(f"❌ State visualization test failed: {e}")
+            print(f"[FAIL] State visualization test failed: {e}")
             return False
 
     def test_mission_command_structure(self) -> bool:
@@ -212,30 +212,30 @@ class DashboardTester:
                 required_fields = ["type", "config"]
                 for field in required_fields:
                     if field not in cmd:
-                        print(f"❌ Missing field '{field}' in mission command")
+                        print(f"[FAIL] Missing field '{field}' in mission command")
                         return False
 
-            print("✅ Mission command structures valid")
+            print("[PASS] Mission command structures valid")
             return True
 
         except Exception as e:
-            print(f"❌ Mission command test failed: {e}")
+            print(f"[FAIL] Mission command test failed: {e}")
             return False
 
     def run_sync_test(self, test_func, test_name: str) -> bool:
         """Run a synchronous test."""
-        print(f"\n🧪 Testing {test_name}...")
+        print(f"\n[EXPERIMENT] Testing {test_name}...")
         try:
             result = test_func()
             if result:
-                print(f"✅ {test_name} PASSED")
+                print(f"[PASS] {test_name} PASSED")
                 self.test_results.append({"name": test_name, "status": "PASSED"})
             else:
-                print(f"❌ {test_name} FAILED")
+                print(f"[FAIL] {test_name} FAILED")
                 self.test_results.append({"name": test_name, "status": "FAILED"})
             return result
         except Exception as e:
-            print(f"💥 {test_name} ERROR: {e}")
+            print(f" {test_name} ERROR: {e}")
             self.test_results.append(
                 {"name": test_name, "status": "ERROR", "error": str(e)}
             )
@@ -243,18 +243,18 @@ class DashboardTester:
 
     async def run_async_test(self, test_func, test_name: str) -> bool:
         """Run an asynchronous test."""
-        print(f"\n🧪 Testing {test_name}...")
+        print(f"\n[EXPERIMENT] Testing {test_name}...")
         try:
             result = await test_func()
             if result:
-                print(f"✅ {test_name} PASSED")
+                print(f"[PASS] {test_name} PASSED")
                 self.test_results.append({"name": test_name, "status": "PASSED"})
             else:
-                print(f"❌ {test_name} FAILED")
+                print(f"[FAIL] {test_name} FAILED")
                 self.test_results.append({"name": test_name, "status": "FAILED"})
             return result
         except Exception as e:
-            print(f"💥 {test_name} ERROR: {e}")
+            print(f" {test_name} ERROR: {e}")
             self.test_results.append(
                 {"name": test_name, "status": "ERROR", "error": str(e)}
             )
@@ -262,7 +262,7 @@ class DashboardTester:
 
     async def run_all_tests(self) -> bool:
         """Run all dashboard integration tests."""
-        print("🚀 Starting Dashboard Integration Tests")
+        print("[IGNITE] Starting Dashboard Integration Tests")
         print("=" * 50)
 
         # Asynchronous WebSocket tests
@@ -297,13 +297,13 @@ class DashboardTester:
 
         print("DASHBOARD INTEGRATION TEST REPORT")
         print(f"Total Tests: {len(self.test_results)}")
-        print(f"✅ Passed: {passed}")
-        print(f"❌ Failed: {failed}")
-        print(f"💥 Errors: {errors}")
+        print(f"[PASS] Passed: {passed}")
+        print(f"[FAIL] Failed: {failed}")
+        print(f" Errors: {errors}")
 
-        print("\n📋 DETAILED RESULTS:")
+        print("\n[CLIPBOARD] DETAILED RESULTS:")
         for result in self.test_results:
-            status_icon = {"PASSED": "✅", "FAILED": "❌", "ERROR": "💥"}.get(
+            status_icon = {"PASSED": "[PASS]", "FAILED": "[FAIL]", "ERROR": ""}.get(
                 result["status"], "?"
             )
             print(f"   {status_icon} {result['name']}")
@@ -312,13 +312,13 @@ class DashboardTester:
             (passed / len(self.test_results)) * 100 if self.test_results else 0
         )
         health_status = (
-            "🟢 GOOD"
+            " GOOD"
             if success_rate >= 90
-            else "🟡 FAIR"
+            else " FAIR"
             if success_rate >= 70
-            else "🔴 NEEDS WORK"
+            else " NEEDS WORK"
         )
-        print(f"\n🏥 DASHBOARD HEALTH: {health_status} ({success_rate:.1f}% pass rate)")
+        print(f"\n DASHBOARD HEALTH: {health_status} ({success_rate:.1f}% pass rate)")
 
 
 async def main():
@@ -355,7 +355,7 @@ async def main():
             tester.test_mission_command_structure, "Mission Commands"
         )
     else:
-        print(f"❌ Test type '{args.test_type}' not implemented")
+        print(f"[FAIL] Test type '{args.test_type}' not implemented")
         success = False
 
     return 0 if success else 1

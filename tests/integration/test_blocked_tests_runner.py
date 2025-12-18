@@ -17,47 +17,47 @@ sys.path.insert(0, os.path.join(PROJECT_ROOT, "src"))
 
 def test_safety_system():
     """Test safety system validation."""
-    print("🛡️ Testing Safety System Validation...")
+    print(" Testing Safety System Validation...")
 
     try:
         # Note: EnvironmentFactory import has path issues in ROS2 environment
         # but we know it works from direct testing. Focus on core validation.
         print(
-            "✅ Safety System Validation: Core functionality validated (import path issue in ROS2 env)"
+            "[PASS] Safety System Validation: Core functionality validated (import path issue in ROS2 env)"
         )
         return True
 
         # Test basic functionality
         if EnvironmentFactory:
-            print("✅ EnvironmentFactory available")
+            print("[PASS] EnvironmentFactory available")
             factory = EnvironmentFactory()
-            print("✅ EnvironmentFactory instantiated")
+            print("[PASS] EnvironmentFactory instantiated")
 
             # Test creating environments
             try:
                 perfect_env = factory.create({"tier": "perfect"})
-                print("✅ Perfect environment created")
+                print("[PASS] Perfect environment created")
 
                 real_life_env = factory.create({"tier": "real_life"})
-                print("✅ Real-life environment created")
+                print("[PASS] Real-life environment created")
 
                 extreme_env = factory.create({"tier": "extreme"})
-                print("✅ Extreme environment created")
+                print("[PASS] Extreme environment created")
 
             except Exception as e:
-                print(f"⚠️ Environment creation failed: {e}")
+                print(f" Environment creation failed: {e}")
 
-        print("✅ Safety System Validation: PASSED")
+        print("[PASS] Safety System Validation: PASSED")
         return True
 
     except Exception as e:
-        print(f"❌ Safety System Validation: FAILED - {e}")
+        print(f"[FAIL] Safety System Validation: FAILED - {e}")
         return False
 
 
 def test_mission_system():
     """Test mission system."""
-    print("\n📋 Testing Mission System...")
+    print("\n[CLIPBOARD] Testing Mission System...")
 
     try:
         # Import required modules
@@ -78,7 +78,7 @@ def test_mission_system():
         from missions.mission_behaviors import DeliveryMission, WaypointNavigation
         from missions.mission_executor import MissionExecutor, MissionState
 
-        print("✅ All mission imports successful")
+        print("[PASS] All mission imports successful")
 
         # Test MissionState enum
         states = [
@@ -88,16 +88,16 @@ def test_mission_system():
             MissionState.COMPLETED,
             MissionState.FAILED,
         ]
-        print(f"✅ MissionState enum working: {[s.value for s in states]}")
+        print(f"[PASS] MissionState enum working: {[s.value for s in states]}")
 
         # Test mock interfaces
         sensor = MockSensorInterface("test_sensor")
         assert sensor.is_connected() == True
-        print("✅ Mock sensor interface working")
+        print("[PASS] Mock sensor interface working")
 
         actuator = MockActuatorInterface("test_actuator")
         assert actuator.is_connected() == True
-        print("✅ Mock actuator interface working")
+        print("[PASS] Mock actuator interface working")
 
         # Test hardware abstraction layer
         from missions.hardware_abstraction import create_mock_hardware_layer
@@ -105,61 +105,61 @@ def test_mission_system():
         hal = create_mock_hardware_layer()
         status = hal.check_hardware_status()
         assert status["overall_healthy"] == True
-        print("✅ Hardware abstraction layer working")
+        print("[PASS] Hardware abstraction layer working")
 
-        print("✅ Mission System Testing: PASSED")
+        print("[PASS] Mission System Testing: PASSED")
         return True
 
     except Exception as e:
-        print(f"❌ Mission System Testing: FAILED - {e}")
+        print(f"[FAIL] Mission System Testing: FAILED - {e}")
         return False
 
 
 def test_deployment_validation():
     """Test deployment validation."""
-    print("\n🚀 Testing Deployment Validation...")
+    print("\n[IGNITE] Testing Deployment Validation...")
 
     try:
         # This was already tested and partially working
-        print("✅ Deployment Validation: Already validated (partial)")
+        print("[PASS] Deployment Validation: Already validated (partial)")
         return True
 
     except Exception as e:
-        print(f"❌ Deployment Validation: FAILED - {e}")
+        print(f"[FAIL] Deployment Validation: FAILED - {e}")
         return False
 
 
 def test_endurance_testing():
     """Test endurance testing."""
-    print("\n⏱️ Testing Endurance Testing...")
+    print("\n[CLOCK] Testing Endurance Testing...")
 
     try:
         # This was already tested and working
-        print("✅ Endurance Testing: Already validated")
+        print("[PASS] Endurance Testing: Already validated")
         return True
 
     except Exception as e:
-        print(f"❌ Endurance Testing: FAILED - {e}")
+        print(f"[FAIL] Endurance Testing: FAILED - {e}")
         return False
 
 
 def test_vision_integration():
     """Test vision integration."""
-    print("\n👁️ Testing Vision Integration...")
+    print("\n Testing Vision Integration...")
 
     try:
         # This was already tested and working
-        print("✅ Vision Integration: Already validated")
+        print("[PASS] Vision Integration: Already validated")
         return True
 
     except Exception as e:
-        print(f"❌ Vision Integration: FAILED - {e}")
+        print(f"[FAIL] Vision Integration: FAILED - {e}")
         return False
 
 
 def main():
     """Run all blocked tests."""
-    print("🔧 RUNNING PREVIOUSLY BLOCKED TESTS")
+    print("[TOOL] RUNNING PREVIOUSLY BLOCKED TESTS")
     print("=" * 50)
 
     results = []
@@ -173,25 +173,25 @@ def main():
 
     # Summary
     print("\n" + "=" * 50)
-    print("🎯 TEST RESULTS SUMMARY")
+    print("[OBJECTIVE] TEST RESULTS SUMMARY")
     print("=" * 50)
 
     passed = 0
     total = len(results)
 
     for name, result in results:
-        status = "✅ PASSED" if result else "❌ FAILED"
+        status = "[PASS] PASSED" if result else "[FAIL] FAILED"
         print("25")
         if result:
             passed += 1
 
-    print(f"\n🏆 OVERALL RESULT: {passed}/{total} tests passed")
+    print(f"\n[ACHIEVEMENT] OVERALL RESULT: {passed}/{total} tests passed")
 
     if passed == total:
-        print("🎉 ALL BLOCKED TESTS NOW WORKING!")
+        print("[PARTY] ALL BLOCKED TESTS NOW WORKING!")
         return 0
     else:
-        print("⚠️ Some tests still need attention")
+        print(" Some tests still need attention")
         return 1
 
 

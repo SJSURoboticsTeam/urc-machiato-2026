@@ -71,7 +71,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def test_competition_bridge_network_resilience(self):
         """Test competition bridge under various network conditions."""
-        print("\n🌐 Testing Competition Bridge Network Resilience")
+        print("\n[NETWORK] Testing Competition Bridge Network Resilience")
 
         results = {}
 
@@ -85,7 +85,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def test_emergency_stop_network_reliability(self):
         """Test emergency stop system reliability under network stress."""
-        print("\n🚨 Testing Emergency Stop Network Reliability")
+        print("\n Testing Emergency Stop Network Reliability")
 
         results = {}
 
@@ -103,7 +103,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def test_communication_redundancy_failover(self):
         """Test communication redundancy under network failure conditions."""
-        print("\n🔄 Testing Communication Redundancy Failover")
+        print("\n[REFRESH] Testing Communication Redundancy Failover")
 
         # Test WebSocket failure with network degradation
         result = self._test_redundancy_under_failure_conditions()
@@ -111,14 +111,14 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def test_service_health_monitoring_network_impact(self):
         """Test service health monitoring under network conditions."""
-        print("\n🏥 Testing Service Health Monitoring Network Impact")
+        print("\n Testing Service Health Monitoring Network Impact")
 
         result = self._test_health_monitoring_under_network_conditions()
         self._verify_health_monitoring_network_resilience(result)
 
     def test_telemetry_streaming_network_efficiency(self):
         """Test telemetry streaming efficiency under bandwidth constraints."""
-        print("\n📊 Testing Telemetry Streaming Network Efficiency")
+        print("\n[GRAPH] Testing Telemetry Streaming Network Efficiency")
 
         results = {}
 
@@ -434,7 +434,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def _analyze_bridge_network_performance(self, results: Dict[str, Any]):
         """Analyze competition bridge performance across network conditions."""
-        print("\n📊 Competition Bridge Network Performance Analysis:")
+        print("\n[GRAPH] Competition Bridge Network Performance Analysis:")
         print("-" * 60)
 
         for profile, result in results.items():
@@ -461,7 +461,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def _verify_emergency_stop_reliability(self, results: Dict[str, Any]):
         """Verify emergency stop system reliability."""
-        print("\n🚨 Emergency Stop Network Reliability Analysis:")
+        print("\n Emergency Stop Network Reliability Analysis:")
         print("-" * 60)
 
         for profile, result in results.items():
@@ -480,7 +480,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def _verify_redundancy_failover_performance(self, result: Dict[str, Any]):
         """Verify communication redundancy performance."""
-        print("\n🔄 Communication Redundancy Performance:")
+        print("\n[REFRESH] Communication Redundancy Performance:")
         print("-" * 60)
         print(f"Failover Triggered: {result['failover_triggered']}")
         print(f"Failover Time: {result['failover_time_seconds']:.2f}s")
@@ -495,7 +495,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def _verify_health_monitoring_network_resilience(self, result: Dict[str, Any]):
         """Verify health monitoring works under network conditions."""
-        print("\n🏥 Health Monitoring Network Resilience:")
+        print("\n Health Monitoring Network Resilience:")
         print("-" * 60)
         print(f"Total Checks: {result['total_checks']}")
         print(f"Success Rate: {result['success_rate']:.1f}")
@@ -507,7 +507,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def _analyze_telemetry_network_efficiency(self, results: Dict[str, Any]):
         """Analyze telemetry efficiency under bandwidth constraints."""
-        print("\n📊 Telemetry Network Efficiency Analysis:")
+        print("\n[GRAPH] Telemetry Network Efficiency Analysis:")
         print("-" * 60)
 
         for profile, result in results.items():

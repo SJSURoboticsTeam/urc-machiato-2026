@@ -61,7 +61,7 @@ class ROSTopicIntegrationTest(unittest.TestCase):
 
     def test_gps_topic_perfect_conditions(self):
         """Test GPS topic communication in perfect conditions."""
-        print("\n🛰️  Testing GPS topic - PERFECT conditions")
+        print("\n  Testing GPS topic - PERFECT conditions")
 
         # Simulate GPS publishing
         for i in range(50):
@@ -94,12 +94,14 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         )
         self.assertLess(stats["average_latency_ms"], 1.0, "Latency should be minimal")
 
-        print(f"  ✅ SIMULATED PASS - {stats['messages_received']}/50 messages received")
-        print(f"  ⚠️  WARNING: Perfect environment - hardware validation required")
+        print(
+            f"  [PASS] SIMULATED PASS - {stats['messages_received']}/50 messages received"
+        )
+        print(f"    WARNING: Perfect environment - hardware validation required")
 
     def test_gps_topic_real_life_conditions(self):
         """Test GPS topic communication in real-life field conditions."""
-        print("\n🛰️  Testing GPS topic - REAL-LIFE conditions")
+        print("\n  Testing GPS topic - REAL-LIFE conditions")
 
         messages_sent = 0
         messages_with_data = 0
@@ -135,14 +137,12 @@ class ROSTopicIntegrationTest(unittest.TestCase):
             success_rate, 0.85, "Success rate should be >85% in real-life conditions"
         )
 
-        print(f"  ✅ SIMULATED PASS - {success_rate*100:.1f}% success rate")
-        print(
-            f"  ⚠️  WARNING: Real-life simulation - actual field performance may vary"
-        )
+        print(f"  [PASS] SIMULATED PASS - {success_rate*100:.1f}% success rate")
+        print(f"    WARNING: Real-life simulation - actual field performance may vary")
 
     def test_gps_topic_extreme_conditions(self):
         """Test GPS topic communication in extreme conditions."""
-        print("\n🛰️  Testing GPS topic - EXTREME conditions")
+        print("\n  Testing GPS topic - EXTREME conditions")
 
         messages_sent = 0
         messages_with_data = 0
@@ -179,13 +179,13 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         )
 
         print(
-            f"  ✅ SIMULATED PASS - {success_rate*100:.1f}% success rate (survival mode)"
+            f"  [PASS] SIMULATED PASS - {success_rate*100:.1f}% success rate (survival mode)"
         )
-        print(f"  ⚠️  WARNING: Extreme simulation - if passing, system is robust")
+        print(f"    WARNING: Extreme simulation - if passing, system is robust")
 
     def test_imu_topic_across_all_tiers(self):
         """Test IMU topic communication across all environment tiers."""
-        print("\n📐 Testing IMU topic - ALL TIERS")
+        print("\n Testing IMU topic - ALL TIERS")
 
         results = {}
 
@@ -235,12 +235,12 @@ class ROSTopicIntegrationTest(unittest.TestCase):
             "Perfect should have better success than real-life",
         )
 
-        print(f"  ✅ SIMULATED PASS - All tiers tested")
-        print(f"  ⚠️  WARNING: Simulation only - IMU hardware validation required")
+        print(f"  [PASS] SIMULATED PASS - All tiers tested")
+        print(f"    WARNING: Simulation only - IMU hardware validation required")
 
     def test_velocity_command_topic(self):
         """Test velocity command topic with response validation."""
-        print("\n🚗 Testing velocity command topic")
+        print("\n Testing velocity command topic")
 
         command_latencies = []
 
@@ -273,13 +273,13 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         self.assertLess(max_latency, 200.0, "Max command latency should be <200ms")
 
         print(
-            f"  ✅ SIMULATED PASS - Avg latency: {avg_latency:.1f}ms, Max: {max_latency:.1f}ms"
+            f"  [PASS] SIMULATED PASS - Avg latency: {avg_latency:.1f}ms, Max: {max_latency:.1f}ms"
         )
-        print(f"  ⚠️  WARNING: Simulation - actual motor response time not validated")
+        print(f"    WARNING: Simulation - actual motor response time not validated")
 
     def test_battery_status_topic(self):
         """Test battery status topic monitoring."""
-        print("\n🔋 Testing battery status topic")
+        print("\n Testing battery status topic")
 
         battery_readings = []
 
@@ -309,12 +309,12 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         voltages = [b["voltage"] for b in battery_readings]
         self.assertLess(voltages[-1], voltages[0], "Voltage should decrease over time")
 
-        print(f"  ✅ SIMULATED PASS - {len(battery_readings)}/20 readings received")
-        print(f"  ⚠️  WARNING: Simulation - real battery monitoring not validated")
+        print(f"  [PASS] SIMULATED PASS - {len(battery_readings)}/20 readings received")
+        print(f"    WARNING: Simulation - real battery monitoring not validated")
 
     def test_emergency_stop_topic_priority(self):
         """Test emergency stop has highest priority."""
-        print("\n🚨 Testing emergency stop priority")
+        print("\n Testing emergency stop priority")
 
         # Send normal messages and e-stop
         normal_count = 0
@@ -339,14 +339,14 @@ class ROSTopicIntegrationTest(unittest.TestCase):
         # E-stop should always be delivered
         self.assertEqual(estop_count, 1, "E-stop should be sent")
 
-        print(f"  ✅ SIMULATED PASS - E-stop prioritized")
-        print(f"  ⚠️  WARNING: Simulation - hardware e-stop not validated")
+        print(f"  [PASS] SIMULATED PASS - E-stop prioritized")
+        print(f"    WARNING: Simulation - hardware e-stop not validated")
 
 
 if __name__ == "__main__":
-    print("🧪 ROS Topic Comprehensive Integration Tests")
+    print("[EXPERIMENT] ROS Topic Comprehensive Integration Tests")
     print("=" * 70)
-    print("⚠️  ALL TESTS ARE SIMULATION-BASED")
+    print("  ALL TESTS ARE SIMULATION-BASED")
     print("=" * 70)
 
     unittest.main(verbosity=2)

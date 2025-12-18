@@ -286,11 +286,11 @@ class ROS2NetworkBridge:
 
 if __name__ == "__main__":
     # Test network emulator
-    print("🌐 Testing Network Emulator")
+    print("[NETWORK] Testing Network Emulator")
     print("=" * 60)
 
     for profile in NetworkProfile:
-        print(f"\n📡 Testing {profile.value} profile:")
+        print(f"\n[ANTENNA] Testing {profile.value} profile:")
         emulator = NetworkEmulator(profile)
         emulator.start()
 
@@ -310,4 +310,4 @@ if __name__ == "__main__":
         print(f"  Packet loss: {stats['packet_loss_percent']:.2f}%")
         print(f"  Average latency: {stats['average_latency_ms']:.2f}ms")
 
-    print("\n✅ Network emulator test complete")
+    print("\n[PASS] Network emulator test complete")

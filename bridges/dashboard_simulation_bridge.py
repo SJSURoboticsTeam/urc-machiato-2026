@@ -98,11 +98,11 @@ class DashboardSimulationBridge:
             )
             self.simulation_thread.start()
 
-            print("✅ Simulation started successfully")
+            print("[PASS] Simulation started successfully")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to start simulation: {e}")
+            print(f"[FAIL] Failed to start simulation: {e}")
             return False
 
     def stop_simulation(self):
@@ -116,7 +116,7 @@ class DashboardSimulationBridge:
         if self.simulation_thread and self.simulation_thread.is_alive():
             self.simulation_thread.join(timeout=5.0)
 
-        print("✅ Simulation stopped")
+        print("[PASS] Simulation stopped")
 
     def _simulation_loop(self):
         """Main simulation loop running in background thread."""
@@ -404,7 +404,7 @@ class DashboardSimulationBridge:
         )
 
         print(
-            f"🚀 Dashboard Simulation Bridge WebSocket server started on ws://0.0.0.0:{self.websocket_port}"
+            f"[IGNITE] Dashboard Simulation Bridge WebSocket server started on ws://0.0.0.0:{self.websocket_port}"
         )
         print("Connect your dashboard to see real simulation data!")
 
@@ -412,25 +412,25 @@ class DashboardSimulationBridge:
 
     def run(self):
         """Main entry point to run the bridge."""
-        print("🌟 Starting Dashboard Simulation Bridge...")
+        print(" Starting Dashboard Simulation Bridge...")
         print("This bridge connects the simulation framework to your web dashboard")
         print()
 
         # Start simulation
         if not self.start_simulation():
-            print("❌ Failed to start simulation. Exiting.")
+            print("[FAIL] Failed to start simulation. Exiting.")
             return
 
         # Start WebSocket server
         try:
             asyncio.run(self.run_websocket_server())
         except KeyboardInterrupt:
-            print("\n🛑 Received interrupt signal...")
+            print("\n Received interrupt signal...")
         except Exception as e:
-            print(f"❌ WebSocket server error: {e}")
+            print(f"[FAIL] WebSocket server error: {e}")
         finally:
             self.stop_simulation()
-            print("👋 Dashboard Simulation Bridge shut down.")
+            print(" Dashboard Simulation Bridge shut down.")
 
 
 def main():

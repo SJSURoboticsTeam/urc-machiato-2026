@@ -209,30 +209,24 @@ def generate_comprehensive_report():
 def print_report_summary(report):
     """Print a human-readable summary of the report."""
 
+    print("")
     print(
-        "╔══════════════════════════════════════════════════════════════════════════════╗"
+        "                   URC 2026 ROVER - SYSTEM VALIDATION REPORT                    "
     )
+    print("")
     print(
-        "║                   URC 2026 ROVER - SYSTEM VALIDATION REPORT                    ║"
+        f" Generated: {datetime.fromisoformat(report['generated_at']).strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    print(
-        "╠══════════════════════════════════════════════════════════════════════════════╣"
-    )
-    print(
-        f"║ Generated: {datetime.fromisoformat(report['generated_at']).strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-    print(
-        "╚══════════════════════════════════════════════════════════════════════════════╝"
-    )
+    print("")
     print()
 
     # Phase Summary
-    print("📋 PHASE COMPLETION SUMMARY:")
+    print("[CLIPBOARD] PHASE COMPLETION SUMMARY:")
     for phase_key, phase_data in report["validation_phases"].items():
         status_icon = (
-            "✅"
+            "[PASS]"
             if phase_data["status"] == "COMPLETED"
-            else "🔄"
+            else "[REFRESH]"
             if phase_data["status"] == "IN_PROGRESS"
             else "⏳"
         )
@@ -242,15 +236,15 @@ def print_report_summary(report):
 
     # System Health
     health = report["system_health_assessment"]
-    health_icons = {"EXCELLENT": "🟢", "GOOD": "🟡", "FAIR": "🟠", "POOR": "🔴"}
+    health_icons = {"EXCELLENT": "", "GOOD": "", "FAIR": "", "POOR": ""}
 
     print(
-        f"🏥 SYSTEM HEALTH: {health_icons[health['overall_health']]} {health['overall_health']} ({health['health_score']}%)"
+        f" SYSTEM HEALTH: {health_icons[health['overall_health']]} {health['overall_health']} ({health['health_score']}%)"
     )
     print()
 
     # Component Status
-    print("🏗️  COMPONENT STATUS:")
+    print("[CONSTRUCTION]  COMPONENT STATUS:")
     for component, data in health["component_breakdown"].items():
         health_icon = health_icons.get(data["health"], "?")
         print(
@@ -261,7 +255,7 @@ def print_report_summary(report):
 
     # Validation Summary
     summary = report["validation_summary"]
-    print("📊 VALIDATION SUMMARY:")
+    print("[GRAPH] VALIDATION SUMMARY:")
     print(f"   • Test Suites: {summary['total_test_suites']}")
     print(f"   • Total Tests: {summary['total_tests_executed']}")
     print(f"   • Passed: {summary['tests_passed']}")
@@ -273,28 +267,28 @@ def print_report_summary(report):
     print()
 
     # Critical Findings
-    print("🔍 CRITICAL FINDINGS:")
+    print("[MAGNIFY] CRITICAL FINDINGS:")
     for finding in report["critical_findings"]:
         severity_icon = (
-            "🟢"
+            ""
             if finding["severity"] == "RESOLVED"
-            else "🟡"
+            else ""
             if finding["severity"] == "MINOR"
-            else "🔴"
+            else ""
         )
         print(f"   {severity_icon} {finding['severity']}: {finding['issue']}")
 
     print()
 
     # Next Steps
-    print("🎯 NEXT STEPS:")
+    print("[OBJECTIVE] NEXT STEPS:")
     for category, items in report["recommendations"].items():
         print(f"   {category.replace('_', ' ').title()}:")
         for item in items:
             print(f"     • {item}")
 
     print()
-    print("🎉 SYSTEM VALIDATION COMPLETE - READY FOR URC COMPETITION!")
+    print("[PARTY] SYSTEM VALIDATION COMPLETE - READY FOR URC COMPETITION!")
 
 
 def save_report(report, output_dir="test_reports"):
@@ -358,13 +352,13 @@ def save_report(report, output_dir="test_reports"):
                 f.write(f"- {item}\n")
             f.write("\n")
 
-    print(f"📄 Reports saved to: {json_file} and {md_file}")
+    print(f" Reports saved to: {json_file} and {md_file}")
 
 
 def main():
     """Main report generation function."""
 
-    print("📊 Generating Comprehensive System Validation Report...")
+    print("[GRAPH] Generating Comprehensive System Validation Report...")
 
     # Generate the report
     report = generate_comprehensive_report()
@@ -375,7 +369,7 @@ def main():
     # Save detailed reports
     save_report(report)
 
-    print("\n✅ Comprehensive validation report generated successfully!")
+    print("\n[PASS] Comprehensive validation report generated successfully!")
 
 
 if __name__ == "__main__":

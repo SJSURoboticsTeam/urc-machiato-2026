@@ -100,7 +100,7 @@ class ConfigValidator:
 
     def validate_all(self) -> bool:
         """Run all validation checks."""
-        print("🔍 Validating configuration for production readiness...\n")
+        print("[MAGNIFY] Validating configuration for production readiness...\n")
 
         self.validate_production_config()
         self.validate_mission_config()
@@ -108,17 +108,17 @@ class ConfigValidator:
 
         # Report results
         if self.errors:
-            print("❌ Configuration Errors:")
+            print("[FAIL] Configuration Errors:")
             for error in self.errors:
                 print(f"  - {error}")
 
         if self.warnings:
-            print("⚠️  Configuration Warnings:")
+            print("  Configuration Warnings:")
             for warning in self.warnings:
                 print(f"  - {warning}")
 
         if not self.errors and not self.warnings:
-            print("✅ All configuration checks passed!")
+            print("[PASS] All configuration checks passed!")
 
         return len(self.errors) == 0
 
@@ -128,10 +128,10 @@ def main():
     validator = ConfigValidator()
 
     if validator.validate_all():
-        print("\n🎉 Configuration is production-ready!")
+        print("\n[PARTY] Configuration is production-ready!")
         sys.exit(0)
     else:
-        print("\n💥 Configuration validation failed!")
+        print("\n Configuration validation failed!")
         sys.exit(1)
 
 

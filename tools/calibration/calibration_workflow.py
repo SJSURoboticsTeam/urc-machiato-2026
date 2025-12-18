@@ -263,10 +263,10 @@ class CalibrationWorkflow:
 
         if final_result.success:
             logger.info(
-                f"✅ Calibration {calibration_type.value} completed successfully"
+                f"[PASS] Calibration {calibration_type.value} completed successfully"
             )
         else:
-            logger.error(f"❌ Calibration {calibration_type.value} failed")
+            logger.error(f"[FAIL] Calibration {calibration_type.value} failed")
 
         return final_result
 
@@ -684,6 +684,6 @@ if __name__ == "__main__":
     print("Calibration status:")
     for cal_type, info in status.items():
         print(
-            f"  {cal_type.value}: {'✅' if info['success'] else '❌'} "
+            f"  {cal_type.value}: {'[PASS]' if info['success'] else '[FAIL]'} "
             f"(quality: {info['quality_score']:.2f})"
         )

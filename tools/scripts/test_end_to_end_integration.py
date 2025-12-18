@@ -247,30 +247,30 @@ class EndToEndTester(Node):
     def generate_test_report(self, test_results: Dict[str, Any]) -> str:
         """Generate detailed test report."""
         report = f"""
-╔══════════════════════════════════════════════════════════════╗
-║                 END-TO-END INTEGRATION TEST REPORT            ║
-╠══════════════════════════════════════════════════════════════╣
-║ Mission Type: {test_results.get('mission_type', 'unknown')}
-║ Duration: {test_results.get('duration', 0):.2f}s
-║ Success: {'✅' if test_results.get('success', False) else '❌'}
-╚══════════════════════════════════════════════════════════════╝
 
-📋 PHASE RESULTS:
+                 END-TO-END INTEGRATION TEST REPORT
+
+ Mission Type: {test_results.get('mission_type', 'unknown')}
+ Duration: {test_results.get('duration', 0):.2f}s
+ Success: {'[PASS]' if test_results.get('success', False) else '[FAIL]'}
+
+
+[CLIPBOARD] PHASE RESULTS:
 """
 
         for phase in test_results.get("phases", []):
-            status = "✅" if phase.get("success", False) else "❌"
+            status = "[PASS]" if phase.get("success", False) else "[FAIL]"
             report += f"   {status} {phase['name']} ({phase['timestamp']:.1f}s)\n"
 
         if test_results.get("error"):
-            report += f"\n💥 ERROR: {test_results['error']}\n"
+            report += f"\n ERROR: {test_results['error']}\n"
 
         # Performance analysis
         if test_results.get("phases"):
             phase_times = [p["timestamp"] for p in test_results["phases"]]
             if len(phase_times) > 1:
                 time_spread = max(phase_times) - min(phase_times)
-                report += f"\n⏱️  Phase Time Spread: {time_spread:.2f}s\n"
+                report += f"\n[CLOCK]  Phase Time Spread: {time_spread:.2f}s\n"
 
         # System health indicators
         state_transitions = len(
@@ -289,11 +289,11 @@ class EndToEndTester(Node):
         )
 
         report += f"""
-📊 SYSTEM METRICS:
+[GRAPH] SYSTEM METRICS:
    • State Transitions: {state_transitions}
    • Mission Events: {mission_events}
-   • ROS2 Topics Active: ✅
-   • Service Communication: ✅
+   • ROS2 Topics Active: [PASS]
+   • Service Communication: [PASS]
 """
 
         return report
@@ -398,7 +398,7 @@ def run_end_to_end_test(mission_type: str = "all"):
     services = []
 
     try:
-        print("🚀 Starting End-to-End Integration Test")
+        print("[IGNITE] Starting End-to-End Integration Test")
         print("=" * 50)
 
         # Start ROS2 state machine bridge
@@ -448,19 +448,19 @@ def run_end_to_end_test(mission_type: str = "all"):
             success = True
 
     except Exception as e:
-        print(f"❌ End-to-end test failed: {e}")
+        print(f"[FAIL] End-to-end test failed: {e}")
         success = False
 
     finally:
         # Clean up services
-        print("\n🧹 Cleaning up services...")
+        print("\n[SWEEP] Cleaning up services...")
         for name, process in services:
             try:
                 process.terminate()
                 process.wait(timeout=5.0)
-                print(f"✅ {name} stopped")
+                print(f"[PASS] {name} stopped")
             except Exception as e:
-                print(f"⚠️  Error stopping {name}: {e}")
+                print(f"  Error stopping {name}: {e}")
                 try:
                     process.kill()
                 except:

@@ -52,7 +52,7 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
 
-    logger.info("🚀 URC 2026 Hardware Integration Preparation")
+    logger.info("[IGNITE] URC 2026 Hardware Integration Preparation")
     logger.info("=" * 50)
 
     success = True
@@ -70,20 +70,20 @@ def main():
             success = run_full_preparation(args.config_dir, output_dir, args.force)
 
     except Exception as e:
-        logger.error(f"❌ Preparation failed with exception: {e}")
+        logger.error(f"[FAIL] Preparation failed with exception: {e}")
         success = False
 
     if success:
-        logger.info("✅ Hardware integration preparation completed successfully!")
-        logger.info(f"📁 Results saved to: {output_dir.absolute()}")
+        logger.info("[PASS] Hardware integration preparation completed successfully!")
+        logger.info(f" Results saved to: {output_dir.absolute()}")
     else:
-        logger.error("❌ Hardware integration preparation failed!")
+        logger.error("[FAIL] Hardware integration preparation failed!")
         sys.exit(1)
 
 
 def run_configuration_validation(config_dir: str, output_dir: Path) -> bool:
     """Run configuration validation."""
-    logger.info("🔍 Running Configuration Validation...")
+    logger.info("[MAGNIFY] Running Configuration Validation...")
 
     try:
         from config.config_validator import ConfigurationValidator, validate_all_configs
@@ -93,7 +93,7 @@ def run_configuration_validation(config_dir: str, output_dir: Path) -> bool:
 
         # Generate default configs if needed
         if not success:
-            logger.info("🔧 Generating default configurations...")
+            logger.info("[TOOL] Generating default configurations...")
             validator = ConfigurationValidator(config_dir)
             configs = validator.generate_default_configs(str(output_dir / "configs"))
 
@@ -119,7 +119,7 @@ def run_configuration_validation(config_dir: str, output_dir: Path) -> bool:
                 indent=2,
             )
 
-        logger.info(f"📄 Validation results saved to: {results_file}")
+        logger.info(f" Validation results saved to: {results_file}")
         return success
 
     except Exception as e:
@@ -129,7 +129,7 @@ def run_configuration_validation(config_dir: str, output_dir: Path) -> bool:
 
 def run_calibration_procedures(output_dir: Path, force_redo: bool = False) -> bool:
     """Run calibration procedures."""
-    logger.info("🔧 Running Calibration Procedures...")
+    logger.info("[TOOL] Running Calibration Procedures...")
 
     try:
         from calibration.calibration_workflow import (
@@ -187,7 +187,7 @@ def run_calibration_procedures(output_dir: Path, force_redo: bool = False) -> bo
                 indent=2,
             )
 
-        logger.info(f"📄 Calibration results saved to: {results_file}")
+        logger.info(f" Calibration results saved to: {results_file}")
         return overall_success
 
     except Exception as e:
@@ -197,7 +197,7 @@ def run_calibration_procedures(output_dir: Path, force_redo: bool = False) -> bo
 
 def run_migration_demo(output_dir: Path) -> bool:
     """Demonstrate migration capabilities."""
-    logger.info("🔄 Running Migration Demonstration...")
+    logger.info("[REFRESH] Running Migration Demonstration...")
 
     try:
         from migration.migration_manager import (
@@ -239,7 +239,7 @@ def run_migration_demo(output_dir: Path) -> bool:
             states = manager.get_component_states()
             migration_results[phase.value]["component_states"] = states
 
-            logger.info(f"✅ Successfully migrated to {phase.value}")
+            logger.info(f"[PASS] Successfully migrated to {phase.value}")
 
         # Save results
         import json
@@ -260,7 +260,7 @@ def run_migration_demo(output_dir: Path) -> bool:
                 indent=2,
             )
 
-        logger.info(f"📄 Migration demo results saved to: {results_file}")
+        logger.info(f" Migration demo results saved to: {results_file}")
         return all(r["success"] for r in migration_results.values())
 
     except Exception as e:
@@ -270,7 +270,7 @@ def run_migration_demo(output_dir: Path) -> bool:
 
 def run_performance_monitoring_demo() -> bool:
     """Demonstrate performance monitoring capabilities."""
-    logger.info("📊 Running Performance Monitoring Demonstration...")
+    logger.info("[GRAPH] Running Performance Monitoring Demonstration...")
 
     try:
         from monitoring.real_time_monitor import (
@@ -350,7 +350,7 @@ def run_full_preparation(
     config_dir: str, output_dir: Path, force_redo: bool = False
 ) -> bool:
     """Run complete hardware integration preparation."""
-    logger.info("🎯 Running Full Hardware Integration Preparation...")
+    logger.info("[OBJECTIVE] Running Full Hardware Integration Preparation...")
 
     preparation_steps = [
         (
@@ -369,7 +369,7 @@ def run_full_preparation(
     overall_success = True
 
     for step_name, step_func in preparation_steps:
-        logger.info(f"\n▶️  Starting: {step_name}")
+        logger.info(f"\n  Starting: {step_name}")
         start_time = time.time()
 
         try:
@@ -383,14 +383,16 @@ def run_full_preparation(
             }
 
             if success:
-                logger.info(f"✅ {step_name} completed successfully in {duration:.1f}s")
+                logger.info(
+                    f"[PASS] {step_name} completed successfully in {duration:.1f}s"
+                )
             else:
-                logger.error(f"❌ {step_name} failed after {duration:.1f}s")
+                logger.error(f"[FAIL] {step_name} failed after {duration:.1f}s")
                 overall_success = False
 
         except Exception as e:
             duration = time.time() - start_time
-            logger.error(f"💥 {step_name} crashed after {duration:.1f}s: {e}")
+            logger.error(f" {step_name} crashed after {duration:.1f}s: {e}")
             results[step_name] = {
                 "success": False,
                 "duration": duration,
@@ -439,22 +441,22 @@ def generate_preparation_report(results: Dict[str, Any], output_dir: Path):
         json.dump(report, f, indent=2)
 
     # Print summary
-    logger.info("\n📊 Hardware Integration Preparation Summary:")
+    logger.info("\n[GRAPH] Hardware Integration Preparation Summary:")
     logger.info("=" * 50)
     logger.info(".1f")
     logger.info(".1f")
     logger.info(".1f")
     for step_name, result in results.items():
-        status = "✅" if result["success"] else "❌"
+        status = "[PASS]" if result["success"] else "[FAIL]"
         logger.info(f"  {status} {step_name}: {result['duration']:.1f}s")
 
     recommendations = report["recommendations"]
     if recommendations:
-        logger.info("\n💡 Recommendations:")
+        logger.info("\n Recommendations:")
         for rec in recommendations:
             logger.info(f"  • {rec}")
 
-    logger.info(f"\n📄 Detailed report saved to: {report_file}")
+    logger.info(f"\n Detailed report saved to: {report_file}")
 
 
 def generate_recommendations(results: Dict[str, Any]) -> List[str]:

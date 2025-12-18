@@ -55,7 +55,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
 
     def test_complete_network_partition(self):
         """Test system behavior during complete network blackout."""
-        print("🌐 Testing Complete Network Partition...")
+        print("[NETWORK] Testing Complete Network Partition...")
 
         # Test network partition resilience without ROS2 environment
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
@@ -85,7 +85,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         )
 
         # Simulate complete network partition
-        print("  🚫 Simulating complete network partition...")
+        print("   Simulating complete network partition...")
 
         # Mark nodes as unhealthy (simulates network partition)
         for node_id in ["chaos_primary", "chaos_secondary"]:
@@ -105,7 +105,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         )
 
         # Test recovery after partition
-        print("  🔄 Simulating network restoration...")
+        print("  [REFRESH] Simulating network restoration...")
 
         # Restore network connectivity
         for node_id in ["chaos_primary", "chaos_secondary"]:
@@ -135,11 +135,11 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         state_mgr.stop()
         dds_mgr.stop()
 
-        print("  ✅ Complete network partition test passed")
+        print("  [PASS] Complete network partition test passed")
 
     def test_asymmetric_network_partition(self):
         """Test asymmetric network partition (one-way communication failure)."""
-        print("🔄 Testing Asymmetric Network Partition...")
+        print("[REFRESH] Testing Asymmetric Network Partition...")
 
         with self.env_manager.create_environment(
             name="asymmetric_partition_test",
@@ -172,7 +172,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             self.assertEqual(state2, "works_both_ways")
 
             # Simulate asymmetric partition (node1 can send to node2, but not vice versa)
-            print("  🔀 Simulating asymmetric partition...")
+            print("   Simulating asymmetric partition...")
 
             # Break node2's ability to receive from node1
             mgr2.nodes = {}  # Simulate node2 losing all node knowledge
@@ -193,11 +193,11 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             mgr1.stop()
             mgr2.stop()
 
-        print("  ✅ Asymmetric network partition test passed")
+        print("  [PASS] Asymmetric network partition test passed")
 
     def test_extreme_network_throttling(self):
         """Test system under extreme network bandwidth limitations."""
-        print("🐌 Testing Extreme Network Throttling...")
+        print(" Testing Extreme Network Throttling...")
 
         # Create environment with extreme network limits
         extreme_config = ROSEnvironmentConfig(
@@ -269,11 +269,11 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             # Cleanup
             mgr.stop()
 
-        print("  ✅ Extreme network throttling test passed")
+        print("  [PASS] Extreme network throttling test passed")
 
     def test_dns_failure_scenario(self):
         """Test system behavior when DNS resolution fails during node discovery."""
-        print("🔍 Testing DNS Failure Scenario...")
+        print("[MAGNIFY] Testing DNS Failure Scenario...")
 
         with self.env_manager.create_environment(
             name="dns_failure_test",
@@ -306,7 +306,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             self.assertLessEqual(health_score, 1.0, "Health score should be <= 1.0")
 
             # Test domain failover under DNS failure conditions
-            print("  🏥 Testing domain failover with discovery issues...")
+            print("   Testing domain failover with discovery issues...")
 
             # Simulate domain becoming unhealthy
             original_measure = dds_mgr._measure_domain_health
@@ -328,11 +328,11 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             # Cleanup
             dds_mgr.stop()
 
-        print("  ✅ DNS failure scenario test passed")
+        print("  [PASS] DNS failure scenario test passed")
 
     def test_network_reconnection_storm(self):
         """Test behavior during rapid network reconnection events."""
-        print("⏱️ Testing Network Reconnection Storm...")
+        print("[CLOCK] Testing Network Reconnection Storm...")
 
         with self.env_manager.create_environment(
             name="reconnection_storm_test",
@@ -349,7 +349,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             mgr.start()
 
             # Simulate reconnection storm: rapid connect/disconnect cycles
-            print("  🌪️ Simulating reconnection storm...")
+            print("   Simulating reconnection storm...")
 
             reconnection_count = 10
             for i in range(reconnection_count):
@@ -387,7 +387,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             # Cleanup
             mgr.stop()
 
-        print("  ✅ Network reconnection storm test passed")
+        print("  [PASS] Network reconnection storm test passed")
 
 
 if __name__ == "__main__":

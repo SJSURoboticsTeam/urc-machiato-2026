@@ -26,7 +26,7 @@ from src.bridges.websocket_redundancy_manager import (
 
 def demonstrate_endpoint_registration():
     """Demonstrate endpoint registration and management."""
-    print("\n🔗 1. ENDPOINT REGISTRATION")
+    print("\n 1. ENDPOINT REGISTRATION")
     print("-" * 40)
 
     manager = get_redundancy_manager()
@@ -70,7 +70,7 @@ def demonstrate_endpoint_registration():
     for endpoint in endpoints:
         manager.add_endpoint(endpoint)
         print(
-            f"✅ Registered {endpoint.name} on port {endpoint.port} (priority {endpoint.priority.value})"
+            f"[PASS] Registered {endpoint.name} on port {endpoint.port} (priority {endpoint.priority.value})"
         )
 
     return manager, endpoints
@@ -78,7 +78,7 @@ def demonstrate_endpoint_registration():
 
 def demonstrate_redundancy_system(manager):
     """Demonstrate the redundancy system starting and monitoring."""
-    print("\n🚀 2. REDUNDANCY SYSTEM ACTIVATION")
+    print("\n[IGNITE] 2. REDUNDANCY SYSTEM ACTIVATION")
     print("-" * 40)
 
     # Start the system
@@ -86,13 +86,13 @@ def demonstrate_redundancy_system(manager):
     success = manager.start_redundancy_system()
 
     if success:
-        print("✅ Redundancy system started successfully")
+        print("[PASS] Redundancy system started successfully")
     else:
-        print("❌ Failed to start redundancy system")
+        print("[FAIL] Failed to start redundancy system")
         return False
 
     # Monitor for a few seconds
-    print("\n📊 Monitoring system health for 10 seconds...")
+    print("\n[GRAPH] Monitoring system health for 10 seconds...")
     for i in range(10):
         time.sleep(1)
         status = manager.get_system_status()
@@ -106,7 +106,7 @@ def demonstrate_redundancy_system(manager):
 
 def demonstrate_failover_logic(manager, endpoints):
     """Demonstrate failover logic and endpoint selection."""
-    print("\n🔄 3. FAILOVER LOGIC DEMONSTRATION")
+    print("\n[REFRESH] 3. FAILOVER LOGIC DEMONSTRATION")
     print("-" * 40)
 
     # Simulate endpoint failure by marking one as unhealthy
@@ -132,14 +132,16 @@ def demonstrate_failover_logic(manager, endpoints):
     # Simulate client failover
     print("\nSimulating client failover from primary to secondary...")
     failover_success = manager._failover_client("demo_client_123")
-    print(f"   Failover result: {'✅ Success' if failover_success else '❌ Failed'}")
+    print(
+        f"   Failover result: {'[PASS] Success' if failover_success else '[FAIL] Failed'}"
+    )
 
     return True
 
 
 def demonstrate_performance_metrics(manager):
     """Demonstrate performance monitoring and metrics."""
-    print("\n📈 4. PERFORMANCE METRICS")
+    print("\n 4. PERFORMANCE METRICS")
     print("-" * 40)
 
     status = manager.get_system_status()
@@ -165,7 +167,7 @@ def demonstrate_performance_metrics(manager):
 
 def demonstrate_real_world_scenario(manager):
     """Demonstrate a real-world competition scenario."""
-    print("\n🏁 5. REAL-WORLD COMPETITION SCENARIO")
+    print("\n[FLAG] 5. REAL-WORLD COMPETITION SCENARIO")
     print("-" * 40)
 
     print("Simulating URC competition scenario:")
@@ -174,31 +176,31 @@ def demonstrate_real_world_scenario(manager):
     print("   • Tertiary bridge (port 8082) - emergency backup")
 
     # Simulate normal operation
-    print("\n📡 Phase 1: Normal Operation")
+    print("\n[ANTENNA] Phase 1: Normal Operation")
     print("   All bridges healthy, clients connected to primary endpoint")
     time.sleep(1)
 
     # Simulate primary bridge failure
-    print("\n💥 Phase 2: Primary Bridge Failure")
+    print("\n Phase 2: Primary Bridge Failure")
     print("   Competition bridge crashes due to high load!")
     print("   → Clients automatically failover to secondary bridge")
     print("   → Judges still see telemetry with minimal interruption")
     time.sleep(1)
 
     # Simulate recovery
-    print("\n🔧 Phase 3: System Recovery")
+    print("\n[TOOL] Phase 3: System Recovery")
     print("   Competition bridge restarts and recovers")
     print("   → Clients can optionally fail back to primary")
     print("   → System returns to full capability")
     time.sleep(1)
 
-    print("\n🎯 Result: Zero telemetry downtime for judges!")
+    print("\n[OBJECTIVE] Result: Zero telemetry downtime for judges!")
     print("   Competition success maintained despite technical issues.")
 
 
 def run_complete_demonstration():
     """Run the complete WebSocket redundancy demonstration."""
-    print("🌟 WebSocket Redundancy System Demonstration")
+    print(" WebSocket Redundancy System Demonstration")
     print("=" * 60)
     print("This demo shows how WebSocket redundancy provides")
     print("fault-tolerant telemetry streaming for URC competition.")
@@ -210,7 +212,7 @@ def run_complete_demonstration():
 
         # Phase 2: System activation
         if not demonstrate_redundancy_system(manager):
-            print("❌ Demonstration failed - could not start redundancy system")
+            print("[FAIL] Demonstration failed - could not start redundancy system")
             return
 
         # Phase 3: Failover demonstration
@@ -223,16 +225,16 @@ def run_complete_demonstration():
         demonstrate_real_world_scenario(manager)
 
         # Final summary
-        print("\n🎉 DEMONSTRATION COMPLETE")
+        print("\n[PARTY] DEMONSTRATION COMPLETE")
         print("=" * 60)
         print("WebSocket Redundancy System successfully demonstrated!")
         print()
         print("Key Benefits Proven:")
-        print("✅ Zero-downtime telemetry during bridge failures")
-        print("✅ Automatic client failover (<1 second)")
-        print("✅ Progressive data degradation (full → emergency)")
-        print("✅ Load balancing across healthy endpoints")
-        print("✅ Health monitoring and automatic recovery")
+        print("[PASS] Zero-downtime telemetry during bridge failures")
+        print("[PASS] Automatic client failover (<1 second)")
+        print("[PASS] Progressive data degradation (full → emergency)")
+        print("[PASS] Load balancing across healthy endpoints")
+        print("[PASS] Health monitoring and automatic recovery")
         print()
         print("For URC Competition:")
         print("   • Judges never lose telemetry visibility")
@@ -242,7 +244,7 @@ def run_complete_demonstration():
         print("=" * 60)
 
     except Exception as e:
-        print(f"❌ Demonstration failed with error: {e}")
+        print(f"[FAIL] Demonstration failed with error: {e}")
         import traceback
 
         traceback.print_exc()
@@ -250,9 +252,9 @@ def run_complete_demonstration():
     finally:
         # Cleanup
         if "manager" in locals():
-            print("\n🧹 Cleaning up...")
+            print("\n[SWEEP] Cleaning up...")
             manager.stop_redundancy_system()
-            print("✅ Cleanup complete")
+            print("[PASS] Cleanup complete")
 
 
 if __name__ == "__main__":

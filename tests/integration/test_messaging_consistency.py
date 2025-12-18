@@ -88,7 +88,7 @@ class TestSimplifiedMessaging:
                 subscriber.received_messages == test_commands
             ), f"Message content mismatch: expected {test_commands}, got {subscriber.received_messages}"
 
-            print("✅ Basic pub/sub test passed!")
+            print("[PASS] Basic pub/sub test passed!")
 
         finally:
             rclpy.shutdown()
@@ -108,7 +108,7 @@ class TestSimplifiedMessaging:
             assert isinstance(msg.data, str), "data field should be string"
             assert msg.data == "test_command", "data field should contain correct value"
 
-            print("✅ Message type validation passed!")
+            print("[PASS] Message type validation passed!")
 
         finally:
             rclpy.shutdown()

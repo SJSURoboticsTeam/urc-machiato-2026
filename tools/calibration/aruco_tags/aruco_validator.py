@@ -88,9 +88,9 @@ class ArucoValidator:
         try:
             dict_attr = getattr(cv2.aruco, self.aruco_dict_name)
             self.aruco_dict = cv2.aruco.getPredefinedDictionary(dict_attr)
-            logger.info(f"✅ ArUco dictionary loaded: {self.aruco_dict_name}")
+            logger.info(f"[PASS] ArUco dictionary loaded: {self.aruco_dict_name}")
         except AttributeError:
-            logger.error(f"❌ Invalid ArUco dictionary: {self.aruco_dict_name}")
+            logger.error(f"[FAIL] Invalid ArUco dictionary: {self.aruco_dict_name}")
             sys.exit(1)
 
         # Optimize detection parameters for real-time performance
@@ -115,7 +115,7 @@ class ArucoValidator:
         """Load camera calibration parameters from JSON file."""
         if not self.calibration_file:
             logger.warning(
-                "⚠️  No calibration file provided - "
+                "  No calibration file provided - "
                 "distance calculation will be unavailable"
             )
             return
@@ -161,19 +161,22 @@ class ArucoValidator:
             has_dist_coeffs = self.dist_coeffs is not None
             if has_matrix and has_dist_coeffs:
                 self.calibration_loaded = True
-                logger.info(f"✅ Camera calibration loaded from {self.calibration_file}")
+                logger.info(
+                    f"[PASS] Camera calibration loaded from {self.calibration_file}"
+                )
                 # Type ignore: mypy doesn't understand the None check above
                 logger.info(f"   Camera matrix shape: {self.camera_matrix.shape}")  # type: ignore[attr-defined]
                 logger.info(f"   Distortion coeffs shape: {self.dist_coeffs.shape}")  # type: ignore[attr-defined]
             else:
                 logger.warning(
-                    "⚠️  Camera calibration data incomplete - "
+                    "  Camera calibration data incomplete - "
                     "distance calculation unavailable"
                 )
 
         except Exception as e:
             logger.error(
-                f"❌ Failed to load calibration file " f"{self.calibration_file}: {e}"
+                f"[FAIL] Failed to load calibration file "
+                f"{self.calibration_file}: {e}"
             )
 
     def calculate_distance_to_tag(self, corners: np.ndarray) -> Tuple[float, float]:
@@ -272,13 +275,13 @@ class ArucoValidator:
             # Choose color based on confidence/distance
             if confidence > 0.8:
                 color = (0, 255, 0)  # Green - good detection
-                status = "✓"
+                status = ""
             elif confidence > 0.5:
                 color = (0, 255, 255)  # Yellow - moderate
                 status = "~"
             else:
                 color = (0, 0, 255)  # Red - poor
-                status = "✗"
+                status = ""
 
             # Draw tag info box
             info_text = f"ID:{tag_id}"
@@ -452,7 +455,7 @@ class ArucoValidator:
         Returns:
             True if successful, False otherwise
         """
-        logger.info("🚀 Starting ArUco tag validation...")
+        logger.info("[IGNITE] Starting ArUco tag validation...")
         logger.info(f"   Camera index: {self.camera_index}")
         logger.info(f"   Tag size: {self.tag_size_cm}cm")
         logger.info(f"   Dictionary: {self.aruco_dict_name}")
@@ -465,13 +468,13 @@ class ArucoValidator:
         for backend in backends:
             cap = cv2.VideoCapture(self.camera_index, backend)
             if cap.isOpened():
-                logger.info(f"✅ Camera opened with backend: {backend}")
+                logger.info(f"[PASS] Camera opened with backend: {backend}")
                 break
             cap.release()
 
         if not cap or not cap.isOpened():
             logger.error(
-                f"❌ Failed to open camera {self.camera_index} " f"with any backend"
+                f"[FAIL] Failed to open camera {self.camera_index} " f"with any backend"
             )
             return False
 
@@ -486,30 +489,32 @@ class ArucoValidator:
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-        logger.info(f"📹 Camera opened: {width}x{height} @ {fps} FPS")
+        logger.info(f" Camera opened: {width}x{height} @ {fps} FPS")
 
         # Setup video writer if requested
         video_writer = None
         if save_video:
             fourcc = cv2.VideoWriter_fourcc(*"MJPG")
             video_writer = cv2.VideoWriter(save_video, fourcc, fps, (width, height))
-            logger.info(f"🎬 Recording to: {save_video}")
+            logger.info(f" Recording to: {save_video}")
 
         try:
             if test_duration:
                 logger.info(
-                    f"🎯 Starting detection loop... "
+                    f"[OBJECTIVE] Starting detection loop... "
                     f"(Will run for {test_duration} seconds)"
                 )
                 start_time = time.time()
             else:
-                logger.info("🎯 Starting detection loop... (Press 'q' to quit)")
+                logger.info(
+                    "[OBJECTIVE] Starting detection loop... (Press 'q' to quit)"
+                )
 
             while True:
                 # Capture frame
                 ret, frame = cap.read()
                 if not ret:
-                    logger.error("❌ Failed to read frame from camera")
+                    logger.error("[FAIL] Failed to read frame from camera")
                     break
 
                 self.detection_stats["frames_processed"] += 1
@@ -533,7 +538,7 @@ class ArucoValidator:
 
                 # Check test duration
                 if test_duration and (time.time() - start_time) >= test_duration:
-                    logger.info(f"⏹️  Test duration ({test_duration}s) completed")
+                    logger.info(f"⏹  Test duration ({test_duration}s) completed")
                     break
 
                 # Display frame
@@ -543,22 +548,22 @@ class ArucoValidator:
                     # Handle keyboard input
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord("q"):
-                        logger.info("⏹️  User requested exit")
+                        logger.info("⏹  User requested exit")
                         break
                     elif key == ord("c"):
                         # Clear statistics
                         self.detection_stats["tags_detected"] = 0
                         self.detection_stats["avg_distance"] = 0.0
-                        logger.info("🧹 Statistics cleared")
+                        logger.info("[SWEEP] Statistics cleared")
 
-            logger.info("✅ Validation completed successfully")
+            logger.info("[PASS] Validation completed successfully")
             return True
 
         except KeyboardInterrupt:
-            logger.info("⏹️  Validation interrupted by user")
+            logger.info("⏹  Validation interrupted by user")
             return True
         except Exception as e:
-            logger.error(f"❌ Validation failed: {e}")
+            logger.error(f"[FAIL] Validation failed: {e}")
             return False
         finally:
             # Cleanup
@@ -639,7 +644,7 @@ Examples:
 
     # Validate calibration file exists if specified
     if args.calibration and not os.path.exists(args.calibration):
-        logger.warning(f"⚠️  Calibration file not found: {args.calibration}")
+        logger.warning(f"  Calibration file not found: {args.calibration}")
         logger.warning("   Distance calculation will be unavailable")
         args.calibration = None
 
@@ -653,7 +658,9 @@ Examples:
 
     # Handle test mode
     if args.test_mode:
-        logger.info(f"🧪 Running in test mode for {args.test_mode} seconds...")
+        logger.info(
+            f"[EXPERIMENT] Running in test mode for {args.test_mode} seconds..."
+        )
         success = validator.run_validation(
             display=not args.no_display,
             save_video=args.save_video,

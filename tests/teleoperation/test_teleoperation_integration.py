@@ -136,7 +136,7 @@ class MockTeleoperationPublisher(Node):
 
 def main():
     """Main test function"""
-    print("🧪 Teleoperation Integration Test")
+    print("[EXPERIMENT] Teleoperation Integration Test")
     print("Starting mock teleoperation data publisher...")
     print("This will publish realistic test data to autonomy system")
     print("Press Ctrl+C to stop")
@@ -148,11 +148,11 @@ def main():
     try:
         rclpy.spin(publisher)
     except KeyboardInterrupt:
-        print("\n🛑 Stopping mock publisher...")
+        print("\n Stopping mock publisher...")
     finally:
         publisher.destroy_node()
         rclpy.shutdown()
-        print("✅ Mock publisher stopped")
+        print("[PASS] Mock publisher stopped")
 
 
 if __name__ == "__main__":

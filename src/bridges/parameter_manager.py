@@ -9,7 +9,9 @@ configuration management for the competition bridge.
 from typing import Any, Dict, Optional
 
 import rclpy
-from constants import (
+from rclpy.node import Node
+
+from .constants import (
     ADAPTATION_RATE,
     BANDWIDTH_MEASUREMENT_WINDOW_SEC,
     BANDWIDTH_TARGET_UTILIZATION,
@@ -22,7 +24,6 @@ from constants import (
     MAX_TELEMETRY_RATE_HZ,
     MIN_TELEMETRY_RATE_HZ,
 )
-from rclpy.node import Node
 
 
 class ParameterManager:

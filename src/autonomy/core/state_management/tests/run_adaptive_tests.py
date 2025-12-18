@@ -46,14 +46,14 @@ class AdaptiveTestRunner:
         """Check if ROS2 is available and properly configured."""
         try:
             # Check if ROS_DISTRO is set
-            ros_distro = os.environ.get('ROS_DISTRO')
+            ros_distro = os.environ.get("ROS_DISTRO")
             if not ros_distro:
                 # Try to detect from common locations
-                ros_paths = ['/opt/ros/humble', '/opt/ros/foxy', '/opt/ros/galactic']
+                ros_paths = ["/opt/ros/humble", "/opt/ros/foxy", "/opt/ros/galactic"]
                 for path in ros_paths:
                     if os.path.exists(path):
-                        ros_distro = path.split('/')[-1]
-                        os.environ['ROS_DISTRO'] = ros_distro
+                        ros_distro = path.split("/")[-1]
+                        os.environ["ROS_DISTRO"] = ros_distro
                         break
 
             if not ros_distro:
@@ -61,18 +61,24 @@ class AdaptiveTestRunner:
                 return False
 
             # Check if setup.bash exists
-            setup_path = f'/opt/ros/{ros_distro}/setup.bash'
+            setup_path = f"/opt/ros/{ros_distro}/setup.bash"
             if not os.path.exists(setup_path):
                 self.logger.warning(f"ROS2 setup file not found: {setup_path}")
                 return False
 
             # Try to source and test
             result = subprocess.run(
-                ['bash', '-c', f'source {setup_path} && python3 -c "import rclpy; print(\'OK\')"'],
-                capture_output=True, text=True, cwd=self.project_root
+                [
+                    "bash",
+                    "-c",
+                    f"source {setup_path} && python3 -c \"import rclpy; print('OK')\"",
+                ],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
             )
 
-            return result.returncode == 0 and 'OK' in result.stdout
+            return result.returncode == 0 and "OK" in result.stdout
 
         except Exception as e:
             self.logger.error(f"ROS2 availability check failed: {e}")
@@ -82,12 +88,14 @@ class AdaptiveTestRunner:
         """Set up Python path for imports."""
         paths = [
             str(self.test_dir.parent),  # autonomy_state_machine package
-            str(self.project_root / 'src' / 'autonomy' / 'interfaces'),  # autonomy_interfaces
-            str(self.project_root / 'src'),  # Additional src paths
+            str(
+                self.project_root / "src" / "autonomy" / "interfaces"
+            ),  # autonomy_interfaces
+            str(self.project_root / "src"),  # Additional src paths
         ]
 
-        python_path = ':'.join(paths)
-        os.environ['PYTHONPATH'] = python_path
+        python_path = ":".join(paths)
+        os.environ["PYTHONPATH"] = python_path
         return python_path
 
     def setup_test_environment(self) -> bool:
@@ -103,17 +111,19 @@ class AdaptiveTestRunner:
             # Setup ROS2 if available
             if self.ros2_available:
                 if not self._source_ros2():
-                    self.logger.warning("ROS2 setup failed, tests may not work properly")
+                    self.logger.warning(
+                        "ROS2 setup failed, tests may not work properly"
+                    )
                     return False
             else:
                 self.logger.warning("ROS2 not available, using mock interfaces")
 
             # Setup Python path
-            os.environ['PYTHONPATH'] = self.python_path
+            os.environ["PYTHONPATH"] = self.python_path
 
             # Additional environment setup
-            os.environ['TESTING'] = '1'  # Flag for test mode
-            os.environ['ROS_DOMAIN_ID'] = '42'  # Use specific domain for tests
+            os.environ["TESTING"] = "1"  # Flag for test mode
+            os.environ["ROS_DOMAIN_ID"] = "42"  # Use specific domain for tests
 
             self.logger.info("[SUCCESS] Test environment setup complete")
             return True
@@ -124,7 +134,7 @@ class AdaptiveTestRunner:
 
     def _ensure_packages_built(self) -> bool:
         """Ensure required ROS2 packages are built."""
-        required_packages = ['autonomy_interfaces', 'autonomy_state_management']
+        required_packages = ["autonomy_interfaces", "autonomy_state_management"]
 
         for package in required_packages:
             if not self._is_package_built(package):
@@ -137,26 +147,27 @@ class AdaptiveTestRunner:
 
     def _is_package_built(self, package_name: str) -> bool:
         """Check if a package is already built."""
-        install_path = self.project_root / 'install' / package_name
+        install_path = self.project_root / "install" / package_name
         return install_path.exists()
 
     def _build_package(self, package_name: str) -> bool:
         """Build a specific ROS2 package."""
         try:
-            ros_distro = os.environ.get('ROS_DISTRO', 'humble')
+            ros_distro = os.environ.get("ROS_DISTRO", "humble")
 
             cmd = [
-                'bash', '-c',
-                f'cd {self.project_root} && '
-                f'source /opt/ros/{ros_distro}/setup.bash && '
-                f'colcon build --packages-select {package_name} --cmake-clean-cache'
+                "bash",
+                "-c",
+                f"cd {self.project_root} && "
+                f"source /opt/ros/{ros_distro}/setup.bash && "
+                f"colcon build --packages-select {package_name} --cmake-clean-cache",
             ]
 
             result = subprocess.run(
                 cmd,
                 capture_output=False,  # Show build output
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
             )
 
             return result.returncode == 0
@@ -171,24 +182,30 @@ class AdaptiveTestRunner:
     def _source_ros2(self) -> bool:
         """Source ROS2 environment."""
         try:
-            ros_distro = os.environ.get('ROS_DISTRO', 'humble')
-            setup_script = f'/opt/ros/{ros_distro}/setup.bash'
+            ros_distro = os.environ.get("ROS_DISTRO", "humble")
+            setup_script = f"/opt/ros/{ros_distro}/setup.bash"
 
             if not os.path.exists(setup_script):
                 return False
 
             # Source ROS2 in the current environment
             result = subprocess.run(
-                ['bash', '-c', f'source {setup_script} && env'],
-                capture_output=True, text=True, cwd=self.project_root
+                ["bash", "-c", f"source {setup_script} && env"],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
             )
 
             if result.returncode == 0:
                 # Update current environment with ROS2 variables
-                for line in result.stdout.split('\n'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
-                        if key.startswith(('ROS_', 'AMENT_', 'COLCON_')) or key in ['PATH', 'PYTHONPATH', 'LD_LIBRARY_PATH']:
+                for line in result.stdout.split("\n"):
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        if key.startswith(("ROS_", "AMENT_", "COLCON_")) or key in [
+                            "PATH",
+                            "PYTHONPATH",
+                            "LD_LIBRARY_PATH",
+                        ]:
                             os.environ[key] = value
 
                 self.logger.info(f"[SUCCESS] ROS2 {ros_distro} environment sourced")
@@ -203,7 +220,7 @@ class AdaptiveTestRunner:
     def _run_command_with_ros2(self, cmd: List[str]) -> bool:
         """Run a command with ROS2 environment sourced."""
         if self.ros2_available:
-            ros_distro = os.environ.get('ROS_DISTRO', 'humble')
+            ros_distro = os.environ.get("ROS_DISTRO", "humble")
 
             # Create a wrapper script that sources ROS2 and then runs the command
             wrapper_script = f"""#!/bin/bash
@@ -221,14 +238,15 @@ exec {" ".join(cmd)}
 """
             # Write wrapper script to temp file
             import tempfile
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
                 f.write(wrapper_script.strip())
                 wrapper_path = f.name
 
             # Make it executable
             os.chmod(wrapper_path, 0o755)
 
-            full_cmd = ['bash', wrapper_path]
+            full_cmd = ["bash", wrapper_path]
         else:
             # Fall back to regular command if ROS2 not available
             full_cmd = cmd
@@ -239,7 +257,8 @@ exec {" ".join(cmd)}
     def logger(self):
         """Get logger instance."""
         import logging
-        return logging.getLogger('AdaptiveTestRunner')
+
+        return logging.getLogger("AdaptiveTestRunner")
 
     def run_unit_tests(self, verbose: bool = True, coverage: bool = True) -> bool:
         """Run unit tests for all adaptive components."""
@@ -252,7 +271,7 @@ exec {" ".join(cmd)}
             "test_error_handling.py",
             "test_transition_manager.py",
             "test_monitoring_service.py",
-            "test_environment_setup.py"
+            "test_environment_setup.py",
         ]
 
         cmd = ["python3", "-m", "pytest"]
@@ -261,49 +280,72 @@ exec {" ".join(cmd)}
         if verbose:
             cmd.append("-v")
         if coverage:
-            cmd.extend([
-                "--cov=autonomy_state_machine",
-                "--cov-report=term-missing",
-                f"--cov-report=html:{self.reports_dir}/coverage_html",
-                f"--cov-report=xml:{self.reports_dir}/coverage.xml"
-            ])
+            cmd.extend(
+                [
+                    "--cov=autonomy_state_machine",
+                    "--cov-report=term-missing",
+                    f"--cov-report=html:{self.reports_dir}/coverage_html",
+                    f"--cov-report=xml:{self.reports_dir}/coverage.xml",
+                ]
+            )
 
         # Source ROS2 environment for pytest
         success = self._run_command_with_ros2(cmd)
-        self.test_results['unit_tests'] = success
+        self.test_results["unit_tests"] = success
         return success
 
     def run_performance_tests(self, benchmark: bool = True) -> bool:
         """Run performance and stress tests."""
-        self.logger.info("[PERFORMANCE] Running Adaptive State Machine Performance Tests")
+        self.logger.info(
+            "[PERFORMANCE] Running Adaptive State Machine Performance Tests"
+        )
 
-        cmd = ["python3", "-m", "pytest", str(self.test_dir / "test_adaptive_performance.py")]
+        cmd = [
+            "python3",
+            "-m",
+            "pytest",
+            str(self.test_dir / "test_adaptive_performance.py"),
+        ]
 
         if benchmark:
             # Use pytest-benchmark if available
             try:
                 import pytest_benchmark
-                cmd.extend(["--benchmark-only", "--benchmark-json", f"{self.reports_dir}/benchmarks.json"])
+
+                cmd.extend(
+                    [
+                        "--benchmark-only",
+                        "--benchmark-json",
+                        f"{self.reports_dir}/benchmarks.json",
+                    ]
+                )
             except ImportError:
-                self.logger.warning("pytest-benchmark not available, running basic performance tests")
+                self.logger.warning(
+                    "pytest-benchmark not available, running basic performance tests"
+                )
 
         cmd.extend(["-v", "--tb=short"])
         success = self._run_command_with_ros2(cmd)
-        self.test_results['performance_tests'] = success
+        self.test_results["performance_tests"] = success
         return success
 
     def run_scenario_tests(self, scenario_filter: str = None) -> bool:
         """Run scenario-based tests."""
         self.logger.info("[ACTION] Running Adaptive State Machine Scenario Tests")
 
-        cmd = ["python3", "-m", "pytest", str(self.test_dir / "test_adaptive_scenarios.py")]
+        cmd = [
+            "python3",
+            "-m",
+            "pytest",
+            str(self.test_dir / "test_adaptive_scenarios.py"),
+        ]
 
         if scenario_filter:
             cmd.extend(["-k", scenario_filter])
 
         cmd.extend(["-v", "--tb=short"])
         success = self._run_command_with_ros2(cmd)
-        self.test_results['scenario_tests'] = success
+        self.test_results["scenario_tests"] = success
         return success
 
     def run_integration_tests(self) -> bool:
@@ -312,19 +354,25 @@ exec {" ".join(cmd)}
 
         # Run integration tests from main test file
         cmd = [
-            "python3", "-m", "pytest",
+            "python3",
+            "-m",
+            "pytest",
             str(self.test_dir / "test_adaptive_state_machine.py"),
-            "-k", "integration",
-            "-v", "--tb=short"
+            "-k",
+            "integration",
+            "-v",
+            "--tb=short",
         ]
 
         success = self._run_command_with_ros2(cmd)
-        self.test_results['integration_tests'] = success
+        self.test_results["integration_tests"] = success
         return success
 
     def run_all_tests(self) -> bool:
         """Run complete test suite with environment setup and comprehensive reporting."""
-        self.get_logger().info("[START] Running Complete Adaptive State Machine Test Suite")
+        self.get_logger().info(
+            "[START] Running Complete Adaptive State Machine Test Suite"
+        )
 
         self.start_time = datetime.now()
 
@@ -365,7 +413,9 @@ exec {" ".join(cmd)}
         self.get_logger().info("25")
         all_passed = all_passed and passed
 
-        overall_status = "[SUCCESS] ALL TESTS PASSED" if all_passed else "[ERROR] SOME TESTS FAILED"
+        overall_status = (
+            "[SUCCESS] ALL TESTS PASSED" if all_passed else "[ERROR] SOME TESTS FAILED"
+        )
         self.get_logger().info(f"\n[TARGET] Overall Result: {overall_status}")
         # Show report location
         report_path = self.reports_dir / "test_summary.html"
@@ -383,17 +433,21 @@ exec {" ".join(cmd)}
             system_info = self._get_system_info()
 
             # Generate HTML report
-            html_content = self._create_html_report(test_results, total_duration_seconds, system_info)
+            html_content = self._create_html_report(
+                test_results, total_duration_seconds, system_info
+            )
 
             # Write report files
             report_path = self.reports_dir / "test_summary.html"
-            with open(report_path, 'w') as f:
+            with open(report_path, "w") as f:
                 f.write(html_content)
 
             # Generate JSON summary
-            json_summary = self._create_json_summary(test_results, total_duration_seconds, system_info)
+            json_summary = self._create_json_summary(
+                test_results, total_duration_seconds, system_info
+            )
             json_path = self.reports_dir / "test_summary.json"
-            with open(json_path, 'w') as f:
+            with open(json_path, "w") as f:
                 json.dump(json_summary, f, indent=2)
 
             self.logger.info(f"📄 HTML report generated: {report_path}")
@@ -410,19 +464,20 @@ exec {" ".join(cmd)}
             import psutil
 
             return {
-                'python_version': platform.python_version(),
-                'platform': platform.platform(),
-                'cpu_count': psutil.cpu_count(),
-                'memory_total': psutil.virtual_memory().total // (1024**3),  # GB
-                'ros2_available': self.ros2_available,
-                'ros2_distro': os.environ.get('ROS_DISTRO', 'Not set'),
-                'test_environment': os.environ.get('CI', 'Local development')
+                "python_version": platform.python_version(),
+                "platform": platform.platform(),
+                "cpu_count": psutil.cpu_count(),
+                "memory_total": psutil.virtual_memory().total // (1024**3),  # GB
+                "ros2_available": self.ros2_available,
+                "ros2_distro": os.environ.get("ROS_DISTRO", "Not set"),
+                "test_environment": os.environ.get("CI", "Local development"),
             }
         except Exception:
-            return {'error': 'System info collection failed'}
+            return {"error": "System info collection failed"}
 
-    def _create_html_report(self, test_results: List[tuple], duration: float,
-                          system_info: Dict[str, Any]) -> str:
+    def _create_html_report(
+        self, test_results: List[tuple], duration: float, system_info: Dict[str, Any]
+    ) -> str:
         """Create HTML test report."""
         passed_count = sum(1 for _, passed in test_results if passed)
         failed_count = len(test_results) - passed_count
@@ -506,32 +561,36 @@ exec {" ".join(cmd)}
 
         return html
 
-    def _create_json_summary(self, test_results: List[tuple], duration: float,
-                           system_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_json_summary(
+        self, test_results: List[tuple], duration: float, system_info: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Create JSON test summary."""
         passed_count = sum(1 for _, passed in test_results if passed)
         failed_count = len(test_results) - passed_count
 
         return {
-            'timestamp': datetime.now().isoformat(),
-            'duration_seconds': duration,
-            'summary': {
-                'total_tests': len(test_results),
-                'passed': passed_count,
-                'failed': failed_count,
-                'success_rate': passed_count / len(test_results) if test_results else 0
+            "timestamp": datetime.now().isoformat(),
+            "duration_seconds": duration,
+            "summary": {
+                "total_tests": len(test_results),
+                "passed": passed_count,
+                "failed": failed_count,
+                "success_rate": passed_count / len(test_results) if test_results else 0,
             },
-            'test_results': [
-                {'name': name, 'passed': passed}
-                for name, passed in test_results
+            "test_results": [
+                {"name": name, "passed": passed} for name, passed in test_results
             ],
-            'system_info': system_info,
-            'reports_generated': [
+            "system_info": system_info,
+            "reports_generated": [
                 str(self.reports_dir / "test_summary.html"),
                 str(self.reports_dir / "test_summary.json"),
-                str(self.reports_dir / "coverage_html" / "index.html") if (self.reports_dir / "coverage.xml").exists() else None,
-                str(self.reports_dir / "benchmarks.json") if (self.reports_dir / "benchmarks.json").exists() else None
-            ]
+                str(self.reports_dir / "coverage_html" / "index.html")
+                if (self.reports_dir / "coverage.xml").exists()
+                else None,
+                str(self.reports_dir / "benchmarks.json")
+                if (self.reports_dir / "benchmarks.json").exists()
+                else None,
+            ],
         }
 
     def run_ci_tests(self) -> bool:
@@ -543,11 +602,13 @@ exec {" ".join(cmd)}
             self.logger.error("[ERROR] CI environment setup failed")
             return False
 
-        os.environ['ROS_DOMAIN_ID'] = '42'  # Use specific domain for CI
+        os.environ["ROS_DOMAIN_ID"] = "42"  # Use specific domain for CI
 
         # Run tests with coverage and JUnit output
         cmd = [
-            "python3", "-m", "pytest",
+            "python3",
+            "-m",
+            "pytest",
             str(self.test_dir),
             "--cov=autonomy_state_machine",
             "--cov-report=term-missing",
@@ -556,7 +617,7 @@ exec {" ".join(cmd)}
             "--tb=short",
             "-x",  # Stop on first failure
             "--disable-warnings",
-            "-q"   # Quiet mode for CI
+            "-q",  # Quiet mode for CI
         ]
 
         success = self._run_command_with_ros2(cmd)
@@ -574,21 +635,23 @@ exec {" ".join(cmd)}
         """Generate CI-specific summary for automated systems."""
         try:
             ci_summary = {
-                'status': 'success',
-                'timestamp': datetime.now().isoformat(),
-                'reports': {
-                    'coverage': str(self.reports_dir / "coverage.xml"),
-                    'junit': str(self.reports_dir / "junit.xml"),
-                    'html_summary': str(self.reports_dir / "test_summary.html")
+                "status": "success",
+                "timestamp": datetime.now().isoformat(),
+                "reports": {
+                    "coverage": str(self.reports_dir / "coverage.xml"),
+                    "junit": str(self.reports_dir / "junit.xml"),
+                    "html_summary": str(self.reports_dir / "test_summary.html"),
                 },
-                'artifacts': [
+                "artifacts": [
                     str(self.reports_dir / "coverage_html"),
-                    str(self.reports_dir / "benchmarks.json") if (self.reports_dir / "benchmarks.json").exists() else None
-                ]
+                    str(self.reports_dir / "benchmarks.json")
+                    if (self.reports_dir / "benchmarks.json").exists()
+                    else None,
+                ],
             }
 
             ci_path = self.reports_dir / "ci_summary.json"
-            with open(ci_path, 'w') as f:
+            with open(ci_path, "w") as f:
                 json.dump(ci_summary, f, indent=2)
 
             self.logger.info(f"📄 CI summary generated: {ci_path}")
@@ -598,7 +661,9 @@ exec {" ".join(cmd)}
 
     def run_stress_test(self, duration: int = 60) -> bool:
         """Run stress tests for extended periods."""
-        self.get_logger().info(f"[HOT] Running Adaptive State Machine Stress Test ({duration}s)")
+        self.get_logger().info(
+            f"[HOT] Running Adaptive State Machine Stress Test ({duration}s)"
+        )
 
         start_time = time.time()
 
@@ -606,12 +671,16 @@ exec {" ".join(cmd)}
             # Run performance tests repeatedly
             while time.time() - start_time < duration:
                 if not self.run_performance_tests():
-                    self.get_logger().info("[ERROR] Stress test failed during execution")
+                    self.get_logger().info(
+                        "[ERROR] Stress test failed during execution"
+                    )
                     return False
 
                 # Brief pause between test runs
                 time.sleep(1)
-            self.get_logger().info(f"[SUCCESS] Stress test completed successfully ({duration}s)")
+            self.get_logger().info(
+                f"[SUCCESS] Stress test completed successfully ({duration}s)"
+            )
             return True
 
         except KeyboardInterrupt:
@@ -627,7 +696,7 @@ exec {" ".join(cmd)}
 
         report_path = self.test_dir / "test_report.md"
 
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             f.write("# Adaptive State Machine Test Report\n\n")
             f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
@@ -636,7 +705,9 @@ exec {" ".join(cmd)}
             f.write("```\n")
             f.write("tests/\n")
             f.write("├── test_adaptive_state_machine.py    # Core unit tests\n")
-            f.write("├── test_adaptive_performance.py      # Performance & reliability\n")
+            f.write(
+                "├── test_adaptive_performance.py      # Performance & reliability\n"
+            )
             f.write("├── test_adaptive_scenarios.py        # Mission scenario tests\n")
             f.write("├── pytest.ini                        # Test configuration\n")
             f.write("└── run_adaptive_tests.py            # Test runner (this file)\n")
@@ -644,8 +715,12 @@ exec {" ".join(cmd)}
 
             # Coverage areas
             f.write("## Test Coverage Areas\n\n")
-            f.write("- **Context Evaluation**: System monitoring and context assessment\n")
-            f.write("- **Policy Engine**: Adaptive decision making and policy execution\n")
+            f.write(
+                "- **Context Evaluation**: System monitoring and context assessment\n"
+            )
+            f.write(
+                "- **Policy Engine**: Adaptive decision making and policy execution\n"
+            )
             f.write("- **State Machine**: Enhanced state transitions with adaptation\n")
             f.write("- **Monitoring Service**: Real-time monitoring and analytics\n")
             f.write("- **Performance**: Scalability, reliability, and resource usage\n")
@@ -655,11 +730,20 @@ exec {" ".join(cmd)}
             # Key metrics
             f.write("## Key Test Metrics\n\n")
             f.write("- **Unit Test Coverage**: >80% code coverage required\n")
-            f.write("- **Performance**: <50ms context evaluation, <20ms policy decisions\n")
-            f.write("- **Reliability**: Graceful degradation under failure conditions\n")
-            f.write("- **Memory Usage**: <50MB additional memory for adaptive features\n")
-            f.write("- **Mission Success**: >95% success rate in adaptive scenarios\n\n")
+            f.write(
+                "- **Performance**: <50ms context evaluation, <20ms policy decisions\n"
+            )
+            f.write(
+                "- **Reliability**: Graceful degradation under failure conditions\n"
+            )
+            f.write(
+                "- **Memory Usage**: <50MB additional memory for adaptive features\n"
+            )
+            f.write(
+                "- **Mission Success**: >95% success rate in adaptive scenarios\n\n"
+            )
         self.get_logger().info(f"📄 Test report generated: {report_path}")
+
     def _run_command(self, cmd: List[str]) -> bool:
         """Run a command and return success status."""
         try:
@@ -668,7 +752,7 @@ exec {" ".join(cmd)}
                 cwd=self.project_root,
                 capture_output=False,
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
             )
             return result.returncode == 0
         except subprocess.TimeoutExpired:
@@ -683,10 +767,11 @@ def main():
     """Main entry point for test runner."""
     # Setup logging
     import logging
+
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-        datefmt='%H:%M:%S'
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
     )
 
     parser = argparse.ArgumentParser(
@@ -706,38 +791,40 @@ Environment Variables:
   ROS_DISTRO      ROS2 distribution (auto-detected if not set)
   ROS_DOMAIN_ID   ROS2 domain ID (default: 42 for tests)
   PYTHONPATH      Additional Python paths (auto-configured)
-        """
+        """,
     )
 
     parser.add_argument(
-        'command',
-        choices=['unit', 'performance', 'scenario', 'integration', 'all', 'ci', 'stress', 'report'],
-        help='Test command to execute'
+        "command",
+        choices=[
+            "unit",
+            "performance",
+            "scenario",
+            "integration",
+            "all",
+            "ci",
+            "stress",
+            "report",
+        ],
+        help="Test command to execute",
     )
 
     parser.add_argument(
-        '--duration',
-        type=int,
-        default=60,
-        help='Duration for stress tests (seconds)'
+        "--duration", type=int, default=60, help="Duration for stress tests (seconds)"
     )
 
     parser.add_argument(
-        '--scenario-filter',
+        "--scenario-filter",
         type=str,
-        help='Filter for scenario tests (e.g., "battery" or "emergency")'
+        help='Filter for scenario tests (e.g., "battery" or "emergency")',
     )
 
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
 
     parser.add_argument(
-        '--no-setup',
-        action='store_true',
-        help='Skip automatic environment setup'
+        "--no-setup", action="store_true", help="Skip automatic environment setup"
     )
 
     args = parser.parse_args()
@@ -754,36 +841,36 @@ Environment Variables:
     success = False
 
     try:
-        if args.command == 'unit':
+        if args.command == "unit":
             success = runner.run_unit_tests(verbose=args.verbose)
-        elif args.command == 'performance':
+        elif args.command == "performance":
             success = runner.run_performance_tests()
-        elif args.command == 'scenario':
+        elif args.command == "scenario":
             success = runner.run_scenario_tests(args.scenario_filter)
-        elif args.command == 'integration':
+        elif args.command == "integration":
             success = runner.run_integration_tests()
-        elif args.command == 'all':
+        elif args.command == "all":
             if not args.no_setup:
-        self.get_logger().info("[FIX] Setting up test environment...")
+                print("Setting up test environment...")
             success = runner.run_all_tests()
-        elif args.command == 'ci':
+        elif args.command == "ci":
             success = runner.run_ci_tests()
-        elif args.command == 'stress':
+        elif args.command == "stress":
             if not args.no_setup:
                 runner.setup_test_environment()
             success = runner.run_stress_test(args.duration)
-        elif args.command == 'report':
+        elif args.command == "report":
             runner.generate_test_report()
             success = True
 
         # Print final status
         if success:
-        self.get_logger().info("\n[SUCCESS] Test execution completed successfully")
-            if hasattr(runner, 'reports_dir'):
-        self.get_logger().info(f"📄 Reports available in: {runner.reports_dir}")
+            print("\n[SUCCESS] Test execution completed successfully")
+            if hasattr(runner, "reports_dir"):
+                self.get_logger().info(f"📄 Reports available in: {runner.reports_dir}")
         else:
-        self.get_logger().info("\n[ERROR] Test execution failed")
-        self.get_logger().info("Check the logs above for details")
+            self.get_logger().info("\n[ERROR] Test execution failed")
+            self.get_logger().info("Check the logs above for details")
     except KeyboardInterrupt:
         self.get_logger().info("\n[STOP] Test execution interrupted by user")
         success = False
@@ -794,5 +881,5 @@ Environment Variables:
     sys.exit(0 if success else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -42,13 +42,13 @@ class AdvancedSystemsIntegrationTest:
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals."""
-        print("\n🛑 Received shutdown signal...")
+        print("\n Received shutdown signal...")
         self.running = False
         self.cleanup()
 
     def run_full_integration_test(self):
         """Run the complete advanced systems integration test."""
-        print("🧪 Advanced Systems Integration Test Suite")
+        print("[EXPERIMENT] Advanced Systems Integration Test Suite")
         print("=" * 60)
         print("Testing: WebSocket Redundancy + State Sync + DDS + Dynamic Config")
         print("=" * 60)
@@ -56,43 +56,43 @@ class AdvancedSystemsIntegrationTest:
         try:
             # Phase 1: System Startup
             if not self.start_integrated_system():
-                print("❌ Failed to start integrated system")
+                print("[FAIL] Failed to start integrated system")
                 return False
 
             self.running = True
 
             # Phase 2: Baseline Testing
-            print("\n📊 Phase 1: Baseline System Testing")
+            print("\n[GRAPH] Phase 1: Baseline System Testing")
             baseline_results = self.test_baseline_functionality()
             self.test_results["baseline"] = baseline_results
 
             # Phase 3: WebSocket Redundancy Testing
-            print("\n🌐 Phase 2: WebSocket Redundancy Testing")
+            print("\n[NETWORK] Phase 2: WebSocket Redundancy Testing")
             ws_results = self.test_websocket_redundancy()
             self.test_results["websocket"] = ws_results
 
             # Phase 4: State Synchronization Testing
-            print("\n🔄 Phase 3: State Synchronization Testing")
+            print("\n[REFRESH] Phase 3: State Synchronization Testing")
             state_results = self.test_state_synchronization()
             self.test_results["state_sync"] = state_results
 
             # Phase 5: DDS Domain Testing (simulated)
-            print("\n🔗 Phase 4: DDS Domain Testing")
+            print("\n Phase 4: DDS Domain Testing")
             dds_results = self.test_dds_domains()
             self.test_results["dds"] = dds_results
 
             # Phase 6: Dynamic Configuration Testing
-            print("\n⚙️ Phase 5: Dynamic Configuration Testing")
+            print("\n Phase 5: Dynamic Configuration Testing")
             config_results = self.test_dynamic_configuration()
             self.test_results["dynamic_config"] = config_results
 
             # Phase 7: Integrated Failure Scenarios
-            print("\n💥 Phase 6: Integrated Failure Scenarios")
+            print("\n Phase 6: Integrated Failure Scenarios")
             failure_results = self.test_integrated_failures()
             self.test_results["integrated_failures"] = failure_results
 
             # Phase 8: Performance Impact Analysis
-            print("\n📈 Phase 7: Performance Impact Analysis")
+            print("\n Phase 7: Performance Impact Analysis")
             perf_results = self.analyze_performance_impact()
             self.test_results["performance"] = perf_results
 
@@ -107,10 +107,10 @@ class AdvancedSystemsIntegrationTest:
 
     def start_integrated_system(self):
         """Start the complete integrated system with all advanced features."""
-        print("🚀 Starting Integrated Advanced System...")
+        print("[IGNITE] Starting Integrated Advanced System...")
 
         # Start Competition Bridge (primary endpoint with all features)
-        print("  📡 Starting Competition Bridge (Primary - All Features)...")
+        print("  [ANTENNA] Starting Competition Bridge (Primary - All Features)...")
         env = os.environ.copy()
         env["PYTHONPATH"] = f"{os.getcwd()}/src:{env.get('PYTHONPATH', '')}"
 
@@ -140,7 +140,7 @@ class AdvancedSystemsIntegrationTest:
         time.sleep(5)
 
         # Start Secondary Bridge
-        print("  📡 Starting Secondary WebSocket Bridge...")
+        print("  [ANTENNA] Starting Secondary WebSocket Bridge...")
         proc2 = subprocess.Popen(
             ["python3", "src/bridges/secondary_websocket_bridge.py"],
             env=env,
@@ -153,7 +153,7 @@ class AdvancedSystemsIntegrationTest:
         time.sleep(3)
 
         # Start Tertiary Bridge
-        print("  📡 Starting Tertiary WebSocket Bridge...")
+        print("  [ANTENNA] Starting Tertiary WebSocket Bridge...")
         proc3 = subprocess.Popen(
             ["python3", "src/bridges/tertiary_websocket_bridge.py"],
             env=env,
@@ -167,13 +167,15 @@ class AdvancedSystemsIntegrationTest:
 
         # Verify all processes are running
         running_count = sum(1 for _, proc in self.processes if proc.poll() is None)
-        print(f"✅ {running_count}/{len(self.processes)} processes started successfully")
+        print(
+            f"[PASS] {running_count}/{len(self.processes)} processes started successfully"
+        )
 
         return running_count == len(self.processes)
 
     def test_baseline_functionality(self) -> Dict[str, Any]:
         """Test basic system functionality before advanced features."""
-        print("  🔍 Testing ROS2 node discovery...")
+        print("  [MAGNIFY] Testing ROS2 node discovery...")
 
         try:
             # Test ROS2 node listing
@@ -210,12 +212,12 @@ class AdvancedSystemsIntegrationTest:
             }
 
         except Exception as e:
-            print(f"    ❌ Baseline test error: {e}")
+            print(f"    [FAIL] Baseline test error: {e}")
             return {"error": str(e), "system_healthy": False}
 
     def test_websocket_redundancy(self) -> Dict[str, Any]:
         """Test WebSocket redundancy functionality."""
-        print("  🌐 Testing WebSocket endpoints...")
+        print("  [NETWORK] Testing WebSocket endpoints...")
 
         endpoints = [
             ("ws://localhost:8080", "Primary"),
@@ -232,7 +234,7 @@ class AdvancedSystemsIntegrationTest:
                 results[name.lower()] = {"url": url, "accessible": True}
 
             except Exception as e:
-                print(f"    ❌ {name} endpoint error: {e}")
+                print(f"    [FAIL] {name} endpoint error: {e}")
                 results[name.lower()] = {
                     "url": url,
                     "accessible": False,
@@ -250,14 +252,14 @@ class AdvancedSystemsIntegrationTest:
                 f"    Redundancy manager: {len(status['endpoints'])} endpoints, health: {status['system_health']['score']:.1f}%"
             )
         except Exception as e:
-            print(f"    ❌ Redundancy manager error: {e}")
+            print(f"    [FAIL] Redundancy manager error: {e}")
             results["redundancy_error"] = str(e)
 
         return results
 
     def test_state_synchronization(self) -> Dict[str, Any]:
         """Test state synchronization across bridges."""
-        print("  🔄 Testing state synchronization...")
+        print("  [REFRESH] Testing state synchronization...")
 
         try:
             from src.core.state_synchronization_manager import get_state_manager
@@ -272,9 +274,9 @@ class AdvancedSystemsIntegrationTest:
             state_sync_working = retrieved_value == "test_value"
 
             if state_sync_working:
-                print("    ✅ State synchronization working")
+                print("    [PASS] State synchronization working")
             else:
-                print("    ❌ State synchronization failed")
+                print("    [FAIL] State synchronization failed")
 
             # Test system status
             status = state_manager.get_system_status()
@@ -290,12 +292,12 @@ class AdvancedSystemsIntegrationTest:
             }
 
         except Exception as e:
-            print(f"    ❌ State sync error: {e}")
+            print(f"    [FAIL] State sync error: {e}")
             return {"error": str(e), "state_sync_working": False}
 
     def test_dds_domains(self) -> Dict[str, Any]:
         """Test DDS domain redundancy (simulated)."""
-        print("  🔗 Testing DDS domain functionality...")
+        print("   Testing DDS domain functionality...")
 
         try:
             from src.core.dds_domain_redundancy_manager import (
@@ -323,12 +325,12 @@ class AdvancedSystemsIntegrationTest:
             }
 
         except Exception as e:
-            print(f"    ❌ DDS domain error: {e}")
+            print(f"    [FAIL] DDS domain error: {e}")
             return {"error": str(e), "dds_system_active": False}
 
     def test_dynamic_configuration(self) -> Dict[str, Any]:
         """Test dynamic configuration functionality."""
-        print("  ⚙️ Testing dynamic configuration...")
+        print("   Testing dynamic configuration...")
 
         try:
             from src.core.dynamic_config_manager import get_dynamic_config_manager
@@ -347,9 +349,9 @@ class AdvancedSystemsIntegrationTest:
             )
 
             if success:
-                print("    ✅ Dynamic configuration working")
+                print("    [PASS] Dynamic configuration working")
             else:
-                print("    ❌ Dynamic configuration failed")
+                print("    [FAIL] Dynamic configuration failed")
 
             # Check configuration
             current_config = config_manager.get_node_config("competition_bridge")
@@ -373,12 +375,12 @@ class AdvancedSystemsIntegrationTest:
             }
 
         except Exception as e:
-            print(f"    ❌ Dynamic config error: {e}")
+            print(f"    [FAIL] Dynamic config error: {e}")
             return {"error": str(e), "config_update_success": False}
 
     def test_integrated_failures(self) -> Dict[str, Any]:
         """Test integrated failure scenarios across all systems."""
-        print("  💥 Testing integrated failure scenarios...")
+        print("   Testing integrated failure scenarios...")
 
         results = {}
 
@@ -413,7 +415,7 @@ class AdvancedSystemsIntegrationTest:
 
     def analyze_performance_impact(self) -> Dict[str, Any]:
         """Analyze performance impact of all advanced systems."""
-        print("  📈 Analyzing performance impact...")
+        print("   Analyzing performance impact...")
 
         try:
             # Measure baseline system resources
@@ -440,21 +442,21 @@ class AdvancedSystemsIntegrationTest:
             }
 
         except Exception as e:
-            print(f"    ❌ Performance analysis error: {e}")
+            print(f"    [FAIL] Performance analysis error: {e}")
             return {"error": str(e)}
 
     def generate_integration_report(self):
         """Generate comprehensive integration test report."""
-        print("\n📋 Advanced Systems Integration Test Report")
+        print("\n[CLIPBOARD] Advanced Systems Integration Test Report")
         print("=" * 60)
 
         # Overall success
         overall_success = self.validate_overall_success()
-        status = "✅ PASSED" if overall_success else "❌ FAILED"
+        status = "[PASS] PASSED" if overall_success else "[FAIL] FAILED"
         print(f"Overall Test Status: {status}")
 
         # System status
-        print(f"\n🏗️ System Configuration:")
+        print(f"\n[CONSTRUCTION] System Configuration:")
         print(f"   • Test Duration: {self.test_duration}s")
         print(f"   • Processes Started: {len(self.processes)}")
         print(
@@ -463,37 +465,39 @@ class AdvancedSystemsIntegrationTest:
 
         # Detailed results
         for test_name, results in self.test_results.items():
-            print(f"\n🔍 {test_name.upper().replace('_', ' ')} Results:")
+            print(f"\n[MAGNIFY] {test_name.upper().replace('_', ' ')} Results:")
 
             if test_name == "baseline":
                 print(f"   • ROS2 Nodes: {results.get('nodes_found', 0)}")
                 print(f"   • ROS2 Topics: {results.get('topics_found', 0)}")
                 print(f"   • ROS2 Services: {results.get('services_found', 0)}")
                 print(
-                    f"   • System Healthy: {'✅' if results.get('system_healthy') else '❌'}"
+                    f"   • System Healthy: {'[PASS]' if results.get('system_healthy') else '[FAIL]'}"
                 )
 
             elif test_name == "websocket":
                 for endpoint, data in results.items():
                     if endpoint != "redundancy_status":
                         accessible = data.get("accessible", False)
-                        print(f"   • {endpoint.title()}: {'✅' if accessible else '❌'}")
+                        print(
+                            f"   • {endpoint.title()}: {'[PASS]' if accessible else '[FAIL]'}"
+                        )
 
             elif test_name == "state_sync":
                 working = results.get("state_sync_working", False)
-                print(f"   • State Sync Working: {'✅' if working else '❌'}")
+                print(f"   • State Sync Working: {'[PASS]' if working else '[FAIL]'}")
                 print(f"   • State Keys: {len(results.get('state_keys', []))}")
 
             elif test_name == "dds":
                 active = results.get("dds_system_active", False)
-                print(f"   • DDS System Active: {'✅' if active else '❌'}")
+                print(f"   • DDS System Active: {'[PASS]' if active else '[FAIL]'}")
                 print(f"   • Domains: {results.get('domains_count', 0)}")
 
             elif test_name == "dynamic_config":
                 success = results.get("config_update_success", False)
-                print(f"   • Config Updates: {'✅' if success else '❌'}")
+                print(f"   • Config Updates: {'[PASS]' if success else '[FAIL]'}")
                 print(
-                    f"   • Rollback Working: {'✅' if results.get('rollback_success') else '❌'}"
+                    f"   • Rollback Working: {'[PASS]' if results.get('rollback_success') else '[FAIL]'}"
                 )
 
             elif test_name == "performance":
@@ -502,18 +506,18 @@ class AdvancedSystemsIntegrationTest:
                 print(f"   • CPU Usage: {cpu:.1f}%")
                 print(f"   • Memory Usage: {mem:.1f} MB")
                 print(
-                    f"   • Performance OK: {'✅' if results.get('performance_acceptable') else '❌'}"
+                    f"   • Performance OK: {'[PASS]' if results.get('performance_acceptable') else '[FAIL]'}"
                 )
 
         # Recommendations
-        print(f"\n💡 Recommendations:")
+        print(f"\n Recommendations:")
 
         if overall_success:
-            print("   ✅ All systems integrated successfully!")
-            print("   ✅ Ready for competition deployment")
-            print("   ✅ Advanced fault tolerance achieved")
+            print("   [PASS] All systems integrated successfully!")
+            print("   [PASS] Ready for competition deployment")
+            print("   [PASS] Advanced fault tolerance achieved")
         else:
-            print("   ⚠️ Some systems need attention:")
+            print("    Some systems need attention:")
             if not self.test_results.get("baseline", {}).get("system_healthy"):
                 print("     - ROS2 system health needs investigation")
             if (
@@ -554,11 +558,11 @@ class AdvancedSystemsIntegrationTest:
 
     def cleanup(self):
         """Clean up all test processes."""
-        print("\n🧹 Cleaning up test environment...")
+        print("\n[SWEEP] Cleaning up test environment...")
 
         for name, proc in self.processes:
             if proc and proc.poll() is None:
-                print(f"  🛑 Stopping {name}...")
+                print(f"   Stopping {name}...")
                 proc.terminate()
 
         # Wait for processes to terminate
@@ -574,7 +578,7 @@ class AdvancedSystemsIntegrationTest:
             1 for _, proc in self.processes if proc.poll() is not None
         )
         print(
-            f"✅ Cleanup complete: {terminated_count}/{len(self.processes)} processes terminated"
+            f"[PASS] Cleanup complete: {terminated_count}/{len(self.processes)} processes terminated"
         )
 
 
@@ -604,12 +608,12 @@ def main():
         sys.exit(0 if success else 1)
 
     except KeyboardInterrupt:
-        print("\n🛑 Test interrupted by user")
+        print("\n Test interrupted by user")
         suite.cleanup()
         sys.exit(1)
 
     except Exception as e:
-        print(f"\n❌ Test suite error: {e}")
+        print(f"\n[FAIL] Test suite error: {e}")
         suite.cleanup()
         sys.exit(1)
 

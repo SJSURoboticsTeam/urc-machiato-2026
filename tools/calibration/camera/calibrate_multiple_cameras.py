@@ -30,7 +30,7 @@ def calibrate_single_camera(
     """Calibrate a single camera."""
 
     print(f"\n{'='*70}")
-    print(f"📷 CALIBRATING CAMERA {camera_index}")
+    print(f" CALIBRATING CAMERA {camera_index}")
     print(f"{'='*70}")
     print(f"Output: {output_file}")
     print(f"Board: {cols}×{rows} ({cols*rows} markers)")
@@ -54,15 +54,15 @@ def calibrate_single_camera(
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     if not cap.isOpened():
-        print(f"❌ Cannot open camera {camera_index}")
+        print(f"[FAIL] Cannot open camera {camera_index}")
         return False
 
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    print(f"✅ Camera opened: {width}x{height}\n")
+    print(f"[PASS] Camera opened: {width}x{height}\n")
 
     # Collect markers
-    print(f"📹 Capturing for {duration} seconds...")
+    print(f" Capturing for {duration} seconds...")
     print("Move board around to collect good frames (various angles)\n")
 
     all_corners = []
@@ -111,11 +111,11 @@ def calibrate_single_camera(
                             collected_frames += 1
 
                             print(
-                                f"  ✅ Frame {frame_count}: Collected {n_corners} corners (total: {collected_frames})"
+                                f"  [PASS] Frame {frame_count}: Collected {n_corners} corners (total: {collected_frames})"
                             )
 
                             if collected_frames >= 15:
-                                print("\n✅ Collected enough frames!")
+                                print("\n[PASS] Collected enough frames!")
                                 break
 
                     # Draw for visualization
@@ -134,23 +134,23 @@ def calibrate_single_camera(
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
-                print("\n⏹️  User interrupted")
+                print("\n⏹  User interrupted")
                 break
 
     finally:
         cap.release()
         cv2.destroyAllWindows()
 
-    print("\n📊 Results:")
+    print("\n[GRAPH] Results:")
     print(f"   Frames processed: {frame_count}")
     print(f"   Frames collected: {collected_frames}")
 
     if collected_frames < 5:
-        print(f"❌ Need at least 5 frames, got {collected_frames}")
+        print(f"[FAIL] Need at least 5 frames, got {collected_frames}")
         return False
 
     # Calibrate
-    print("\n🔧 Calibrating...")
+    print("\n[TOOL] Calibrating...")
     try:
         camera_matrix = np.zeros((3, 3))
         dist_coeffs = np.zeros((5, 1))
@@ -188,7 +188,9 @@ def calibrate_single_camera(
                 image_points_list.append(np.vstack(frame_img_pts))
 
         if len(object_points_list) < 3:
-            print(f"❌ Not enough frames with valid markers ({len(object_points_list)})")
+            print(
+                f"[FAIL] Not enough frames with valid markers ({len(object_points_list)})"
+            )
             return False
 
         ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
@@ -200,10 +202,10 @@ def calibrate_single_camera(
         )
 
         if not ret:
-            print("❌ Calibration failed")
+            print("[FAIL] Calibration failed")
             return False
 
-        print("✅ Calibration successful!")
+        print("[PASS] Calibration successful!")
 
         # Save
         calib_data = {
@@ -228,14 +230,14 @@ def calibrate_single_camera(
         with open(output_file, "w") as f:
             json.dump(calib_data, f, indent=2)
 
-        print(f"💾 Calibration saved to: {output_file}")
+        print(f" Calibration saved to: {output_file}")
         print(f"\nCamera Matrix:\n{camera_matrix}")
         print(f"\nDistortion Coefficients:\n{dist_coeffs.flatten()}")
 
         return True
 
     except Exception as e:
-        print(f"❌ Calibration error: {e}")
+        print(f"[FAIL] Calibration error: {e}")
         import traceback
 
         traceback.print_exc()
@@ -302,7 +304,7 @@ Examples:
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    print(f"📁 Output directory: {output_dir.absolute()}\n")
+    print(f" Output directory: {output_dir.absolute()}\n")
 
     # Calibrate each camera
     successful = 0
@@ -328,10 +330,10 @@ Examples:
 
         if success:
             successful += 1
-            print(f"\n✅ Camera {camera_index} calibrated successfully!")
+            print(f"\n[PASS] Camera {camera_index} calibrated successfully!")
         else:
             failed += 1
-            print(f"\n❌ Camera {camera_index} calibration FAILED!")
+            print(f"\n[FAIL] Camera {camera_index} calibration FAILED!")
 
         # Ask if user wants to continue
         if i < args.num_cameras - 1:
@@ -341,22 +343,22 @@ Examples:
             try:
                 input()
             except KeyboardInterrupt:
-                print("\n⏹️  Calibration interrupted by user")
+                print("\n⏹  Calibration interrupted by user")
                 break
 
     # Summary
     print(f"\n{'='*70}")
-    print("📊 CALIBRATION SUMMARY")
+    print("[GRAPH] CALIBRATION SUMMARY")
     print(f"{'='*70}")
     print(f"Total cameras: {args.num_cameras}")
-    print(f"✅ Successful: {successful}")
-    print(f"❌ Failed: {failed}")
-    print(f"📁 Calibrations saved to: {output_dir.absolute()}\n")
+    print(f"[PASS] Successful: {successful}")
+    print(f"[FAIL] Failed: {failed}")
+    print(f" Calibrations saved to: {output_dir.absolute()}\n")
 
     # List all calibration files
     calib_files = sorted(output_dir.glob("camera_*_calibration.json"))
     if calib_files:
-        print("📋 Calibration files:")
+        print("[CLIPBOARD] Calibration files:")
         for calib_file in calib_files:
             try:
                 with open(calib_file) as f:

@@ -18,26 +18,27 @@ from typing import Any, Dict, List, Optional
 
 import rclpy
 from autonomy_interfaces.msg import LedCommand, VisionDetection
-from constants import (
+from geometry_msgs.msg import TwistStamped
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import BatteryState, Imu, NavSatFix
+from std_msgs.msg import Bool, String
+
+from .constants import (
     DEFAULT_COMPETITION_LOG_FILE,
     DEFAULT_DDS_DOMAIN_ID,
     DEFAULT_TELEMETRY_RATE_HZ,
     DEFAULT_WEBSOCKET_PORT,
 )
-from emergency_communicator import EmergencyCommunicator
-from geometry_msgs.msg import TwistStamped
-from mission_orchestrator import MissionOrchestrator
-from nav_msgs.msg import Odometry
-from parameter_manager import ParameterManager
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy
-from sensor_msgs.msg import BatteryState, Imu, NavSatFix
-from spectrum_monitor import SpectrumMonitor
-from std_msgs.msg import Bool, String
+from .emergency_communicator import EmergencyCommunicator
+from .mission_orchestrator import MissionOrchestrator
+from .parameter_manager import ParameterManager
+from .spectrum_monitor import SpectrumMonitor
 
 # Import extracted manager classes
-from telemetry_manager import TelemetryManager
-from websocket_manager import WebSocketManager
+from .telemetry_manager import TelemetryManager
+from .websocket_manager import WebSocketManager
 
 
 class CompetitionBridge(Node):

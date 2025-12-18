@@ -26,9 +26,9 @@ def cleanup_print_statements():
             r"        self.get_logger().info(\1, \2)",
         ),
         # Emergency/error prints
-        (r'^\s*print\("🚨(.*?)"\)\s*$', r'        self.get_logger().error("\1")'),
+        (r'^\s*print\("(.*?)"\)\s*$', r'        self.get_logger().error("\1")'),
         # Success prints
-        (r'^\s*print\("✅(.*?)"\)\s*$', r'        self.get_logger().info("\1")'),
+        (r'^\s*print\("[PASS](.*?)"\)\s*$', r'        self.get_logger().info("\1")'),
         # Info prints
         (r'^\s*print\("(.*?)..."\)\s*$', r'        self.get_logger().info("\1...")'),
     ]
@@ -62,13 +62,15 @@ def cleanup_print_statements():
                 )
                 prints_removed += removed_in_file
 
-                print(f"✅ Cleaned {py_file.name} ({removed_in_file} prints removed)")
+                print(
+                    f"[PASS] Cleaned {py_file.name} ({removed_in_file} prints removed)"
+                )
 
         except Exception as e:
-            print(f"❌ Error processing {py_file}: {e}")
+            print(f"[FAIL] Error processing {py_file}: {e}")
 
     print(
-        f"\n📊 SUMMARY: {files_processed} files processed, {prints_removed} print statements removed"
+        f"\n[GRAPH] SUMMARY: {files_processed} files processed, {prints_removed} print statements removed"
     )
 
 

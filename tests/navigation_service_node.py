@@ -126,7 +126,7 @@ def main():
 
     def signal_handler(signum, frame):
         """Handle shutdown signals."""
-        print("\n🛑 Shutting down navigation service...")
+        print("\n Shutting down navigation service...")
         sys.exit(0)
 
     # Set up signal handlers
@@ -137,13 +137,13 @@ def main():
     node = NavigationServiceNode()
 
     try:
-        print("🚀 Navigation Service running...")
-        print("📡 Providing path planning services")
+        print("[IGNITE] Navigation Service running...")
+        print("[ANTENNA] Providing path planning services")
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        print("✅ Navigation Service stopping...")
+        print("[PASS] Navigation Service stopping...")
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

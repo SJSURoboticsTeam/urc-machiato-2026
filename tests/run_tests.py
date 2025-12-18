@@ -71,7 +71,7 @@ class TestRunner:
 
     def run_aoi_tests(self, coverage=True, verbose=True):
         """Run automated AoI tests."""
-        print("🧪 Running Automated AoI Tests...")
+        print("[EXPERIMENT] Running Automated AoI Tests...")
         print("This will spin up the system, run tests, and spin down automatically")
 
         cmd = ["python3", "tests/automated_test_platform.py", "aoi_tests"]
@@ -83,7 +83,7 @@ class TestRunner:
 
     def run_all_automated_tests(self, coverage=True, verbose=True):
         """Run all tests using automated platform."""
-        print("🤖 Running Complete Automated Test Suite...")
+        print(" Running Complete Automated Test Suite...")
         print("This will run all test suites with full lifecycle management")
 
         cmd = ["python3", "tests/automated_test_platform.py", "all"]
@@ -114,13 +114,13 @@ class TestRunner:
 
     def generate_reports(self):
         """Generate test reports."""
-        print("📊 Generating Test Reports...")
+        print("[GRAPH] Generating Test Reports...")
 
         cmd = ["python3", "tests/reports/generate_test_report.py"]
         result = self._run_command(cmd, "Report Generation")
 
         if result == 0:
-            print("✅ Reports generated in tests/reports/")
+            print("[PASS] Reports generated in tests/reports/")
             print("   - test_report.html (HTML report)")
             print("   - test_report.json (JSON data)")
             print("   - coverage_html/ (Coverage report)")
@@ -129,7 +129,7 @@ class TestRunner:
 
     def check_test_status(self):
         """Check current test status."""
-        print("📋 Current Test Status")
+        print("[CLIPBOARD] Current Test Status")
         print("=" * 50)
 
         # Check if test directories exist
@@ -138,17 +138,21 @@ class TestRunner:
         system_tests = (self.tests_dir / "system").exists()
         fixtures = (self.tests_dir / "fixtures").exists()
 
-        print(f"Unit Tests Directory: {'✅' if unit_tests else '❌'}")
-        print(f"Integration Tests Directory: {'✅' if integration_tests else '❌'}")
-        print(f"System Tests Directory: {'✅' if system_tests else '❌'}")
-        print(f"Test Fixtures: {'✅' if fixtures else '❌'}")
+        print(f"Unit Tests Directory: {'[PASS]' if unit_tests else '[FAIL]'}")
+        print(
+            f"Integration Tests Directory: {'[PASS]' if integration_tests else '[FAIL]'}"
+        )
+        print(f"System Tests Directory: {'[PASS]' if system_tests else '[FAIL]'}")
+        print(f"Test Fixtures: {'[PASS]' if fixtures else '[FAIL]'}")
 
         # Check pytest configuration
         pytest_ini = self.tests_dir / "pytest.ini"
         conftest = self.tests_dir / "conftest.py"
 
-        print(f"Pytest Config: {'✅' if pytest_ini.exists() else '❌'}")
-        print(f"Test Fixtures (conftest.py): {'✅' if conftest.exists() else '❌'}")
+        print(f"Pytest Config: {'[PASS]' if pytest_ini.exists() else '[FAIL]'}")
+        print(
+            f"Test Fixtures (conftest.py): {'[PASS]' if conftest.exists() else '[FAIL]'}"
+        )
 
         # Count test files
         test_files = list(self.tests_dir.rglob("test_*.py"))
@@ -160,7 +164,7 @@ class TestRunner:
         if len(test_files) > 5:
             print(f"  ... and {len(test_files) - 5} more")
 
-        print("\n💡 Next Steps:")
+        print("\n Next Steps:")
         print("1. Run automated AoI tests: python tests/run_tests.py --aoi")
         print("2. Run complete automated suite: python tests/run_tests.py --automated")
         print("3. Run traditional unit tests: python tests/run_tests.py --unit")
@@ -171,7 +175,7 @@ class TestRunner:
 
     def _run_command(self, cmd, test_type):
         """Run a command and return exit code."""
-        print(f"🚀 Running {test_type}...")
+        print(f"[IGNITE] Running {test_type}...")
         print(f"Command: {' '.join(cmd)}")
         print("-" * 50)
 
@@ -184,12 +188,12 @@ class TestRunner:
             )
             print("-" * 50)
             if result.returncode == 0:
-                print(f"✅ {test_type} PASSED")
+                print(f"[PASS] {test_type} PASSED")
             else:
-                print(f"❌ {test_type} FAILED (exit code: {result.returncode})")
+                print(f"[FAIL] {test_type} FAILED (exit code: {result.returncode})")
             return result.returncode
         except Exception as e:
-            print(f"❌ Error running {test_type}: {e}")
+            print(f"[FAIL] Error running {test_type}: {e}")
             return 1
 
 
@@ -249,7 +253,7 @@ def main():
         return success
     else:
         # Default: show status
-        print("🧪 Autonomy System Test Runner")
+        print("[EXPERIMENT] Autonomy System Test Runner")
         print("=" * 40)
         print("Available commands:")
         print("  --status          Check current test infrastructure status")

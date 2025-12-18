@@ -11,6 +11,7 @@ Author: URC 2026 Autonomy Team
 import copy
 import hashlib
 import json
+import logging
 import threading
 import time
 from dataclasses import dataclass, field

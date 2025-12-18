@@ -22,10 +22,10 @@ try:
     from rclpy.node import Node
 
     ROS2_AVAILABLE = True
-    print("✅ ROS2 available for testing")
+    print("[PASS] ROS2 available for testing")
 except ImportError:
     ROS2_AVAILABLE = False
-    print("⚠️ ROS2 not available - some tests will be skipped")
+    print(" ROS2 not available - some tests will be skipped")
 
 # Check autonomy interfaces
 try:
@@ -33,10 +33,10 @@ try:
     from autonomy_interfaces.msg import LedCommand, VisionDetection
 
     AUTONOMY_INTERFACES_AVAILABLE = True
-    print("✅ Autonomy interfaces available")
+    print("[PASS] Autonomy interfaces available")
 except ImportError:
     AUTONOMY_INTERFACES_AVAILABLE = False
-    print("⚠️ Autonomy interfaces not available - using mocks")
+    print(" Autonomy interfaces not available - using mocks")
 
 
 @pytest.fixture

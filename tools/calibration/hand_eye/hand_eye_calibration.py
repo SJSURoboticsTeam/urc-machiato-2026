@@ -195,7 +195,7 @@ def generate_sample_data(setup_type="eye_on_hand", num_poses=20):
         robot_poses.append(T_base_to_hand)
         target_in_camera_poses.append(T_camera_to_target)
 
-    print(f"✅ Generated {num_poses} sample poses for '{setup_type}' setup.")
+    print(f"[PASS] Generated {num_poses} sample poses for '{setup_type}' setup.")
     return robot_poses, target_in_camera_poses
 
 
@@ -217,10 +217,10 @@ def load_calibration_data(data_file):
         data = np.load(data_file)
         robot_poses = data["robot_poses"]
         target_poses = data["target_poses"]
-        print(f"✅ Loaded {len(robot_poses)} pose pairs from '{data_file}'")
+        print(f"[PASS] Loaded {len(robot_poses)} pose pairs from '{data_file}'")
         return robot_poses, target_poses
     except Exception as e:
-        print(f"❌ Error loading data from '{data_file}': {e}")
+        print(f"[FAIL] Error loading data from '{data_file}': {e}")
         return None, None
 
 
@@ -267,7 +267,7 @@ def perform_hand_eye_calibration(
             t_all_targets.append(T_target_to_camera[:3, 3])
 
     # Perform calibration
-    print(f"\n🔧 Performing hand-eye calibration using {setup_type} setup...")
+    print(f"\n[TOOL] Performing hand-eye calibration using {setup_type} setup...")
     R, t = cv2.calibrateHandEye(
         R_gripper2base=R_all_robots,
         t_gripper2base=t_all_robots,
@@ -360,9 +360,9 @@ def collect_hand_eye_data(
         if board_pose is not None and i < len(robot_poses):
             board_poses_in_camera.append(board_pose)
             valid_pairs += 1
-            print("  ✓ Board detected")
+            print("   Board detected")
         else:
-            print("  ✗ Board not detected or no corresponding robot pose")
+            print("   Board not detected or no corresponding robot pose")
 
     print("\nData collection complete:")
     print(f"  Total images: {len(image_files)}")
@@ -385,9 +385,9 @@ def save_calibration_result(
     """
     try:
         np.savez(output_file, transformation=result_matrix, setup_type=setup_type)
-        print(f"✅ Calibration result saved to '{output_file}'")
+        print(f"[PASS] Calibration result saved to '{output_file}'")
     except Exception as e:
-        print(f"❌ Error saving result: {e}")
+        print(f"[FAIL] Error saving result: {e}")
 
 
 def print_calibration_result(result_matrix, setup_type):
@@ -395,7 +395,7 @@ def print_calibration_result(result_matrix, setup_type):
     Print the calibration result in a readable format.
     """
     if result_matrix is not None:
-        print("\n✅ Calibration successful!")
+        print("\n[PASS] Calibration successful!")
         if setup_type == "eye_on_hand":
             print("Result: Transformation from Hand to Camera (T_hand_to_camera)")
         else:  # eye_to_hand
@@ -417,7 +417,7 @@ def print_calibration_result(result_matrix, setup_type):
         print("\nTranslation (in meters):")
         print(f"{t}")
     else:
-        print("\n❌ Calibration failed. Check your data.")
+        print("\n[FAIL] Calibration failed. Check your data.")
 
 
 def main():
@@ -518,11 +518,11 @@ def main():
     if args.collect_data:
         if not all([args.images, args.robot_poses, args.camera_calibration]):
             print(
-                "❌ Error: --collect-data requires --images, --robot-poses, and --camera-calibration"
+                "[FAIL] Error: --collect-data requires --images, --robot-poses, and --camera-calibration"
             )
             return
 
-        print("📷 Collecting calibration data from images...")
+        print(" Collecting calibration data from images...")
         # Parse board squares
         squares_w, squares_h = map(int, args.board_squares.split("x"))
         robot_poses, target_poses = collect_hand_eye_data(
@@ -534,15 +534,15 @@ def main():
             args.marker_size,
         )
     elif args.generate_sample:
-        print("🎯 Generating sample calibration data...")
+        print("[OBJECTIVE] Generating sample calibration data...")
         robot_poses, target_poses = generate_sample_data(args.setup, args.num_poses)
     elif args.data:
-        print(f"📂 Loading calibration data from '{args.data}'...")
+        print(f" Loading calibration data from '{args.data}'...")
         robot_poses, target_poses = load_calibration_data(args.data)
         if robot_poses is None:
             return
     else:
-        print("❌ Error: Must specify one of:")
+        print("[FAIL] Error: Must specify one of:")
         print("  --collect-data (with --images, --robot-poses, --camera-calibration)")
         print("  --data <file>")
         print("  --generate-sample")
@@ -552,17 +552,17 @@ def main():
     # Validate data
     if len(robot_poses) != len(target_poses):
         print(
-            f"❌ Error: Robot poses ({len(robot_poses)}) and target poses ({len(target_poses)}) must have the same length"
+            f"[FAIL] Error: Robot poses ({len(robot_poses)}) and target poses ({len(target_poses)}) must have the same length"
         )
         return
 
     if len(robot_poses) < 3:
         print(
-            f"❌ Error: Need at least 3 pose pairs for calibration (you have {len(robot_poses)})"
+            f"[FAIL] Error: Need at least 3 pose pairs for calibration (you have {len(robot_poses)})"
         )
         return
 
-    print(f"📊 Using {len(robot_poses)} pose pairs for calibration")
+    print(f"[GRAPH] Using {len(robot_poses)} pose pairs for calibration")
 
     # Perform calibration
     result_matrix = perform_hand_eye_calibration(

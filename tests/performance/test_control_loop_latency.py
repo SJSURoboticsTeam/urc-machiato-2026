@@ -62,7 +62,7 @@ class ControlLoopLatencyTest(unittest.TestCase):
 
     def test_end_to_end_control_loop_latency(self):
         """Test complete control loop: sensor → processing → actuator."""
-        print("\n🎯 Testing End-to-End Control Loop Latency")
+        print("\n[OBJECTIVE] Testing End-to-End Control Loop Latency")
         print("=" * 60)
 
         # Start all nodes
@@ -80,11 +80,11 @@ class ControlLoopLatencyTest(unittest.TestCase):
 
         try:
             # Warm up the system
-            print("🔥 Warming up control loop...")
+            print(" Warming up control loop...")
             self._run_warmup_phase()
 
             # Run main latency test
-            print("📊 Measuring control loop latency...")
+            print("[GRAPH] Measuring control loop latency...")
             self._run_latency_test()
 
             # Analyze results
@@ -190,7 +190,7 @@ class ControlLoopLatencyTest(unittest.TestCase):
         )
 
         # Print detailed results
-        print("\n📈 Control Loop Latency Results:")
+        print("\n Control Loop Latency Results:")
         print("-" * 40)
         print(".3f")
         print(".3f")
@@ -201,7 +201,7 @@ class ControlLoopLatencyTest(unittest.TestCase):
         print(".3f")
 
         # Validate against competition requirements
-        print("\n🎯 Competition Requirements Check:")
+        print("\n[OBJECTIVE] Competition Requirements Check:")
         print("-" * 40)
 
         requirements = {
@@ -223,29 +223,29 @@ class ControlLoopLatencyTest(unittest.TestCase):
         all_passed = True
         for metric, (actual, target) in requirements.items():
             passed = actual <= target
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".3f")
 
             if not passed:
                 all_passed = False
 
         # Performance assessment
-        print("\n🚀 Performance Assessment:")
+        print("\n[IGNITE] Performance Assessment:")
         print("-" * 40)
 
         if all_passed:
-            print("✅ ALL COMPETITION REQUIREMENTS MET")
+            print("[PASS] ALL COMPETITION REQUIREMENTS MET")
             print("   Control loop performance suitable for competition")
         elif avg_latency <= self.target_latency_ms:
-            print("⚠️  AVERAGE LATENCY OK, BUT TAIL LATENCY CONCERNS")
+            print("  AVERAGE LATENCY OK, BUT TAIL LATENCY CONCERNS")
             print("   Consider optimizing for worst-case performance")
         else:
-            print("❌ COMPETITION PERFORMANCE NOT MET")
+            print("[FAIL] COMPETITION PERFORMANCE NOT MET")
             print("   Control loop requires optimization before competition")
 
         # Recommendations
         if avg_latency > self.target_latency_ms:
-            print("\n💡 Optimization Recommendations:")
+            print("\n Optimization Recommendations:")
             if avg_processing > 20:
                 print("   - Optimize control algorithm processing time")
             if avg_sensor_delay > 5:
@@ -269,7 +269,7 @@ class ControlLoopLatencyTest(unittest.TestCase):
 
     def test_control_loop_under_load(self):
         """Test control loop performance under concurrent load."""
-        print("\n🔄 Testing Control Loop Under Load")
+        print("\n[REFRESH] Testing Control Loop Under Load")
 
         executor = rclpy.executors.MultiThreadedExecutor()
         executor.add_node(self.sensor_simulator)

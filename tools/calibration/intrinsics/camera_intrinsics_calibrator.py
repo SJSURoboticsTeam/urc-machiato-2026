@@ -310,7 +310,7 @@ class CameraIntrinsicsCalibrator:
                 break
 
         cv2.destroyAllWindows()
-        print(f"✓ Recorded {len(recorded_frames)} frames\n")
+        print(f" Recorded {len(recorded_frames)} frames\n")
 
         # Extract frames
         print("Extracting frames at regular intervals...")
@@ -394,7 +394,7 @@ class CameraIntrinsicsCalibrator:
             # Calculate quality
             if ids is None or len(ids) < min_markers:
                 quality_score = 0.0
-                status = "✗ Too few markers"
+                status = " Too few markers"
             else:
                 # Blur detection
                 laplacian = cv2.Laplacian(gray, cv2.CV_64F)
@@ -404,7 +404,7 @@ class CameraIntrinsicsCalibrator:
 
                 if blur_ratio > max_blur_ratio:
                     quality_score = 0.0
-                    status = "✗ Too blurry"
+                    status = " Too blurry"
                 else:
                     # Detection rate
                     expected_markers = (
@@ -414,10 +414,10 @@ class CameraIntrinsicsCalibrator:
 
                     if detection_rate < min_detection_rate:
                         quality_score = 0.0
-                        status = "✗ Low detection"
+                        status = " Low detection"
                     else:
                         quality_score = blur_score * detection_rate
-                        status = f"✓ Good"
+                        status = f" Good"
 
             recorded_frames.append(frame.copy())
             frame_quality_scores.append((quality_score, status))
@@ -446,7 +446,7 @@ class CameraIntrinsicsCalibrator:
                 break
 
         cv2.destroyAllWindows()
-        print(f"✓ Recorded {len(recorded_frames)} frames\n")
+        print(f" Recorded {len(recorded_frames)} frames\n")
 
         # Select best frames
         print("Selecting best frames by quality score...")
@@ -694,13 +694,13 @@ class CameraIntrinsicsCalibrator:
         error = result.reprojection_error
         print(f"\nReprojection Error: {error:.4f} px", end=" → ")
         if error < 0.5:
-            print("Excellent ✓")
+            print("Excellent ")
         elif error < 1.0:
-            print("Good ✓")
+            print("Good ")
         elif error < 2.0:
             print("Acceptable")
         else:
-            print("Poor ✗")
+            print("Poor ")
 
         print("\nCapture Details:")
         print(f"  Mode: {result.capture_mode}")

@@ -205,7 +205,7 @@ class IntegratedStressTest:
     def run_integrated_stress_test(self) -> Dict:
         """Run the complete integrated stress test."""
 
-        print("🔥 Running Integrated System Stress Test")
+        print(" Running Integrated System Stress Test")
         print("=" * 50)
 
         # Display test configuration
@@ -264,7 +264,7 @@ class IntegratedStressTest:
 
                 except concurrent.futures.TimeoutError:
                     print(
-                        "   ⚠️  Test timed out - some components may not have completed"
+                        "     Test timed out - some components may not have completed"
                     )
 
             # Stop resource monitoring
@@ -399,7 +399,7 @@ class IntegratedStressTest:
     def _display_integrated_results(self, results: Dict):
         """Display comprehensive integrated test results."""
 
-        print("\n📊 INTEGRATED SYSTEM STRESS TEST RESULTS")
+        print("\n[GRAPH] INTEGRATED SYSTEM STRESS TEST RESULTS")
         print("=" * 50)
 
         print(
@@ -407,11 +407,11 @@ class IntegratedStressTest:
         )
 
         if results["overall_health_score"] > 80:
-            health_status = "✅ EXCELLENT - System handles extreme stress well"
+            health_status = "[PASS] EXCELLENT - System handles extreme stress well"
         elif results["overall_health_score"] > 60:
-            health_status = "⚠️ GOOD - Some degradation under stress"
+            health_status = " GOOD - Some degradation under stress"
         else:
-            health_status = "❌ POOR - Significant system issues"
+            health_status = "[FAIL] POOR - Significant system issues"
 
         print(f"   Health Status: {health_status}")
 
@@ -432,7 +432,7 @@ class IntegratedStressTest:
         print(f"   Cross-system conflicts: {results['cross_system_conflicts']}")
 
         # Recommendations
-        print("\n🛠️ SYSTEM RECOMMENDATIONS:")
+        print("\n SYSTEM RECOMMENDATIONS:")
 
         issues = []
 
@@ -461,23 +461,21 @@ class IntegratedStressTest:
         for issue in issues:
             print(issue)
 
-        print("\n🎯 MISSION IMPACT ASSESSMENT:")
+        print("\n[OBJECTIVE] MISSION IMPACT ASSESSMENT:")
         if results["overall_health_score"] > 75:
             print(
-                "   ✅ System should maintain basic functionality in extreme conditions"
+                "   [PASS] System should maintain basic functionality in extreme conditions"
             )
         elif results["overall_health_score"] > 50:
-            print(
-                "   ⚠️ System may experience reduced performance in extreme conditions"
-            )
+            print("    System may experience reduced performance in extreme conditions")
         else:
-            print("   ❌ System reliability significantly compromised under stress")
+            print("   [FAIL] System reliability significantly compromised under stress")
 
 
 def run_integrated_stress_test_suite():
     """Run integrated stress tests across all severity levels."""
 
-    print("🚀 URC 2026 Integrated Communication Stress Test Suite")
+    print("[IGNITE] URC 2026 Integrated Communication Stress Test Suite")
     print("=" * 65)
 
     results = {}
@@ -490,7 +488,7 @@ def run_integrated_stress_test_suite():
     ]
 
     for level in stress_levels:
-        print(f"\n🔥 Testing {level.value.upper()} Integrated System Stress")
+        print(f"\n Testing {level.value.upper()} Integrated System Stress")
         print("-" * 60)
 
         config = IntegratedStressConfig(level)
@@ -500,13 +498,13 @@ def run_integrated_stress_test_suite():
             level_results = tester.run_integrated_stress_test()
             results[level.value] = level_results
         except Exception as e:
-            print(f"   ❌ Integrated test failed: {e}")
+            print(f"   [FAIL] Integrated test failed: {e}")
             results[level.value] = {"error": str(e)}
 
         print()  # Add spacing
 
     # Comparative analysis
-    print("📈 INTEGRATED STRESS ANALYSIS")
+    print(" INTEGRATED STRESS ANALYSIS")
     print("=" * 35)
 
     print("\nPerformance by Stress Level:")
@@ -535,18 +533,18 @@ def run_integrated_stress_test_suite():
     # Final assessment
     extreme_results = results.get("extreme", {})
     if "error" not in extreme_results:
-        print("\n🎯 FINAL SYSTEM ASSESSMENT")
+        print("\n[OBJECTIVE] FINAL SYSTEM ASSESSMENT")
 
         if extreme_results["overall_health_score"] > 70:
             print(
-                "✅ System demonstrates good resilience under extreme integrated stress"
+                "[PASS] System demonstrates good resilience under extreme integrated stress"
             )
             print("   • Suitable for harsh Martian environment with proper monitoring")
         elif extreme_results["overall_health_score"] > 40:
-            print("⚠️ System shows moderate resilience under extreme conditions")
+            print(" System shows moderate resilience under extreme conditions")
             print("   • May require additional fault tolerance measures")
         else:
-            print("❌ System shows poor resilience under integrated stress")
+            print("[FAIL] System shows poor resilience under integrated stress")
             print("   • Significant redesign required for harsh environments")
 
     return results
@@ -561,4 +559,4 @@ if __name__ == "__main__":
     # Run integrated stress test suite
     integrated_results = run_integrated_stress_test_suite()
 
-    print("\n✨ Integrated communication stress testing completed!")
+    print("\n[SHINE] Integrated communication stress testing completed!")

@@ -38,7 +38,7 @@ class MultiCameraDetector:
         calib_files = sorted(self.calibration_dir.glob("camera_*_calibration.json"))
 
         if not calib_files:
-            logger.warning(f"⚠️  No calibration files found in {self.calibration_dir}")
+            logger.warning(f"  No calibration files found in {self.calibration_dir}")
             return
 
         for calib_file in calib_files:
@@ -60,12 +60,12 @@ class MultiCameraDetector:
                     "dist_coeffs": dist_coeffs,
                 }
                 logger.info(
-                    f"✅ Loaded calibration for camera {camera_index}: {calib_file.name}"
+                    f"[PASS] Loaded calibration for camera {camera_index}: {calib_file.name}"
                 )
             except Exception as e:
-                logger.error(f"❌ Failed to load {calib_file}: {e}")
+                logger.error(f"[FAIL] Failed to load {calib_file}: {e}")
 
-        logger.info(f"📊 Total calibrations loaded: {len(self.calibrations)}")
+        logger.info(f"[GRAPH] Total calibrations loaded: {len(self.calibrations)}")
 
     def calculate_distance(self, corners, calibration):
         """Calculate distance for a tag given corners and calibration."""
@@ -101,10 +101,10 @@ class MultiCameraDetector:
     def process_camera(self, camera_index, duration=None, display=True):
         """Process a single camera."""
         if camera_index not in self.calibrations:
-            logger.error(f"❌ No calibration for camera {camera_index}")
+            logger.error(f"[FAIL] No calibration for camera {camera_index}")
             return False
 
-        logger.info(f"📷 Starting detection on camera {camera_index}...")
+        logger.info(f" Starting detection on camera {camera_index}...")
 
         # Open camera
         cap = cv2.VideoCapture(camera_index)
@@ -112,12 +112,12 @@ class MultiCameraDetector:
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
         if not cap.isOpened():
-            logger.error(f"❌ Cannot open camera {camera_index}")
+            logger.error(f"[FAIL] Cannot open camera {camera_index}")
             return False
 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        logger.info(f"✅ Camera {camera_index} opened: {width}x{height}")
+        logger.info(f"[PASS] Camera {camera_index} opened: {width}x{height}")
 
         # Setup ArUco
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
@@ -200,17 +200,19 @@ class MultiCameraDetector:
         finally:
             cap.release()
             cv2.destroyAllWindows()
-            logger.info(f"📊 Camera {camera_index}: Processed {frame_count} frames")
+            logger.info(
+                f"[GRAPH] Camera {camera_index}: Processed {frame_count} frames"
+            )
 
         return True
 
     def process_all_cameras(self, duration=None, display=True, threaded=False):
         """Process all cameras."""
         if not self.calibrations:
-            logger.error("❌ No calibrations loaded")
+            logger.error("[FAIL] No calibrations loaded")
             return False
 
-        logger.info(f"🎬 Processing {len(self.calibrations)} cameras...")
+        logger.info(f" Processing {len(self.calibrations)} cameras...")
 
         if threaded:
             # Process cameras in parallel threads
@@ -229,7 +231,7 @@ class MultiCameraDetector:
             for camera_index in sorted(self.calibrations.keys()):
                 self.process_camera(camera_index, duration, display)
 
-        logger.info("✅ Detection completed")
+        logger.info("[PASS] Detection completed")
         return True
 
 
@@ -277,7 +279,7 @@ Examples:
     detector = MultiCameraDetector(args.calibration_dir, args.tag_size)
 
     if not detector.calibrations:
-        logger.error("❌ No calibrations loaded. Exiting.")
+        logger.error("[FAIL] No calibrations loaded. Exiting.")
         return 1
 
     # Process

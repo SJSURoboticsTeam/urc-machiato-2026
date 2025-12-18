@@ -37,7 +37,7 @@ def generate_charuco_board(
             getattr(cv2.aruco, aruco_dict_name)
         )
     except AttributeError:
-        print(f"❌ Error: Dictionary '{aruco_dict_name}' not found in cv2.aruco.")
+        print(f"[FAIL] Error: Dictionary '{aruco_dict_name}' not found in cv2.aruco.")
         return
 
     # Create the ChArUco board object using the modern constructor
@@ -69,7 +69,7 @@ def generate_charuco_board(
         or board_height_inches > canvas_height_inches - 1.0
     ):
         print(
-            f'\n⚠️ WARNING: Board dimensions may be too large for the {canvas_width_inches:.1f}"x{canvas_height_inches:.1f}" canvas with margins.'
+            f'\n WARNING: Board dimensions may be too large for the {canvas_width_inches:.1f}"x{canvas_height_inches:.1f}" canvas with margins.'
         )
 
     # Calculate board dimensions in pixels
@@ -106,7 +106,7 @@ def generate_charuco_board(
         ] = board_img
     else:
         print(
-            "⚠️ WARNING: Board is larger than the available page area. It may be cropped."
+            " WARNING: Board is larger than the available page area. It may be cropped."
         )
         canvas[
             max(0, start_y) : min(page_height_px, start_y + board_height_px),
@@ -138,9 +138,9 @@ def generate_charuco_board(
 
     try:
         plt.savefig(output_filename, dpi=DPI, format="pdf")
-        print(f"\n✅ Successfully generated board: '{output_filename}'")
+        print(f"\n[PASS] Successfully generated board: '{output_filename}'")
     except Exception as e:
-        print(f"\n❌ Error saving file: {e}")
+        print(f"\n[FAIL] Error saving file: {e}")
 
     plt.close(fig)
 
@@ -180,7 +180,7 @@ def main():
     args = parser.parse_args()
 
     if args.marker_size >= args.checker_size:
-        print("❌ Error: --marker-size must be smaller than --checker-size.")
+        print("[FAIL] Error: --marker-size must be smaller than --checker-size.")
         return
 
     generate_charuco_board(

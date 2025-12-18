@@ -102,7 +102,7 @@ class MotorControllerMock:
         self.fault_type = None
         self.last_update = time.time()
 
-        self.logger.info(f"🚗 MOCK Motor Controller '{motor_name}' initialized")
+        self.logger.info(f" MOCK Motor Controller '{motor_name}' initialized")
 
     def set_velocity(self, velocity: float) -> bool:
         """
@@ -150,7 +150,7 @@ class MotorControllerMock:
         self.velocity_setpoint = 0.0
         self.fault_active = True
         self.fault_type = "emergency_stop"
-        self.logger.warning("🚨 EMERGENCY STOP activated")
+        self.logger.warning(" EMERGENCY STOP activated")
         return True
 
     def clear_faults(self) -> bool:
@@ -204,7 +204,7 @@ class MotorControllerMock:
             self.fault_type = random.choice(
                 ["overcurrent", "overtemp", "encoder_failure"]
             )
-            self.logger.error(f"🚨 SIMULATED FAULT: {self.fault_type}")
+            self.logger.error(f" SIMULATED FAULT: {self.fault_type}")
 
 
 class SensorInterfaceMock:
@@ -244,7 +244,7 @@ class SensorInterfaceMock:
         elif sensor_type == "temperature":
             self.noise_std = 0.5  # °C
 
-        self.logger.info(f"📡 MOCK Sensor '{sensor_type}' initialized")
+        self.logger.info(f"[ANTENNA] MOCK Sensor '{sensor_type}' initialized")
 
     def get_reading(self) -> Dict[str, Any]:
         """Get current sensor reading."""
@@ -438,7 +438,7 @@ class CANBusMockSimulator:
         # Message queue for simulation
         self.message_queue = []
 
-        self.logger.info("🚍 MOCK CAN Bus Simulator initialized with full rover network")
+        self.logger.info(" MOCK CAN Bus Simulator initialized with full rover network")
 
     def get_mock_reading(
         self, sensor_type: str, sensor_id: Optional[str] = None
@@ -546,7 +546,7 @@ class CANBusMockSimulator:
 
     def emergency_stop_all(self) -> bool:
         """Emergency stop all motors."""
-        self.logger.warning("🚨 EMERGENCY STOP ALL MOTORS")
+        self.logger.warning(" EMERGENCY STOP ALL MOTORS")
 
         try:
             for controller in self.motor_controllers.values():

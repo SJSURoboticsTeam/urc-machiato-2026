@@ -225,10 +225,10 @@ class MigrationManager:
         # Update current phase if migration successful
         if success:
             self.current_phase = target_phase
-            logger.info(f"✅ Successfully migrated to phase: {target_phase.value}")
+            logger.info(f"[PASS] Successfully migrated to phase: {target_phase.value}")
         else:
             logger.error(
-                f"❌ Migration to {target_phase.value} failed at step: {failed_step.description if failed_step else 'unknown'}"
+                f"[FAIL] Migration to {target_phase.value} failed at step: {failed_step.description if failed_step else 'unknown'}"
             )
 
         return MigrationResult(
@@ -300,7 +300,9 @@ class MigrationManager:
 
         if success:
             self.current_phase = target_phase
-            logger.info(f"✅ Successfully rolled back to phase: {target_phase.value}")
+            logger.info(
+                f"[PASS] Successfully rolled back to phase: {target_phase.value}"
+            )
 
         return MigrationResult(success=success, duration=time.time() - start_time)
 

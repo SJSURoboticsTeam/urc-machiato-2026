@@ -8,6 +8,7 @@ failures and network partitioning events.
 Author: URC 2026 Autonomy Team
 """
 
+import logging
 import os
 import signal
 import subprocess
@@ -20,6 +21,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 class DomainStatus(Enum):
     """Status of a DDS domain."""
+
     ACTIVE = "active"
     STANDBY = "standby"
     FAILED = "failed"
@@ -28,14 +30,16 @@ class DomainStatus(Enum):
 
 class FailoverStrategy(Enum):
     """Strategies for domain failover."""
-    IMMEDIATE = "immediate"      # Fail over immediately on detection
-    GRACEFUL = "graceful"        # Allow current operations to complete
-    CONSENSUS = "consensus"      # Require agreement from multiple nodes
+
+    IMMEDIATE = "immediate"  # Fail over immediately on detection
+    GRACEFUL = "graceful"  # Allow current operations to complete
+    CONSENSUS = "consensus"  # Require agreement from multiple nodes
 
 
 @dataclass
 class DDSDomain:
     """Configuration for a DDS domain."""
+
     domain_id: int
     name: str
     status: DomainStatus = DomainStatus.STANDBY
@@ -48,6 +52,7 @@ class DDSDomain:
 @dataclass
 class NodeInfo:
     """Information about a ROS2 node."""
+
     name: str
     namespace: str = ""
     pid: Optional[int] = None
@@ -69,6 +74,9 @@ class DDSDomainRedundancyManager:
     """
 
     def __init__(self, primary_domain: int = 42):
+        # Initialize logger
+        self.logger = logging.getLogger(self.__class__.__name__)
+
         self.primary_domain_id = primary_domain
         self.current_domain_id = primary_domain
 
@@ -103,15 +111,17 @@ class DDSDomainRedundancyManager:
         domains_config = [
             (self.primary_domain_id, "primary", 1),
             (self.primary_domain_id + 1, "backup", 2),
-            (self.primary_domain_id + 2, "emergency", 3)
+            (self.primary_domain_id + 2, "emergency", 3),
         ]
 
         for domain_id, name, priority in domains_config:
             self.domains[domain_id] = DDSDomain(
                 domain_id=domain_id,
                 name=name,
-                status=DomainStatus.ACTIVE if domain_id == self.primary_domain_id else DomainStatus.STANDBY,
-                failover_priority=priority
+                status=DomainStatus.ACTIVE
+                if domain_id == self.primary_domain_id
+                else DomainStatus.STANDBY,
+                failover_priority=priority,
             )
 
     def start(self):
@@ -120,7 +130,9 @@ class DDSDomainRedundancyManager:
             return
 
         self.running = True
-        self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True
+        )
         self.monitor_thread.start()
 
         # Set primary domain as active
@@ -136,8 +148,13 @@ class DDSDomainRedundancyManager:
         # Stop all managed processes
         self._stop_all_nodes()
 
-    def register_node(self, node_name: str, restart_command: str,
-                     namespace: str = "", domain_id: Optional[int] = None):
+    def register_node(
+        self,
+        node_name: str,
+        restart_command: str,
+        namespace: str = "",
+        domain_id: Optional[int] = None,
+    ):
         """Register a ROS2 node for management."""
         if domain_id is None:
             domain_id = self.current_domain_id
@@ -146,7 +163,7 @@ class DDSDomainRedundancyManager:
             name=node_name,
             namespace=namespace,
             domain_id=domain_id,
-            restart_command=restart_command
+            restart_command=restart_command,
         )
 
         self.nodes[node_name] = node_info
@@ -204,28 +221,28 @@ class DDSDomainRedundancyManager:
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status."""
         return {
-            'current_domain': self.current_domain_id,
-            'domains': {
+            "current_domain": self.current_domain_id,
+            "domains": {
                 domain_id: {
-                    'name': domain.name,
-                    'status': domain.status.value,
-                    'node_count': domain.node_count,
-                    'health_score': domain.health_score,
-                    'last_health_check': domain.last_health_check
+                    "name": domain.name,
+                    "status": domain.status.value,
+                    "node_count": domain.node_count,
+                    "health_score": domain.health_score,
+                    "last_health_check": domain.last_health_check,
                 }
                 for domain_id, domain in self.domains.items()
             },
-            'nodes': {
+            "nodes": {
                 node_name: {
-                    'domain_id': node.domain_id,
-                    'pid': node.pid,
-                    'restart_count': node.restart_count,
-                    'last_restart': node.last_restart
+                    "domain_id": node.domain_id,
+                    "pid": node.pid,
+                    "restart_count": node.restart_count,
+                    "last_restart": node.last_restart,
                 }
                 for node_name, node in self.nodes.items()
             },
-            'failover_in_progress': self.failover_in_progress,
-            'timestamp': time.time()
+            "failover_in_progress": self.failover_in_progress,
+            "timestamp": time.time(),
         }
 
     def _monitoring_loop(self):
@@ -242,7 +259,7 @@ class DDSDomainRedundancyManager:
                 time.sleep(self.health_check_interval)
 
             except Exception as e:
-                self.get_logger().info(f"DDS monitoring error: {e}")
+                self.logger.info(f"DDS monitoring error: {e}")
                 time.sleep(self.health_check_interval)
 
     def _check_domain_health(self):
@@ -261,7 +278,11 @@ class DDSDomainRedundancyManager:
 
                 # Update domain status based on health
                 if health_score > 0.8:
-                    domain.status = DomainStatus.ACTIVE if domain_id == self.current_domain_id else DomainStatus.STANDBY
+                    domain.status = (
+                        DomainStatus.ACTIVE
+                        if domain_id == self.current_domain_id
+                        else DomainStatus.STANDBY
+                    )
                 elif health_score > 0.3:
                     domain.status = DomainStatus.RECOVERING
                 else:
@@ -272,7 +293,7 @@ class DDSDomainRedundancyManager:
                     self._trigger_health_callbacks(domain_id, health_score)
 
             except Exception as e:
-                self.get_logger().info(f"Domain health check error for {domain_id}: {e}")
+                self.logger.info(f"Domain health check error for {domain_id}: {e}")
                 domain.health_score = 0.0
                 domain.status = DomainStatus.FAILED
 
@@ -284,7 +305,9 @@ class DDSDomainRedundancyManager:
 
                 # Check if process is still running
                 if process.poll() is not None:
-                    self.get_logger().info(f"Node {node_name} process died (exit code: {process.returncode})")
+                    self.logger.info(
+                        f"Node {node_name} process died (exit code: {process.returncode})"
+                    )
                     # Restart the node
                     self._restart_node(node_name)
 
@@ -293,20 +316,24 @@ class DDSDomainRedundancyManager:
         try:
             # Test DDS connectivity by attempting to list nodes in the domain
             env = os.environ.copy()
-            env['ROS_DOMAIN_ID'] = str(domain_id)
+            env["ROS_DOMAIN_ID"] = str(domain_id)
 
             # Try to run a quick ROS2 command to test domain accessibility
             result = subprocess.run(
-                ['ros2', 'node', 'list'],
+                ["ros2", "node", "list"],
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=2.0
+                timeout=2.0,
             )
 
             if result.returncode == 0:
                 # Domain is accessible - return health based on node count and response time
-                node_count = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
+                node_count = (
+                    len(result.stdout.strip().split("\n"))
+                    if result.stdout.strip()
+                    else 0
+                )
 
                 # Health score based on node count and accessibility
                 base_health = 0.5  # Base score for accessibility
@@ -342,29 +369,36 @@ class DDSDomainRedundancyManager:
         """Select the best domain for failover."""
         # Find healthy domains excluding current
         available_domains = [
-            domain for domain in self.domains.values()
-            if domain.domain_id != self.current_domain_id and
-            domain.status in [DomainStatus.ACTIVE, DomainStatus.STANDBY] and
-            domain.health_score > 0.5
+            domain
+            for domain in self.domains.values()
+            if domain.domain_id != self.current_domain_id
+            and domain.status in [DomainStatus.ACTIVE, DomainStatus.STANDBY]
+            and domain.health_score > 0.5
         ]
 
         if not available_domains:
             # No healthy domains, use emergency domain
             emergency_domain = next(
-                (d for d in self.domains.values() if d.failover_priority == 3),
-                None
+                (d for d in self.domains.values() if d.failover_priority == 3), None
             )
-            return emergency_domain.domain_id if emergency_domain else self.primary_domain_id
+            return (
+                emergency_domain.domain_id
+                if emergency_domain
+                else self.primary_domain_id
+            )
 
         # Select domain with best health score and highest priority (lowest number)
-        best_domain = min(available_domains,
-                         key=lambda d: (d.failover_priority, -d.health_score))
+        best_domain = min(
+            available_domains, key=lambda d: (d.failover_priority, -d.health_score)
+        )
 
         return best_domain.domain_id
 
     def _execute_domain_failover(self, target_domain_id: int) -> bool:
         """Execute the actual domain failover."""
-        self.get_logger().info(f"[ALERT] Executing DDS domain failover: {self.current_domain_id} → {target_domain_id}")
+        self.logger.info(
+            f"[ALERT] Executing DDS domain failover: {self.current_domain_id} → {target_domain_id}"
+        )
         try:
             # Step 1: Stop all nodes in current domain gracefully
             self._graceful_node_shutdown()
@@ -381,20 +415,22 @@ class DDSDomainRedundancyManager:
 
             # Step 3: Restart all nodes in new domain
             self._restart_all_nodes_in_domain(target_domain_id)
-            self.get_logger().info(f"[SUCCESS] Domain failover completed successfully")
+            self.logger.info(f"[SUCCESS] Domain failover completed successfully")
             return True
 
         except Exception as e:
-            self.get_logger().info(f"[ERROR] Domain failover failed: {e}")
+            self.logger.info(f"[ERROR] Domain failover failed: {e}")
             # Attempt rollback
             try:
                 self.current_domain_id = old_domain
                 if old_domain in self.domains:
                     self.domains[old_domain].status = DomainStatus.ACTIVE
                 self._restart_all_nodes_in_domain(old_domain)
-                self.get_logger().info("[SUCCESS] Failover rollback completed")
+                self.logger.info("[SUCCESS] Failover rollback completed")
             except Exception as rollback_error:
-                self.get_logger().info(f"[ERROR] Failover rollback also failed: {rollback_error}")
+                self.logger.info(
+                    f"[ERROR] Failover rollback also failed: {rollback_error}"
+                )
             return False
 
     def _activate_domain(self, domain_id: int):
@@ -405,7 +441,7 @@ class DDSDomainRedundancyManager:
 
     def _graceful_node_shutdown(self, timeout: float = 10.0):
         """Gracefully shut down all managed nodes."""
-        self.get_logger().info("[STOP] Gracefully shutting down nodes...")
+        self.logger.info("[STOP] Gracefully shutting down nodes...")
         shutdown_start = time.time()
 
         # Send SIGTERM to all processes
@@ -414,8 +450,11 @@ class DDSDomainRedundancyManager:
 
         # Wait for processes to terminate
         while self.node_processes and (time.time() - shutdown_start) < timeout:
-            still_running = [name for name, proc in self.node_processes.items()
-                           if proc.poll() is None]
+            still_running = [
+                name
+                for name, proc in self.node_processes.items()
+                if proc.poll() is None
+            ]
             if not still_running:
                 break
             time.sleep(0.5)
@@ -427,7 +466,7 @@ class DDSDomainRedundancyManager:
 
     def _restart_all_nodes_in_domain(self, domain_id: int):
         """Restart all nodes in the specified domain."""
-        self.get_logger().info(f"[UPDATE] Restarting nodes in domain {domain_id}...")
+        self.logger.info(f"[UPDATE] Restarting nodes in domain {domain_id}...")
         for node_name, node_info in self.nodes.items():
             if node_info.domain_id == domain_id:
                 self._restart_node(node_name)
@@ -450,14 +489,16 @@ class DDSDomainRedundancyManager:
 
             # Set environment for correct domain
             env = os.environ.copy()
-            env['ROS_DOMAIN_ID'] = str(node_info.domain_id)
-            self.get_logger().info(f"[START] Restarting {node_name} in domain {node_info.domain_id}")
+            env["ROS_DOMAIN_ID"] = str(node_info.domain_id)
+            self.logger.info(
+                f"[START] Restarting {node_name} in domain {node_info.domain_id}"
+            )
             # Start new process
             process = subprocess.Popen(
                 node_info.restart_command.split(),
                 env=env,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
             )
 
             self.node_processes[node_name] = process
@@ -466,7 +507,8 @@ class DDSDomainRedundancyManager:
             node_info.restart_count += 1
 
         except Exception as e:
-            self.get_logger().info(f"Failed to restart node {node_name}: {e}")
+            self.logger.info(f"Failed to restart node {node_name}: {e}")
+
     def _stop_node_process(self, node_name: str, graceful: bool = True):
         """Stop a node process."""
         if node_name not in self.node_processes:
@@ -499,14 +541,17 @@ class DDSDomainRedundancyManager:
             try:
                 callback(self.current_domain_id, new_domain_id)
             except Exception as e:
-        self.get_logger().info(f"Failover callback error: {e}")
+                self.logger.info(f"Failover callback error: {e}")
+
     def _trigger_health_callbacks(self, domain_id: int, health_score: float):
         """Trigger health change callbacks."""
         for callback in self.health_callbacks:
             try:
                 callback(domain_id, health_score)
             except Exception as e:
-        self.get_logger().info(f"Health callback error: {e}")
+                self.logger.info(f"Health callback error: {e}")
+
+
 # Global DDS redundancy manager instance
 _dds_manager = None
 
@@ -522,35 +567,42 @@ def get_dds_redundancy_manager(primary_domain: int = 42) -> DDSDomainRedundancyM
 # Example usage and testing
 def test_dds_domain_redundancy():
     """Test DDS domain redundancy functionality."""
-        self.get_logger().info("[TEST] Testing DDS Domain Redundancy...")
+    print("[TEST] Testing DDS Domain Redundancy...")
     manager = DDSDomainRedundancyManager(primary_domain=42)
 
     # Register test nodes
-    manager.register_node("competition_bridge", "python3 src/bridges/competition_bridge.py")
-    manager.register_node("state_machine_bridge", "python3 src/bridges/ros2_state_machine_bridge.py")
-    manager.register_node("sensor_bridge", "python3 src/autonomy/perception/sensor_bridge/sensor_bridge_node.py")
+    manager.register_node(
+        "competition_bridge", "python3 src/bridges/competition_bridge.py"
+    )
+    manager.register_node(
+        "state_machine_bridge", "python3 src/bridges/ros2_state_machine_bridge.py"
+    )
+    manager.register_node(
+        "sensor_bridge",
+        "python3 src/autonomy/perception/sensor_bridge/sensor_bridge_node.py",
+    )
 
     # Start manager
     manager.start()
 
     try:
-        self.get_logger().info("  [STATUS] Testing domain health monitoring...")
+        self.logger.info("  [STATUS] Testing domain health monitoring...")
         time.sleep(2)
 
         status = manager.get_system_status()
-        self.get_logger().info(f"    Current domain: {status['current_domain']}")
-        self.get_logger().info(f"    Domains: {list(status['domains'].keys())}")
-        self.get_logger().info(f"    Registered nodes: {list(status['nodes'].keys())}")
+        self.logger.info(f"    Current domain: {status['current_domain']}")
+        self.logger.info(f"    Domains: {list(status['domains'].keys())}")
+        self.logger.info(f"    Registered nodes: {list(status['nodes'].keys())}")
         # Simulate domain failure and failover
-        self.get_logger().info("  [UPDATE] Testing domain failover...")
+        self.logger.info("  [UPDATE] Testing domain failover...")
         success = manager.trigger_domain_failover()
 
         if success:
-        self.get_logger().info("    [SUCCESS] Domain failover successful!")
+            self.logger.info("    [SUCCESS] Domain failover successful!")
             new_status = manager.get_system_status()
-        self.get_logger().info(f"    New domain: {new_status['current_domain']}")
+            self.logger.info(f"    New domain: {new_status['current_domain']}")
         else:
-        self.get_logger().info("    [ERROR] Domain failover failed!")
+            self.logger.info("    [ERROR] Domain failover failed!")
         return True
 
     finally:

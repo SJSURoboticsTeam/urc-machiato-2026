@@ -111,7 +111,7 @@ def main():
 
     def signal_handler(signum, frame):
         """Handle shutdown signals."""
-        print("\n🛑 Shutting down SLAM nodes...")
+        print("\n Shutting down SLAM nodes...")
         sys.exit(0)
 
     # Set up signal handlers
@@ -125,8 +125,8 @@ def main():
     gps_fusion = GPSFusionNode()
 
     try:
-        print("🚀 SLAM nodes running...")
-        print("📡 Processing depth images and GPS fusion")
+        print("[IGNITE] SLAM nodes running...")
+        print("[ANTENNA] Processing depth images and GPS fusion")
         # Spin both nodes
         executor = rclpy.executors.MultiThreadedExecutor()
         executor.add_node(depth_processor)
@@ -136,7 +136,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        print("✅ SLAM nodes stopping...")
+        print("[PASS] SLAM nodes stopping...")
         depth_processor.destroy_node()
         gps_fusion.destroy_node()
         if rclpy.ok():

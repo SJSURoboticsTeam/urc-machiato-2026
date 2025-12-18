@@ -114,7 +114,7 @@ class PreCompetitionChecklist:
         """Run the complete pre-competition checklist."""
         self.start_time = time.time()
 
-        print("🏁 PRE-COMPETITION CHECKLIST")
+        print("[FLAG] PRE-COMPETITION CHECKLIST")
         print("=" * 50)
         print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
@@ -131,17 +131,17 @@ class PreCompetitionChecklist:
                 check["message"] = message
 
                 if success:
-                    print("✅ PASSED")
+                    print("[PASS] PASSED")
                     passed += 1
                 else:
-                    print("❌ FAILED")
+                    print("[FAIL] FAILED")
                     print(f"   {message}")
                     failed += 1
 
             except Exception as e:
                 check["status"] = "error"
                 check["message"] = str(e)
-                print("❌ ERROR")
+                print("[FAIL] ERROR")
                 print(f"   {str(e)}")
                 failed += 1
 
@@ -149,7 +149,7 @@ class PreCompetitionChecklist:
         duration = time.time() - self.start_time
         print()
         print("=" * 50)
-        print("📊 CHECKLIST SUMMARY")
+        print("[GRAPH] CHECKLIST SUMMARY")
         print(f"Total checks: {len(self.checks)}")
         print(f"Passed: {passed}")
         print(f"Failed: {failed}")
@@ -157,10 +157,10 @@ class PreCompetitionChecklist:
         print()
 
         if failed == 0:
-            print("🎉 ALL CHECKS PASSED - SYSTEM READY FOR COMPETITION")
+            print("[PARTY] ALL CHECKS PASSED - SYSTEM READY FOR COMPETITION")
             return True
         else:
-            print("⚠️  CHECKLIST INCOMPLETE - DO NOT PROCEED TO COMPETITION")
+            print("  CHECKLIST INCOMPLETE - DO NOT PROCEED TO COMPETITION")
             print("\nFailed checks:")
             for check in self.checks:
                 if check["status"] != "passed":
@@ -479,7 +479,7 @@ def main():
     with open(results_file, "w") as f:
         json.dump(results_data, f, indent=2)
 
-    print(f"\n📄 Detailed results saved to: {results_file}")
+    print(f"\n Detailed results saved to: {results_file}")
     return success
 
 

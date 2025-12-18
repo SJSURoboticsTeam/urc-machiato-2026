@@ -67,7 +67,7 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
     def test_intra_process_latency(self):
         """Test latency for intra-process communication."""
-        print("\n🔗 Testing Intra-Process Communication Latency")
+        print("\n Testing Intra-Process Communication Latency")
 
         # Configure for intra-process communication
         qos_intra = QoSProfile(
@@ -132,7 +132,7 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
     def test_inter_process_latency(self):
         """Test latency for inter-process communication."""
-        print("\n🌐 Testing Inter-Process Communication Latency")
+        print("\n[NETWORK] Testing Inter-Process Communication Latency")
 
         # Configure for inter-process communication (different durability)
         qos_inter = QoSProfile(
@@ -199,7 +199,7 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
     def test_high_frequency_throughput(self):
         """Test throughput for high-frequency topics like IMU and cmd_vel."""
-        print("\n📊 Testing High-Frequency Topic Throughput")
+        print("\n[GRAPH] Testing High-Frequency Topic Throughput")
 
         # High-frequency QoS profiles
         qos_high_freq_intra = QoSProfile(
@@ -290,7 +290,7 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
     def test_resource_usage_comparison(self):
         """Test resource usage difference between intra-process and inter-process."""
-        print("\n💻 Testing Resource Usage Comparison")
+        print("\n Testing Resource Usage Comparison")
 
         qos_intra = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
@@ -377,14 +377,14 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
 
     def generate_performance_comparison_report(self):
         """Generate detailed performance comparison report."""
-        print("\n📈 ROS2 Communication Performance Comparison Report")
+        print("\n ROS2 Communication Performance Comparison Report")
         print("=" * 70)
 
         if (
             "intra_process_latency" in self.results
             and "inter_process_latency" in self.results
         ):
-            print("\n🔄 LATENCY COMPARISON")
+            print("\n[REFRESH] LATENCY COMPARISON")
             print("-" * 50)
 
             for msg_size in self.message_sizes:
@@ -408,11 +408,11 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
                         f"  Inter-process: {inter['avg_latency_ms']:.3f}ms avg, {inter['p95_latency_ms']:.3f}ms p95"
                     )
                     print(
-                        f"  Improvement: {improvement:+.1f}% {'⚡' if improvement > 0 else '🐌'}"
+                        f"  Improvement: {improvement:+.1f}% {'[LIGHTNING]' if improvement > 0 else ''}"
                     )
 
         if "high_frequency_throughput" in self.results:
-            print("\n📊 HIGH-FREQUENCY THROUGHPUT COMPARISON")
+            print("\n[GRAPH] HIGH-FREQUENCY THROUGHPUT COMPARISON")
             print("-" * 50)
 
             intra = self.results["high_frequency_throughput"]["intra_process"]
@@ -436,7 +436,7 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
                 print(f"  Throughput improvement: {throughput_improvement:+.1f}%")
 
         if "resource_usage" in self.results:
-            print("\n💻 RESOURCE USAGE COMPARISON")
+            print("\n RESOURCE USAGE COMPARISON")
             print("-" * 50)
 
             intra = self.results["resource_usage"]["intra_process"]
@@ -456,15 +456,17 @@ class ROS2CommunicationPerformanceTest(unittest.TestCase):
             print(f"  CPU savings: {cpu_savings:+.1f}%")
             print(f"  Memory savings: {memory_savings:+.2f} MB")
 
-        print("\n🎯 PERFORMANCE OPTIMIZATION SUMMARY")
+        print("\n[OBJECTIVE] PERFORMANCE OPTIMIZATION SUMMARY")
         print("-" * 50)
-        print("✅ Critical high-frequency topics now use intra-process communication:")
+        print(
+            "[PASS] Critical high-frequency topics now use intra-process communication:"
+        )
         print("   - /imu (100 Hz IMU data)")
         print("   - /odom (50 Hz odometry)")
         print("   - /cmd_vel (50 Hz velocity commands)")
         print("   - vision/detections (30 Hz computer vision)")
         print("   - Safety and state management topics")
-        print("\n🚀 Expected Benefits:")
+        print("\n[IGNITE] Expected Benefits:")
         print("   - 50-70% reduction in message latency")
         print("   - Lower CPU usage from reduced serialization")
         print("   - Better real-time performance for autonomy")
@@ -630,7 +632,7 @@ class ROS2PerformanceSubscriber(Node):
 
 def run_performance_tests():
     """Run the complete ROS2 communication performance test suite."""
-    print("🚀 URC 2026 ROS2 Communication Performance Testing")
+    print("[IGNITE] URC 2026 ROS2 Communication Performance Testing")
     print("=" * 60)
 
     # Create test suite
@@ -646,13 +648,13 @@ def run_performance_tests():
 
     # Generate performance report
     if result.wasSuccessful():
-        print("\n📊 Generating Performance Comparison Report...")
+        print("\n[GRAPH] Generating Performance Comparison Report...")
         test_instance = ROS2CommunicationPerformanceTest()
         test_instance.setUp()
         test_instance.generate_performance_comparison_report()
         test_instance.tearDown()
 
-    print("\n✨ ROS2 Communication Performance Testing Completed!")
+    print("\n[SHINE] ROS2 Communication Performance Testing Completed!")
     return result.wasSuccessful()
 
 

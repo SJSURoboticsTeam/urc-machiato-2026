@@ -241,7 +241,7 @@ class SafetyMonitor(Node):
         properties["emergency_stop_response"] = SafetyProperty(
             name="emergency_stop_response",
             description="Must respond to emergency stops within timing requirements",
-            specification="G(emergency_declared → ◇(emergency_actions_completed))_≤50ms",
+            specification="G(emergency_declared → (emergency_actions_completed))_≤50ms",
             evaluator=emergency_response_evaluator,
             severity=SafetyLevel.EMERGENCY,
             violation_threshold=1,

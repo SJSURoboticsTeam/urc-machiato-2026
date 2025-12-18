@@ -81,7 +81,7 @@ class DriveSystemSimulator:
         self._initialize_state()
         self._initialize_physics()
 
-        self.logger.info("🚗 MOCK Drive System Simulator initialized")
+        self.logger.info(" MOCK Drive System Simulator initialized")
 
     def _get_default_config(self) -> Dict:
         """Get default rover configuration."""
@@ -387,7 +387,7 @@ class DriveSystemSimulator:
 
     def emergency_stop_drive(self) -> bool:
         """Emergency stop all drive motors."""
-        self.logger.warning("🚨 DRIVE EMERGENCY STOP")
+        self.logger.warning(" DRIVE EMERGENCY STOP")
         self.emergency_stop = True
         self.linear_velocity_cmd = 0.0
         self.angular_velocity_cmd = 0.0
@@ -466,7 +466,7 @@ class DriveSystemSimulator:
         # Low battery warning
         if self.battery_level < 20.0 and not self.faults["battery_low"]:
             self.faults["battery_low"] = True
-            self.logger.warning("⚠️ LOW BATTERY WARNING")
+            self.logger.warning(" LOW BATTERY WARNING")
 
     def _update_thermal_model(self, dt: float):
         """Update motor thermal model."""
@@ -488,7 +488,7 @@ class DriveSystemSimulator:
             if self.motor_temperatures[i] > 80.0:
                 if f"motor_{i}" not in self.faults["motor_failures"]:
                     self.faults["motor_failures"].append(f"motor_{i}")
-                    self.logger.error(f"🚨 MOTOR {i} OVERHEAT")
+                    self.logger.error(f" MOTOR {i} OVERHEAT")
 
     def _check_faults(self):
         """Check for system faults."""
@@ -496,12 +496,12 @@ class DriveSystemSimulator:
         for i, temp in enumerate(self.motor_temperatures):
             if temp > 90.0 and f"motor_{i}" not in self.faults["motor_failures"]:
                 self.faults["motor_failures"].append(f"motor_{i}")
-                self.logger.error(f"🚨 MOTOR {i} CRITICAL TEMPERATURE")
+                self.logger.error(f" MOTOR {i} CRITICAL TEMPERATURE")
 
         # Battery fault
         if self.battery_level < 5.0:
             self.emergency_stop = True
-            self.logger.critical("🚨 BATTERY CRITICAL - EMERGENCY STOP")
+            self.logger.critical(" BATTERY CRITICAL - EMERGENCY STOP")
 
         # Random fault simulation (very low probability for testing)
         if np.random.random() < 0.00001:  # Very rare
@@ -511,8 +511,8 @@ class DriveSystemSimulator:
                 fault_name = f"encoder_{wheel_idx}"
                 if fault_name not in self.faults["encoder_failures"]:
                     self.faults["encoder_failures"].append(fault_name)
-                    self.logger.error(f"🚨 ENCODER {wheel_idx} FAILURE SIMULATED")
+                    self.logger.error(f" ENCODER {wheel_idx} FAILURE SIMULATED")
             elif fault_type == "steering":
                 if not self.faults["steering_failures"]:
                     self.faults["steering_failures"].append("steering_actuator")
-                    self.logger.error("🚨 STEERING FAILURE SIMULATED")
+                    self.logger.error(" STEERING FAILURE SIMULATED")

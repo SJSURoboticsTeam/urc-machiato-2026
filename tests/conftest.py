@@ -3,13 +3,44 @@
 Pytest Configuration and Shared Fixtures
 
 Provides shared test fixtures and configuration for the autonomy test suite.
+Ensures tests use newest implementation and start from clean state.
 """
 
+import importlib
+import os
+import sys
 import time
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
+
+# Ensure we use the absolute latest code - clear any cached imports
+modules_to_clear = [
+    "bridges.competition_bridge",
+    "bridges.telemetry_manager",
+    "bridges.websocket_manager",
+    "bridges.mission_orchestrator",
+    "core.dds_domain_redundancy_manager",
+    "core.state_synchronization_manager",
+    "core.recovery_coordinator",
+    "config.config_manager",
+]
+
+for module in modules_to_clear:
+    if module in sys.modules:
+        del sys.modules[module]
+
+# Set up project paths to ensure latest code
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+SRC_ROOT = os.path.join(PROJECT_ROOT, "src")
+
+# Clear and reset Python path for clean imports
+original_path = sys.path[:]
+sys.path.clear()
+sys.path.append(PROJECT_ROOT)
+sys.path.append(SRC_ROOT)
+sys.path.extend(original_path)
 
 # ROS2 testing imports (optional)
 try:
@@ -36,54 +67,51 @@ except ImportError:
     TwistStamped = None
     PoseStamped = None
 
-# ROS2 Context management for tests
-_ros2_context = None
-_ros2_initialized = False
-
-import os
-
-# Import simulation sensor factory
-import sys
-
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, PROJECT_ROOT)
-from simulation.sensors.sensor_factory import SensorFactory
+# Import simulation sensor factory with fresh import
+try:
+    from simulation.sensors.sensor_factory import SensorFactory
+except ImportError:
+    SensorFactory = None
 
 
-@pytest.fixture(scope="session", autouse=True)
-def ros2_setup():
-    """Set up ROS2 environment for testing."""
-    global _ros2_context, _ros2_initialized
+# Clean environment setup
+@pytest.fixture(scope="function", autouse=True)
+def clean_test_environment():
+    """Ensure clean test environment with fresh imports and no cached state."""
+    # Reset global config manager
+    try:
+        from config.config_manager import reset_global_config
 
-    if ROS2_AVAILABLE and not _ros2_initialized:
-        try:
-            # Create a separate context for testing to avoid conflicts
-            _ros2_context = Context()
-            rclpy.init(context=_ros2_context)
-            _ros2_initialized = True
-        except RuntimeError:
-            # ROS2 already initialized, use existing context
-            _ros2_context = rclpy.get_default_context()
-            _ros2_initialized = True
+        reset_global_config()
+    except ImportError:
+        pass
+
+    # Clear critical modules to force fresh imports
+    modules_to_clear = [
+        "bridges.competition_bridge",
+        "bridges.telemetry_manager",
+        "bridges.websocket_manager",
+        "config.config_manager",
+        "core.dds_domain_redundancy_manager",
+    ]
+
+    for module in modules_to_clear:
+        if module in sys.modules:
+            del sys.modules[module]
+
+    # Clear environment variables that might persist
+    env_vars_to_clear = ["ROS_DOMAIN_ID", "URC_ENV"]
+    for var in env_vars_to_clear:
+        os.environ.pop(var, None)
 
     yield
 
-    # Cleanup will be handled by pytest session teardown
-
-
-@pytest.fixture(scope="session", autouse=True)
-def ros2_teardown():
-    """Clean up ROS2 environment after testing."""
-    yield
-
-    global _ros2_context, _ros2_initialized
-    if ROS2_AVAILABLE and _ros2_initialized:
+    # Test cleanup - ensure clean state
+    if ROS2_AVAILABLE:
         try:
-            if _ros2_context:
-                _ros2_context.try_shutdown()
-            _ros2_initialized = False
+            rclpy.shutdown()
         except:
-            pass  # Ignore cleanup errors
+            pass
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -407,40 +435,51 @@ def wait_for_condition(condition_func, timeout=5.0, check_interval=0.1):
     return False
 
 
-# ROS2 Testing Fixtures
-@pytest.fixture(scope="session", autouse=True)
-def ros2_init_shutdown():
-    """Initialize and shutdown ROS2 context for all ROS2 tests."""
+# ROS2 Testing Fixtures - Clean initialization per test
+@pytest.fixture(scope="function")
+def ros2_context():
+    """Provide clean ROS2 context for each test function."""
     if not ROS2_AVAILABLE:
         pytest.skip("ROS2 not available - install ROS2 to run ROS2 tests")
 
-    # Initialize ROS2
+    # Ensure clean state - shutdown any existing context
+    try:
+        rclpy.shutdown()
+    except:
+        pass
+
+    # Initialize fresh context for this test
     rclpy.init()
 
-    # Set test domain ID to avoid conflicts
-    import os
-
-    os.environ["ROS_DOMAIN_ID"] = "42"
+    # Set isolated domain ID for this test
+    test_domain_id = f"test_{hash(time.time()) % 10000}"
+    os.environ["ROS_DOMAIN_ID"] = test_domain_id
 
     yield
 
-    # Shutdown ROS2
-    rclpy.shutdown()
+    # Clean shutdown
+    try:
+        rclpy.shutdown()
+    except:
+        pass
+
+    # Clean up environment
+    os.environ.pop("ROS_DOMAIN_ID", None)
 
 
 @pytest.fixture
-def ros_node():
-    """Provide a ROS2 node for testing."""
+def ros_node(ros2_context):
+    """Provide a ROS2 node for testing with clean context."""
     if not ROS2_AVAILABLE:
         pytest.skip("ROS2 not available")
 
-    node = Node("test_node")
+    node = Node(f"test_node_{hash(time.time()) % 10000}")
     yield node
     node.destroy_node()
 
 
 @pytest.fixture
-def ros_executor():
+def ros_executor(ros2_context):
     """Provide a ROS2 executor for testing."""
     if not ROS2_AVAILABLE:
         pytest.skip("ROS2 not available")
@@ -451,202 +490,50 @@ def ros_executor():
     yield executor
 
 
-@pytest.fixture
-def ros_context():
-    """Provide ROS2 context initialization/cleanup (legacy compatibility)."""
-    if not ROS2_AVAILABLE:
-        pytest.skip("ROS2 not available")
-
-    # Context is already initialized by ros2_init_shutdown
-    yield
-    # Cleanup handled by ros2_init_shutdown
-
-
-import pytest
-import os
-import signal
-import subprocess
-import sys
-import threading
-import time
-
-# Import mock autonomy interfaces first
-# import mock_autonomy_interfaces  # Not used in this file
-
-# Import ROS2 for context management
-try:
-    import rclpy
-
-    ROS2_AVAILABLE = True
-except ImportError:
-    ROS2_AVAILABLE = False
-    rclpy = None
-
-# Global variables for ROS2 processes
-_ros2_processes = []
-_ros2_daemon_started = False
-
-
-def _start_ros2_daemon():
-    """Start ROS2 daemon if not already running."""
-    global _ros2_daemon_started
-    if _ros2_daemon_started:
-        return
-
-    try:
-        # Stop any existing daemon first
-        subprocess.run(
-            ["bash", "-c", "source /opt/ros/humble/setup.bash && ros2 daemon stop"],
-            capture_output=True,
-            timeout=5,
-        )
-        time.sleep(1)
-
-        # Start daemon
-        result = subprocess.run(
-            ["bash", "-c", "source /opt/ros/humble/setup.bash && ros2 daemon start"],
-            capture_output=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            _ros2_daemon_started = True
-            print("✅ ROS2 daemon started")
-        else:
-            print("⚠️  ROS2 daemon start failed")
-    except Exception as e:
-        print(f"⚠️  ROS2 daemon setup failed: {e}")
-
-
-def _launch_ros2_node(script_path, node_name):
-    """Launch a ROS2 node as background process."""
-    try:
-        env = os.environ.copy()
-        env["ROS_DOMAIN_ID"] = "42"
-        env["PYTHONPATH"] = f"{os.getcwd()}:{os.getcwd()}/autonomy/code"
-
-        cmd = f"cd {os.getcwd()} && source /opt/ros/humble/setup.bash && python3 {script_path}"
-        process = subprocess.Popen(
-            ["bash", "-c", cmd],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            preexec_fn=os.setsid,  # Create new process group
-        )
-
-        _ros2_processes.append((node_name, process))
-        print(f"🚀 {node_name} launched (PID: {process.pid})")
-
-        # Give node time to start
-        time.sleep(2)
-
-        return process
-    except Exception as e:
-        print(f"❌ Failed to launch {node_name}: {e}")
-        return None
-
-
-@pytest.fixture(scope="session", autouse=False)
-def ros2_integration_environment():
-    """Set up complete ROS2 integration environment for all tests."""
-    print("\n🔧 Setting up ROS2 integration environment...")
-
-    # Start ROS2 daemon
-    _start_ros2_daemon()
-
-    # Launch ROS2 nodes
-    nodes_to_launch = [
-        ("tests/mock_topics_publisher.py", "Mock Topics Publisher"),
-        ("tests/state_machine_director_node.py", "State Machine Director"),
-        ("tests/slam_nodes.py", "SLAM Processing Nodes"),
-        ("tests/navigation_service_node.py", "Navigation Service"),
+# Integration testing utilities
+@pytest.fixture(scope="function")
+def clean_module_cache():
+    """Ensure fresh module imports for each test."""
+    # Clear critical modules to force fresh imports
+    critical_modules = [
+        "bridges.competition_bridge",
+        "bridges.telemetry_manager",
+        "bridges.websocket_manager",
+        "config.config_manager",
+        "core.dds_domain_redundancy_manager",
     ]
 
-    launched_nodes = []
-    for script, name in nodes_to_launch:
-        process = _launch_ros2_node(script, name)
-        if process:
-            launched_nodes.append((name, process))
+    for module in critical_modules:
+        if module in sys.modules:
+            del sys.modules[module]
 
-    # Wait for all nodes to initialize
-    print("⏳ Waiting for ROS2 nodes to initialize...")
-    time.sleep(5)
+    yield
 
-    # Verify environment is ready
-    try:
-        env = os.environ.copy()
-        env["ROS_DOMAIN_ID"] = "42"
+    # Re-clear after test
+    for module in critical_modules:
+        if module in sys.modules:
+            del sys.modules[module]
 
-        result = subprocess.run(
-            ["bash", "-c", "source /opt/ros/humble/setup.bash && ros2 topic list"],
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
 
-        topics = result.stdout.strip().split("\n")
-        print(f"📡 ROS2 topics available: {len([t for t in topics if t.strip()])}")
+@pytest.fixture(scope="function")
+def isolated_config():
+    """Provide isolated configuration for each test."""
+    import shutil
+    import tempfile
 
-        # Check for key topics
-        key_topics = [
-            "/state_machine/current_state",
-            "/gps/fix",
-            "/imu/data",
-            "/cmd_vel",
-        ]
-        found_topics = [t for t in key_topics if t in topics]
+    from config.config_manager import ConfigurationManager
 
-        if found_topics:
-            print(f"   ✅ Found: {', '.join(found_topics)}")
-        if len(found_topics) >= 3:
-            print("✅ ROS2 integration environment ready")
-        else:
-            print("⚠️  Limited ROS2 topics detected - some tests may fail")
+    # Create temporary config directory
+    temp_dir = tempfile.mkdtemp()
+    config_dir = os.path.join(temp_dir, "config")
+    os.makedirs(config_dir)
 
-    except Exception as e:
-        print(f"⚠️  ROS2 environment verification failed: {e}")
+    manager = ConfigurationManager(config_dir)
 
-    yield  # Tests run here
+    yield manager
 
     # Cleanup
-    print("\n🧹 Cleaning up ROS2 integration environment...")
-
-    # Terminate all ROS2 processes
-    for name, process in launched_nodes:
-        try:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            process.wait(timeout=5)
-            print(f"✅ {name} stopped")
-        except Exception as e:
-            try:
-                process.kill()
-                print(f"⚠️  {name} force killed")
-            except:
-                print(f"⚠️  {name} cleanup failed: {e}")
-
-    # Stop ROS2 daemon
-    try:
-        subprocess.run(
-            ["bash", "-c", "source /opt/ros/humble/setup.bash && ros2 daemon stop"],
-            capture_output=True,
-            timeout=5,
-        )
-        print("✅ ROS2 daemon stopped")
-    except:
-        pass
-
-
-@pytest.fixture
-def ros_context():
-    """Initialize and cleanup ROS context for individual tests."""
-    # For integration tests, ROS2 context is managed externally
-    # Don't skip - let tests handle ROS2 availability
-    if ROS2_AVAILABLE:
-        rclpy.init()
-        yield
-        rclpy.shutdown()
-    else:
-        yield  # Allow tests to run even without ROS2
+    shutil.rmtree(temp_dir)
 
 
 def simulate_time_passing(_seconds):

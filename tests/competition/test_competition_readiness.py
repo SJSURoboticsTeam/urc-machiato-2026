@@ -77,7 +77,7 @@ class CompetitionReadinessTest(Node):
     def run_test_suite(self) -> Dict[str, Any]:
         """Run the complete competition readiness test suite."""
 
-        self.get_logger().info("🧪 Starting Competition Readiness Test Suite")
+        self.get_logger().info("[EXPERIMENT] Starting Competition Readiness Test Suite")
 
         # Test 1: System Startup
         self.test_results["system_startup"] = self.test_system_startup()
@@ -143,7 +143,7 @@ class CompetitionReadinessTest(Node):
             result["details"].append(
                 f"Found {len(found_nodes)}/{len(expected_nodes)} expected nodes"
             )
-            result["details"].extend([f"✓ {node}" for node in found_nodes])
+            result["details"].extend([f" {node}" for node in found_nodes])
 
             if len(found_nodes) >= len(expected_nodes) * 0.8:  # 80% success rate
                 result["passed"] = True
@@ -180,7 +180,7 @@ class CompetitionReadinessTest(Node):
             result["details"].append(
                 f"Found {len(found_topics)}/{len(topics_to_check)} hardware topics"
             )
-            result["details"].extend([f"✓ {topic}" for topic in found_topics])
+            result["details"].extend([f" {topic}" for topic in found_topics])
 
             if len(found_topics) == len(topics_to_check):
                 result["passed"] = True
@@ -220,7 +220,7 @@ class CompetitionReadinessTest(Node):
             if len(found_topics) > 0:
                 result["passed"] = True
                 result["score"] = (len(found_topics) / len(terrain_topics)) * 100
-                result["details"].extend([f"✓ {topic}" for topic in found_topics])
+                result["details"].extend([f" {topic}" for topic in found_topics])
             else:
                 result["details"].append(
                     "No terrain topics found - may be using mock data"
@@ -257,14 +257,14 @@ class CompetitionReadinessTest(Node):
             if len(found_topics) > 0:
                 result["passed"] = True
                 result["score"] = (len(found_topics) / len(safety_topics)) * 100
-                result["details"].extend([f"✓ {topic}" for topic in found_topics])
+                result["details"].extend([f" {topic}" for topic in found_topics])
 
                 # Test emergency stop responsiveness
                 self.emergency_stop_pub.publish(Bool(data=True))
                 time.sleep(1)
                 self.emergency_stop_pub.publish(Bool(data=False))
 
-                result["details"].append("✓ Emergency stop commands sent")
+                result["details"].append(" Emergency stop commands sent")
 
         except Exception as e:
             result["details"].append(f"Safety check failed: {e}")
@@ -291,9 +291,9 @@ class CompetitionReadinessTest(Node):
         if self.mission_responsive or initial_responsive:
             result["passed"] = True
             result["score"] = 100
-            result["details"].append("✓ Mission system responsive")
+            result["details"].append(" Mission system responsive")
         else:
-            result["details"].append("⚠ Mission system may not be fully responsive")
+            result["details"].append(" Mission system may not be fully responsive")
 
         return result
 
@@ -314,9 +314,9 @@ class CompetitionReadinessTest(Node):
             if result_ws == 0:
                 result["passed"] = True
                 result["score"] = 100
-                result["details"].append("✓ WebSocket server running on port 8080")
+                result["details"].append(" WebSocket server running on port 8080")
             else:
-                result["details"].append("⚠ WebSocket server not accessible")
+                result["details"].append(" WebSocket server not accessible")
 
         except Exception as e:
             result["details"].append(f"WebSocket check failed: {e}")
@@ -340,9 +340,9 @@ class CompetitionReadinessTest(Node):
         if self.safety_functional or initial_safety:
             result["passed"] = True
             result["score"] = 100
-            result["details"].append("✓ Emergency stop system functional")
+            result["details"].append(" Emergency stop system functional")
         else:
-            result["details"].append("⚠ Emergency stop system response unclear")
+            result["details"].append(" Emergency stop system response unclear")
 
         return result
 
@@ -354,15 +354,15 @@ class CompetitionReadinessTest(Node):
 
         # Check overall system health
         if self.system_healthy:
-            result["details"].append("✓ System reports healthy")
+            result["details"].append(" System reports healthy")
             result["score"] += 50
 
         if self.mission_responsive:
-            result["details"].append("✓ Mission system integrated")
+            result["details"].append(" Mission system integrated")
             result["score"] += 25
 
         if self.safety_functional:
-            result["details"].append("✓ Safety system integrated")
+            result["details"].append(" Safety system integrated")
             result["score"] += 25
 
         if result["score"] >= 75:
@@ -387,14 +387,14 @@ class CompetitionReadinessTest(Node):
     def print_results(self):
         """Print test results in a formatted way."""
         print("\n" + "=" * 60)
-        print("🏆 COMPETITION READINESS TEST RESULTS")
+        print("[ACHIEVEMENT] COMPETITION READINESS TEST RESULTS")
         print("=" * 60)
 
         for test_name, result in self.test_results.items():
             if not isinstance(result, dict):
                 continue
 
-            status = "✅ PASS" if result.get("passed", False) else "❌ FAIL"
+            status = "[PASS] PASS" if result.get("passed", False) else "[FAIL] FAIL"
             score = result.get("score", 0)
 
             print(f"\n{test_name.upper().replace('_', ' ')}: {status} ({score:.1f}%)")
@@ -406,15 +406,15 @@ class CompetitionReadinessTest(Node):
         duration = self.test_results.get("test_duration", 0)
 
         print(f"\n{'='*60}")
-        print(f"📊 OVERALL SCORE: {overall_score:.1f}%")
-        print(f"⏱️  TEST DURATION: {duration:.1f} seconds")
+        print(f"[GRAPH] OVERALL SCORE: {overall_score:.1f}%")
+        print(f"[CLOCK]  TEST DURATION: {duration:.1f} seconds")
 
         if overall_score >= 90:
-            print("🎉 SYSTEM IS COMPETITION READY!")
+            print("[PARTY] SYSTEM IS COMPETITION READY!")
         elif overall_score >= 75:
-            print("⚠️  SYSTEM MOSTLY READY - MINOR ISSUES TO ADDRESS")
+            print("  SYSTEM MOSTLY READY - MINOR ISSUES TO ADDRESS")
         else:
-            print("🚨 SYSTEM NEEDS SIGNIFICANT WORK BEFORE COMPETITION")
+            print(" SYSTEM NEEDS SIGNIFICANT WORK BEFORE COMPETITION")
 
 
 def main():
@@ -439,14 +439,14 @@ def main():
         with open("competition_readiness_report.json", "w") as f:
             json.dump(results, f, indent=2)
 
-        print(f"\n📄 Detailed results saved to competition_readiness_report.json")
+        print(f"\n Detailed results saved to competition_readiness_report.json")
 
         # Return appropriate exit code
         overall_score = results.get("overall_score", 0)
         return 0 if overall_score >= 75 else 1
 
     except KeyboardInterrupt:
-        print("\n🛑 Test interrupted by user")
+        print("\n Test interrupted by user")
         return 1
     finally:
         test_node.destroy_node()

@@ -50,20 +50,37 @@ if MissionExecutor is None:
 class TestMissionExecutor:
     """Test the mission executor core functionality"""
 
-    @pytest.fixture
-    def ros_context(self):
-        """Setup ROS2 context for testing"""
-        rclpy.init()
-        yield
-        rclpy.shutdown()
+    # ROS2 context is managed by session fixture in conftest.py
 
     @pytest.fixture
-    def mock_hardware(self, ros_context):
+    def mock_hardware(self):
         """Create mock hardware interface"""
-        node = rclpy.create_node("test_node")
-        hardware = HardwareInterface(node, use_mock=True)
+        from missions.hardware_abstraction import (
+            MockActuatorInterface,
+            MockSensorInterface,
+        )
+
+        # Create mock sensor and actuator interfaces
+        sensor = MockSensorInterface("test_sensor")
+        actuator = MockActuatorInterface("test_actuator")
+
+        # Create a simple container class for testing
+        class MockHardwareContainer:
+            def __init__(self):
+                self.sensor = sensor
+                self.actuator = actuator
+
+            def is_connected(self):
+                return True
+
+            def get_status(self):
+                return {
+                    "sensors": [sensor.get_status()],
+                    "actuators": [actuator.get_status()],
+                }
+
+        hardware = MockHardwareContainer()
         yield hardware
-        node.destroy_node()
 
     @pytest.fixture
     def mission_executor(self, mock_hardware):

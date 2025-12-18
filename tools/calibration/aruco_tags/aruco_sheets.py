@@ -53,7 +53,7 @@ def create_page_with_tags(tag_specs, start_id, dpi=300, landscape=False):
     landscape: if True, use landscape orientation
     Returns: (PIL_image, next_id)
 
-    ✅ Respects template_silhouette.png constraints:
+    [PASS] Respects template_silhouette.png constraints:
     - Page: US Letter (11" × 8.5", 3301×2550px @ 300 DPI)
     - Safe margins: 0.75" (225px)
     - Usable area: 9.5" × 7.0" (2851×2100px)
@@ -103,7 +103,7 @@ def create_page_with_tags(tag_specs, start_id, dpi=300, landscape=False):
 
     if max_tag_size_px > usable_width_px or max_tag_size_px > usable_height_px:
         print(
-            f"  ⚠️  WARNING: {max_tag_size_cm}cm tag "
+            f"    WARNING: {max_tag_size_cm}cm tag "
             f'({max_tag_size_inches:.1f}") too large for printable area!'
         )
         margin_inches = PRINT_MARGIN_INCHES
@@ -143,14 +143,14 @@ def create_page_with_tags(tag_specs, start_id, dpi=300, landscape=False):
             if y + tag_size_px > page_height_px - margin:
                 remaining_tags = count - tag_idx
                 print(
-                    f"  ⚠️  WARNING: Not enough vertical space for all tags. "
+                    f"    WARNING: Not enough vertical space for all tags. "
                     f"{remaining_tags} tags will be omitted."
                 )
                 break
 
             # Check horizontal bounds
             if x + tag_size_px > page_width_px - margin:
-                print("  ⚠️  WARNING: Tag exceeds horizontal bounds.")
+                print("    WARNING: Tag exceeds horizontal bounds.")
                 continue
 
             # Generate tag
@@ -239,7 +239,7 @@ def create_page_with_tags_large_format(tag_specs, start_id, dpi=300):
     start_id: starting marker ID
     Returns: (PIL_image, next_id)
 
-    ✅ Optimized for 36" × 44" roll paper:
+    [PASS] Optimized for 36" × 44" roll paper:
     - Arranges tags in efficient rows (fills width)
     - Minimal margins (0.5")
     - Maximum utilization of paper width
@@ -301,7 +301,7 @@ def create_page_with_tags_large_format(tag_specs, start_id, dpi=300):
             # Check if we're exceeding the page height
             if y + tag_size_px > page_height_px - margin:
                 print(
-                    f"  ⚠️  WARNING: Insufficient vertical space for all tags. "
+                    f"    WARNING: Insufficient vertical space for all tags. "
                     f"{count - tag_idx} tags will be omitted."
                 )
                 break
@@ -385,7 +385,7 @@ def create_merged_template_with_tags(tag_specs, start_id, template_image_path, d
     template_image_path: path to template_silhouette.png
     Returns: (PIL_image, next_id)
 
-    ✅ Overlays ArUco tags on template_silhouette.png:
+    [PASS] Overlays ArUco tags on template_silhouette.png:
     - Template: US Letter (11" × 8.5")
     - Tags: Overlaid as registration/fiducial marks
     - Layout: Corner and edge positions for alignment
@@ -396,10 +396,10 @@ def create_merged_template_with_tags(tag_specs, start_id, template_image_path, d
     # Load template image
     try:
         template_img = Image.open(template_image_path)
-        print(f"  ✅ Loaded template: {template_image_path}")
+        print(f"  [PASS] Loaded template: {template_image_path}")
         print(f"     Template size: {template_img.size}")
     except FileNotFoundError:
-        print(f"  ❌ Template not found: {template_image_path}")
+        print(f"  [FAIL] Template not found: {template_image_path}")
         return None, start_id
 
     # Convert template to RGB if needed
@@ -455,9 +455,7 @@ def create_merged_template_with_tags(tag_specs, start_id, template_image_path, d
 
             # Check bounds
             if y + tag_size_px > template_height_px - margin:
-                print(
-                    f"  ⚠️  Not enough space for all tags. {count - tag_idx} omitted."
-                )
+                print(f"    Not enough space for all tags. {count - tag_idx} omitted.")
                 break
 
             if x + tag_size_px > template_width_px - margin:
@@ -543,7 +541,7 @@ def generate_merged_template_pdf(
     )
 
     if pil_img is None:
-        print("❌ Failed to merge template with tags")
+        print("[FAIL] Failed to merge template with tags")
         return
 
     total_tags = sum(count for _, count in tag_specs)
@@ -551,12 +549,12 @@ def generate_merged_template_pdf(
     try:
         # Save as PDF
         pil_img.save(output_filename, format="PDF", dpi=(300, 300))
-        print(f"\n✅ Successfully generated: '{output_filename}'")
+        print(f"\n[PASS] Successfully generated: '{output_filename}'")
         print(f"   Tags: {total_tags} (IDs 0 to {current_id-1})")
         print("   Resolution: 300 DPI")
         print("   Format: A4 Letter with overlaid registration marks")
     except Exception as e:
-        print(f"\n❌ Error saving file: {e}")
+        print(f"\n[FAIL] Error saving file: {e}")
 
 
 def generate_sheets(specs_list, output_filename="aruco_tags.pdf"):
@@ -599,10 +597,10 @@ def generate_sheets(specs_list, output_filename="aruco_tags.pdf"):
             save_all=True,
             append_images=pages[1:] if len(pages) > 1 else [],
         )
-        print(f"\n✅ Successfully generated: '{output_filename}'")
+        print(f"\n[PASS] Successfully generated: '{output_filename}'")
         print(f"   Total pages: {len(pages)}")
     except Exception as e:
-        print(f"\n❌ Error saving file: {e}")
+        print(f"\n[FAIL] Error saving file: {e}")
 
 
 def generate_sheets_large_format(specs_list, output_filename="aruco_tags_large.pdf"):
@@ -640,10 +638,10 @@ def generate_sheets_large_format(specs_list, output_filename="aruco_tags_large.p
             save_all=True,
             append_images=pages[1:] if len(pages) > 1 else [],
         )
-        print(f"\n✅ Successfully generated: '{output_filename}'")
+        print(f"\n[PASS] Successfully generated: '{output_filename}'")
         print(f"   Total pages: {len(pages)}")
     except Exception as e:
-        print(f"\n❌ Error saving file: {e}")
+        print(f"\n[FAIL] Error saving file: {e}")
 
 
 def generate_tags_as_pngs(tag_specs, output_dir="aruco_tags_png", dpi=300):
@@ -710,11 +708,11 @@ def generate_tags_as_pngs(tag_specs, output_dir="aruco_tags_png", dpi=300):
             generated_count += 1
 
             if (tag_idx + 1) % max(1, count // 4) == 0 or tag_idx == count - 1:
-                print(f"  ✓ Generated {tag_idx + 1}/{count} tags")
+                print(f"   Generated {tag_idx + 1}/{count} tags")
 
             current_id += 1
 
-    print(f"\n✅ Successfully generated {generated_count} PNG files")
+    print(f"\n[PASS] Successfully generated {generated_count} PNG files")
     print(f"   Location: {os.path.abspath(output_dir)}")
 
 
@@ -758,7 +756,7 @@ def main():
                 else "aruco_sheets_large.pdf"
             )
 
-    print("\n📋 ArUco Sheet Generation Configuration:")
+    print("\n[CLIPBOARD] ArUco Sheet Generation Configuration:")
 
     # PNG export mode
     if args.png:

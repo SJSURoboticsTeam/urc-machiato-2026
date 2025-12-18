@@ -65,7 +65,7 @@ def calibrate_from_markers(
         None: All errors are handled internally and logged to console
     """
 
-    print("🎯 Direct ArUco Marker Calibration")
+    print("[OBJECTIVE] Direct ArUco Marker Calibration")
     print("=" * 60)
     print(f"Board: {cols}×{rows} ({cols*rows} markers)")
     print(f"Square: {square_size*1000:.0f}mm, Marker: {marker_size*1000:.0f}mm")
@@ -88,15 +88,15 @@ def calibrate_from_markers(
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     if not cap.isOpened():
-        print("❌ Cannot open camera")
+        print("[FAIL] Cannot open camera")
         return False
 
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    print(f"📷 Camera: {width}x{height}\n")
+    print(f" Camera: {width}x{height}\n")
 
     # Collect markers
-    print(f"📹 Capturing for {duration} seconds...")
+    print(f" Capturing for {duration} seconds...")
     print("Move board around to collect good frames\n")
 
     all_corners = []
@@ -145,11 +145,11 @@ def calibrate_from_markers(
                             collected_frames += 1
 
                             print(
-                                f"✅ Frame {frame_count}: Collected {n_corners} corners (total: {collected_frames})"
+                                f"[PASS] Frame {frame_count}: Collected {n_corners} corners (total: {collected_frames})"
                             )
 
                             if collected_frames >= 15:
-                                print("\n✅ Collected enough frames!")
+                                print("\n[PASS] Collected enough frames!")
                                 break
 
                     # Draw for visualization
@@ -168,23 +168,23 @@ def calibrate_from_markers(
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord("q"):
-                print("\n⏹️ User interrupted")
+                print("\n⏹ User interrupted")
                 break
 
     finally:
         cap.release()
         cv2.destroyAllWindows()
 
-    print("\n📊 Results:")
+    print("\n[GRAPH] Results:")
     print(f"   Frames processed: {frame_count}")
     print(f"   Frames collected: {collected_frames}")
 
     if collected_frames < 5:
-        print(f"❌ Need at least 5 frames, got {collected_frames}")
+        print(f"[FAIL] Need at least 5 frames, got {collected_frames}")
         return False
 
     # Calibrate
-    print("\n🔧 Calibrating camera...")
+    print("\n[TOOL] Calibrating camera...")
     try:
         camera_matrix = np.zeros((3, 3))
         dist_coeffs = np.zeros((5, 1))
@@ -222,7 +222,9 @@ def calibrate_from_markers(
                 image_points_list.append(np.vstack(frame_img_pts))
 
         if len(object_points_list) < 3:
-            print(f"❌ Not enough frames with valid markers ({len(object_points_list)})")
+            print(
+                f"[FAIL] Not enough frames with valid markers ({len(object_points_list)})"
+            )
             return False
 
         ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
@@ -234,10 +236,10 @@ def calibrate_from_markers(
         )
 
         if not ret:
-            print("❌ Calibration failed")
+            print("[FAIL] Calibration failed")
             return False
 
-        print("✅ Calibration successful!")
+        print("[PASS] Calibration successful!")
 
         # Save
         calib_data = {
@@ -261,14 +263,14 @@ def calibrate_from_markers(
         with open(output_file, "w") as f:
             json.dump(calib_data, f, indent=2)
 
-        print(f"💾 Calibration saved to: {output_file}")
+        print(f" Calibration saved to: {output_file}")
         print(f"\nCamera Matrix:\n{camera_matrix}")
         print(f"\nDistortion Coefficients:\n{dist_coeffs.flatten()}")
 
         return True
 
     except Exception as e:
-        print(f"❌ Calibration error: {e}")
+        print(f"[FAIL] Calibration error: {e}")
         import traceback
 
         traceback.print_exc()

@@ -77,7 +77,7 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
     def test_enhanced_state_synchronization(self):
         """Test enhanced state synchronization with improved election."""
-        print("🔄 Testing Enhanced State Synchronization...")
+        print("[REFRESH] Testing Enhanced State Synchronization...")
 
         # Start all state managers
         self.state_mgr_primary.start()
@@ -187,11 +187,11 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         self.state_mgr_secondary.stop()
         self.state_mgr_tertiary.stop()
 
-        print("  ✅ Enhanced state synchronization test passed")
+        print("  [PASS] Enhanced state synchronization test passed")
 
     def test_enhanced_websocket_health_monitoring(self):
         """Test enhanced WebSocket health monitoring."""
-        print("🌐 Testing Enhanced WebSocket Health Monitoring...")
+        print("[NETWORK] Testing Enhanced WebSocket Health Monitoring...")
 
         from bridges.websocket_redundancy_manager import (
             EndpointPriority,
@@ -286,11 +286,11 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         # Stop redundancy system
         self.ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Enhanced WebSocket health monitoring test passed")
+        print("  [PASS] Enhanced WebSocket health monitoring test passed")
 
     def test_coordinated_recovery_system(self):
         """Test the coordinated recovery system."""
-        print("🔧 Testing Coordinated Recovery System...")
+        print("[TOOL] Testing Coordinated Recovery System...")
 
         # Register progress and completion callbacks
         progress_updates = []
@@ -352,11 +352,11 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
             len(final_status["checkpoints"]), 0, "Should have recovery checkpoints"
         )
 
-        print("  ✅ Coordinated recovery system test passed")
+        print("  [PASS] Coordinated recovery system test passed")
 
     def test_complex_failure_scenario(self):
         """Test complex failure scenario with coordinated recovery."""
-        print("💥 Testing Complex Failure Scenario...")
+        print(" Testing Complex Failure Scenario...")
 
         # Simulate a multi-system failure
         # 1. Make state system unhealthy (no master)
@@ -460,11 +460,11 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         self.dds_mgr.stop()
         self.ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Complex failure scenario test passed")
+        print("  [PASS] Complex failure scenario test passed")
 
     def test_performance_improvements(self):
         """Test performance improvements after enhancements."""
-        print("📈 Testing Performance Improvements...")
+        print(" Testing Performance Improvements...")
 
         # Test state synchronization performance
         self.state_mgr_primary.start()
@@ -522,7 +522,7 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
         # Cleanup
         self.state_mgr_primary.stop()
 
-        print("  ✅ Performance improvements test passed")
+        print("  [PASS] Performance improvements test passed")
 
     def tearDown(self):
         """Clean up after tests."""
@@ -550,7 +550,7 @@ class EnhancedAdvancedSystemsTest(unittest.TestCase):
 
 def run_enhanced_tests():
     """Run the enhanced test suite."""
-    print("🧪 Enhanced Advanced Systems Test Suite")
+    print("[EXPERIMENT] Enhanced Advanced Systems Test Suite")
     print("=" * 60)
     print("Testing: Enhanced State Sync + WebSocket Health + Coordinated Recovery")
     print("Mode: Full Integration with ROS2 Simulation")
@@ -565,17 +565,17 @@ def run_enhanced_tests():
 
     # Print summary
     print("\n" + "=" * 60)
-    print("📊 ENHANCED TEST RESULTS")
+    print("[GRAPH] ENHANCED TEST RESULTS")
     print("=" * 60)
 
     if result.wasSuccessful():
-        print("🎉 ALL ENHANCED TESTS PASSED!")
-        print("✅ State synchronization election: IMPROVED")
-        print("✅ WebSocket health monitoring: ENHANCED")
-        print("✅ Coordinated recovery: IMPLEMENTED")
-        print("🚀 Systems are now PRODUCTION READY!")
+        print("[PARTY] ALL ENHANCED TESTS PASSED!")
+        print("[PASS] State synchronization election: IMPROVED")
+        print("[PASS] WebSocket health monitoring: ENHANCED")
+        print("[PASS] Coordinated recovery: IMPLEMENTED")
+        print("[IGNITE] Systems are now PRODUCTION READY!")
     else:
-        print("❌ SOME ENHANCED TESTS FAILED!")
+        print("[FAIL] SOME ENHANCED TESTS FAILED!")
         print(f"   Failed: {len(result.failures)}")
         print(f"   Errors: {len(result.errors)}")
 
@@ -589,9 +589,9 @@ def run_enhanced_tests():
             for test, traceback in result.errors:
                 print(f"   - {test}: {traceback[:100]}...")
 
-    print(f"\n⏱️  Total Tests Run: {result.testsRun}")
+    print(f"\n[CLOCK]  Total Tests Run: {result.testsRun}")
     print(
-        f"⏱️  Time Taken: {time.time() - time.time():.2f}s"
+        f"[CLOCK]  Time Taken: {time.time() - time.time():.2f}s"
     )  # This won't be accurate since we reset time
 
     return result.wasSuccessful()

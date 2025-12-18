@@ -11,9 +11,10 @@ from typing import Any, Dict, List, Optional
 
 import rclpy
 from autonomy_interfaces.msg import LedCommand, VisionDetection
-from constants import DEFAULT_WEBSOCKET_PORT
 from rclpy.node import Node
 from rclpy.publisher import Publisher
+
+from .constants import DEFAULT_WEBSOCKET_PORT
 
 
 class MissionOrchestrator:

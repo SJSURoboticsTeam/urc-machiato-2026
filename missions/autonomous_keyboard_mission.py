@@ -185,7 +185,7 @@ class AutonomousKeyboardMission(Node):
             )
             return
 
-        self.get_logger().info("🚀 Starting Autonomous Keyboard Typing Mission")
+        self.get_logger().info("[IGNITE] Starting Autonomous Keyboard Typing Mission")
         self.state = KeyboardMissionState.SEARCHING
         self.start_time = time.time()
         self.keyboard_detected = False
@@ -202,14 +202,14 @@ class AutonomousKeyboardMission(Node):
 
     def stop_mission(self):
         """Stop the current mission."""
-        self.get_logger().info("🛑 Stopping Autonomous Keyboard Mission")
+        self.get_logger().info(" Stopping Autonomous Keyboard Mission")
         self.state = KeyboardMissionState.IDLE
         self.cleanup_timers()
         self.publish_status()
 
     def reset_mission(self):
         """Reset mission to initial state."""
-        self.get_logger().info("🔄 Resetting Autonomous Keyboard Mission")
+        self.get_logger().info("[REFRESH] Resetting Autonomous Keyboard Mission")
         self.stop_mission()
         self.start_mission()
 
@@ -227,7 +227,7 @@ class AutonomousKeyboardMission(Node):
 
         try:
             # Keyboard detected by centralized vision processor
-            self.get_logger().info("🎯 Keyboard detected by vision processor!")
+            self.get_logger().info("[OBJECTIVE] Keyboard detected by vision processor!")
 
             # Transform to map frame
             keyboard_pose = self.transform_to_map_frame(msg)
@@ -270,7 +270,7 @@ class AutonomousKeyboardMission(Node):
             self.state = KeyboardMissionState.FAILED
             return
 
-        self.get_logger().info("🧭 Navigating to keyboard...")
+        self.get_logger().info(" Navigating to keyboard...")
 
         # Create approach pose (slightly in front of keyboard)
         approach_pose = PoseStamped()
@@ -346,7 +346,7 @@ class AutonomousKeyboardMission(Node):
             and self.is_at_keyboard_position()
         ):
 
-            self.get_logger().info("📍 Reached keyboard position")
+            self.get_logger().info(" Reached keyboard position")
             self.state = KeyboardMissionState.POSITIONING
             self.cleanup_timers()
 
@@ -366,7 +366,7 @@ class AutonomousKeyboardMission(Node):
 
     def position_for_typing(self):
         """Position arm and align for typing."""
-        self.get_logger().info("🎯 Positioning for typing...")
+        self.get_logger().info("[OBJECTIVE] Positioning for typing...")
 
         # Use existing arm controller to position for typing
         try:
@@ -405,18 +405,18 @@ class AutonomousKeyboardMission(Node):
 
     def execute_typing(self):
         """Execute the autonomous typing sequence."""
-        self.get_logger().info("⌨️ Executing typing sequence...")
+        self.get_logger().info("⌨ Executing typing sequence...")
 
         try:
             # Use existing typing executor
             success = self.typing_executor.execute_sequence(self.target_sequence)
 
             if success:
-                self.get_logger().info("✅ Typing sequence completed")
+                self.get_logger().info("[PASS] Typing sequence completed")
                 self.state = KeyboardMissionState.VERIFYING
                 self.verify_typing()
             else:
-                self.get_logger().error("❌ Typing sequence failed")
+                self.get_logger().error("[FAIL] Typing sequence failed")
                 self.state = KeyboardMissionState.FAILED
 
         except Exception as e:
@@ -434,7 +434,7 @@ class AutonomousKeyboardMission(Node):
 
     def verification_complete(self):
         """Handle typing verification completion."""
-        self.get_logger().info("✅ Typing verification complete")
+        self.get_logger().info("[PASS] Typing verification complete")
         self.state = KeyboardMissionState.COMPLETED
         self.typing_completed = True
         self.publish_status()

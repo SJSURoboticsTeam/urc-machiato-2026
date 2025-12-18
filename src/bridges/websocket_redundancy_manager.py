@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from .constants import HEALTH_SCORE_THRESHOLD, LOAD_DEGRADED_THRESHOLD
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,10 +36,10 @@ class EndpointPriority(Enum):
 class EndpointHealth(Enum):
     """Health status of WebSocket endpoints."""
 
-    HEALTHY = "healthy"
-    DEGRADED = "degraded"
-    UNHEALTHY = "unhealthy"
-    DOWN = "down"
+    HEALTHY = "HEALTHY"
+    DEGRADED = "DEGRADED"
+    UNHEALTHY = "UNHEALTHY"
+    DOWN = "DOWN"
 
 
 class NetworkQualityMonitor:
@@ -114,6 +116,18 @@ class WebSocketEndpoint:
     health_status: EndpointHealth = EndpointHealth.DOWN
     response_time: float = float("inf")
     current_load: int = 0
+
+    @property
+    def is_healthy(self) -> bool:
+        """Check if the endpoint is healthy."""
+        return self.health_status == EndpointHealth.HEALTHY
+
+    @is_healthy.setter
+    def is_healthy(self, value: bool):
+        """Set endpoint health status."""
+        self.health_status = (
+            EndpointHealth.HEALTHY if value else EndpointHealth.UNHEALTHY
+        )
 
 
 @dataclass

@@ -13,7 +13,14 @@ from collections import deque
 from typing import Any, Dict, List, Optional
 
 import rclpy
-from constants import (
+from geometry_msgs.msg import TwistStamped
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from sensor_msgs.msg import BatteryState, Imu, NavSatFix
+from std_msgs.msg import String
+
+from .constants import (
     ADAPTATION_RATE,
     BANDWIDTH_MEASUREMENT_WINDOW_SEC,
     BANDWIDTH_TARGET_UTILIZATION,
@@ -25,12 +32,6 @@ from constants import (
     MIN_TELEMETRY_RATE_HZ,
     PACKET_LOSS_HISTORY_SIZE,
 )
-from geometry_msgs.msg import TwistStamped
-from nav_msgs.msg import Odometry
-from rclpy.node import Node
-from rclpy.publisher import Publisher
-from sensor_msgs.msg import BatteryState, Imu, NavSatFix
-from std_msgs.msg import String
 
 
 class TelemetryManager:

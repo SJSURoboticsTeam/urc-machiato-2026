@@ -51,7 +51,7 @@ class DocsBuilder:
             )
             return result
         except subprocess.CalledProcessError as e:
-            print(f"❌ Command failed: {' '.join(cmd)}")
+            print(f"[FAIL] Command failed: {' '.join(cmd)}")
             print(f"Error output: {e.stderr}")
             if check:
                 sys.exit(1)
@@ -59,7 +59,7 @@ class DocsBuilder:
 
     def check_dependencies(self) -> bool:
         """Check if all required dependencies are installed."""
-        print("🔍 Checking dependencies...")
+        print("[MAGNIFY] Checking dependencies...")
 
         # Check Python dependencies
         try:
@@ -67,9 +67,9 @@ class DocsBuilder:
             import sphinx
             import sphinx_js
 
-            print("✅ Python dependencies OK")
+            print("[PASS] Python dependencies OK")
         except ImportError as e:
-            print(f"❌ Missing Python dependency: {e}")
+            print(f"[FAIL] Missing Python dependency: {e}")
             print("Install with: pip install -r requirements.txt")
             return False
 
@@ -77,15 +77,15 @@ class DocsBuilder:
         tools = ["doxygen", "jsdoc"]
         for tool in tools:
             if not shutil.which(tool):
-                print(f"❌ Missing system tool: {tool}")
+                print(f"[FAIL] Missing system tool: {tool}")
                 return False
 
-        print("✅ System tools OK")
+        print("[PASS] System tools OK")
         return True
 
     def clean_builds(self):
         """Clean all build artifacts."""
-        print("🧹 Cleaning build artifacts...")
+        print("[SWEEP] Cleaning build artifacts...")
 
         dirs_to_clean = [
             self.build_dir / "html",
@@ -100,81 +100,81 @@ class DocsBuilder:
                 shutil.rmtree(dir_path)
                 print(f"   Cleaned: {dir_path}")
 
-        print("✅ Build artifacts cleaned")
+        print("[PASS] Build artifacts cleaned")
 
     def build_sphinx(self):
         """Build Sphinx documentation."""
-        print("📚 Building Sphinx documentation...")
+        print(" Building Sphinx documentation...")
 
         cmd = ["make", "html"]
         result = self.run_command(cmd)
 
         if result.returncode == 0:
-            print("✅ Sphinx documentation built successfully")
+            print("[PASS] Sphinx documentation built successfully")
         else:
-            print("❌ Sphinx build failed")
+            print("[FAIL] Sphinx build failed")
             return False
 
         return True
 
     def build_doxygen(self):
         """Build Doxygen documentation."""
-        print("⚙️ Building Doxygen documentation...")
+        print(" Building Doxygen documentation...")
 
         cmd = ["make", "doxygen"]
         result = self.run_command(cmd)
 
         if result.returncode == 0:
-            print("✅ Doxygen documentation built successfully")
+            print("[PASS] Doxygen documentation built successfully")
         else:
-            print("❌ Doxygen build failed")
+            print("[FAIL] Doxygen build failed")
             return False
 
         return True
 
     def build_jsdoc(self):
         """Build JSDoc documentation."""
-        print("🌐 Building JSDoc documentation...")
+        print("[NETWORK] Building JSDoc documentation...")
 
         cmd = ["make", "jsdoc"]
         result = self.run_command(cmd)
 
         if result.returncode == 0:
-            print("✅ JSDoc documentation built successfully")
+            print("[PASS] JSDoc documentation built successfully")
         else:
-            print("❌ JSDoc build failed")
+            print("[FAIL] JSDoc build failed")
             return False
 
         return True
 
     def validate_docs(self):
         """Run documentation validation."""
-        print("🔍 Validating documentation...")
+        print("[MAGNIFY] Validating documentation...")
 
         # Link check
         print("   Checking links...")
         result = self.run_command(["make", "linkcheck"], check=False)
         if result.returncode != 0:
-            print("⚠️ Link check found issues (see _build/linkcheck/output.txt)")
+            print(" Link check found issues (see _build/linkcheck/output.txt)")
 
         # Doctest
         print("   Running doctests...")
         result = self.run_command(["make", "doctest"], check=False)
         if result.returncode != 0:
-            print("⚠️ Doctest failures found")
+            print(" Doctest failures found")
 
-        print("✅ Validation completed")
+        print("[PASS] Validation completed")
 
     def serve_docs(self, host: str = "localhost", port: int = 8000):
         """Serve documentation locally."""
-        print(f"🚀 Serving documentation at http://{host}:{port}/")
+        print(f"[IGNITE] Serving documentation at http://{host}:{port}/")
         print("Press Ctrl+C to stop")
 
         try:
             cmd = ["python3", "-m", "http.server", str(port)]
             self.run_command(cmd, cwd=self.build_dir / "html")
         except KeyboardInterrupt:
-            print("\n🛑 Server stopped")
+            print("\n Server stopped")
 
     def build_all(self, clean: bool = False, validate: bool = False):
         """Build all documentation types."""
@@ -203,10 +203,10 @@ class DocsBuilder:
         duration = end_time - start_time
 
         if success:
-            print("🎉 All documentation built successfully!")
+            print("[PARTY] All documentation built successfully!")
             print(".2f")
         else:
-            print("❌ Some documentation builds failed")
+            print("[FAIL] Some documentation builds failed")
             return False
 
         return True
@@ -257,7 +257,7 @@ def main():
         project_root = script_dir.parent
         docs_dir = project_root / "docs"
         if not docs_dir.exists():
-            print("❌ Cannot find docs directory")
+            print("[FAIL] Cannot find docs directory")
             sys.exit(1)
 
     builder = DocsBuilder(docs_dir)

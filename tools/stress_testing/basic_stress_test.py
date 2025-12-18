@@ -334,7 +334,7 @@ class CompetitionSystemStressTester(Node):
 
 def run_basic_stress_tests():
     """Run basic stress tests on competition systems."""
-    print("🔬 Starting Basic Stress Testing Suite")
+    print("[LAB] Starting Basic Stress Testing Suite")
     print("=" * 60)
 
     # Initialize ROS2
@@ -346,19 +346,19 @@ def run_basic_stress_tests():
     # Run stress tests
     test_types = ["competition_bridge", "emergency_stop", "communication"]
 
-    print(f"📋 Running {len(test_types)} stress tests...")
+    print(f"[CLIPBOARD] Running {len(test_types)} stress tests...")
 
     for test_type in test_types:
-        print(f"\n🔄 Running {test_type} stress test...")
+        print(f"\n[REFRESH] Running {test_type} stress test...")
         tester.run_stress_test(test_type)
         time.sleep(2.0)  # Brief pause between tests
 
     # Generate report
-    print("\n📊 Generating Stress Test Report...")
+    print("\n[GRAPH] Generating Stress Test Report...")
     report = tester.generate_stress_report()
 
     # Display results
-    print("\n🎯 STRESS TESTING RESULTS")
+    print("\n[OBJECTIVE] STRESS TESTING RESULTS")
     print("=" * 60)
 
     summary = report["summary"]
@@ -369,15 +369,15 @@ def run_basic_stress_tests():
     print(".1f")
     print(".1f")
 
-    print("\n📈 Individual Test Results:")
+    print("\n Individual Test Results:")
     for result in report["individual_results"]:
-        status = "✅ PASS" if result["success"] else "❌ FAIL"
+        status = "[PASS] PASS" if result["success"] else "[FAIL] FAIL"
         print(f"  {result['test_name']}: {status}")
         print(".1f")
         print(".1f")
 
     if report.get("recommendations"):
-        print("\n💡 Recommendations:")
+        print("\n Recommendations:")
         for rec in report["recommendations"]:
             print(f"  • {rec}")
 
@@ -385,12 +385,12 @@ def run_basic_stress_tests():
     tester.destroy_node()
     rclpy.shutdown()
 
-    print("\n✅ Stress testing complete!")
+    print("\n[PASS] Stress testing complete!")
 
 
 def run_targeted_stress_test(test_type: str = "competition_bridge", duration: int = 30):
     """Run a specific stress test with detailed monitoring."""
-    print(f"🎯 Running Targeted Stress Test: {test_type}")
+    print(f"[OBJECTIVE] Running Targeted Stress Test: {test_type}")
     print("=" * 60)
 
     # Initialize ROS2
@@ -417,7 +417,7 @@ def run_targeted_stress_test(test_type: str = "competition_bridge", duration: in
 
     if report["individual_results"]:
         result = report["individual_results"][0]
-        print("\n📊 Final Results:")
+        print("\n[GRAPH] Final Results:")
         print(".1f")
         print(".1f")
         print(".1f")

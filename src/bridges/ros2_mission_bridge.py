@@ -332,7 +332,7 @@ def main(args=None):
         self.get_logger().info(f"[ERROR] Bridge error: {e}")
     finally:
         rclpy.shutdown()
-        self.get_logger().info("👋 ROS2 Mission Control Bridge shut down.")
+        self.get_logger().info(" ROS2 Mission Control Bridge shut down.")
 
 
 if __name__ == "__main__":

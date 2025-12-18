@@ -31,7 +31,7 @@ class StressTestOrchestrator:
     def run_full_stress_test_suite(self) -> Dict:
         """Run the complete stress test suite."""
 
-        print("🚀 URC 2026 Complete Communication Stress Test Suite")
+        print("[IGNITE] URC 2026 Complete Communication Stress Test Suite")
         print("=" * 65)
         print("Testing communication systems under harsher-than-real-world conditions")
         print()
@@ -54,24 +54,24 @@ class StressTestOrchestrator:
 
         try:
             # Run individual stress tests
-            print("📡 PHASE 1: Network Communication Stress Tests")
+            print("[ANTENNA] PHASE 1: Network Communication Stress Tests")
             print("-" * 50)
             self._run_network_stress_tests()
 
-            print("\n🔧 PHASE 2: CAN Bus Communication Stress Tests")
+            print("\n[TOOL] PHASE 2: CAN Bus Communication Stress Tests")
             print("-" * 50)
             self._run_can_stress_tests()
 
-            print("\n🎮 PHASE 3: Movement Control Stress Tests")
+            print("\n PHASE 3: Movement Control Stress Tests")
             print("-" * 50)
             self._run_movement_stress_tests()
 
-            print("\n🔗 PHASE 4: Integrated System Stress Tests")
+            print("\n PHASE 4: Integrated System Stress Tests")
             print("-" * 50)
             self._run_integrated_stress_tests()
 
             # Generate comprehensive analysis
-            print("\n📊 PHASE 5: Comprehensive Analysis & Recommendations")
+            print("\n[GRAPH] PHASE 5: Comprehensive Analysis & Recommendations")
             print("-" * 50)
             self._generate_comprehensive_analysis()
 
@@ -81,7 +81,7 @@ class StressTestOrchestrator:
             return self.results
 
         except Exception as e:
-            print(f"❌ Stress test suite failed: {e}")
+            print(f"[FAIL] Stress test suite failed: {e}")
             self.results["error"] = str(e)
             return self.results
 
@@ -101,9 +101,9 @@ class StressTestOrchestrator:
             print("   Running network stress tests...")
             network_results = run_comprehensive_network_stress_test()
             self.results["network_tests"] = network_results
-            print("   ✅ Network stress tests completed")
+            print("   [PASS] Network stress tests completed")
         except Exception as e:
-            print(f"   ❌ Network stress tests failed: {e}")
+            print(f"   [FAIL] Network stress tests failed: {e}")
             self.results["network_tests"] = {"error": str(e)}
 
     def _run_can_stress_tests(self):
@@ -114,9 +114,9 @@ class StressTestOrchestrator:
             print("   Running CAN bus stress tests...")
             can_results = run_comprehensive_can_stress_test()
             self.results["can_tests"] = can_results
-            print("   ✅ CAN bus stress tests completed")
+            print("   [PASS] CAN bus stress tests completed")
         except Exception as e:
-            print(f"   ❌ CAN bus stress tests failed: {e}")
+            print(f"   [FAIL] CAN bus stress tests failed: {e}")
             self.results["can_tests"] = {"error": str(e)}
 
     def _run_movement_stress_tests(self):
@@ -127,9 +127,9 @@ class StressTestOrchestrator:
             print("   Running movement control stress tests...")
             movement_results = run_comprehensive_movement_stress_test()
             self.results["movement_tests"] = movement_results
-            print("   ✅ Movement control stress tests completed")
+            print("   [PASS] Movement control stress tests completed")
         except Exception as e:
-            print(f"   ❌ Movement control stress tests failed: {e}")
+            print(f"   [FAIL] Movement control stress tests failed: {e}")
             self.results["movement_tests"] = {"error": str(e)}
 
     def _run_integrated_stress_tests(self):
@@ -140,9 +140,9 @@ class StressTestOrchestrator:
             print("   Running integrated system stress tests...")
             integrated_results = run_integrated_stress_test_suite()
             self.results["integrated_tests"] = integrated_results
-            print("   ✅ Integrated system stress tests completed")
+            print("   [PASS] Integrated system stress tests completed")
         except Exception as e:
-            print(f"   ❌ Integrated system stress tests failed: {e}")
+            print(f"   [FAIL] Integrated system stress tests failed: {e}")
             self.results["integrated_tests"] = {"error": str(e)}
 
     def _generate_comprehensive_analysis(self):
@@ -423,17 +423,17 @@ class StressTestOrchestrator:
     def _display_analysis_summary(self, analysis: Dict):
         """Display comprehensive analysis summary."""
 
-        print("\n🎯 COMPREHENSIVE STRESS TEST ANALYSIS")
+        print("\n[OBJECTIVE] COMPREHENSIVE STRESS TEST ANALYSIS")
         print("=" * 45)
 
         overall_health = analysis.get("overall_system_health", 0)
         print(".1f")
         if overall_health > 80:
-            status = "✅ EXCELLENT - System handles extreme stress well"
+            status = "[PASS] EXCELLENT - System handles extreme stress well"
         elif overall_health > 60:
-            status = "⚠️ GOOD - Some degradation under extreme stress"
+            status = " GOOD - Some degradation under extreme stress"
         else:
-            status = "❌ POOR - Significant issues under stress"
+            status = "[FAIL] POOR - Significant issues under stress"
 
         print(f"   Status: {status}")
 
@@ -451,7 +451,7 @@ class StressTestOrchestrator:
                 category_name = finding_type.replace("_findings", "").title()
                 print(f"   {category_name}:")
                 for finding in findings:
-                    severity_icon = "🔴" if finding["severity"] == "high" else "🟡"
+                    severity_icon = "" if finding["severity"] == "high" else ""
                     print(
                         f"     {severity_icon} {finding['issue']}: {finding['value']}"
                     )
@@ -476,7 +476,7 @@ class StressTestOrchestrator:
         with open(output_file, "w") as f:
             json.dump(serializable_results, f, indent=2, default=str)
 
-        print(f"\n💾 Results saved to: {output_file}")
+        print(f"\n Results saved to: {output_file}")
 
         # Generate summary report
         summary_file = self.output_dir / f"stress_test_summary_{timestamp}.txt"
@@ -561,7 +561,7 @@ class StressTestOrchestrator:
                 f"\nDetailed results available in: stress_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json\n"
             )
 
-        print(f"📄 Summary report saved to: {output_file}")
+        print(f" Summary report saved to: {output_file}")
 
 
 def main():
@@ -596,7 +596,7 @@ def main():
     exit_code = 0 if overall_health > 60 else 1  # Fail if health is critically low
 
     print(
-        f"\n🏁 Stress test suite completed with health score: {overall_health:.1f}/100"
+        f"\n[FLAG] Stress test suite completed with health score: {overall_health:.1f}/100"
     )
     sys.exit(exit_code)
 
