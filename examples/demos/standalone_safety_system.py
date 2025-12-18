@@ -91,7 +91,8 @@ class EnhancedStandaloneSafetySystem(Node):
 
         self.get_logger().info("Enhanced Standalone Safety System started")
         self.get_logger().info(
-            "Providing services: emergency_stop, recover_from_safety, run_diagnostics, watchdog_monitoring, sensor_health_check"
+            "Providing services: emergency_stop, recover_from_safety, "
+            "run_diagnostics, watchdog_monitoring, sensor_health_check"
         )
 
     def handle_emergency_stop(self, request, response):
@@ -161,7 +162,10 @@ class EnhancedStandaloneSafetySystem(Node):
             self.get_logger().info("Safety recovery completed successfully")
         else:
             response.success = False
-            response.message = f"Safety recovery failed (attempt {self.recovery_attempts}) - manual intervention required"
+            response.message = (
+                f"Safety recovery failed (attempt {self.recovery_attempts}) - "
+                f"manual intervention required"
+            )
             self.get_logger().warn(
                 "Safety recovery failed - manual intervention may be required"
             )
@@ -215,7 +219,10 @@ class EnhancedStandaloneSafetySystem(Node):
         }
 
         response.success = watchdog_status["system_responsive"]
-        response.message = f'Watchdog monitoring: {"PASS" if response.success else "FAIL"} - {len(watchdog_status["monitored_processes"])} processes monitored'
+        response.message = (
+            f'Watchdog monitoring: {"PASS" if response.success else "FAIL"} - '
+            f'{len(watchdog_status["monitored_processes"])} processes monitored'
+        )
         return response
 
     def handle_sensor_health_check(self, request, response):
@@ -242,7 +249,10 @@ class EnhancedStandaloneSafetySystem(Node):
         response.success = sensor_status["overall_health"] != "CRITICAL"
         failed_count = len(sensor_status["failed_sensors"])
         degraded_count = len(sensor_status["degraded_sensors"])
-        response.message = f'Sensor health: {sensor_status["overall_health"]} - {failed_count} failed, {degraded_count} degraded'
+        response.message = (
+            f'Sensor health: {sensor_status["overall_health"]} - '
+            f"{failed_count} failed, {degraded_count} degraded"
+        )
         return response
 
     def publish_system_health(self):

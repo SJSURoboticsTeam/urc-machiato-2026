@@ -45,12 +45,13 @@ class EndpointHealth(Enum):
 class NetworkQualityMonitor:
     """Monitor network quality for adaptive behavior."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         from collections import deque
+        from typing import Deque
 
-        self.latency_history = deque(maxlen=100)
-        self.packet_loss_history = deque(maxlen=100)
-        self.bandwidth_history = deque(maxlen=100)
+        self.latency_history: Deque[float] = deque(maxlen=100)
+        self.packet_loss_history: Deque[float] = deque(maxlen=100)
+        self.bandwidth_history: Deque[float] = deque(maxlen=100)
 
     def assess_network_quality(self) -> str:
         """Assess current network quality."""
@@ -74,15 +75,15 @@ class NetworkQualityMonitor:
         else:
             return "poor"
 
-    def record_latency(self, latency_ms: float):
+    def record_latency(self, latency_ms: float) -> None:
         """Record latency measurement."""
         self.latency_history.append(latency_ms)
 
-    def record_packet_loss(self, loss_rate: float):
+    def record_packet_loss(self, loss_rate: float) -> None:
         """Record packet loss measurement."""
         self.packet_loss_history.append(loss_rate)
 
-    def record_bandwidth(self, bandwidth_mbps: float):
+    def record_bandwidth(self, bandwidth_mbps: float) -> None:
         """Record bandwidth measurement."""
         self.bandwidth_history.append(bandwidth_mbps)
 
@@ -161,7 +162,7 @@ class WebSocketRedundancyManager:
     - Network resilience with retry logic and compression
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.endpoints: Dict[str, WebSocketEndpoint] = {}
         self.clients: Dict[str, ClientConnection] = {}
         self.health_monitor_active = False
@@ -173,7 +174,7 @@ class WebSocketRedundancyManager:
         self.max_failover_attempts = 3  # Max failover attempts per client per minute
 
         # Network resilience features
-        self.message_queue = asyncio.Queue(maxsize=1000)
+        self.message_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
         self.retry_delays = [0.1, 0.5, 1.0, 2.0, 5.0]  # Exponential backoff
         self.max_retries = 3
         self.network_quality_monitor = NetworkQualityMonitor()
@@ -315,7 +316,7 @@ class WebSocketRedundancyManager:
         return True
 
     async def handle_client_connection(
-        self, websocket, endpoint_name: str, client_id: str = None
+        self, websocket, endpoint_name: str, client_id: Optional[str] = None
     ) -> None:
         """Handle a new client connection to an endpoint."""
         if not client_id:
@@ -427,7 +428,7 @@ class WebSocketRedundancyManager:
             client.current_endpoint.current_load = len(client.current_endpoint.clients)
 
         # Clean up client record after timeout
-        def cleanup_client():
+        def cleanup_client() -> None:
             time.sleep(self.client_timeout)
             if client_id in self.clients:
                 del self.clients[client_id]
@@ -482,7 +483,7 @@ class WebSocketRedundancyManager:
         """Continuous health monitoring of all endpoints."""
         import asyncio
 
-        async def async_monitoring():
+        async def async_monitoring() -> None:
             while self.health_monitor_active:
                 try:
                     await self._check_endpoint_health_async()
@@ -611,7 +612,7 @@ class WebSocketRedundancyManager:
                 endpoint.health_status = EndpointHealth.DOWN
                 endpoint.is_healthy = False
 
-    def _calculate_health_score(self, endpoint) -> float:
+    def _calculate_health_score(self, endpoint: WebSocketEndpoint) -> float:
         """Calculate comprehensive health score for an endpoint."""
         try:
             # If not running, score is 0
@@ -889,9 +890,9 @@ if __name__ == "__main__":
         while True:
             time.sleep(10)
             status = manager.get_system_status()
-        self.get_logger().info(
-            f"System Health: {status['system_health']['status']} ({status['system_health']['score']}%)"
-        )
-        self.get_logger().info(f"Active Clients: {len(status['clients'])}")
+            self.get_logger().info(
+                f"System Health: {status['system_health']['status']} ({status['system_health']['score']}%)"
+            )
+            self.get_logger().info(f"Active Clients: {len(status['clients'])}")
     except KeyboardInterrupt:
         manager.stop_redundancy_system()

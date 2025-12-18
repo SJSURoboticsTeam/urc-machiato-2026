@@ -2,7 +2,8 @@
 """
 Autonomous Keyboard Typing Mission - Complete URC Task Integration
 
-Integrates computer vision, navigation, and arm control for autonomous keyboard interaction.
+Integrates computer vision, navigation, and arm control for autonomous keyboard
+interaction.
 Combines existing autonomous_typing package with mission execution framework.
 
 URC Requirement: Autonomous keyboard typing is a scored task requiring:
@@ -15,18 +16,15 @@ URC Requirement: Autonomous keyboard typing is a scored task requiring:
 import math
 import time
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Optional
 
-import cv2
-import numpy as np
 import rclpy
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, PoseStamped, Quaternion
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
-from sensor_msgs.msg import CameraInfo, Image
-from std_msgs.msg import Bool, String
+from std_msgs.msg import String
 from tf2_ros import Buffer, TransformListener
 
 from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.arm_controller import (
@@ -374,7 +372,10 @@ class AutonomousKeyboardMission(Node):
             typing_position = self.calculate_typing_position()
 
             # Send arm positioning command
-            arm_cmd = f"POSITION:{typing_position['x']},{typing_position['y']},{typing_position['z']}"
+            arm_cmd = (
+                f"POSITION:{typing_position['x']},{typing_position['y']},"
+                f"{typing_position['z']}"
+            )
             self.arm_cmd_pub.publish(String(data=arm_cmd))
 
             # Start positioning timeout
