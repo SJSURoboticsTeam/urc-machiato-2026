@@ -23,7 +23,7 @@ from src.bridges.websocket_redundancy_manager import (
 )
 
 
-def demonstrate_endpoint_registration():
+def demonstrate_endpoint_registration() -> None:
     """Demonstrate endpoint registration and management."""
     print("\n 1. ENDPOINT REGISTRATION")
     print("-" * 40)
@@ -76,7 +76,7 @@ def demonstrate_endpoint_registration():
     return manager, endpoints
 
 
-def demonstrate_redundancy_system(manager):
+def demonstrate_redundancy_system(manager) -> None:
     """Demonstrate the redundancy system starting and monitoring."""
     print("\n[IGNITE] 2. REDUNDANCY SYSTEM ACTIVATION")
     print("-" * 40)
@@ -105,7 +105,7 @@ def demonstrate_redundancy_system(manager):
     return True
 
 
-def demonstrate_failover_logic(manager, endpoints):
+def demonstrate_failover_logic(manager, endpoints) -> None:
     """Demonstrate failover logic and endpoint selection."""
     print("\n[REFRESH] 3. FAILOVER LOGIC DEMONSTRATION")
     print("-" * 40)
@@ -134,13 +134,14 @@ def demonstrate_failover_logic(manager, endpoints):
     print("\nSimulating client failover from primary to secondary...")
     failover_success = manager._failover_client("demo_client_123")
     print(
-        f"   Failover result: {'[PASS] Success' if failover_success else '[FAIL] Failed'}"
+        f"   Failover result: "
+        f"{'[PASS] Success' if failover_success else '[FAIL] Failed'}"
     )
 
     return True
 
 
-def demonstrate_performance_metrics(manager):
+def demonstrate_performance_metrics(manager) -> None:
     """Demonstrate performance monitoring and metrics."""
     print("\n 4. PERFORMANCE METRICS")
     print("-" * 40)
@@ -166,7 +167,7 @@ def demonstrate_performance_metrics(manager):
     return status
 
 
-def demonstrate_real_world_scenario(manager):
+def demonstrate_real_world_scenario(manager) -> None:
     """Demonstrate a real-world competition scenario."""
     print("\n[FLAG] 5. REAL-WORLD COMPETITION SCENARIO")
     print("-" * 40)
@@ -199,7 +200,7 @@ def demonstrate_real_world_scenario(manager):
     print("   Competition success maintained despite technical issues.")
 
 
-def run_complete_demonstration():
+def run_complete_demonstration() -> None:
     """Run the complete WebSocket redundancy demonstration."""
     print(" WebSocket Redundancy System Demonstration")
     print("=" * 60)

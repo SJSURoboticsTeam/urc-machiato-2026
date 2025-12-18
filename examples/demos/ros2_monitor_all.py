@@ -36,7 +36,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 class ROS2UniversalMonitor:
     """Monitor all ROS2 topics, services, and WebSocket streams."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.running = True
         self.topics_data = {}
         self.services_data = {}
@@ -54,12 +54,12 @@ class ROS2UniversalMonitor:
         # Signal handler for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
 
-    def signal_handler(self, signum, frame):
+    def signal_handler(self, signum: int, frame) -> None:
         """Handle shutdown signals."""
         print("\n Received shutdown signal...")
         self.running = False
 
-    def setup_ros2_environment(self):
+    def setup_ros2_environment(self) -> None:
         """Set up ROS2 environment."""
         try:
             # Set up environment variables directly
@@ -245,7 +245,7 @@ class ROS2UniversalMonitor:
                 "timestamp": time.time(),
             }
 
-    async def websocket_monitor(self):
+    async def websocket_monitor(self) -> None:
         """Monitor WebSocket telemetry from competition bridge."""
         while self.running:
             try:
@@ -284,7 +284,7 @@ class ROS2UniversalMonitor:
                 print(f"[FAIL] WebSocket connection failed: {e}")
                 await asyncio.sleep(5)  # Retry after 5 seconds
 
-    def display_websocket_data(self):
+    def display_websocket_data(self) -> None:
         """Display WebSocket telemetry data."""
         if not self.websocket_data.get("connected", False):
             return
@@ -340,7 +340,7 @@ class ROS2UniversalMonitor:
         if data.get("autonomous_mode", False):
             print(" AUTONOMOUS MODE ACTIVE")
 
-    def display_topic_data(self):
+    def display_topic_data(self) -> None:
         """Display data from all monitored ROS2 topics."""
         topics = self.get_topic_list()
 
@@ -399,7 +399,7 @@ class ROS2UniversalMonitor:
         else:
             print(f"[FAIL] {topic_short}: {data}")
 
-    def display_service_data(self):
+    def display_service_data(self) -> None:
         """Display information about all ROS2 services."""
         services = self.get_service_list()
 
@@ -421,7 +421,7 @@ class ROS2UniversalMonitor:
                 else:
                     print(f"[FAIL] {service} (Unavailable)")
 
-    def display_system_overview(self):
+    def display_system_overview(self) -> None:
         """Display overall system status overview."""
         print("\n" + "=" * 80)
         print("[IGNITE] ROS2 UNIVERSAL MONITOR - SYSTEM OVERVIEW")
@@ -463,7 +463,7 @@ class ROS2UniversalMonitor:
 
         print("=" * 80)
 
-    async def run_monitor(self):
+    async def run_monitor(self) -> None:
         """Main monitoring loop."""
         print("[IGNITE] Starting ROS2 Universal Monitor...")
         print("This will monitor ALL ROS2 topics, services, and WebSocket telemetry")
@@ -511,7 +511,7 @@ class ROS2UniversalMonitor:
                 pass
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     import argparse
 

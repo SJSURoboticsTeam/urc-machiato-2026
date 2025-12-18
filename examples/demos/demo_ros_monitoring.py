@@ -10,7 +10,7 @@ import os
 import subprocess
 
 
-def run_cmd(cmd, description="") -> tuple:
+def run_cmd(cmd: str, description: str = "") -> tuple[bool, str, str]:
     """Run a command and return the result."""
     try:
         result = subprocess.run(
@@ -21,7 +21,7 @@ def run_cmd(cmd, description="") -> tuple:
         return False, "", str(e)
 
 
-def print_section(title) -> None:
+def print_section(title: str) -> None:
     """Print a section header."""
     print(f"\n{'='*60}")
     print(f"[IGNITE] {title}")
