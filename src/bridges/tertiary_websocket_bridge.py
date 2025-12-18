@@ -133,8 +133,8 @@ class TertiaryWebSocketBridge:
             """Handle individual WebSocket client connections."""
             self.clients.add(websocket)
             client_id = f"tertiary_{len(self.clients)}"
-        self.get_logger().info(f"[ALERT] Tertiary client connected: {client_id}")
-        try:
+            self.get_logger().info(f"[ALERT] Tertiary client connected: {client_id}")
+            try:
                 # Send initial critical telemetry
                 await websocket.send(json.dumps({
                     'type': 'emergency_initial',
@@ -181,7 +181,7 @@ class TertiaryWebSocketBridge:
                 time.sleep(1.0 / self.update_rate_hz)
 
             except Exception as e:
-        self.get_logger().info(f"Tertiary telemetry error: {e}")
+                self.get_logger().info(f"Tertiary telemetry error: {e}")
                 time.sleep(1)
 
     def _broadcast_emergency_telemetry(self):

@@ -618,7 +618,7 @@ exec {" ".join(cmd)}
             self.get_logger().info("[STOP] Stress test interrupted by user")
             return False
         except Exception as e:
-        self.get_logger().info(f"[ERROR] Stress test failed with error: {e}")
+            self.get_logger().info(f"[ERROR] Stress test failed with error: {e}")
             return False
 
     def generate_test_report(self) -> None:
@@ -672,10 +672,10 @@ exec {" ".join(cmd)}
             )
             return result.returncode == 0
         except subprocess.TimeoutExpired:
-        self.get_logger().info("[ERROR] Command timed out")
+            self.get_logger().info("[ERROR] Command timed out")
             return False
         except Exception as e:
-        self.get_logger().info(f"[ERROR] Command failed with error: {e}")
+            self.get_logger().info(f"[ERROR] Command failed with error: {e}")
             return False
 
 
@@ -746,10 +746,10 @@ Environment Variables:
     runner = AdaptiveTestRunner()
 
     # Print banner
-        self.get_logger().info("🔬 Adaptive State Machine Test Runner")
+    print("🔬 Adaptive State Machine Test Runner")
 
-        self.get_logger().info(f"ROS2 Available: {'[SUCCESS]' if runner.ros2_available else '[ERROR]'}")
-        self.get_logger().info(f"Reports Directory: {runner.reports_dir}")
+    print(f"ROS2 Available: {'[SUCCESS]' if runner.ros2_available else '[ERROR]'}")
+    print(f"Reports Directory: {runner.reports_dir}")
 
     success = False
 
