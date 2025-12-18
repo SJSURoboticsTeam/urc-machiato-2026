@@ -311,7 +311,7 @@ def setup_mock_environment():
 
 if __name__ == "__main__":
     # Test the mock environment
-        self.get_logger().info("[TEST] Testing Mock ROS2 Environment")
+    print("[TEST] Testing Mock ROS2 Environment")
     if setup_mock_environment():
         self.get_logger().info("[SUCCESS] Mock environment setup successful")
         # Test basic functionality

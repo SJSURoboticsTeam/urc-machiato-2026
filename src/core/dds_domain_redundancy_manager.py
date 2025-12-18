@@ -284,7 +284,7 @@ class DDSDomainRedundancyManager:
 
                 # Check if process is still running
                 if process.poll() is not None:
-        self.get_logger().info(f"Node {node_name} process died (exit code: {process.returncode})")
+                    self.get_logger().info(f"Node {node_name} process died (exit code: {process.returncode})")
                     # Restart the node
                     self._restart_node(node_name)
 

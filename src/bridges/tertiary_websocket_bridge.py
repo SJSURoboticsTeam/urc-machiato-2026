@@ -150,7 +150,7 @@ class TertiaryWebSocketBridge:
                     }))
 
             except websockets.exceptions.ConnectionClosed:
-        self.get_logger().info(f"[ALERT] Tertiary client disconnected: {client_id}")
+                self.get_logger().info(f"[ALERT] Tertiary client disconnected: {client_id}")
             finally:
                 self.clients.discard(websocket)
 

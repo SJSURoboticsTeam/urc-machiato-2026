@@ -611,11 +611,11 @@ exec {" ".join(cmd)}
 
                 # Brief pause between test runs
                 time.sleep(1)
-        self.get_logger().info(f"[SUCCESS] Stress test completed successfully ({duration}s)")
+            self.get_logger().info(f"[SUCCESS] Stress test completed successfully ({duration}s)")
             return True
 
         except KeyboardInterrupt:
-        self.get_logger().info("[STOP] Stress test interrupted by user")
+            self.get_logger().info("[STOP] Stress test interrupted by user")
             return False
         except Exception as e:
         self.get_logger().info(f"[ERROR] Stress test failed with error: {e}")
