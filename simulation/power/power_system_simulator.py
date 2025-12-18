@@ -15,7 +15,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class PowerSource(Enum):
     """Types of power sources."""
+
     BATTERY = "battery"
     SOLAR = "solar"
     EXTERNAL = "external"
@@ -31,6 +32,7 @@ class PowerSource(Enum):
 
 class PowerConsumer(Enum):
     """Types of power consumers."""
+
     DRIVE_SYSTEM = "drive_system"
     ARM_SYSTEM = "arm_system"
     SCIENCE_PAYLOAD = "science_payload"
@@ -43,23 +45,25 @@ class PowerConsumer(Enum):
 @dataclass
 class BatteryCell:
     """Individual battery cell model."""
-    voltage: float          # Volts
-    capacity: float         # Ah
-    temperature: float      # °C
+
+    voltage: float  # Volts
+    capacity: float  # Ah
+    temperature: float  # °C
     state_of_charge: float  # 0-1
     internal_resistance: float  # ohms
-    max_charge_current: float   # A
+    max_charge_current: float  # A
     max_discharge_current: float  # A
 
 
 @dataclass
 class SolarPanel:
     """Solar panel model."""
-    area: float                    # m²
-    efficiency: float              # 0-1
-    max_power: float               # Watts
-    temperature_coefficient: float # %/°C
-    current_temperature: float     # °C
+
+    area: float  # m²
+    efficiency: float  # 0-1
+    max_power: float  # Watts
+    temperature_coefficient: float  # %/°C
+    current_temperature: float  # °C
     orientation: Tuple[float, float, float]  # yaw, pitch, roll
 
 
@@ -95,48 +99,48 @@ class PowerSystemSimulator:
         return {
             "name": "URC_Power_System_Simulator",
             "battery_pack": {
-                "series_cells": 12,           # 12S configuration
-                "parallel_strings": 2,         # 2P configuration
-                "nominal_voltage": 48.0,      # Volts (4V per cell * 12)
-                "capacity": 100.0,            # Ah total pack capacity
-                "cell_capacity": 100.0,       # Ah per cell
-                "max_charge_voltage": 54.0,   # Volts
-                "min_discharge_voltage": 36.0, # Volts
-                "max_charge_current": 50.0,   # Amps
-                "max_discharge_current": 200.0, # Amps
-                "initial_soc": 0.8           # 80% state of charge
+                "series_cells": 12,  # 12S configuration
+                "parallel_strings": 2,  # 2P configuration
+                "nominal_voltage": 48.0,  # Volts (4V per cell * 12)
+                "capacity": 100.0,  # Ah total pack capacity
+                "cell_capacity": 100.0,  # Ah per cell
+                "max_charge_voltage": 54.0,  # Volts
+                "min_discharge_voltage": 36.0,  # Volts
+                "max_charge_current": 50.0,  # Amps
+                "max_discharge_current": 200.0,  # Amps
+                "initial_soc": 0.8,  # 80% state of charge
             },
             "solar_panels": [
                 {
                     "name": "main_panel",
-                    "area": 2.0,              # m²
-                    "efficiency": 0.22,       # 22%
-                    "max_power": 400.0,       # Watts
-                    "orientation": [0.0, 0.0, 0.0]  # yaw, pitch, roll
+                    "area": 2.0,  # m²
+                    "efficiency": 0.22,  # 22%
+                    "max_power": 400.0,  # Watts
+                    "orientation": [0.0, 0.0, 0.0],  # yaw, pitch, roll
                 },
                 {
                     "name": "aux_panel",
                     "area": 1.0,
                     "efficiency": 0.20,
                     "max_power": 200.0,
-                    "orientation": [0.0, 0.0, 0.0]
-                }
+                    "orientation": [0.0, 0.0, 0.0],
+                },
             ],
             "thermal_management": {
-                "heat_sink_area": 1.0,        # m²
-                "cooling_power": 100.0,      # Watts available for cooling
+                "heat_sink_area": 1.0,  # m²
+                "cooling_power": 100.0,  # Watts available for cooling
                 "target_temperature": 35.0,  # °C
-                "max_temperature": 60.0      # °C
+                "max_temperature": 60.0,  # °C
             },
             "power_distribution": {
-                "bus_voltage": 48.0,         # Main bus voltage
-                "efficiency": 0.95,          # DC-DC converter efficiency
+                "bus_voltage": 48.0,  # Main bus voltage
+                "efficiency": 0.95,  # DC-DC converter efficiency
                 "protection_thresholds": {
-                    "overcurrent": 250.0,    # Amps
-                    "overvoltage": 55.0,     # Volts
-                    "undervoltage": 35.0     # Volts
-                }
-            }
+                    "overcurrent": 250.0,  # Amps
+                    "overvoltage": 55.0,  # Volts
+                    "undervoltage": 35.0,  # Volts
+                },
+            },
         }
 
     def _load_configuration(self, config: Dict):
@@ -151,7 +155,10 @@ class PowerSystemSimulator:
         """Initialize power system state."""
         # Battery pack
         self.cells = []
-        total_cells = self.battery_config["series_cells"] * self.battery_config["parallel_strings"]
+        total_cells = (
+            self.battery_config["series_cells"]
+            * self.battery_config["parallel_strings"]
+        )
 
         for i in range(total_cells):
             cell = BatteryCell(
@@ -161,7 +168,7 @@ class PowerSystemSimulator:
                 state_of_charge=self.battery_config["initial_soc"],
                 internal_resistance=0.01,  # ohms
                 max_charge_current=10.0,
-                max_discharge_current=50.0
+                max_discharge_current=50.0,
             )
             self.cells.append(cell)
 
@@ -174,7 +181,7 @@ class PowerSystemSimulator:
                 max_power=panel_config["max_power"],
                 temperature_coefficient=-0.004,  # -0.4%/°C
                 current_temperature=25.0,
-                orientation=tuple(panel_config["orientation"])
+                orientation=tuple(panel_config["orientation"]),
             )
             self.solar_panels.append(panel)
 
@@ -189,10 +196,10 @@ class PowerSystemSimulator:
             PowerConsumer.DRIVE_SYSTEM: 0.0,
             PowerConsumer.ARM_SYSTEM: 0.0,
             PowerConsumer.SCIENCE_PAYLOAD: 0.0,
-            PowerConsumer.COMPUTING: 50.0,      # Base computing power
-            PowerConsumer.COMMUNICATION: 10.0,   # Base comms power
+            PowerConsumer.COMPUTING: 50.0,  # Base computing power
+            PowerConsumer.COMMUNICATION: 10.0,  # Base comms power
             PowerConsumer.THERMAL_CONTROL: 0.0,
-            PowerConsumer.LIGHTING: 0.0
+            PowerConsumer.LIGHTING: 0.0,
         }
 
         # Thermal management
@@ -210,7 +217,9 @@ class PowerSystemSimulator:
         self.last_update_time = time.time()
         self.uptime_hours = 0.0
 
-    def set_power_consumption(self, consumer: PowerConsumer, power_watts: float) -> bool:
+    def set_power_consumption(
+        self, consumer: PowerConsumer, power_watts: float
+    ) -> bool:
         """
         Set power consumption for a subsystem.
 
@@ -227,7 +236,9 @@ class PowerSystemSimulator:
         # Validate power limits
         max_available = self.get_available_power()
         if power_watts > max_available:
-            self.logger.warning(f"Power request {power_watts}W exceeds available {max_available}W")
+            self.logger.warning(
+                f"Power request {power_watts}W exceeds available {max_available}W"
+            )
             return False
 
         self.power_consumers[consumer] = power_watts
@@ -253,7 +264,9 @@ class PowerSystemSimulator:
     def get_pack_voltage(self) -> float:
         """Get current battery pack voltage."""
         # Calculate series voltage
-        series_voltage = sum(cell.voltage for cell in self.cells[:self.battery_config["series_cells"]])
+        series_voltage = sum(
+            cell.voltage for cell in self.cells[: self.battery_config["series_cells"]]
+        )
         return series_voltage
 
     def get_state_of_charge(self) -> float:
@@ -321,7 +334,6 @@ class PowerSystemSimulator:
             "enabled": self.enabled,
             "charging_enabled": self.charging_enabled,
             "emergency_shutdown": self.emergency_shutdown,
-
             "battery": {
                 "pack_voltage": self.get_pack_voltage(),
                 "state_of_charge": self.get_state_of_charge(),
@@ -330,47 +342,44 @@ class PowerSystemSimulator:
                 "nominal_voltage": self.battery_config["nominal_voltage"],
                 "cell_count": len(self.cells),
                 "cell_temperatures": [cell.temperature for cell in self.cells],
-                "cell_soc": [cell.state_of_charge for cell in self.cells]
+                "cell_soc": [cell.state_of_charge for cell in self.cells],
             },
-
             "solar": {
                 "total_power_generated": self.solar_power_generated,
                 "panels": [
                     {
                         "name": panel_config["name"],
                         "power": panel.max_power,
-                        "temperature": 25.0  # Simplified
+                        "temperature": 25.0,  # Simplified
                     }
                     for panel_config in self.solar_config
-                ]
+                ],
             },
-
             "power_consumers": {
-                consumer.value: power for consumer, power in self.power_consumers.items()
+                consumer.value: power
+                for consumer, power in self.power_consumers.items()
             },
-
             "power_distribution": {
                 "bus_voltage": self.bus_voltage,
                 "bus_current": self.bus_current,
                 "total_consumption": sum(self.power_consumers.values()),
-                "efficiency": self.distribution_config["efficiency"]
+                "efficiency": self.distribution_config["efficiency"],
             },
-
             "thermal": {
                 "ambient_temperature": self.ambient_temperature,
                 "cooling_active": self.cooling_active,
                 "cooling_power_used": self.cooling_power_used,
-                "battery_avg_temperature": np.mean([cell.temperature for cell in self.cells])
+                "battery_avg_temperature": np.mean(
+                    [cell.temperature for cell in self.cells]
+                ),
             },
-
             "system": {
                 "uptime_hours": self.uptime_hours,
                 "total_energy_consumed": self.total_power_consumption,
-                "faults": self.faults.copy()
+                "faults": self.faults.copy(),
             },
-
             "mock": True,
-            "simulated": True
+            "simulated": True,
         }
 
     def emergency_shutdown_power(self) -> bool:
@@ -396,7 +405,9 @@ class PowerSystemSimulator:
             self.logger.info("Power system enabled")
             return True
         else:
-            self.logger.warning("Cannot enable power system while in emergency shutdown")
+            self.logger.warning(
+                "Cannot enable power system while in emergency shutdown"
+            )
             return False
 
     def enable_charging(self, enable: bool) -> bool:
@@ -417,7 +428,9 @@ class PowerSystemSimulator:
             power = panel.max_power * solar_efficiency
 
             # Temperature derating
-            temp_derating = 1.0 + panel.temperature_coefficient * (panel.current_temperature - 25.0)
+            temp_derating = 1.0 + panel.temperature_coefficient * (
+                panel.current_temperature - 25.0
+            )
             power *= max(0.0, temp_derating)
 
             total_power += power
@@ -437,12 +450,18 @@ class PowerSystemSimulator:
         # Update each cell
         for cell in self.cells:
             # Peukert's law approximation for capacity at different discharge rates
-            effective_capacity = cell.capacity * (1.0 - 0.1 * np.log10(current_draw / 10.0))
+            effective_capacity = cell.capacity * (
+                1.0 - 0.1 * np.log10(current_draw / 10.0)
+            )
 
             # Update state of charge
-            energy_used = current_draw * pack_voltage * dt / len(self.cells) / 3600.0  # Wh
+            energy_used = (
+                current_draw * pack_voltage * dt / len(self.cells) / 3600.0
+            )  # Wh
             capacity_used = energy_used / cell.voltage  # Ah
-            cell.state_of_charge = max(0.0, cell.state_of_charge - capacity_used / effective_capacity)
+            cell.state_of_charge = max(
+                0.0, cell.state_of_charge - capacity_used / effective_capacity
+            )
 
             # Update voltage (simplified model)
             cell.voltage = 3.7 + 0.3 * cell.state_of_charge  # Rough Li-ion model
@@ -473,13 +492,17 @@ class PowerSystemSimulator:
         for cell in self.cells:
             # Update state of charge
             capacity_added = charge_current * dt / len(self.cells) / 3600.0  # Ah
-            cell.state_of_charge = min(1.0, cell.state_of_charge + capacity_added / cell.capacity)
+            cell.state_of_charge = min(
+                1.0, cell.state_of_charge + capacity_added / cell.capacity
+            )
 
             # Update voltage
             cell.voltage = 3.7 + 0.3 * cell.state_of_charge
 
             # Update temperature (slight heating from charging)
-            heat_generated = charge_current * charge_current * cell.internal_resistance * dt * 0.5
+            heat_generated = (
+                charge_current * charge_current * cell.internal_resistance * dt * 0.5
+            )
             temp_rise = heat_generated / 10.0
             cell.temperature += temp_rise
 
@@ -497,7 +520,7 @@ class PowerSystemSimulator:
             self.cooling_active = True
             self.cooling_power_used = min(
                 self.thermal_config["cooling_power"],
-                (avg_battery_temp - target_temp) * 10.0  # Proportional control
+                (avg_battery_temp - target_temp) * 10.0,  # Proportional control
             )
         elif avg_battery_temp < target_temp - 5.0:
             # Deactivate cooling

@@ -1,0 +1,83 @@
+@startuml URC 2026 ROS2 Architecture
+
+title URC 2026 ROS2 Topics and Services Architecture
+
+' Define participants (ROS2 Nodes)
+participant "Competition Bridge" as CB
+participant "State Machine Bridge" as SMB
+participant "SLAM Node" as SLAM
+participant "Navigation Node" as NAV
+participant "Map Data Bridge" as MDB
+participant "Hardware Sensors" as HS
+participant "Mission Control" as MC
+participant "Safety Systems" as SS
+participant "LED Control" as LED
+participant "C2 Display" as C2
+participant "Dashboard\n(WebSocket)" as DASH
+
+' Publishers and Subscribers relationships
+== Data Flow ==
+
+' Hardware Sensors publishing to Competition Bridge
+HS -> CB : /hardware/battery_state
+HS -> CB : /hardware/chassis_velocity
+HS -> CB : /hardware/gps
+HS -> CB : /hardware/imu
+HS -> CB : /hardware/system_status
+HS -> CB : /odom
+
+' Hardware Sensors to SLAM and Navigation
+HS -> SLAM : camera/depth, IMU
+HS -> NAV : /odom, /imu, /gps/fix
+
+' SLAM data flow
+SLAM -> MDB : slam/pose, map data
+MDB -> CB : processed map data
+SLAM -> CB : slam/system/status
+
+' Navigation data flow
+NAV -> CB : /navigation/status, /cmd_vel
+CB -> NAV : navigation goals
+SMB -> NAV : navigation control
+
+' Mission Control bidirectional with Competition Bridge
+MC -> CB : /mission/keyboard_status
+MC -> CB : /mission/sample_collection_status
+MC -> CB : /mission/status
+CB -> MC : /mission/commands
+
+' Safety Systems bidirectional with Competition Bridge
+SS -> CB : /emergency_stop
+SS -> CB : /safety/boundary_violation
+CB -> SS : /emergency_stop
+
+' Competition Bridge publishing to control systems
+CB -> LED : /led/command
+CB -> C2 : /c2/object_highlight
+
+' State Machine Bridge subscribers
+MC -> SMB : /mission/state_request
+SMB -> SMB : /state_machine/transition_request
+
+' State Machine Bridge publishers
+SMB -> CB : /state_machine/current_state
+SMB -> MC : /state_machine/for_mission_control
+SMB -> SMB : /state_machine/state_transition
+SMB -> SMB : /state_machine/metadata
+
+' Telemetry streaming
+CB -> DASH : WebSocket telemetry
+
+' Services
+== Services ==
+
+' State Machine Bridge Services
+SMB -> SMB : can_transition_to_autonomous
+SMB -> SMB : health_check
+
+note right of CB : Parameter Services Available
+note right of SMB : Parameter Services Available
+note right of SLAM : SLAM Topics:\nslam/pose\nslam/system/status\nrtabmap/stat
+note right of NAV : Navigation Topics:\n/cmd_vel\n/navigation/status\n/plan
+
+@enduml

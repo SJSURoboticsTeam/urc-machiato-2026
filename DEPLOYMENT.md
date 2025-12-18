@@ -82,7 +82,7 @@ docker-compose -f docker-compose.prod.yml ps
 source /opt/ros/humble/setup.bash
 
 # Build autonomy packages
-cd Autonomy/ros2_ws
+cd autonomy/ros2_ws
 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 # Start core services
@@ -254,8 +254,3 @@ For deployment issues:
 
 **Last updated**: $(date)
 **Version**: 1.0.0
-
-
-
-
-

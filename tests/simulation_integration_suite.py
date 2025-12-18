@@ -61,9 +61,15 @@ class TestResult:
             "test_name": self.test_name,
             "category": self.category,
             "status": self.status,
-            "environment_tier": self.environment_tier if self.environment_tier else "N/A",
-            "network_profile": self.network_profile.value if self.network_profile else "N/A",
-            "duration_ms": (self.end_time - self.start_time) * 1000 if self.end_time else 0,
+            "environment_tier": self.environment_tier
+            if self.environment_tier
+            else "N/A",
+            "network_profile": self.network_profile.value
+            if self.network_profile
+            else "N/A",
+            "duration_ms": (self.end_time - self.start_time) * 1000
+            if self.end_time
+            else 0,
             "metrics": self.metrics,
             "warnings": self.warnings,
             "errors": self.errors,
@@ -99,7 +105,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             emulator.start()
 
         # Create CAN sensor (using sensor factory)
-        cls.can_sensor = cls.sensor_factory.create("gps", {"name": "can_gps", "type": "gps"})
+        cls.can_sensor = cls.sensor_factory.create(
+            "gps", {"name": "can_gps", "type": "gps"}
+        )
 
         # Create simple message router (placeholder - can be expanded)
         cls.message_queue = []
@@ -141,7 +149,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             # Test motor commands
             self.can_simulator.set_motor_command("motor_left", 1.5)
-            self.assertEqual(self.can_simulator.mock_data["motor_left"]["velocity"], 1.5)
+            self.assertEqual(
+                self.can_simulator.mock_data["motor_left"]["velocity"], 1.5
+            )
 
             # Test GPS
             gps_data = self.can_simulator.get_mock_reading("gps")
@@ -184,9 +194,13 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.metrics["success_rate"] = success_rate
             result.metrics["messages_sent"] = messages_sent
 
-            self.assertGreater(success_rate, 0.95, "Should handle high-frequency messages")
+            self.assertGreater(
+                success_rate, 0.95, "Should handle high-frequency messages"
+            )
 
-            result.warnings.append("⚠️ STRESS TEST SIMULATION - Real CAN timing may differ")
+            result.warnings.append(
+                "⚠️ STRESS TEST SIMULATION - Real CAN timing may differ"
+            )
             result.complete("PASSED")
 
         except Exception as e:
@@ -209,7 +223,8 @@ class SimulationIntegrationSuite(unittest.TestCase):
             telem_msg = {"type": "telemetry"}
 
             self.assertEqual(
-                self.message_router.determine_priority(safety_msg), MessagePriority.CRITICAL
+                self.message_router.determine_priority(safety_msg),
+                MessagePriority.CRITICAL,
             )
             self.assertEqual(
                 self.message_router.determine_priority(calib_msg), MessagePriority.HIGH
@@ -292,7 +307,11 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
                 # Check against expected performance
                 expected = ENVIRONMENT_PROFILES[tier].expected_success_rate
-                self.assertGreater(success_rate, expected * 0.8, f"Should meet {tier.value} performance")
+                self.assertGreater(
+                    success_rate,
+                    expected * 0.8,
+                    f"Should meet {tier.value} performance",
+                )
 
                 result.warnings.append(
                     f"⚠️ {tier.value.upper()} INTEGRATION SIMULATION - "
@@ -312,7 +331,11 @@ class SimulationIntegrationSuite(unittest.TestCase):
     def test_end_to_end_latency(self):
         """Test end-to-end latency across system."""
         latencies = []
-        for profile in [NetworkProfile.PERFECT, NetworkProfile.RURAL_WIFI, NetworkProfile.EXTREME]:
+        for profile in [
+            NetworkProfile.PERFECT,
+            NetworkProfile.RURAL_WIFI,
+            NetworkProfile.EXTREME,
+        ]:
             result = TestResult(f"e2e_latency_{profile.value}", "PERFORMANCE")
             result.network_profile = profile
             latencies = []  # Reset for each profile
@@ -349,7 +372,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
                     # Check against expected thresholds
                     expected = NETWORK_PROFILES[profile].latency_ms
-                    self.assertLess(max_latency, expected * 2.0, "Max latency within bounds")
+                    self.assertLess(
+                        max_latency, expected * 2.0, "Max latency within bounds"
+                    )
 
                     result.warnings.append(
                         f"⚠️ {profile.value.upper()} LATENCY SIMULATION - "
@@ -365,7 +390,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             self.test_results.append(result)
             if latencies:
-                print(f"  ✅ {result.test_name}: {avg_latency:.1f}ms avg, {max_latency:.1f}ms max")
+                print(
+                    f"  ✅ {result.test_name}: {avg_latency:.1f}ms avg, {max_latency:.1f}ms max"
+                )
 
     def test_message_throughput(self):
         """Test message throughput under load."""
@@ -445,9 +472,7 @@ class SimulationIntegrationSuite(unittest.TestCase):
                 imu_data = self.can_simulator.get_mock_reading("imu")
 
                 # Verify data available
-                phase_success.append(
-                    gps_data is not None and imu_data is not None
-                )
+                phase_success.append(gps_data is not None and imu_data is not None)
 
             success_rate = sum(phase_success) / len(phase_success)
             result.metrics["phases_completed"] = sum(phase_success)
@@ -466,7 +491,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: {sum(phase_success)}/{len(mission_phases)} phases")
+        print(
+            f"  ✅ {result.test_name}: {sum(phase_success)}/{len(mission_phases)} phases"
+        )
 
     # ==================== STATE MACHINE TESTS ====================
 
@@ -505,7 +532,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             # In extreme conditions, some loss is acceptable
             self.assertGreaterEqual(
-                transitions_successful, 2, "Should complete some transitions even with loss"
+                transitions_successful,
+                2,
+                "Should complete some transitions even with loss",
             )
 
             result.warnings.append(
@@ -518,7 +547,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: {transitions_successful}/{len(states)-1} transitions")
+        print(
+            f"  ✅ {result.test_name}: {transitions_successful}/{len(states)-1} transitions"
+        )
 
     # ==================== FAILURE MODE TESTING ====================
 
@@ -531,12 +562,14 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
         try:
             # Simulate GPS complete failure
-            gps_sim = self.sensor_factory.create({
-                "type": "gps",
-                "name": "primary_gps",
-                "update_rate": 10.0,
-                "failure_rate": 1.0,  # 100% failure rate
-            })
+            gps_sim = self.sensor_factory.create(
+                {
+                    "type": "gps",
+                    "name": "primary_gps",
+                    "update_rate": 10.0,
+                    "failure_rate": 1.0,  # 100% failure rate
+                }
+            )
 
             # System should detect failure and use backup or degrade gracefully
             failure_detected = False
@@ -557,7 +590,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             # Should detect failure and attempt recovery
             self.assertTrue(failure_detected, "Should detect complete sensor failure")
-            self.assertGreater(recovery_attempts, 10, "Should attempt recovery multiple times")
+            self.assertGreater(
+                recovery_attempts, 10, "Should attempt recovery multiple times"
+            )
 
             result.warnings.append(
                 "⚠️ SENSOR FAILURE SIMULATION - Hardware watchdog required"
@@ -569,7 +604,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: failure_detected={failure_detected}, recovery_attempts={recovery_attempts}")
+        print(
+            f"  ✅ {result.test_name}: failure_detected={failure_detected}, recovery_attempts={recovery_attempts}"
+        )
 
     def test_network_complete_loss_handling(self):
         """Test system behavior during complete network loss >5 minutes."""
@@ -608,7 +645,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.metrics["recovery_time_seconds"] = recovery_time
 
             # Should lose messages during blackout but recover
-            self.assertGreater(messages_lost, 50, "Should experience significant message loss")
+            self.assertGreater(
+                messages_lost, 50, "Should experience significant message loss"
+            )
             self.assertGreater(messages_sent, 10, "Should recover and send messages")
             self.assertIsNotNone(recovery_time, "Should track recovery time")
 
@@ -622,8 +661,12 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
             self.test_results.append(result)
-            recovery_str = f"{recovery_time:.1f}s" if recovery_time is not None else "N/A"
-            print(f"  ✅ {result.test_name}: lost={messages_lost}, recovered={messages_sent}, recovery_time={recovery_str}")
+            recovery_str = (
+                f"{recovery_time:.1f}s" if recovery_time is not None else "N/A"
+            )
+            print(
+                f"  ✅ {result.test_name}: lost={messages_lost}, recovered={messages_sent}, recovery_time={recovery_str}"
+            )
 
     def test_power_brownout_recovery(self):
         """Test system response to power brownouts."""
@@ -632,21 +675,30 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
         try:
             # Simulate power brownout (voltage drops)
-            rover_sim = self.rover_factory.create({
-                "model": "urc_rover",
-                "power_system": {
-                    "nominal_voltage": 24.0,
-                    "brownout_threshold": 18.0,
-                    "recovery_voltage": 20.0
+            rover_sim = self.rover_factory.create(
+                {
+                    "model": "urc_rover",
+                    "power_system": {
+                        "nominal_voltage": 24.0,
+                        "brownout_threshold": 18.0,
+                        "recovery_voltage": 20.0,
+                    },
                 }
-            })
+            )
 
             brownout_events = 0
             recovery_events = 0
             emergency_stops = 0
 
             # Simulate brownout scenario
-            for voltage in [24.0, 22.0, 19.0, 17.0, 21.0, 23.0]:  # Brownout and recovery
+            for voltage in [
+                24.0,
+                22.0,
+                19.0,
+                17.0,
+                21.0,
+                23.0,
+            ]:  # Brownout and recovery
                 rover_sim.set_power_voltage(voltage)
 
                 if voltage < 18.0:
@@ -665,7 +717,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             # Should detect brownouts and trigger safety measures
             self.assertGreater(brownout_events, 0, "Should detect brownout conditions")
-            self.assertGreater(emergency_stops, 0, "Should trigger emergency stops during brownout")
+            self.assertGreater(
+                emergency_stops, 0, "Should trigger emergency stops during brownout"
+            )
             self.assertGreater(recovery_events, 0, "Should handle power recovery")
 
             result.warnings.append(
@@ -678,7 +732,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: brownouts={brownout_events}, recoveries={recovery_events}, stops={emergency_stops}")
+        print(
+            f"  ✅ {result.test_name}: brownouts={brownout_events}, recoveries={recovery_events}, stops={emergency_stops}"
+        )
 
     def test_memory_exhaustion_handling(self):
         """Test system behavior under memory exhaustion."""
@@ -712,7 +768,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             # Should handle memory pressure gracefully
             self.assertGreater(gc_events, 0, "Should trigger memory cleanup")
-            self.assertGreater(max(memory_usage), 1000000, "Should reach high memory usage")
+            self.assertGreater(
+                max(memory_usage), 1000000, "Should reach high memory usage"
+            )
 
             result.warnings.append(
                 "⚠️ MEMORY EXHAUSTION SIMULATION - Hardware memory monitoring required"
@@ -724,7 +782,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: peak={max(memory_usage)/1024:.0f}KB, gc_events={gc_events}")
+        print(
+            f"  ✅ {result.test_name}: peak={max(memory_usage)/1024:.0f}KB, gc_events={gc_events}"
+        )
 
     def test_thermal_shutdown_simulation(self):
         """Test system response to thermal overload."""
@@ -735,14 +795,16 @@ class SimulationIntegrationSuite(unittest.TestCase):
         recovery_temp = None
 
         try:
-            rover_sim = self.rover_factory.create({
-                "model": "urc_rover",
-                "thermal_system": {
-                    "max_temperature": 80.0,  # Celsius
-                    "shutdown_temp": 85.0,
-                    "cooling_rate": 2.0
+            rover_sim = self.rover_factory.create(
+                {
+                    "model": "urc_rover",
+                    "thermal_system": {
+                        "max_temperature": 80.0,  # Celsius
+                        "shutdown_temp": 85.0,
+                        "cooling_rate": 2.0,
+                    },
                 }
-            })
+            )
 
             temps = [25.0, 40.0, 60.0, 75.0, 82.0, 88.0, 78.0]  # Overheat and cool
             shutdown_triggered = False
@@ -781,8 +843,12 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
             self.test_results.append(result)
-            recovery_str = f"{recovery_temp:.1f}°C" if recovery_temp is not None else "N/A"
-            print(f"  ✅ {result.test_name}: shutdown={shutdown_triggered}, cooling={cooling_activated}, recovery={recovery_str}")
+            recovery_str = (
+                f"{recovery_temp:.1f}°C" if recovery_temp is not None else "N/A"
+            )
+            print(
+                f"  ✅ {result.test_name}: shutdown={shutdown_triggered}, cooling={cooling_activated}, recovery={recovery_str}"
+            )
 
     # ==================== LONG-DURATION TESTING ====================
 
@@ -806,8 +872,12 @@ class SimulationIntegrationSuite(unittest.TestCase):
                 # In real test, this would run actual system for 30 minutes
 
                 # Monitor resources (simulated)
-                cpu_usage = 45.0 + (elapsed / simulation_duration) * 20.0  # Gradual increase
-                memory_usage = 150.0 + (elapsed / simulation_duration) * 50.0  # Memory creep
+                cpu_usage = (
+                    45.0 + (elapsed / simulation_duration) * 20.0
+                )  # Gradual increase
+                memory_usage = (
+                    150.0 + (elapsed / simulation_duration) * 50.0
+                )  # Memory creep
                 messages_processed = int(elapsed / 10)  # Message throughput
 
                 cpu_samples.append(cpu_usage)
@@ -817,7 +887,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
                 # Check for degradation
                 if elapsed > 900:  # After 15 minutes
                     if cpu_usage > 70.0 or memory_usage > 200.0:
-                        result.warnings.append(f"Resource degradation at {elapsed}s: CPU={cpu_usage:.1f}%, MEM={memory_usage:.1f}MB")
+                        result.warnings.append(
+                            f"Resource degradation at {elapsed}s: CPU={cpu_usage:.1f}%, MEM={memory_usage:.1f}MB"
+                        )
 
                 time.sleep(0.1)  # Brief pause for simulation
 
@@ -826,12 +898,26 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.metrics["peak_cpu_percent"] = max(cpu_samples)
             result.metrics["avg_memory_mb"] = sum(memory_samples) / len(memory_samples)
             result.metrics["peak_memory_mb"] = max(memory_samples)
-            result.metrics["total_messages"] = message_counts[-1] if message_counts else 0
+            result.metrics["total_messages"] = (
+                message_counts[-1] if message_counts else 0
+            )
 
             # Endurance criteria
-            self.assertLess(result.metrics["avg_cpu_percent"], 75.0, "Average CPU usage should be reasonable")
-            self.assertLess(result.metrics["peak_cpu_percent"], 90.0, "Peak CPU usage should not exceed limits")
-            self.assertLess(result.metrics["avg_memory_mb"], 250.0, "Average memory usage should be stable")
+            self.assertLess(
+                result.metrics["avg_cpu_percent"],
+                75.0,
+                "Average CPU usage should be reasonable",
+            )
+            self.assertLess(
+                result.metrics["peak_cpu_percent"],
+                90.0,
+                "Peak CPU usage should not exceed limits",
+            )
+            self.assertLess(
+                result.metrics["avg_memory_mb"],
+                250.0,
+                "Average memory usage should be stable",
+            )
 
             result.warnings.append(
                 "⚠️ ENDURANCE SIMULATION - Hardware long-duration testing required"
@@ -843,7 +929,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: {simulation_duration}s, avg_cpu={result.metrics['avg_cpu_percent']:.1f}%, peak_mem={result.metrics['peak_memory_mb']:.1f}MB")
+        print(
+            f"  ✅ {result.test_name}: {simulation_duration}s, avg_cpu={result.metrics['avg_cpu_percent']:.1f}%, peak_mem={result.metrics['peak_memory_mb']:.1f}MB"
+        )
 
     def test_performance_degradation_monitoring(self):
         """Monitor performance degradation over extended operation."""
@@ -875,15 +963,27 @@ class SimulationIntegrationSuite(unittest.TestCase):
                     baseline_avg = sum(baseline_latencies) / len(baseline_latencies)
 
                     if recent_avg > baseline_avg * 1.5:  # 50% degradation
-                        result.warnings.append(f"Performance degradation detected at {minute+1}min: {recent_avg:.1f}ms vs baseline {baseline_avg:.1f}ms")
+                        result.warnings.append(
+                            f"Performance degradation detected at {minute+1}min: {recent_avg:.1f}ms vs baseline {baseline_avg:.1f}ms"
+                        )
 
-            result.metrics["baseline_avg_ms"] = sum(baseline_latencies) / len(baseline_latencies)
+            result.metrics["baseline_avg_ms"] = sum(baseline_latencies) / len(
+                baseline_latencies
+            )
             result.metrics["final_avg_ms"] = sum(degraded_latencies[-100:]) / 100
-            result.metrics["degradation_percent"] = ((result.metrics["final_avg_ms"] / result.metrics["baseline_avg_ms"]) - 1) * 100
+            result.metrics["degradation_percent"] = (
+                (result.metrics["final_avg_ms"] / result.metrics["baseline_avg_ms"]) - 1
+            ) * 100
 
             # Should detect gradual performance changes
-            self.assertLess(result.metrics["degradation_percent"], 100.0, "Degradation should be manageable")
-            self.assertGreater(len(result.warnings), 0, "Should detect performance degradation")
+            self.assertLess(
+                result.metrics["degradation_percent"],
+                100.0,
+                "Degradation should be manageable",
+            )
+            self.assertGreater(
+                len(result.warnings), 0, "Should detect performance degradation"
+            )
 
             result.warnings.append(
                 "⚠️ PERFORMANCE DEGRADATION SIMULATION - Hardware monitoring required"
@@ -895,7 +995,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: baseline={result.metrics['baseline_avg_ms']:.1f}ms, final={result.metrics['final_avg_ms']:.1f}ms ({result.metrics['degradation_percent']:.1f}% degradation)")
+        print(
+            f"  ✅ {result.test_name}: baseline={result.metrics['baseline_avg_ms']:.1f}ms, final={result.metrics['final_avg_ms']:.1f}ms ({result.metrics['degradation_percent']:.1f}% degradation)"
+        )
 
     # ==================== VISION SYSTEM INTEGRATION ====================
 
@@ -919,19 +1021,39 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
                     # Detection probability based on conditions
                     base_probability = 0.95  # 95% detection in perfect conditions
-                    detection_prob = base_probability * visibility * (1.0 - dust_factor * 0.7)
+                    detection_prob = (
+                        base_probability * visibility * (1.0 - dust_factor * 0.7)
+                    )
 
                     detected = np.random.random() < detection_prob
                     detection_rates[tier].append(1 if detected else 0)
 
-            result.metrics["perfect_detection_rate"] = sum(detection_rates["perfect"]) / len(detection_rates["perfect"])
-            result.metrics["real_life_detection_rate"] = sum(detection_rates["real_life"]) / len(detection_rates["real_life"])
-            result.metrics["extreme_detection_rate"] = sum(detection_rates["extreme"]) / len(detection_rates["extreme"])
+            result.metrics["perfect_detection_rate"] = sum(
+                detection_rates["perfect"]
+            ) / len(detection_rates["perfect"])
+            result.metrics["real_life_detection_rate"] = sum(
+                detection_rates["real_life"]
+            ) / len(detection_rates["real_life"])
+            result.metrics["extreme_detection_rate"] = sum(
+                detection_rates["extreme"]
+            ) / len(detection_rates["extreme"])
 
             # Should show degradation with environmental conditions
-            self.assertGreater(result.metrics["perfect_detection_rate"], 0.90, "Perfect conditions should have high detection rate")
-            self.assertGreater(result.metrics["real_life_detection_rate"], 0.70, "Real-life should have moderate detection rate")
-            self.assertGreater(result.metrics["extreme_detection_rate"], 0.30, "Extreme should have low but functional detection rate")
+            self.assertGreater(
+                result.metrics["perfect_detection_rate"],
+                0.90,
+                "Perfect conditions should have high detection rate",
+            )
+            self.assertGreater(
+                result.metrics["real_life_detection_rate"],
+                0.70,
+                "Real-life should have moderate detection rate",
+            )
+            self.assertGreater(
+                result.metrics["extreme_detection_rate"],
+                0.30,
+                "Extreme should have low but functional detection rate",
+            )
 
             result.warnings.append(
                 "⚠️ VISION DEGRADATION SIMULATION - Hardware camera testing required"
@@ -943,7 +1065,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: perfect={result.metrics['perfect_detection_rate']:.2f}, real_life={result.metrics['real_life_detection_rate']:.2f}, extreme={result.metrics['extreme_detection_rate']:.2f}")
+        print(
+            f"  ✅ {result.test_name}: perfect={result.metrics['perfect_detection_rate']:.2f}, real_life={result.metrics['real_life_detection_rate']:.2f}, extreme={result.metrics['extreme_detection_rate']:.2f}"
+        )
 
     # ==================== ARM CONTROL INTEGRATION ====================
 
@@ -968,11 +1092,15 @@ class SimulationIntegrationSuite(unittest.TestCase):
             for step in sequence:
                 # Simulate joint movements
                 for joint in range(6):  # 6-DOF arm
-                    position = step["target"][joint % 3] + np.random.normal(0, 0.01)  # Small noise
+                    position = step["target"][joint % 3] + np.random.normal(
+                        0, 0.01
+                    )  # Small noise
                     joint_positions.append(position)
 
                 # Simulate force feedback
-                force = step["force_limit"] * 0.8 + np.random.normal(0, step["force_limit"] * 0.1)
+                force = step["force_limit"] * 0.8 + np.random.normal(
+                    0, step["force_limit"] * 0.1
+                )
                 force_measurements.append(force)
 
                 # Check safety limits
@@ -984,13 +1112,25 @@ class SimulationIntegrationSuite(unittest.TestCase):
 
             result.metrics["sequence_steps"] = len(sequence)
             result.metrics["total_joints_controlled"] = len(joint_positions)
-            result.metrics["avg_force_measurement"] = sum(force_measurements) / len(force_measurements)
+            result.metrics["avg_force_measurement"] = sum(force_measurements) / len(
+                force_measurements
+            )
             result.metrics["safety_stops"] = safety_stops
 
             # Should complete sequence with safety monitoring
-            self.assertEqual(result.metrics["sequence_steps"], 3, "Should complete all sequence steps")
-            self.assertGreater(result.metrics["total_joints_controlled"], 10, "Should control multiple joints")
-            self.assertGreater(result.metrics["avg_force_measurement"], 0, "Should measure forces")
+            self.assertEqual(
+                result.metrics["sequence_steps"],
+                3,
+                "Should complete all sequence steps",
+            )
+            self.assertGreater(
+                result.metrics["total_joints_controlled"],
+                10,
+                "Should control multiple joints",
+            )
+            self.assertGreater(
+                result.metrics["avg_force_measurement"], 0, "Should measure forces"
+            )
 
             result.warnings.append(
                 "⚠️ ARM CONTROL SIMULATION - Hardware arm testing required"
@@ -1002,7 +1142,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: steps={result.metrics['sequence_steps']}, joints={result.metrics['total_joints_controlled']}, safety_stops={safety_stops}")
+        print(
+            f"  ✅ {result.test_name}: steps={result.metrics['sequence_steps']}, joints={result.metrics['total_joints_controlled']}, safety_stops={safety_stops}"
+        )
 
     # ==================== MULTI-ROBOT COORDINATION ====================
 
@@ -1014,11 +1156,13 @@ class SimulationIntegrationSuite(unittest.TestCase):
             # Simulate 3-rover coordination
             rovers = []
             for i in range(3):
-                rover = self.rover_factory.create({
-                    "model": "urc_rover",
-                    "id": f"rover_{i}",
-                    "start_position": [i * 5.0, 0.0, 0.0]  # Spaced out
-                })
+                rover = self.rover_factory.create(
+                    {
+                        "model": "urc_rover",
+                        "id": f"rover_{i}",
+                        "start_position": [i * 5.0, 0.0, 0.0],  # Spaced out
+                    }
+                )
                 rovers.append(rover)
 
             # Simulate coordination scenario
@@ -1029,13 +1173,18 @@ class SimulationIntegrationSuite(unittest.TestCase):
             # Rovers perform coordinated tasks
             for step in range(50):
                 # Simulate position sharing and conflict avoidance
-                positions = [(rover.get_position()[0], rover.get_position()[1]) for rover in rovers]
+                positions = [
+                    (rover.get_position()[0], rover.get_position()[1])
+                    for rover in rovers
+                ]
 
                 # Check for conflicts (rovers too close)
                 for i in range(len(positions)):
                     for j in range(i + 1, len(positions)):
-                        distance = np.sqrt((positions[i][0] - positions[j][0])**2 +
-                                         (positions[i][1] - positions[j][1])**2)
+                        distance = np.sqrt(
+                            (positions[i][0] - positions[j][0]) ** 2
+                            + (positions[i][1] - positions[j][1]) ** 2
+                        )
                         if distance < 2.0:  # Minimum separation
                             conflicts_detected += 1
                             # In real system, would trigger avoidance maneuvers
@@ -1059,9 +1208,19 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.metrics["tasks_completed"] = tasks_completed
 
             # Should coordinate multiple rovers effectively
-            self.assertEqual(result.metrics["rovers_coordinated"], 3, "Should coordinate 3 rovers")
-            self.assertGreater(result.metrics["coordination_events"], 3, "Should have coordination events")
-            self.assertGreater(result.metrics["tasks_completed"], 3, "Should complete coordinated tasks")
+            self.assertEqual(
+                result.metrics["rovers_coordinated"], 3, "Should coordinate 3 rovers"
+            )
+            self.assertGreater(
+                result.metrics["coordination_events"],
+                3,
+                "Should have coordination events",
+            )
+            self.assertGreater(
+                result.metrics["tasks_completed"],
+                3,
+                "Should complete coordinated tasks",
+            )
 
             result.warnings.append(
                 "⚠️ MULTI-ROBOT SIMULATION - Hardware multi-rover testing required"
@@ -1073,7 +1232,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
             self.test_results.append(result)
-            print(f"  ✅ {result.test_name}: rovers={result.metrics.get('rovers_coordinated', 0)}, conflicts={result.metrics.get('conflicts_detected', 0)}, tasks={result.metrics.get('tasks_completed', 0)}")
+            print(
+                f"  ✅ {result.test_name}: rovers={result.metrics.get('rovers_coordinated', 0)}, conflicts={result.metrics.get('conflicts_detected', 0)}, tasks={result.metrics.get('tasks_completed', 0)}"
+            )
 
     # ==================== REPORT GENERATION ====================
 
@@ -1128,7 +1289,9 @@ class SimulationIntegrationSuite(unittest.TestCase):
         print(f"Total Tests: {report['summary']['total_tests']}")
         print(f"Passed: {report['summary']['passed']}")
         print(f"Failed: {report['summary']['failed']}")
-        print(f"Pass Rate: {report['summary']['passed']/report['summary']['total_tests']*100:.1f}%")
+        print(
+            f"Pass Rate: {report['summary']['passed']/report['summary']['total_tests']*100:.1f}%"
+        )
         print("\nBy Category:")
         for cat, data in categories.items():
             print(f"  {cat:20} {data['passed']}/{data['total']} passed")

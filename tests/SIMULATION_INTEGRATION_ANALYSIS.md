@@ -95,7 +95,7 @@ Create `tests/simulation/comprehensive_simulation_tests.py`:
 ```python
 class ComprehensiveSimulationTest:
     """Base class for tests that use simulation framework."""
-    
+
     def setUp(self):
         # Standardized setup
         self.env_simulators = {
@@ -104,7 +104,7 @@ class ComprehensiveSimulationTest:
         self.net_emulators = {
             profile: NetworkEmulator(profile) for profile in NetworkProfile
         }
-    
+
     def run_test_across_tiers(self, test_func, test_name):
         """Run test across all environment tiers."""
         for tier in EnvironmentTier:
@@ -144,5 +144,3 @@ Tests should:
 - ❌ Simulation not applied to actual test data/communication
 
 **Action Required**: Tests need to actually apply simulation degradation to be effective.
-
-

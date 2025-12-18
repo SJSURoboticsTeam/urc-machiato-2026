@@ -18,7 +18,9 @@ class TestArucoDetection(unittest.TestCase):
         """Set up test fixtures."""
         self.aruco_detector = Mock()
         self.aruco_detector.detect_markers = Mock(return_value=([], [], []))
-        self.aruco_detector.estimate_pose = Mock(return_value=(True, np.eye(3), np.zeros(3)))
+        self.aruco_detector.estimate_pose = Mock(
+            return_value=(True, np.eye(3), np.zeros(3))
+        )
 
     def test_marker_detection_empty_image(self):
         """Test marker detection with empty image."""
@@ -42,7 +44,11 @@ class TestArucoDetection(unittest.TestCase):
         mock_ids = np.array([42])
         mock_rejected = []
 
-        self.aruco_detector.detect_markers.return_value = (mock_corners, mock_ids, mock_rejected)
+        self.aruco_detector.detect_markers.return_value = (
+            mock_corners,
+            mock_ids,
+            mock_rejected,
+        )
 
         corners, ids, rejected = self.aruco_detector.detect_markers(test_image)
 
@@ -57,13 +63,17 @@ class TestArucoDetection(unittest.TestCase):
 
         # Mock multiple markers
         mock_corners = [
-            np.array([[[50, 50], [150, 50], [150, 150], [50, 150]]]),   # Marker 0
-            np.array([[[300, 100], [400, 100], [400, 200], [300, 200]]])  # Marker 1
+            np.array([[[50, 50], [150, 50], [150, 150], [50, 150]]]),  # Marker 0
+            np.array([[[300, 100], [400, 100], [400, 200], [300, 200]]]),  # Marker 1
         ]
         mock_ids = np.array([0, 1])
         mock_rejected = [np.array([[[500, 500], [550, 500], [550, 550], [500, 550]]])]
 
-        self.aruco_detector.detect_markers.return_value = (mock_corners, mock_ids, mock_rejected)
+        self.aruco_detector.detect_markers.return_value = (
+            mock_corners,
+            mock_ids,
+            mock_rejected,
+        )
 
         corners, ids, rejected = self.aruco_detector.detect_markers(test_image)
 
@@ -112,10 +122,10 @@ class TestArucoDetection(unittest.TestCase):
         """Test mapping detected markers to keyboard positions."""
         # Define expected marker positions for keyboard corners
         marker_positions = {
-            0: np.array([0.0, 0.0, 0.0]),      # Top-left
-            1: np.array([0.3, 0.0, 0.0]),      # Top-right
-            2: np.array([0.0, 0.15, 0.0]),     # Bottom-left
-            3: np.array([0.3, 0.15, 0.0])      # Bottom-right
+            0: np.array([0.0, 0.0, 0.0]),  # Top-left
+            1: np.array([0.3, 0.0, 0.0]),  # Top-right
+            2: np.array([0.0, 0.15, 0.0]),  # Bottom-left
+            3: np.array([0.3, 0.15, 0.0]),  # Bottom-right
         }
 
         # Test each marker position
@@ -127,8 +137,10 @@ class TestArucoDetection(unittest.TestCase):
         """Test mapping keyboard keys to 3D positions."""
         # QWERTY layout key mapping
         key_layout = {
-            'q': {'row': 0, 'col': 0}, 'w': {'row': 0, 'col': 1},
-            'a': {'row': 1, 'col': 0}, 's': {'row': 1, 'col': 1},
+            "q": {"row": 0, "col": 0},
+            "w": {"row": 0, "col": 1},
+            "a": {"row": 1, "col": 0},
+            "s": {"row": 1, "col": 1},
         }
 
         # Physical dimensions
@@ -137,8 +149,8 @@ class TestArucoDetection(unittest.TestCase):
 
         # Test key position calculation
         for key, pos in key_layout.items():
-            x = keyboard_origin[0] + pos['col'] * key_width
-            y = keyboard_origin[1] + pos['row'] * key_height
+            x = keyboard_origin[0] + pos["col"] * key_width
+            y = keyboard_origin[1] + pos["row"] * key_height
             z = keyboard_origin[2]
 
             expected_pos = np.array([x, y, z])
@@ -162,13 +174,13 @@ class TestArucoDetection(unittest.TestCase):
     def test_detection_robustness(self):
         """Test detection robustness under various conditions."""
         # Test with different lighting conditions (simulated)
-        lighting_conditions = ['bright', 'dim', 'shadowed']
+        lighting_conditions = ["bright", "dim", "shadowed"]
 
         for condition in lighting_conditions:
             # Mock detection results based on lighting
-            if condition == 'bright':
+            if condition == "bright":
                 mock_ids = np.array([0, 1, 2, 3])  # All markers detected
-            elif condition == 'dim':
+            elif condition == "dim":
                 mock_ids = np.array([0, 1])  # Some markers detected
             else:  # shadowed
                 mock_ids = np.array([0])  # Only one marker
@@ -183,13 +195,19 @@ class TestArucoDetection(unittest.TestCase):
         """Test pose estimation filtering and validation."""
         # Test pose validation
         valid_poses = [
-            {'position': [0.5, 0.3, 1.0], 'orientation': [0, 0, 0, 1]},
-            {'position': [0.2, -0.1, 0.8], 'orientation': [0.1, 0.2, 0.3, 0.9]},
+            {"position": [0.5, 0.3, 1.0], "orientation": [0, 0, 0, 1]},
+            {"position": [0.2, -0.1, 0.8], "orientation": [0.1, 0.2, 0.3, 0.9]},
         ]
 
         invalid_poses = [
-            {'position': [float('inf'), 0.3, 1.0], 'orientation': [0, 0, 0, 1]},  # Infinite position
-            {'position': [0.5, 0.3, 1.0], 'orientation': [0, 0, 0, 0]},  # Invalid quaternion
+            {
+                "position": [float("inf"), 0.3, 1.0],
+                "orientation": [0, 0, 0, 1],
+            },  # Infinite position
+            {
+                "position": [0.5, 0.3, 1.0],
+                "orientation": [0, 0, 0, 0],
+            },  # Invalid quaternion
         ]
 
         # Test valid poses
@@ -203,20 +221,22 @@ class TestArucoDetection(unittest.TestCase):
     def test_keyboard_pose_tracking(self):
         """Test keyboard pose tracking over time."""
         poses_over_time = [
-            {'timestamp': 0.0, 'position': [0.5, 0.3, 1.0]},
-            {'timestamp': 1.0, 'position': [0.51, 0.31, 1.02]},  # Slight movement
-            {'timestamp': 2.0, 'position': [0.52, 0.32, 1.05]},  # More movement
+            {"timestamp": 0.0, "position": [0.5, 0.3, 1.0]},
+            {"timestamp": 1.0, "position": [0.51, 0.31, 1.02]},  # Slight movement
+            {"timestamp": 2.0, "position": [0.52, 0.32, 1.05]},  # More movement
         ]
 
         # Test pose continuity (shouldn't jump suddenly)
         for i in range(1, len(poses_over_time)):
-            prev_pos = np.array(poses_over_time[i - 1]['position'])
-            curr_pos = np.array(poses_over_time[i]['position'])
+            prev_pos = np.array(poses_over_time[i - 1]["position"])
+            curr_pos = np.array(poses_over_time[i]["position"])
             distance = np.linalg.norm(curr_pos - prev_pos)
 
             # Pose changes should be gradual (< 5cm per second)
-            time_diff = poses_over_time[i]['timestamp'] - poses_over_time[i - 1]['timestamp']
-            velocity = distance / time_diff if time_diff > 0 else float('inf')
+            time_diff = (
+                poses_over_time[i]["timestamp"] - poses_over_time[i - 1]["timestamp"]
+            )
+            velocity = distance / time_diff if time_diff > 0 else float("inf")
 
             self.assertLess(velocity, 0.5)  # Less than 50 cm/s movement
 
@@ -226,22 +246,26 @@ class TestArucoDetection(unittest.TestCase):
             return False
 
         # Check position
-        if 'position' not in pose or len(pose['position']) != 3:
+        if "position" not in pose or len(pose["position"]) != 3:
             return False
-        if not all(isinstance(x, (int, float)) and not np.isinf(x) for x in pose['position']):
+        if not all(
+            isinstance(x, (int, float)) and not np.isinf(x) for x in pose["position"]
+        ):
             return False
 
         # Check orientation (quaternion)
-        if 'orientation' not in pose or len(pose['orientation']) != 4:
+        if "orientation" not in pose or len(pose["orientation"]) != 4:
             return False
-        if not all(isinstance(x, (int, float)) and not np.isinf(x) for x in pose['orientation']):
+        if not all(
+            isinstance(x, (int, float)) and not np.isinf(x) for x in pose["orientation"]
+        ):
             return False
 
         # Check quaternion normalization (roughly)
-        orientation = np.array(pose['orientation'])
+        orientation = np.array(pose["orientation"])
         norm = np.linalg.norm(orientation)
         return 0.9 < norm < 1.1  # Should be approximately normalized
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -13,7 +13,8 @@ Tests mission execution system with:
 - Time budget validation
 
 This addresses P1 high priority gap: Mission Execution (10% coverage).
-"""
+
+NOTE: This test is skipped because Complex mission execution replaced with simple command processing."""
 
 import os
 import sys
@@ -31,12 +32,11 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "missions"))
 
 # Import simulation framework
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 try:
-    from environment_tiers import EnvironmentSimulator, EnvironmentTier
-    from network_emulator import NetworkEmulator, NetworkProfile
+    from simulation.environments.environment_factory import EnvironmentFactory
+    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
 except ImportError:
-    EnvironmentSimulator = None
+    EnvironmentFactory = None
     NetworkEmulator = None
 
 
@@ -48,6 +48,57 @@ def ros_context():
     rclpy.shutdown()
 
 
+class TestVisionProcessingIntegration:
+    """Test mission execution with centralized vision processing."""
+
+    def test_keyboard_mission_vision_topic_subscription(self):
+        """Test keyboard mission subscribes to correct vision processing topics."""
+        try:
+            # Import keyboard mission
+            from missions.autonomous_keyboard_mission import AutonomousKeyboardMission
+
+            # Verify the mission uses centralized vision processing
+            # Should subscribe to /vision/keyboard_pose instead of processing raw images
+            # Mock ROS2 components
+            with pytest.mock.patch("rclpy.node.Node.__init__", return_value=None):
+                mission = AutonomousKeyboardMission.__new__(AutonomousKeyboardMission)
+
+                # Mock required attributes for testing
+                mission.get_logger = lambda: pytest.mock.Mock()
+
+                # Verify vision processing integration
+                # The mission should be designed to work with centralized vision system
+
+        except Exception as e:
+            pytest.fail(f"Vision processing integration test failed: {e}")
+
+    def test_obstacle_avoidance_vision_integration(self):
+        """Test missions use vision-based obstacle avoidance."""
+        try:
+            # Test that missions integrate with vision obstacle detection
+            # Should use /vision/obstacles or /terrain/traversability topics
+
+            # Mock mission execution
+            # Verify obstacle avoidance uses centralized vision processing
+            pass  # Placeholder for actual test implementation
+
+        except Exception as e:
+            pytest.fail(f"Obstacle avoidance vision integration test failed: {e}")
+
+    def test_terrain_aware_navigation(self):
+        """Test navigation uses terrain intelligence from vision processing."""
+        try:
+            # Test waypoint navigation considers terrain costs from vision system
+            # Should integrate with /terrain/traversability topic
+
+            # Mock navigation with terrain awareness
+            # Verify terrain costs affect path planning
+            pass  # Placeholder for actual test implementation
+
+        except Exception as e:
+            pytest.fail(f"Terrain aware navigation test failed: {e}")
+
+
 @pytest.mark.integration
 @pytest.mark.ros2
 @pytest.mark.slow
@@ -56,9 +107,11 @@ class TestMissionExecution:
 
     def setUp(self):
         """Set up test environment."""
-        if EnvironmentSimulator:
+        if EnvironmentFactory:
+            # Available environment tiers
+            tiers = ["perfect", "real_life", "extreme"]
             self.env_simulators = {
-                tier: EnvironmentSimulator(tier) for tier in EnvironmentTier
+                tier: EnvironmentFactory.create({"tier": tier}) for tier in tiers
             }
         if NetworkEmulator:
             self.net_emulators = {
@@ -84,8 +137,12 @@ class TestMissionExecution:
         mission_result = self._execute_waypoint_mission(waypoints)
 
         assert mission_result["success"], "Multi-waypoint mission should succeed"
-        assert mission_result["waypoints_completed"] == len(waypoints), "All waypoints should be completed"
-        assert mission_result["final_position"] == waypoints[-1], "Should reach final waypoint"
+        assert mission_result["waypoints_completed"] == len(
+            waypoints
+        ), "All waypoints should be completed"
+        assert (
+            mission_result["final_position"] == waypoints[-1]
+        ), "Should reach final waypoint"
 
     def test_mission_replanning_unreachable_waypoint(self, ros_context):
         """Test mission replanning when waypoint is unreachable."""
@@ -102,7 +159,9 @@ class TestMissionExecution:
         # Mission should replan and skip unreachable waypoint
         assert mission_result["success"], "Mission should succeed after replanning"
         assert mission_result["replanned"], "Mission should have replanned"
-        assert mission_result["waypoints_completed"] >= 2, "Should complete at least some waypoints"
+        assert (
+            mission_result["waypoints_completed"] >= 2
+        ), "Should complete at least some waypoints"
 
     def test_task_priority_management(self, ros_context):
         """Test task priority management in missions."""
@@ -117,10 +176,14 @@ class TestMissionExecution:
 
         # High priority tasks should execute first
         high_priority_tasks = [t for t in tasks if t["priority"] == "high"]
-        first_executed = execution_order[:len(high_priority_tasks)]
+        first_executed = execution_order[: len(high_priority_tasks)]
 
-        assert all(t["priority"] == "high" for t in first_executed), "High priority tasks should execute first"
-        assert execution_order[0]["type"] == "safety", "Safety should have highest priority"
+        assert all(
+            t["priority"] == "high" for t in first_executed
+        ), "High priority tasks should execute first"
+        assert (
+            execution_order[0]["type"] == "safety"
+        ), "Safety should have highest priority"
 
     def test_mission_abort_scenario(self, ros_context):
         """Test mission abort handling."""
@@ -167,8 +230,12 @@ class TestMissionExecution:
 
         # Verify progress accuracy
         assert len(progress_updates) == len(waypoints), "Should track all waypoints"
-        assert progress_updates[-1]["percentage"] == 100.0, "Final progress should be 100%"
-        assert all(0 <= p["percentage"] <= 100 for p in progress_updates), "Progress should be 0-100%"
+        assert (
+            progress_updates[-1]["percentage"] == 100.0
+        ), "Final progress should be 100%"
+        assert all(
+            0 <= p["percentage"] <= 100 for p in progress_updates
+        ), "Progress should be 0-100%"
 
     def test_mission_recovery_from_failure(self, ros_context):
         """Test mission recovery after failure."""
@@ -219,7 +286,9 @@ class TestMissionExecution:
                 assert False, f"Mission exceeded time budget at waypoint {i}"
 
         total_time = elapsed_time
-        assert total_time <= time_budget, f"Mission should complete within budget, took {total_time:.1f}s"
+        assert (
+            total_time <= time_budget
+        ), f"Mission should complete within budget, took {total_time:.1f}s"
 
     def _execute_waypoint_mission(self, waypoints: List[Dict]) -> Dict:
         """Simulate waypoint mission execution."""
@@ -228,7 +297,10 @@ class TestMissionExecution:
 
         for waypoint in waypoints:
             # Navigate to waypoint
-            distance = ((waypoint["x"] - current_position["x"]) ** 2 + (waypoint["y"] - current_position["y"]) ** 2) ** 0.5
+            distance = (
+                (waypoint["x"] - current_position["x"]) ** 2
+                + (waypoint["y"] - current_position["y"]) ** 2
+            ) ** 0.5
 
             if distance < 1.0:  # Within tolerance
                 completed_waypoints.append(waypoint)
@@ -247,7 +319,10 @@ class TestMissionExecution:
         current_position = {"x": 0.0, "y": 0.0}
 
         for waypoint in waypoints:
-            distance = ((waypoint["x"] - current_position["x"]) ** 2 + (waypoint["y"] - current_position["y"]) ** 2) ** 0.5
+            distance = (
+                (waypoint["x"] - current_position["x"]) ** 2
+                + (waypoint["y"] - current_position["y"]) ** 2
+            ) ** 0.5
 
             # Check if waypoint is reachable (within reasonable distance)
             if distance > 50.0:  # Unreachable

@@ -26,7 +26,7 @@ try:
     import rclpy
     from rclpy.node import Node
     from sensor_msgs.msg import JointState
-    from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
     try:
         from control_msgs.msg import JointTrajectoryControllerState  # noqa: F401
     except ImportError:
@@ -43,12 +43,11 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "Autonomy", "code", "autonomous_typing"))
 
 # Import simulation framework
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 try:
-    from environment_tiers import EnvironmentSimulator, EnvironmentTier
-    from network_emulator import NetworkEmulator, NetworkProfile
+    from simulation.environments.environment_factory import EnvironmentFactory
+    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
 except ImportError:
-    EnvironmentSimulator = None
+    EnvironmentFactory = None
     NetworkEmulator = None
 
 
@@ -75,14 +74,15 @@ class ArmControlSimulator:
             "wrist_3_joint",
         ]
         self.current_joint_positions = np.zeros(len(self.joint_names))
-        self.joint_limits = {
-            name: (-np.pi, np.pi) for name in self.joint_names
-        }
+        self.joint_limits = {name: (-np.pi, np.pi) for name in self.joint_names}
         self.max_joint_velocity = 1.0  # rad/s
         self.max_joint_acceleration = 2.0  # rad/s²
 
     def solve_ik(
-        self, target_pos: np.ndarray, target_orientation: Optional[np.ndarray] = None, noise_level: float = 0.0
+        self,
+        target_pos: np.ndarray,
+        _target_orientation: Optional[np.ndarray] = None,
+        noise_level: float = 0.0,
     ) -> Optional[np.ndarray]:
         """
         Solve inverse kinematics for target position.
@@ -102,14 +102,16 @@ class ArmControlSimulator:
         noise = np.random.normal(0, noise_level * 0.1, len(self.joint_names))
 
         # Simple IK approximation
-        angles = np.array([
-            np.arctan2(target_pos[1], target_pos[0]),  # shoulder_pan
-            np.arcsin(target_pos[2] / np.linalg.norm(target_pos)),  # shoulder_lift
-            np.pi / 4,  # elbow
-            0.0,  # wrist_1
-            0.0,  # wrist_2
-            0.0,  # wrist_3
-        ])
+        angles = np.array(
+            [
+                np.arctan2(target_pos[1], target_pos[0]),  # shoulder_pan
+                np.arcsin(target_pos[2] / np.linalg.norm(target_pos)),  # shoulder_lift
+                np.pi / 4,  # elbow
+                0.0,  # wrist_1
+                0.0,  # wrist_2
+                0.0,  # wrist_3
+            ]
+        )
 
         angles += noise
 
@@ -152,13 +154,23 @@ class ArmControlSimulator:
     def _forward_kinematics(self, joint_angles: np.ndarray) -> np.ndarray:
         """Simple forward kinematics (simplified)."""
         # Simplified FK for testing
-        x = 0.5 * np.cos(joint_angles[0]) * (np.cos(joint_angles[1]) + np.cos(joint_angles[1] + joint_angles[2]))
-        y = 0.5 * np.sin(joint_angles[0]) * (np.cos(joint_angles[1]) + np.cos(joint_angles[1] + joint_angles[2]))
+        x = (
+            0.5
+            * np.cos(joint_angles[0])
+            * (np.cos(joint_angles[1]) + np.cos(joint_angles[1] + joint_angles[2]))
+        )
+        y = (
+            0.5
+            * np.sin(joint_angles[0])
+            * (np.cos(joint_angles[1]) + np.cos(joint_angles[1] + joint_angles[2]))
+        )
         z = 0.5 * (np.sin(joint_angles[1]) + np.sin(joint_angles[1] + joint_angles[2]))
 
         return np.array([x, y, z])
 
-    def check_force_limits(self, joint_angles: np.ndarray, applied_forces: np.ndarray) -> bool:
+    def check_force_limits(
+        self, joint_angles: np.ndarray, applied_forces: np.ndarray
+    ) -> bool:
         """
         Check if applied forces exceed limits.
 
@@ -215,7 +227,9 @@ class TestArmControl:
             results.append((latency, success))
 
         # Control should work even with latency (may be slower)
-        assert all(success for _, success in results), "Joint control should work with latency"
+        assert all(
+            success for _, success in results
+        ), "Joint control should work with latency"
 
     def test_ik_solver_convergence(self, ros_context):
         """Test IK solver convergence."""
@@ -225,7 +239,9 @@ class TestArmControl:
         solution = self.arm_sim.solve_ik(target_pos)
 
         assert solution is not None, "IK solver should find solution"
-        assert len(solution) == len(self.arm_sim.joint_names), "Solution should have correct number of joints"
+        assert len(solution) == len(
+            self.arm_sim.joint_names
+        ), "Solution should have correct number of joints"
 
         # Verify solution reaches target (approximately)
         ee_pos = self.arm_sim._forward_kinematics(solution)
@@ -252,7 +268,9 @@ class TestArmControl:
             ee_pos = self.arm_sim._forward_kinematics(solution)
             error = np.linalg.norm(ee_pos - target_pos)
             # Higher noise may lead to higher error, but should still be reasonable
-            assert error < 0.2, f"IK error should be reasonable with noise {noise}, got {error:.3f}m"
+            assert (
+                error < 0.2
+            ), f"IK error should be reasonable with noise {noise}, got {error:.3f}m"
 
     def test_collision_detection(self, ros_context):
         """Test collision detection."""
@@ -324,13 +342,19 @@ class TestArmControl:
             net_emu.start()
 
         try:
-            execution_success = self._execute_trajectory(trajectory, network_latency=0.1)
-            assert execution_success, "Trajectory should execute even with network degradation"
+            execution_success = self._execute_trajectory(
+                trajectory, network_latency=0.1
+            )
+            assert (
+                execution_success
+            ), "Trajectory should execute even with network degradation"
         finally:
             if NetworkEmulator:
                 net_emu.stop()
 
-    def _control_joints(self, target_angles: np.ndarray, network_latency: float = 0.0) -> bool:
+    def _control_joints(
+        self, target_angles: np.ndarray, network_latency: float = 0.0
+    ) -> bool:
         """Simulate joint control."""
         # Simulate network delay
         if network_latency > 0:
@@ -354,7 +378,11 @@ class TestArmControl:
         return True
 
     def _create_trajectory(
-        self, start_angles: np.ndarray, end_angles: np.ndarray, duration: float = 3.0, num_points: int = 10
+        self,
+        start_angles: np.ndarray,
+        end_angles: np.ndarray,
+        duration: float = 3.0,
+        num_points: int = 10,
     ) -> List[np.ndarray]:
         """Create trajectory from start to end angles."""
         trajectory = []
@@ -365,7 +393,9 @@ class TestArmControl:
             trajectory.append(angles)
         return trajectory
 
-    def _execute_trajectory(self, trajectory: List[np.ndarray], network_latency: float = 0.0) -> bool:
+    def _execute_trajectory(
+        self, trajectory: List[np.ndarray], network_latency: float = 0.0
+    ) -> bool:
         """Simulate trajectory execution."""
         for waypoint in trajectory:
             # Simulate network delay

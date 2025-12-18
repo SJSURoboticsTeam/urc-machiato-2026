@@ -11,7 +11,8 @@ Tests safety system under complex scenarios:
 - Collision avoidance under poor visibility
 
 This addresses P2 medium priority gap: Advanced Safety Scenarios.
-"""
+
+NOTE: This test is skipped because Complex safety system replaced with basic mission control."""
 
 import os
 import sys
@@ -29,12 +30,11 @@ sys.path.insert(0, STATE_MGMT_ROOT)
 sys.path.insert(0, os.path.join(STATE_MGMT_ROOT, "autonomy_state_machine"))
 
 # Import simulation framework
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 try:
-    from environment_tiers import EnvironmentSimulator, EnvironmentTier
-    from network_emulator import NetworkEmulator, NetworkProfile
+    from simulation.environments.environment_factory import EnvironmentFactory
+    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
 except ImportError:
-    EnvironmentSimulator = None
+    EnvironmentFactory = None
     NetworkEmulator = None
 
 
@@ -55,25 +55,44 @@ class TestMultiFaultScenarios:
 
     def setUp(self):
         """Set up test environment."""
-        if EnvironmentSimulator:
+        if EnvironmentFactory:
+            # Available environment tiers
+            tiers = ["perfect", "real_life", "extreme"]
             self.env_simulators = {
-                tier: EnvironmentSimulator(tier) for tier in EnvironmentTier
+                tier: EnvironmentFactory.create({"tier": tier}) for tier in tiers
             }
 
-    def test_multiple_sensor_failures(self, ros_context):
+    def test_multiple_sensor_failures(self, _ros_context):
         """Test system behavior when multiple sensors fail simultaneously."""
         # Simulate multiple sensor failures
         failed_sensors = ["gps", "imu", "camera"]
         system_state = {
-            "sensors": {sensor: {"status": "failed" if sensor in failed_sensors else "operational"} for sensor in ["gps", "imu", "camera", "lidar"]},
+            "sensors": {
+                sensor: {
+                    "status": "failed" if sensor in failed_sensors else "operational"
+                }
+                for sensor in ["gps", "imu", "camera", "lidar"]
+            },
             "safety_mode": "normal",
         }
 
         # System should enter safe mode
-        if len([s for s in failed_sensors if system_state["sensors"][s]["status"] == "failed"]) >= 2:
+        if (
+            len(
+                [
+                    s
+                    for s in failed_sensors
+                    if system_state["sensors"][s]["status"] == "failed"
+                ]
+            )
+            >= 2
+        ):
             system_state["safety_mode"] = "degraded"
 
-        assert system_state["safety_mode"] in ["degraded", "safe"], "System should enter safe mode with multiple failures"
+        assert system_state["safety_mode"] in [
+            "degraded",
+            "safe",
+        ], "System should enter safe mode with multiple failures"
 
     def test_cascading_failure_scenario(self, ros_context):
         """Test cascading failure scenario."""
@@ -81,10 +100,24 @@ class TestMultiFaultScenarios:
         failures = [{"component": "gps", "time": 0.0, "severity": "medium"}]
 
         # Cascading: Navigation fails due to GPS loss
-        failures.append({"component": "navigation", "time": 5.0, "severity": "high", "caused_by": "gps"})
+        failures.append(
+            {
+                "component": "navigation",
+                "time": 5.0,
+                "severity": "high",
+                "caused_by": "gps",
+            }
+        )
 
         # Further cascade: Mission fails due to navigation failure
-        failures.append({"component": "mission", "time": 10.0, "severity": "critical", "caused_by": "navigation"})
+        failures.append(
+            {
+                "component": "mission",
+                "time": 10.0,
+                "severity": "critical",
+                "caused_by": "navigation",
+            }
+        )
 
         # System should detect cascade and enter safe mode
         critical_failures = [f for f in failures if f["severity"] == "critical"]
@@ -95,7 +128,10 @@ class TestMultiFaultScenarios:
         else:
             safety_mode = "degraded"
 
-        assert safety_mode in ["safe", "emergency"], "System should enter safe mode with cascading failures"
+        assert safety_mode in [
+            "safe",
+            "emergency",
+        ], "System should enter safe mode with cascading failures"
 
     def test_recovery_sequence(self, ros_context):
         """Test recovery sequence after failures."""
@@ -125,8 +161,12 @@ class TestMultiFaultScenarios:
                 system_state["safety_mode"] = "normal"
                 system_state["failed_components"] = []
 
-        assert system_state["safety_mode"] == "normal", "System should recover to normal mode"
-        assert len(system_state["failed_components"]) == 0, "Failed components should be cleared"
+        assert (
+            system_state["safety_mode"] == "normal"
+        ), "System should recover to normal mode"
+        assert (
+            len(system_state["failed_components"]) == 0
+        ), "Failed components should be cleared"
 
     def test_safe_mode_operation(self, ros_context):
         """Test safe mode operation."""
@@ -144,8 +184,12 @@ class TestMultiFaultScenarios:
         ), "Safe mode should only allow critical subsystems"
 
         # Navigation and autonomy should be disabled
-        assert "navigation" in system_state["disabled_subsystems"], "Navigation should be disabled in safe mode"
-        assert "autonomy" in system_state["disabled_subsystems"], "Autonomy should be disabled in safe mode"
+        assert (
+            "navigation" in system_state["disabled_subsystems"]
+        ), "Navigation should be disabled in safe mode"
+        assert (
+            "autonomy" in system_state["disabled_subsystems"]
+        ), "Autonomy should be disabled in safe mode"
 
     def test_safety_navigation_coordination(self, ros_context):
         """Test safety system coordination with navigation."""
@@ -153,7 +197,11 @@ class TestMultiFaultScenarios:
         navigation_state = {"active": True, "velocity": 1.5, "target": (10.0, 10.0)}
 
         # Safety trigger occurs
-        safety_trigger = {"type": "obstacle_detected", "severity": "high", "position": (5.0, 5.0)}
+        safety_trigger = {
+            "type": "obstacle_detected",
+            "severity": "high",
+            "position": (5.0, 5.0),
+        }
 
         # Safety should stop navigation
         if safety_trigger["severity"] in ["high", "critical"]:
@@ -161,7 +209,9 @@ class TestMultiFaultScenarios:
             navigation_state["velocity"] = 0.0
             navigation_state["emergency_stop"] = True
 
-        assert not navigation_state["active"], "Navigation should stop on safety trigger"
+        assert not navigation_state[
+            "active"
+        ], "Navigation should stop on safety trigger"
         assert navigation_state["velocity"] == 0.0, "Velocity should be zero"
         assert navigation_state["emergency_stop"], "Emergency stop should be activated"
 
@@ -176,7 +226,10 @@ class TestMultiFaultScenarios:
         detection_range = 10.0 * visibility  # 3m instead of 10m
 
         # Check if obstacle is detected
-        distance = ((obstacle_position[0] - rover_position[0]) ** 2 + (obstacle_position[1] - rover_position[1]) ** 2) ** 0.5
+        distance = (
+            (obstacle_position[0] - rover_position[0]) ** 2
+            + (obstacle_position[1] - rover_position[1]) ** 2
+        ) ** 0.5
         obstacle_detected = distance < detection_range
 
         if obstacle_detected:
@@ -185,7 +238,9 @@ class TestMultiFaultScenarios:
             safe_distance = 2.0  # Minimum safe distance
             avoidance_successful = distance > safe_distance or avoidance_active
 
-            assert avoidance_active, "Collision avoidance should activate when obstacle detected"
+            assert (
+                avoidance_active
+            ), "Collision avoidance should activate when obstacle detected"
             # System should maintain safe distance or stop
             assert avoidance_successful, "Should maintain safe distance or stop"
 
@@ -234,7 +289,9 @@ class TestMultiFaultScenarios:
             # Disable non-critical subsystems
             system_state["disabled_subsystems"] = ["mission", "science"]
 
-        assert system_state["power_save_mode"] or not system_state["operational"], "System should respond to low power"
+        assert (
+            system_state["power_save_mode"] or not system_state["operational"]
+        ), "System should respond to low power"
 
     def test_communication_loss_recovery(self, ros_context):
         """Test recovery from communication loss."""
@@ -260,7 +317,9 @@ class TestMultiFaultScenarios:
 
         assert reconnected, "System should reconnect after communication loss"
         assert comm_state["connected"], "Communication should be restored"
-        assert comm_state["reconnection_attempts"] <= max_attempts, "Should not exceed max attempts"
+        assert (
+            comm_state["reconnection_attempts"] <= max_attempts
+        ), "Should not exceed max attempts"
 
 
 @pytest.mark.integration
@@ -283,7 +342,9 @@ class TestSafetyCoordination:
             nav_state["velocity"] = 0.0
 
         # System should coordinate
-        assert nav_state["active"] == safety_status["safe"], "Navigation should match safety status"
+        assert (
+            nav_state["active"] == safety_status["safe"]
+        ), "Navigation should match safety status"
 
     def test_safety_vision_integration(self, ros_context):
         """Test safety and vision system integration."""
@@ -297,8 +358,13 @@ class TestSafetyCoordination:
                 "confidence": vision_detection["confidence"],
             }
 
-            assert safety_response["action"] in ["slow_down", "stop"], "Safety should respond to vision detection"
-            assert safety_response["confidence"] >= 0.7, "Should require reasonable confidence"
+            assert safety_response["action"] in [
+                "slow_down",
+                "stop",
+            ], "Safety should respond to vision detection"
+            assert (
+                safety_response["confidence"] >= 0.7
+            ), "Should require reasonable confidence"
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ import pytest
 try:
     import rclpy
     from rclpy.node import Node
+
     ROS2_AVAILABLE = True
 except ImportError:
     ROS2_AVAILABLE = False
@@ -38,10 +39,10 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 
 try:
-    from environment_tiers import EnvironmentSimulator, EnvironmentTier
-    from network_emulator import NetworkEmulator, NetworkProfile
+    from simulation.environments.environment_factory import EnvironmentFactory
+    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
 except ImportError:
-    EnvironmentSimulator = None
+    EnvironmentFactory = None
     NetworkEmulator = None
 
 
@@ -66,28 +67,34 @@ class DataFlowTracker:
 
     def record_sensor_reading(self, sensor_type: str, value: float, timestamp: float):
         """Record sensor reading."""
-        self.sensor_readings.append({
-            "type": sensor_type,
-            "value": value,
-            "timestamp": timestamp,
-        })
+        self.sensor_readings.append(
+            {
+                "type": sensor_type,
+                "value": value,
+                "timestamp": timestamp,
+            }
+        )
         self.timestamps.append(timestamp)
 
     def record_processed_data(self, data: Dict, timestamp: float):
         """Record processed data."""
-        self.processed_data.append({
-            "data": data,
-            "timestamp": timestamp,
-        })
+        self.processed_data.append(
+            {
+                "data": data,
+                "timestamp": timestamp,
+            }
+        )
         self.timestamps.append(timestamp)
 
     def record_action(self, action_type: str, value: float, timestamp: float):
         """Record action taken."""
-        self.actions.append({
-            "type": action_type,
-            "value": value,
-            "timestamp": timestamp,
-        })
+        self.actions.append(
+            {
+                "type": action_type,
+                "value": value,
+                "timestamp": timestamp,
+            }
+        )
         self.timestamps.append(timestamp)
 
     def get_latency(self, start_idx: int, end_idx: int) -> float:
@@ -118,8 +125,10 @@ class TestDataFlow:
     def setUp(self):
         """Set up test environment."""
         self.tracker = DataFlowTracker()
-        if EnvironmentSimulator:
-            self.env_sim = EnvironmentSimulator(EnvironmentTier.REAL_LIFE)
+        if EnvironmentFactory:
+            # Create environment with REAL_LIFE tier config
+            env_config = {"tier": "real_life"}
+            self.env_sim = EnvironmentFactory.create(env_config)
         if NetworkEmulator:
             self.net_emu = NetworkEmulator(NetworkProfile.RURAL_WIFI)
 
@@ -140,7 +149,9 @@ class TestDataFlow:
         # Simulate processing (navigation calculates target)
         processed_timestamp = time.time()
         target_value = sensor_value + 5.0  # Move 5 units forward
-        self.tracker.record_processed_data({"target": target_value}, processed_timestamp)
+        self.tracker.record_processed_data(
+            {"target": target_value}, processed_timestamp
+        )
 
         # Simulate action (motor command)
         action_timestamp = time.time()
@@ -153,11 +164,17 @@ class TestDataFlow:
         assert len(self.tracker.actions) > 0, "Should have actions"
 
         # Verify timestamps are sequential
-        assert sensor_timestamp <= processed_timestamp, "Processing should occur after sensor"
-        assert processed_timestamp <= action_timestamp, "Action should occur after processing"
+        assert (
+            sensor_timestamp <= processed_timestamp
+        ), "Processing should occur after sensor"
+        assert (
+            processed_timestamp <= action_timestamp
+        ), "Action should occur after processing"
 
         # Verify data transformation
-        assert target_value == sensor_value + 5.0, "Processing should transform data correctly"
+        assert (
+            target_value == sensor_value + 5.0
+        ), "Processing should transform data correctly"
 
     def test_data_transformation_accuracy(self, ros_context):
         """Test data transformation accuracy through pipeline."""
@@ -170,20 +187,24 @@ class TestDataFlow:
         # Transform 1: Calculate direction
         direction = target_position - input_position
         expected_direction = np.array([10.0, 10.0])
-        assert np.allclose(direction, expected_direction), "Direction calculation should be accurate"
+        assert np.allclose(
+            direction, expected_direction
+        ), "Direction calculation should be accurate"
 
         # Transform 2: Calculate distance
         distance = np.linalg.norm(direction)
         expected_distance = np.sqrt(200.0)  # sqrt(10^2 + 10^2)
-        assert np.isclose(distance, expected_distance, rtol=0.01), \
-            f"Distance calculation should be accurate: {distance} vs {expected_distance}"
+        assert np.isclose(
+            distance, expected_distance, rtol=0.01
+        ), f"Distance calculation should be accurate: {distance} vs {expected_distance}"
 
         # Transform 3: Calculate velocity command
         max_velocity = 2.0  # m/s
         velocity = direction / distance * max_velocity
         expected_velocity_magnitude = max_velocity
-        assert np.isclose(np.linalg.norm(velocity), expected_velocity_magnitude, rtol=0.01), \
-            "Velocity calculation should be accurate"
+        assert np.isclose(
+            np.linalg.norm(velocity), expected_velocity_magnitude, rtol=0.01
+        ), "Velocity calculation should be accurate"
 
     def test_timestamp_synchronization(self, ros_context):
         """Test timestamp synchronization across subsystems."""
@@ -192,21 +213,25 @@ class TestDataFlow:
         # Simulate multiple sensors with timestamps
         base_time = time.time()
         sensor_timestamps = [
-            base_time + 0.0,   # GPS
+            base_time + 0.0,  # GPS
             base_time + 0.01,  # IMU
             base_time + 0.02,  # Camera
         ]
 
         # Check timestamp consistency
         max_drift = max(sensor_timestamps) - min(sensor_timestamps)
-        assert max_drift < 0.1, f"Timestamp drift should be < 100ms, got {max_drift*1000:.1f}ms"
+        assert (
+            max_drift < 0.1
+        ), f"Timestamp drift should be < 100ms, got {max_drift*1000:.1f}ms"
 
         # Simulate processing with timestamp
         processing_timestamp = time.time()
         timestamp_delay = processing_timestamp - base_time
 
         # Processing should occur within reasonable time
-        assert timestamp_delay < 1.0, f"Processing delay should be < 1s, got {timestamp_delay:.2f}s"
+        assert (
+            timestamp_delay < 1.0
+        ), f"Processing delay should be < 1s, got {timestamp_delay:.2f}s"
 
     def test_data_loss_detection(self, ros_context):
         """Test detection of data loss in pipeline."""
@@ -257,9 +282,15 @@ class TestDataFlow:
         print(f"  Total latency: {total_latency*1000:.2f} ms")
 
         # Latencies should be reasonable
-        assert processing_latency < 0.5, f"Processing latency should be < 500ms, got {processing_latency*1000:.1f}ms"
-        assert action_latency < 0.5, f"Action latency should be < 500ms, got {action_latency*1000:.1f}ms"
-        assert total_latency < 1.0, f"Total latency should be < 1s, got {total_latency*1000:.1f}ms"
+        assert (
+            processing_latency < 0.5
+        ), f"Processing latency should be < 500ms, got {processing_latency*1000:.1f}ms"
+        assert (
+            action_latency < 0.5
+        ), f"Action latency should be < 500ms, got {action_latency*1000:.1f}ms"
+        assert (
+            total_latency < 1.0
+        ), f"Total latency should be < 1s, got {total_latency*1000:.1f}ms"
 
     def test_data_integrity(self, ros_context):
         """Test data integrity through pipeline."""
@@ -277,9 +308,15 @@ class TestDataFlow:
         assert "z" in processed_data, "Data integrity: z should be preserved"
 
         # Verify values are not corrupted
-        assert abs(processed_data["x"] - input_data["x"]) < 0.01, "x value should not be corrupted"
-        assert abs(processed_data["y"] - input_data["y"]) < 0.01, "y value should not be corrupted"
-        assert abs(processed_data["z"] - input_data["z"]) < 0.01, "z value should not be corrupted"
+        assert (
+            abs(processed_data["x"] - input_data["x"]) < 0.01
+        ), "x value should not be corrupted"
+        assert (
+            abs(processed_data["y"] - input_data["y"]) < 0.01
+        ), "y value should not be corrupted"
+        assert (
+            abs(processed_data["z"] - input_data["z"]) < 0.01
+        ), "z value should not be corrupted"
 
     def test_multi_sensor_fusion(self, ros_context):
         """Test data fusion from multiple sensors."""
@@ -299,8 +336,12 @@ class TestDataFlow:
         assert "detections" in fused_data, "Fused data should have detections"
 
         # Verify data is correctly combined
-        assert fused_data["position"]["lat"] == gps_data["lat"], "GPS data should be preserved"
-        assert fused_data["detections"]["count"] == camera_data["detections"], "Camera data should be preserved"
+        assert (
+            fused_data["position"]["lat"] == gps_data["lat"]
+        ), "GPS data should be preserved"
+        assert (
+            fused_data["detections"]["count"] == camera_data["detections"]
+        ), "Camera data should be preserved"
 
     def _process_data(self, data: Dict) -> Dict:
         """Process data (simulated)."""
@@ -314,8 +355,15 @@ class TestDataFlow:
         """Fuse data from multiple sensors."""
         return {
             "position": {"lat": gps["lat"], "lon": gps["lon"], "alt": gps["alt"]},
-            "orientation": {"accel_x": imu["accel_x"], "accel_y": imu["accel_y"], "accel_z": imu["accel_z"]},
-            "detections": {"count": camera["detections"], "confidence": camera["confidence"]},
+            "orientation": {
+                "accel_x": imu["accel_x"],
+                "accel_y": imu["accel_y"],
+                "accel_z": imu["accel_z"],
+            },
+            "detections": {
+                "count": camera["detections"],
+                "confidence": camera["confidence"],
+            },
             "fused": True,
             "timestamp": time.time(),
         }
@@ -347,7 +395,9 @@ class TestDataFlowUnderDegradation:
             latency = end_time - start_time
 
             # Latency should be within network profile limits
-            assert latency < 0.5, f"Network latency should be reasonable: {latency*1000:.1f}ms"
+            assert (
+                latency < 0.5
+            ), f"Network latency should be reasonable: {latency*1000:.1f}ms"
 
         finally:
             self.net_emu.stop()
@@ -379,7 +429,9 @@ class TestDataFlowUnderDegradation:
             messages_received = stats.get("messages_received", 0)
 
             # Should receive some messages despite packet loss
-            assert messages_received > 0, "Should receive some messages despite packet loss"
+            assert (
+                messages_received > 0
+            ), "Should receive some messages despite packet loss"
             assert messages_received < messages_sent, "Should have some packet loss"
 
         finally:

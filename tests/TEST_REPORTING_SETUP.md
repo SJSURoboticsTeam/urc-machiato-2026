@@ -88,7 +88,7 @@ Example GitHub Actions:
 ```yaml
 - name: Run tests
   run: pytest tests/
-  
+
 - name: Upload test results
   uses: actions/upload-artifact@v3
   with:
@@ -116,5 +116,3 @@ git status tests/reports/
 
 - **`tests/pytest.ini`** - Pytest configuration with report settings
 - **`.gitignore`** - Explicitly allows `tests/reports/` (at end of file)
-
-

@@ -25,11 +25,12 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool, String
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class MovementStressLevel(Enum):
     """Movement control stress test severity levels."""
+
     MODERATE = "moderate"
     SEVERE = "severe"
     EXTREME = "extreme"
@@ -37,6 +38,7 @@ class MovementStressLevel(Enum):
 
 class MovementFaultType(Enum):
     """Types of movement control faults to simulate."""
+
     COMMAND_CONFLICT = "command_conflict"
     RAPID_DIRECTION_CHANGE = "rapid_direction_change"
     OVERSPEED_COMMAND = "overspeed_command"
@@ -48,6 +50,7 @@ class MovementFaultType(Enum):
 @dataclass
 class MovementStressConfig:
     """Configuration for movement control stress testing."""
+
     stress_level: MovementStressLevel
     test_duration: float = 60.0
     command_frequency_hz: float = 50.0
@@ -62,17 +65,17 @@ class MovementStressConfig:
         if self.stress_level == MovementStressLevel.MODERATE:
             self.command_frequency_hz = 100.0
             self.fault_injection_rate = 0.05  # 5% faults
-            self.emergency_stop_rate = 0.02   # 2% emergency stops
+            self.emergency_stop_rate = 0.02  # 2% emergency stops
             self.command_conflict_rate = 0.03  # 3% conflicts
         elif self.stress_level == MovementStressLevel.SEVERE:
             self.command_frequency_hz = 200.0
             self.fault_injection_rate = 0.15  # 15% faults
-            self.emergency_stop_rate = 0.1    # 10% emergency stops
+            self.emergency_stop_rate = 0.1  # 10% emergency stops
             self.command_conflict_rate = 0.1  # 10% conflicts
         elif self.stress_level == MovementStressLevel.EXTREME:
             self.command_frequency_hz = 500.0
-            self.fault_injection_rate = 0.4   # 40% faults
-            self.emergency_stop_rate = 0.3    # 30% emergency stops
+            self.fault_injection_rate = 0.4  # 40% faults
+            self.emergency_stop_rate = 0.3  # 30% emergency stops
             self.command_conflict_rate = 0.3  # 30% conflicts
 
 
@@ -101,11 +104,9 @@ class MovementStressController:
 
     def inject_movement_fault(self, fault_type: MovementFaultType) -> bool:
         """Inject a movement control fault."""
-        self.active_faults.append({
-            'type': fault_type,
-            'timestamp': time.time(),
-            'resolved': False
-        })
+        self.active_faults.append(
+            {"type": fault_type, "timestamp": time.time(), "resolved": False}
+        )
 
         if fault_type == MovementFaultType.EMERGENCY_STOP_CONFLICT:
             self.emergency_stop_active = True
@@ -122,13 +123,21 @@ class MovementStressController:
 
         # Check speed limits
         if abs(velocity.linear.x) > self.config.max_linear_speed:
-            return False, f"Linear speed {velocity.linear.x:.2f} exceeds limit {self.config.max_linear_speed}"
+            return (
+                False,
+                f"Linear speed {velocity.linear.x:.2f} exceeds limit {self.config.max_linear_speed}",
+            )
 
         if abs(velocity.angular.z) > self.config.max_angular_speed:
-            return False, f"Angular speed {velocity.angular.z:.2f} exceeds limit {self.config.max_angular_speed}"
+            return (
+                False,
+                f"Angular speed {velocity.angular.z:.2f} exceeds limit {self.config.max_angular_speed}",
+            )
 
         # Check for emergency stop conflicts
-        if self.emergency_stop_active and (abs(velocity.linear.x) > 0.01 or abs(velocity.angular.z) > 0.01):
+        if self.emergency_stop_active and (
+            abs(velocity.linear.x) > 0.01 or abs(velocity.angular.z) > 0.01
+        ):
             return False, "Emergency stop active - motion commands rejected"
 
         # Check for rapid direction changes
@@ -139,7 +148,9 @@ class MovementStressController:
 
     def _is_rapid_direction_change(self, new_velocity: Twist) -> bool:
         """Check if velocity change is too rapid."""
-        current_speed = math.sqrt(self.current_velocity.linear.x**2 + self.current_velocity.angular.z**2)
+        current_speed = math.sqrt(
+            self.current_velocity.linear.x**2 + self.current_velocity.angular.z**2
+        )
         new_speed = math.sqrt(new_velocity.linear.x**2 + new_velocity.angular.z**2)
 
         # Calculate acceleration
@@ -192,21 +203,31 @@ class MovementStressController:
         self.emergency_stop_active = False
         # Resolve emergency stop faults
         for fault in self.active_faults:
-            if fault['type'] == MovementFaultType.EMERGENCY_STOP_CONFLICT:
-                fault['resolved'] = True
+            if fault["type"] == MovementFaultType.EMERGENCY_STOP_CONFLICT:
+                fault["resolved"] = True
 
     def get_stress_stats(self) -> Dict:
         """Get comprehensive movement control stress statistics."""
         return {
-            'commands_processed': self.commands_processed,
-            'commands_rejected': self.commands_rejected,
-            'emergency_stops': self.emergency_stops_triggered,
-            'command_conflicts': self.command_conflicts,
-            'overspeed_events': self.overspeed_events,
-            'avg_response_latency_ms': statistics.mean(self.response_latencies) if self.response_latencies else 0,
-            'max_response_latency_ms': max(self.response_latencies) if self.response_latencies else 0,
-            'command_success_rate': (self.commands_processed / max(self.commands_processed + self.commands_rejected, 1)) * 100,
-            'active_faults': len([f for f in self.active_faults if not f.get('resolved', False)])
+            "commands_processed": self.commands_processed,
+            "commands_rejected": self.commands_rejected,
+            "emergency_stops": self.emergency_stops_triggered,
+            "command_conflicts": self.command_conflicts,
+            "overspeed_events": self.overspeed_events,
+            "avg_response_latency_ms": statistics.mean(self.response_latencies)
+            if self.response_latencies
+            else 0,
+            "max_response_latency_ms": max(self.response_latencies)
+            if self.response_latencies
+            else 0,
+            "command_success_rate": (
+                self.commands_processed
+                / max(self.commands_processed + self.commands_rejected, 1)
+            )
+            * 100,
+            "active_faults": len(
+                [f for f in self.active_faults if not f.get("resolved", False)]
+            ),
         }
 
 
@@ -214,7 +235,7 @@ class MovementStressPublisher(Node):
     """ROS2 publisher for movement control stress testing."""
 
     def __init__(self, stress_config: MovementStressConfig):
-        super().__init__('movement_stress_publisher')
+        super().__init__("movement_stress_publisher")
 
         self.config = stress_config
         self.controller = MovementStressController(stress_config)
@@ -223,18 +244,21 @@ class MovementStressPublisher(Node):
         qos_realtime = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=10,
         )
 
         # Publishers
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', qos_realtime)
-        self.emergency_stop_pub = self.create_publisher(Bool, '/safety/emergency_stop', qos_realtime)
-        self.status_pub = self.create_publisher(String, '/movement/status', qos_realtime)
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", qos_realtime)
+        self.emergency_stop_pub = self.create_publisher(
+            Bool, "/safety/emergency_stop", qos_realtime
+        )
+        self.status_pub = self.create_publisher(
+            String, "/movement/status", qos_realtime
+        )
 
         # Command generation timer
         self.command_timer = self.create_timer(
-            1.0 / self.config.command_frequency_hz,
-            self.generate_stress_command
+            1.0 / self.config.command_frequency_hz, self.generate_stress_command
         )
 
         # Status reporting timer
@@ -244,22 +268,38 @@ class MovementStressPublisher(Node):
         """Generate a movement command with stress characteristics."""
 
         # Generate random velocity command
-        linear_x = random.uniform(-self.config.max_linear_speed, self.config.max_linear_speed)
-        angular_z = random.uniform(-self.config.max_angular_speed, self.config.max_angular_speed)
+        linear_x = random.uniform(
+            -self.config.max_linear_speed, self.config.max_linear_speed
+        )
+        angular_z = random.uniform(
+            -self.config.max_angular_speed, self.config.max_angular_speed
+        )
 
         # Occasionally generate extreme commands for stress testing
         if random.random() < 0.1:  # 10% chance of extreme commands
             if random.choice([True, False]):
-                linear_x = random.choice([-self.config.max_linear_speed * 2, self.config.max_linear_speed * 2])
+                linear_x = random.choice(
+                    [
+                        -self.config.max_linear_speed * 2,
+                        self.config.max_linear_speed * 2,
+                    ]
+                )
             else:
-                angular_z = random.choice([-self.config.max_angular_speed * 2, self.config.max_angular_speed * 2])
+                angular_z = random.choice(
+                    [
+                        -self.config.max_angular_speed * 2,
+                        self.config.max_angular_speed * 2,
+                    ]
+                )
 
         velocity_cmd = Twist()
         velocity_cmd.linear.x = linear_x
         velocity_cmd.angular.z = angular_z
 
         # Process command through stress controller
-        success, reason, latency = self.controller.process_movement_command(velocity_cmd)
+        success, reason, latency = self.controller.process_movement_command(
+            velocity_cmd
+        )
 
         if success:
             # Publish velocity command
@@ -283,7 +323,7 @@ class MovementStressSubscriber(Node):
     """ROS2 subscriber for movement control stress testing."""
 
     def __init__(self, stress_config: MovementStressConfig):
-        super().__init__('movement_stress_subscriber')
+        super().__init__("movement_stress_subscriber")
 
         self.config = stress_config
         self.received_commands = 0
@@ -294,16 +334,16 @@ class MovementStressSubscriber(Node):
         qos_realtime = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=10,
         )
 
         # Subscribers
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel', self.cmd_vel_callback, qos_realtime
+            Twist, "/cmd_vel", self.cmd_vel_callback, qos_realtime
         )
 
         self.emergency_stop_sub = self.create_subscription(
-            Bool, '/safety/emergency_stop', self.emergency_stop_callback, qos_realtime
+            Bool, "/safety/emergency_stop", self.emergency_stop_callback, qos_realtime
         )
 
     def cmd_vel_callback(self, msg: Twist):
@@ -367,11 +407,13 @@ def run_movement_stress_test_level(level: MovementStressLevel) -> Dict:
             # Periodic status report
             if current_time - last_report >= 5.0:
                 controller_stats = publisher.controller.get_stress_stats()
-                print(f"   [{current_time - start_time:.1f}s] "
-                      f"Commands: {controller_stats['commands_processed']}, "
-                      f"Rejected: {controller_stats['commands_rejected']}, "
-                      f"Conflicts: {controller_stats['command_conflicts']}, "
-                      f"Latency: {controller_stats['avg_response_latency_ms']:.1f}ms")
+                print(
+                    f"   [{current_time - start_time:.1f}s] "
+                    f"Commands: {controller_stats['commands_processed']}, "
+                    f"Rejected: {controller_stats['commands_rejected']}, "
+                    f"Conflicts: {controller_stats['command_conflicts']}, "
+                    f"Latency: {controller_stats['avg_response_latency_ms']:.1f}ms"
+                )
                 last_report = current_time
 
             time.sleep(0.1)
@@ -385,17 +427,17 @@ def run_movement_stress_test_level(level: MovementStressLevel) -> Dict:
         subscriber.destroy_node()
 
         results = {
-            'stress_level': level.value,
-            'config': config,
-            'commands_processed': controller_stats['commands_processed'],
-            'commands_rejected': controller_stats['commands_rejected'],
-            'emergency_stops': controller_stats['emergency_stops'],
-            'command_conflicts': controller_stats['command_conflicts'],
-            'avg_response_latency_ms': controller_stats['avg_response_latency_ms'],
-            'max_response_latency_ms': controller_stats['max_response_latency_ms'],
-            'command_success_rate': controller_stats['command_success_rate'],
-            'commands_received': subscriber.received_commands,
-            'emergency_stops_received': subscriber.received_emergency_stops
+            "stress_level": level.value,
+            "config": config,
+            "commands_processed": controller_stats["commands_processed"],
+            "commands_rejected": controller_stats["commands_rejected"],
+            "emergency_stops": controller_stats["emergency_stops"],
+            "command_conflicts": controller_stats["command_conflicts"],
+            "avg_response_latency_ms": controller_stats["avg_response_latency_ms"],
+            "max_response_latency_ms": controller_stats["max_response_latency_ms"],
+            "command_success_rate": controller_stats["command_success_rate"],
+            "commands_received": subscriber.received_commands,
+            "emergency_stops_received": subscriber.received_emergency_stops,
         }
 
         print("\n   Final Results:")
@@ -407,7 +449,7 @@ def run_movement_stress_test_level(level: MovementStressLevel) -> Dict:
         print(f"   • Command Success Rate: {results['command_success_rate']:.3f}%")
         print(f"   • Max Response Latency: {results['max_response_latency_ms']:.1f}ms")
         # Performance assessment
-        success_rate = results['command_success_rate']
+        success_rate = results["command_success_rate"]
         if success_rate > 90:
             assessment = "✅ EXCELLENT - Handles stress well"
         elif success_rate > 75:
@@ -432,7 +474,11 @@ def run_comprehensive_movement_stress_test():
     results = {}
 
     # Test all stress levels
-    stress_levels = [MovementStressLevel.MODERATE, MovementStressLevel.SEVERE, MovementStressLevel.EXTREME]
+    stress_levels = [
+        MovementStressLevel.MODERATE,
+        MovementStressLevel.SEVERE,
+        MovementStressLevel.EXTREME,
+    ]
 
     for level in stress_levels:
         results[level.value] = run_movement_stress_test_level(level)
@@ -448,10 +494,10 @@ def run_comprehensive_movement_stress_test():
 
     for level_name, result in results.items():
         level_short = level_name[:3].upper()
-        success_rate = result['command_success_rate']
-        conflicts = result['command_conflicts']
-        estops = result['emergency_stops']
-        latency = result['avg_response_latency_ms']
+        success_rate = result["command_success_rate"]
+        conflicts = result["command_conflicts"]
+        estops = result["emergency_stops"]
+        latency = result["avg_response_latency_ms"]
 
         if success_rate > 90 and conflicts < 10:
             assessment = "✅"
@@ -460,24 +506,29 @@ def run_comprehensive_movement_stress_test():
         else:
             assessment = "❌"
 
-        print(f"{level_short:8} | {success_rate:7.1f}% | {conflicts:9} | {estops:7} | {latency:7.1f}ms | {assessment}")
+        print(
+            f"{level_short:8} | {success_rate:7.1f}% | {conflicts:9} | {estops:7} | {latency:7.1f}ms | {assessment}"
+        )
 
     # Overall assessment
-    extreme_results = results['extreme']
+    extreme_results = results["extreme"]
 
     print("\n🎯 MOVEMENT CONTROL STRESS ASSESSMENT")
 
-    if extreme_results['command_success_rate'] > 80:
+    if extreme_results["command_success_rate"] > 80:
         print("✅ Movement control maintains good reliability under extreme stress")
     else:
         print("❌ Movement control reliability degrades significantly")
 
-    if extreme_results['command_conflicts'] < extreme_results['commands_processed'] * 0.2:
+    if (
+        extreme_results["command_conflicts"]
+        < extreme_results["commands_processed"] * 0.2
+    ):
         print("✅ Command conflict resolution is effective")
     else:
         print("⚠️ High command conflict rate may cause erratic movement")
 
-    if extreme_results['avg_response_latency_ms'] < 20:
+    if extreme_results["avg_response_latency_ms"] < 20:
         print("✅ Response latency remains acceptable under stress")
     else:
         print("⚠️ High latency may impact real-time control performance")
@@ -526,7 +577,9 @@ def simulate_movement_emergency_scenarios():
     conflicting_cmd.linear.x = -config.max_linear_speed * 0.5  # Reverse direction
 
     success, reason, latency = controller.process_movement_command(conflicting_cmd)
-    print(f"   Conflicting command during E-stop: {'❌' if not success else '✅'} ({reason})")
+    print(
+        f"   Conflicting command during E-stop: {'❌' if not success else '✅'} ({reason})"
+    )
 
     # Clear emergency stop
     controller.clear_emergency_stop()
@@ -551,10 +604,14 @@ def simulate_movement_emergency_scenarios():
         if not success:
             commands_rejected += 1
 
-    print(f"   Rapid commands: {commands_tested - commands_rejected}/{commands_tested} accepted")
+    print(
+        f"   Rapid commands: {commands_tested - commands_rejected}/{commands_tested} accepted"
+    )
 
     emergency_stats = controller.get_stress_stats()
-    print(f"   Emergency test latency: {emergency_stats['avg_response_latency_ms']:.1f}ms")
+    print(
+        f"   Emergency test latency: {emergency_stats['avg_response_latency_ms']:.1f}ms"
+    )
     if commands_rejected < commands_tested * 0.3:  # Less than 30% rejected
         print("   ✅ System handles rapid changes reasonably well")
     else:
@@ -563,7 +620,7 @@ def simulate_movement_emergency_scenarios():
     return emergency_stats
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run comprehensive movement stress tests
     movement_results = run_comprehensive_movement_stress_test()
 

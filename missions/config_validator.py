@@ -12,12 +12,13 @@ from typing import Any, Dict, List
 
 try:
     import rclpy
+
     RCLPY_AVAILABLE = True
 except ImportError:
     RCLPY_AVAILABLE = False
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 class ValidationError(Exception):
@@ -37,10 +38,7 @@ class ConfigurationValidator:
         self.warnings = []
 
         # Check environment variables
-        required_env_vars = [
-            'ROS_DOMAIN_ID',
-            'ROS_VERSION'
-        ]
+        required_env_vars = ["ROS_DOMAIN_ID", "ROS_VERSION"]
 
         for var in required_env_vars:
             if not os.getenv(var):
@@ -58,21 +56,14 @@ class ConfigurationValidator:
                 self.errors.append(f"ROS2 initialization failed: {e}")
 
         # Check required directories
-        required_dirs = [
-            'missions',
-            'Autonomy/code',
-            'config'
-        ]
+        required_dirs = ["missions", "autonomy/code", "config"]
 
         for dir_path in required_dirs:
             if not os.path.exists(dir_path):
                 self.warnings.append(f"Directory not found: {dir_path}")
 
         # Check configuration files
-        config_files = [
-            'config/mission_configs.yaml',
-            'config/development.yaml'
-        ]
+        config_files = ["config/mission_configs.yaml", "config/development.yaml"]
 
         for config_file in config_files:
             if not os.path.exists(config_file):
@@ -86,40 +77,40 @@ class ConfigurationValidator:
         self.warnings = []
 
         # Check required fields
-        required_fields = ['mission_type', 'waypoints']
+        required_fields = ["mission_type", "waypoints"]
         for field in required_fields:
             if field not in config:
                 self.errors.append(f"Missing required field: {field}")
 
         # Validate mission type
         valid_mission_types = [
-            'waypoint_navigation',
-            'object_detection',
-            'follow_me',
-            'delivery',
-            'emergency_response'
+            "waypoint_navigation",
+            "object_detection",
+            "follow_me",
+            "delivery",
+            "emergency_response",
         ]
 
-        mission_type = config.get('mission_type')
+        mission_type = config.get("mission_type")
         if mission_type and mission_type not in valid_mission_types:
             self.errors.append(f"Invalid mission type: {mission_type}")
 
         # Validate waypoints
-        waypoints = config.get('waypoints', [])
+        waypoints = config.get("waypoints", [])
         if isinstance(waypoints, list):
             for i, waypoint in enumerate(waypoints):
                 if not isinstance(waypoint, dict):
                     self.errors.append(f"Waypoint {i} must be a dictionary")
                     continue
 
-                required_wp_fields = ['latitude', 'longitude']
+                required_wp_fields = ["latitude", "longitude"]
                 for field in required_wp_fields:
                     if field not in waypoint:
                         self.errors.append(f"Waypoint {i} missing field: {field}")
 
                 # Validate coordinate ranges
-                lat = waypoint.get('latitude', 0)
-                lon = waypoint.get('longitude', 0)
+                lat = waypoint.get("latitude", 0)
+                lon = waypoint.get("longitude", 0)
 
                 if not -90 <= lat <= 90:
                     self.errors.append(f"Waypoint {i} latitude out of range: {lat}")
@@ -130,7 +121,7 @@ class ConfigurationValidator:
             self.errors.append("Waypoints must be a list")
 
         # Validate timeout
-        timeout = config.get('timeout', 300)
+        timeout = config.get("timeout", 300)
         if not isinstance(timeout, (int, float)) or timeout <= 0:
             self.errors.append("Timeout must be a positive number")
 

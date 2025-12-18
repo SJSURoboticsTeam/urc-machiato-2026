@@ -2,12 +2,15 @@
 """
 Full Autonomy-Teleoperation Integration Test
 Tests the complete data flow from mock teleoperation to autonomy decision-making
-"""
+
+NOTE: This test is skipped because Complex full autonomy system replaced with basic mission executor."""
 
 import os
 import subprocess
 import sys
 import time
+
+import pytest
 
 
 def test_full_integration():
@@ -22,10 +25,14 @@ def test_full_integration():
         # 1. Start mock teleoperation data publisher
         print("📡 Starting mock teleoperation publisher...")
         env = os.environ.copy()
-        env['PYTHONPATH'] = '/home/ubuntu/urc-machiato-2026'
-        teleop_process = subprocess.Popen([
-            'python3', 'test_teleoperation_integration.py'
-        ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        env["PYTHONPATH"] = "/home/ubuntu/urc-machiato-2026"
+        teleop_process = subprocess.Popen(
+            ["python3", "test_teleoperation_integration.py"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
         processes.append(("Mock Teleoperation", teleop_process))
 
         # Wait for publisher to start
@@ -41,16 +48,20 @@ def test_full_integration():
         # 2. Test ROS2 topic publishing
         print("\n🔍 Testing ROS2 topic publishing...")
         try:
-            result = subprocess.run([
-                'ros2', 'topic', 'list'
-            ], capture_output=True, text=True, timeout=5, env=env)
+            result = subprocess.run(
+                ["ros2", "topic", "list"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                env=env,
+            )
 
-            topics = result.stdout.strip().split('\n')
+            topics = result.stdout.strip().split("\n")
             teleop_topics = [
-                '/teleoperation/joint_states',
-                '/teleoperation/chassis_velocity',
-                '/teleoperation/motor_temperatures',
-                '/teleoperation/system_status'
+                "/teleoperation/joint_states",
+                "/teleoperation/chassis_velocity",
+                "/teleoperation/motor_temperatures",
+                "/teleoperation/system_status",
             ]
 
             found_topics = [t for t in topics if t in teleop_topics]
@@ -72,13 +83,16 @@ def test_full_integration():
         print("\n⏱️  Testing message publishing rates...")
         try:
             # Check joint_states rate
-            result = subprocess.run([
-                'timeout', '3', 'ros2', 'topic', 'hz', '/teleoperation/joint_states'
-            ], capture_output=True, text=True, env=env)
+            result = subprocess.run(
+                ["timeout", "3", "ros2", "topic", "hz", "/teleoperation/joint_states"],
+                capture_output=True,
+                text=True,
+                env=env,
+            )
 
             if "average rate:" in result.stdout:
                 # Parse rate
-                lines = result.stdout.split('\n')
+                lines = result.stdout.split("\n")
                 for line in lines:
                     if "average rate:" in line:
                         rate_str = line.split("average rate:")[1].strip()
@@ -101,17 +115,17 @@ def test_full_integration():
         print("\n🤖 Testing autonomy code structure...")
         try:
             # Test that our modified mission executor can be imported
-            sys.path.insert(0, '/home/ubuntu/urc-machiato-2026')
+            sys.path.insert(0, "/home/ubuntu/urc-machiato-2026")
             import missions.mission_executor
 
             # Check that key methods exist
             mission_class = missions.mission_executor.SimpleMissionExecutor
 
             required_methods = [
-                'joint_state_callback',
-                '_validate_joint_state_data',
-                '_monitor_motor_health',
-                '_monitor_thermal_limits'
+                "joint_state_callback",
+                "_validate_joint_state_data",
+                "_monitor_motor_health",
+                "_monitor_thermal_limits",
             ]
 
             missing_methods = []
@@ -135,14 +149,19 @@ def test_full_integration():
         print("\n⚙️  Testing configuration loading...")
         try:
             import yaml
-            with open('/home/ubuntu/urc-machiato-2026/config/production.yaml', 'r') as f:
+
+            with open(
+                "/home/ubuntu/urc-machiato-2026/config/production.yaml", "r"
+            ) as f:
                 config = yaml.safe_load(f)
 
-            if 'teleoperation' in config:
-                teleop_config = config['teleoperation']
-                required_sections = ['thermal_limits', 'battery_limits', 'motor_limits']
+            if "teleoperation" in config:
+                teleop_config = config["teleoperation"]
+                required_sections = ["thermal_limits", "battery_limits", "motor_limits"]
 
-                missing_sections = [s for s in required_sections if s not in teleop_config]
+                missing_sections = [
+                    s for s in required_sections if s not in teleop_config
+                ]
                 if not missing_sections:
                     print("✅ Teleoperation configuration loaded correctly")
                     print(f"   Config has {len(teleop_config)} sections")
@@ -186,7 +205,9 @@ def test_full_integration():
 
         # Kill any remaining processes
         try:
-            subprocess.run(['pkill', '-f', 'test_teleoperation_integration'], check=False)
+            subprocess.run(
+                ["pkill", "-f", "test_teleoperation_integration"], check=False
+            )
         except BaseException:
             pass
 
@@ -209,21 +230,24 @@ def test_full_integration():
     return success
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Set ROS environment if running standalone
-    ros_env = os.environ.get('ROS_DISTRO')
+    ros_env = os.environ.get("ROS_DISTRO")
     if not ros_env:
         # Try to source ROS if not already done
-        ros_setup = '/opt/ros/humble/setup.bash'
+        ros_setup = "/opt/ros/humble/setup.bash"
         if os.path.exists(ros_setup):
             print("📦 Sourcing ROS2 environment...")
-            result = subprocess.run(['bash', '-c', f'source {ros_setup} && env'],
-                                    capture_output=True, text=True)
+            result = subprocess.run(
+                ["bash", "-c", f"source {ros_setup} && env"],
+                capture_output=True,
+                text=True,
+            )
             if result.returncode == 0:
                 # Update environment with ROS variables
-                for line in result.stdout.split('\n'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
+                for line in result.stdout.split("\n"):
+                    if "=" in line:
+                        key, value = line.split("=", 1)
                         os.environ[key] = value
 
     success = test_full_integration()

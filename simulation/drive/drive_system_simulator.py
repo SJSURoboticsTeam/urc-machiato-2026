@@ -15,7 +15,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -24,32 +24,35 @@ logger = logging.getLogger(__name__)
 
 class TerrainType(Enum):
     """Types of terrain for simulation."""
-    HARD_SURFACE = "hard_surface"    # Concrete/asphalt
-    SOFT_SOIL = "soft_soil"          # Loose dirt/sand
-    ROCKY = "rocky"                  # Rocks/boulders
-    GRASS = "grass"                  # Grass/vegetation
-    MUD = "mud"                      # Wet mud
-    SNOW = "snow"                    # Snow/ice
+
+    HARD_SURFACE = "hard_surface"  # Concrete/asphalt
+    SOFT_SOIL = "soft_soil"  # Loose dirt/sand
+    ROCKY = "rocky"  # Rocks/boulders
+    GRASS = "grass"  # Grass/vegetation
+    MUD = "mud"  # Wet mud
+    SNOW = "snow"  # Snow/ice
 
 
 @dataclass
 class WheelConfig:
     """Configuration for a drive wheel."""
+
     name: str
     position: Tuple[float, float, float]  # (x, y, z) relative to center
-    radius: float                         # meters
-    width: float                          # meters
-    max_torque: float                     # Nm
-    gear_ratio: float                     # :1
+    radius: float  # meters
+    width: float  # meters
+    max_torque: float  # Nm
+    gear_ratio: float  # :1
 
 
 @dataclass
 class TerrainProperties:
     """Terrain interaction properties."""
+
     friction_coefficient: float
     rolling_resistance: float
-    sinkage_factor: float        # How much the wheel sinks
-    vibration_amplitude: float   # Terrain-induced vibration
+    sinkage_factor: float  # How much the wheel sinks
+    vibration_amplitude: float  # Terrain-induced vibration
 
 
 class DriveSystemSimulator:
@@ -84,17 +87,16 @@ class DriveSystemSimulator:
         """Get default rover configuration."""
         return {
             "name": "URC_Rover_Simulator",
-            "wheelbase": 1.2,          # meters between front/rear axles
-            "track_width": 0.8,        # meters between left/right wheels
-            "wheel_radius": 0.15,      # meters
-            "wheel_width": 0.08,       # meters
-            "mass": 50.0,              # kg
-            "max_speed": 2.0,          # m/s
-            "max_acceleration": 1.0,   # m/s²
-            "max_steering_angle": np.pi/6,  # 30 degrees
-            "motor_power": 150.0,      # Watts per motor
-            "battery_voltage": 24.0,   # Volts
-
+            "wheelbase": 1.2,  # meters between front/rear axles
+            "track_width": 0.8,  # meters between left/right wheels
+            "wheel_radius": 0.15,  # meters
+            "wheel_width": 0.08,  # meters
+            "mass": 50.0,  # kg
+            "max_speed": 2.0,  # m/s
+            "max_acceleration": 1.0,  # m/s²
+            "max_steering_angle": np.pi / 6,  # 30 degrees
+            "motor_power": 150.0,  # Watts per motor
+            "battery_voltage": 24.0,  # Volts
             "wheels": [
                 # Left side
                 {"name": "front_left", "position": (-0.6, 0.4, -0.15)},
@@ -103,8 +105,8 @@ class DriveSystemSimulator:
                 # Right side
                 {"name": "front_right", "position": (-0.6, -0.4, -0.15)},
                 {"name": "middle_right", "position": (0.0, -0.4, -0.15)},
-                {"name": "rear_right", "position": (0.6, -0.4, -0.15)}
-            ]
+                {"name": "rear_right", "position": (0.6, -0.4, -0.15)},
+            ],
         }
 
     def _load_configuration(self, config: Dict):
@@ -130,30 +132,30 @@ class DriveSystemSimulator:
                 radius=self.wheel_radius,
                 width=self.wheel_width,
                 max_torque=50.0,  # Nm
-                gear_ratio=20.0
+                gear_ratio=20.0,
             )
             self.wheels.append(wheel)
 
     def _initialize_state(self):
         """Initialize rover state."""
         # Position and orientation
-        self.position = np.array([0.0, 0.0, 0.0])      # x, y, z
-        self.orientation = np.array([0.0, 0.0, 0.0])   # roll, pitch, yaw
-        self.velocity = np.array([0.0, 0.0, 0.0])      # vx, vy, vz
+        self.position = np.array([0.0, 0.0, 0.0])  # x, y, z
+        self.orientation = np.array([0.0, 0.0, 0.0])  # roll, pitch, yaw
+        self.velocity = np.array([0.0, 0.0, 0.0])  # vx, vy, vz
         self.angular_velocity = np.array([0.0, 0.0, 0.0])  # ωx, ωy, ωz
 
         # Control inputs
-        self.linear_velocity_cmd = 0.0   # m/s
+        self.linear_velocity_cmd = 0.0  # m/s
         self.angular_velocity_cmd = 0.0  # rad/s
-        self.steering_angle_cmd = 0.0    # rad
+        self.steering_angle_cmd = 0.0  # rad
 
         # Wheel states
-        self.wheel_speeds = np.zeros(6)      # rad/s for each wheel
-        self.wheel_torques = np.zeros(6)     # Nm for each wheel
-        self.wheel_positions = np.zeros(6)   # radians (odometry)
+        self.wheel_speeds = np.zeros(6)  # rad/s for each wheel
+        self.wheel_torques = np.zeros(6)  # Nm for each wheel
+        self.wheel_positions = np.zeros(6)  # radians (odometry)
 
         # Power and health
-        self.battery_level = 100.0          # %
+        self.battery_level = 100.0  # %
         self.total_power_consumption = 0.0  # Wh
         self.motor_temperatures = np.full(6, 25.0)  # °C
 
@@ -167,7 +169,7 @@ class DriveSystemSimulator:
             "motor_failures": [],
             "encoder_failures": [],
             "steering_failures": [],
-            "battery_low": False
+            "battery_low": False,
         }
 
     def _initialize_physics(self):
@@ -179,7 +181,7 @@ class DriveSystemSimulator:
             TerrainType.ROCKY: TerrainProperties(0.6, 0.08, 0.02, 0.2),
             TerrainType.GRASS: TerrainProperties(0.5, 0.06, 0.01, 0.05),
             TerrainType.MUD: TerrainProperties(0.2, 0.2, 0.1, 0.15),
-            TerrainType.SNOW: TerrainProperties(0.1, 0.05, 0.03, 0.08)
+            TerrainType.SNOW: TerrainProperties(0.1, 0.05, 0.03, 0.08),
         }
 
         self.current_terrain = TerrainType.HARD_SURFACE
@@ -194,7 +196,9 @@ class DriveSystemSimulator:
         self.wheel_separation = self.track_width
         self.wheel_distance = self.wheelbase
 
-    def set_velocity_commands(self, linear_velocity: float, angular_velocity: float) -> bool:
+    def set_velocity_commands(
+        self, linear_velocity: float, angular_velocity: float
+    ) -> bool:
         """
         Set velocity commands for differential drive.
 
@@ -209,10 +213,14 @@ class DriveSystemSimulator:
             return False
 
         # Apply limits
-        self.linear_velocity_cmd = np.clip(linear_velocity, -self.max_speed, self.max_speed)
+        self.linear_velocity_cmd = np.clip(
+            linear_velocity, -self.max_speed, self.max_speed
+        )
         self.angular_velocity_cmd = np.clip(angular_velocity, -2.0, 2.0)
 
-        self.logger.debug(f"Set velocity commands: linear={self.linear_velocity_cmd}, angular={self.angular_velocity_cmd}")
+        self.logger.debug(
+            f"Set velocity commands: linear={self.linear_velocity_cmd}, angular={self.angular_velocity_cmd}"
+        )
         return True
 
     def set_steering_angle(self, angle: float) -> bool:
@@ -226,7 +234,9 @@ class DriveSystemSimulator:
             bool: True if command accepted
         """
         if abs(angle) > self.max_steering_angle:
-            self.logger.warning(f"Steering angle {angle} exceeds limit {self.max_steering_angle}")
+            self.logger.warning(
+                f"Steering angle {angle} exceeds limit {self.max_steering_angle}"
+            )
             return False
 
         self.steering_angle_cmd = angle
@@ -245,8 +255,12 @@ class DriveSystemSimulator:
             return
 
         # Calculate wheel speeds for differential drive
-        left_speed = self.linear_velocity_cmd - (self.angular_velocity_cmd * self.wheel_separation / 2)
-        right_speed = self.linear_velocity_cmd + (self.angular_velocity_cmd * self.wheel_separation / 2)
+        left_speed = self.linear_velocity_cmd - (
+            self.angular_velocity_cmd * self.wheel_separation / 2
+        )
+        right_speed = self.linear_velocity_cmd + (
+            self.angular_velocity_cmd * self.wheel_separation / 2
+        )
 
         # Apply terrain effects and wheel slip
         terrain = self.terrain_properties[self.current_terrain]
@@ -274,16 +288,24 @@ class DriveSystemSimulator:
 
             # Calculate torque (simplified motor model)
             speed_rads = abs(self.wheel_speeds[i])
-            max_torque_at_speed = wheel.max_torque * (1.0 - speed_rads / (50.0 / wheel.gear_ratio))
-            self.wheel_torques[i] = np.clip(speed_error * 10.0, -max_torque_at_speed, max_torque_at_speed)
+            max_torque_at_speed = wheel.max_torque * (
+                1.0 - speed_rads / (50.0 / wheel.gear_ratio)
+            )
+            self.wheel_torques[i] = np.clip(
+                speed_error * 10.0, -max_torque_at_speed, max_torque_at_speed
+            )
 
         # Update rover velocity and position
         avg_wheel_speed = (effective_left_speed + effective_right_speed) / 2
-        angular_speed = (effective_right_speed - effective_left_speed) / self.wheel_separation
+        angular_speed = (
+            effective_right_speed - effective_left_speed
+        ) / self.wheel_separation
 
         # Apply terrain effects to actual movement
         actual_linear_velocity = avg_wheel_speed * (1.0 - terrain.rolling_resistance)
-        actual_angular_velocity = angular_speed * (1.0 - terrain.rolling_resistance * 0.5)
+        actual_angular_velocity = angular_speed * (
+            1.0 - terrain.rolling_resistance * 0.5
+        )
 
         # Update state
         self.velocity[0] = actual_linear_velocity * np.cos(self.orientation[2])
@@ -313,24 +335,34 @@ class DriveSystemSimulator:
     def get_drive_state(self) -> Dict:
         """Get complete drive system state."""
         # Estimate odometry from wheel encoders
-        left_distance = np.mean([self.wheel_positions[i] * self.wheel_radius
-                               for i, w in enumerate(self.wheels) if "left" in w.name])
-        right_distance = np.mean([self.wheel_positions[i] * self.wheel_radius
-                                for i, w in enumerate(self.wheels) if "right" in w.name])
+        left_distance = np.mean(
+            [
+                self.wheel_positions[i] * self.wheel_radius
+                for i, w in enumerate(self.wheels)
+                if "left" in w.name
+            ]
+        )
+        right_distance = np.mean(
+            [
+                self.wheel_positions[i] * self.wheel_radius
+                for i, w in enumerate(self.wheels)
+                if "right" in w.name
+            ]
+        )
 
         return {
             "position": self.position.tolist(),
             "orientation": self.orientation.tolist(),
             "velocity": {
                 "linear": self.velocity[:2].tolist(),
-                "angular": self.angular_velocity[2]
+                "angular": self.angular_velocity[2],
             },
             "wheel_speeds": self.wheel_speeds.tolist(),
             "wheel_torques": self.wheel_torques.tolist(),
             "odometry": {
                 "left_distance": left_distance,
                 "right_distance": right_distance,
-                "total_distance": (left_distance + right_distance) / 2
+                "total_distance": (left_distance + right_distance) / 2,
             },
             "power_consumption": self.total_power_consumption,
             "battery_level": self.battery_level,
@@ -340,7 +372,7 @@ class DriveSystemSimulator:
             "emergency_stop": self.emergency_stop,
             "faults": self.faults.copy(),
             "mock": True,
-            "simulated": True
+            "simulated": True,
         }
 
     def set_terrain(self, terrain_type: TerrainType) -> bool:
@@ -388,7 +420,9 @@ class DriveSystemSimulator:
             self.logger.info("Emergency stop cleared")
         return True
 
-    def _calculate_slip_factor(self, wheel_speed: float, terrain: TerrainProperties) -> float:
+    def _calculate_slip_factor(
+        self, wheel_speed: float, terrain: TerrainProperties
+    ) -> float:
         """Calculate wheel slip factor based on terrain."""
         # Simplified slip model based on friction and load
         max_friction_speed = 1.0  # m/s where full friction is available
@@ -399,7 +433,7 @@ class DriveSystemSimulator:
             slip_factor = min(0.8, (abs(wheel_speed) - max_friction_speed) * 0.3)
 
         # Terrain effect
-        slip_factor *= (1.0 - terrain.friction_coefficient)
+        slip_factor *= 1.0 - terrain.friction_coefficient
 
         return slip_factor
 
@@ -425,7 +459,9 @@ class DriveSystemSimulator:
 
         # Update battery level (simplified model)
         battery_capacity_wh = 1000.0  # 1000Wh battery
-        self.battery_level = max(0.0, 100.0 - (self.total_power_consumption / battery_capacity_wh * 100.0))
+        self.battery_level = max(
+            0.0, 100.0 - (self.total_power_consumption / battery_capacity_wh * 100.0)
+        )
 
         # Low battery warning
         if self.battery_level < 20.0 and not self.faults["battery_low"]:
@@ -443,7 +479,9 @@ class DriveSystemSimulator:
             heat_dissipation = (self.motor_temperatures[i] - 25.0) * 2.0
 
             # Update temperature
-            temp_change = (heat_generation - heat_dissipation) * dt / 10.0  # Thermal mass
+            temp_change = (
+                (heat_generation - heat_dissipation) * dt / 10.0
+            )  # Thermal mass
             self.motor_temperatures[i] += temp_change
 
             # Temperature limits

@@ -22,40 +22,48 @@ class MockTopicsPublisher(Node):
     """Node that publishes mock topics for integration testing."""
 
     def __init__(self):
-        super().__init__('mock_topics_publisher')
+        super().__init__("mock_topics_publisher")
 
         # GPS publisher
-        self.gps_pub = self.create_publisher(NavSatFix, '/gps/fix', 10)
+        self.gps_pub = self.create_publisher(NavSatFix, "/gps/fix", 10)
         self.create_timer(1.0, self.publish_gps)
 
         # IMU publisher
-        self.imu_pub = self.create_publisher(Imu, '/imu/data', 10)
+        self.imu_pub = self.create_publisher(Imu, "/imu/data", 10)
         self.create_timer(0.1, self.publish_imu)
 
         # Depth camera publisher
-        self.depth_pub = self.create_publisher(Image, '/camera/depth/image_raw', 10)
+        self.depth_pub = self.create_publisher(Image, "/camera/depth/image_raw", 10)
         self.create_timer(0.5, self.publish_depth)
 
         # Cmd_vel publisher (static)
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.publish_cmd_vel()  # Publish once
 
         # Teleoperation topics
-        self.joint_pub = self.create_publisher(JointState, '/teleoperation/joint_states', 10)
-        self.chassis_pub = self.create_publisher(TwistStamped, '/teleoperation/chassis_velocity', 10)
-        self.temp_pub = self.create_publisher(Float32MultiArray, '/teleoperation/motor_temperatures', 10)
-        self.status_pub = self.create_publisher(BatteryState, '/teleoperation/system_status', 10)
+        self.joint_pub = self.create_publisher(
+            JointState, "/teleoperation/joint_states", 10
+        )
+        self.chassis_pub = self.create_publisher(
+            TwistStamped, "/teleoperation/chassis_velocity", 10
+        )
+        self.temp_pub = self.create_publisher(
+            Float32MultiArray, "/teleoperation/motor_temperatures", 10
+        )
+        self.status_pub = self.create_publisher(
+            BatteryState, "/teleoperation/system_status", 10
+        )
 
         self.create_timer(0.2, self.publish_teleop_topics)
 
-        self.get_logger().info('Mock topics publisher initialized')
+        self.get_logger().info("Mock topics publisher initialized")
 
     def publish_gps(self):
         """Publish mock GPS data."""
         msg = NavSatFix()
         msg.header = Header()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'gps'
+        msg.header.frame_id = "gps"
         msg.latitude = 35.0
         msg.longitude = -117.0
         msg.altitude = 100.0
@@ -67,7 +75,7 @@ class MockTopicsPublisher(Node):
         msg = Imu()
         msg.header = Header()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'imu'
+        msg.header.frame_id = "imu"
         msg.orientation.w = 1.0  # Identity quaternion
         msg.angular_velocity.x = 0.0
         msg.angular_velocity.y = 0.0
@@ -82,10 +90,10 @@ class MockTopicsPublisher(Node):
         msg = Image()
         msg.header = Header()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = 'camera_depth'
+        msg.header.frame_id = "camera_depth"
         msg.height = 480
         msg.width = 640
-        msg.encoding = '32FC1'
+        msg.encoding = "32FC1"
         msg.is_bigendian = False
         msg.step = 640 * 4  # 4 bytes per float
         # Empty data array - just for topic presence
@@ -110,8 +118,8 @@ class MockTopicsPublisher(Node):
         # Joint states
         joint_msg = JointState()
         joint_msg.header.stamp = now
-        joint_msg.header.frame_id = 'teleop'
-        joint_msg.name = ['joint1', 'joint2', 'joint3']
+        joint_msg.header.frame_id = "teleop"
+        joint_msg.name = ["joint1", "joint2", "joint3"]
         joint_msg.position = [0.0, 0.0, 0.0]
         joint_msg.velocity = [0.0, 0.0, 0.0]
         joint_msg.effort = [0.0, 0.0, 0.0]
@@ -120,7 +128,7 @@ class MockTopicsPublisher(Node):
         # Chassis velocity
         chassis_msg = TwistStamped()
         chassis_msg.header.stamp = now
-        chassis_msg.header.frame_id = 'teleop'
+        chassis_msg.header.frame_id = "teleop"
         self.chassis_pub.publish(chassis_msg)
 
         # Motor temperatures
@@ -182,5 +190,5 @@ def main():
         print("✅ Mock topics publisher stopped")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,0 +1,61 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/SoftwareEstop.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Software Emergency Stop Service" "\n"
+      "Triggers full emergency shutdown via software (equivalent to hardware ESTOP)" "\n"
+      "" "\n"
+      "WARNING: This service triggers a critical emergency stop that requires manual" "\n"
+      "intervention to recover from. Use only in actual emergency situations." "\n"
+      "Behavior is identical to pressing the physical emergency stop button.")
+    struct SoftwareEstop_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "ID of operator triggering software ESTOP")
+      string operator_id;
+
+      @verbatim (language="comment", text=
+        "Reason for triggering software ESTOP")
+      string reason;
+
+      @verbatim (language="comment", text=
+        "Operator acknowledges this is critical action")
+      boolean acknowledge_criticality;
+
+      @verbatim (language="comment", text=
+        "Force immediate shutdown (no coordination)")
+      boolean force_immediate;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct SoftwareEstop_Response {
+      @verbatim (language="comment", text=
+        "True if software ESTOP was triggered")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "Unique ID for this ESTOP event")
+      string estop_id;
+
+      @verbatim (language="comment", text=
+        "When ESTOP was triggered")
+      double timestamp;
+
+      @verbatim (language="comment", text=
+        "Operator who triggered it")
+      string triggered_by;
+
+      @verbatim (language="comment", text=
+        "Whether subsystem coordination began")
+      boolean coordination_started;
+    };
+  };
+};

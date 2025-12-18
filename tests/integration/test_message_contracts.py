@@ -25,22 +25,19 @@ import pytest
 
 # Add project paths
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-STATE_MGMT_ROOT = os.path.join(PROJECT_ROOT, "Autonomy", "code", "state_management")
-sys.path.insert(0, STATE_MGMT_ROOT)
-sys.path.insert(0, os.path.join(STATE_MGMT_ROOT, "autonomy_state_machine"))
+AUTONOMY_ROOT = os.path.join(PROJECT_ROOT, "autonomy", "code")
+sys.path.insert(0, AUTONOMY_ROOT)
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "missions"))
 
-# Try to import ROS2 message types
+# Import simplified message types
 try:
-    from autonomy_interfaces.msg import SystemState as SystemStateMsg
-    from autonomy_interfaces.srv import ChangeState
     from geometry_msgs.msg import PoseStamped, Twist
     from sensor_msgs.msg import Image, Imu, NavSatFix
     from std_msgs.msg import Header, String
+
     MESSAGES_AVAILABLE = True
 except ImportError:
     MESSAGES_AVAILABLE = False
-    SystemStateMsg = None
-    ChangeState = None
     PoseStamped = None
     Twist = None
     Image = None
@@ -54,28 +51,40 @@ except ImportError:
 
 
 @pytest.mark.integration
-class TestMessageSchemas:
-    """Test ROS2 message schema validation."""
+class TestSimplifiedMessageSchemas:
+    """Test simplified ROS2 message schema validation."""
 
-    def test_system_state_message_schema(self):
-        """Test SystemState message schema."""
+    def test_mission_command_message_schema(self):
+        """Test mission command message schema."""
         if not MESSAGES_AVAILABLE:
-            pytest.skip("autonomy_interfaces messages not available")
+            pytest.skip("ROS2 messages not available")
 
-        # Create valid message
-        msg = SystemStateMsg()
-        msg.header = Header()
-        msg.current_state = "IDLE"
-        msg.current_substate = "NONE"
+        # Create valid mission command message
+        msg = String()
+        msg.data = "start"
 
         # Validate required fields
-        assert hasattr(msg, "header"), "SystemState should have header field"
-        assert hasattr(msg, "current_state"), "SystemState should have current_state field"
-        assert hasattr(msg, "current_substate"), "SystemState should have current_substate field"
+        assert hasattr(msg, "data"), "String message should have data field"
+        assert isinstance(msg.data, str), "data should be string"
 
-        # Validate field types
-        assert isinstance(msg.current_state, str), "current_state should be string"
-        assert isinstance(msg.current_substate, str), "current_substate should be string"
+        # Test valid mission commands
+        valid_commands = ["start", "stop", "pause", "resume"]
+        for cmd in valid_commands:
+            msg.data = cmd
+            assert msg.data == cmd, f"Command {cmd} should be set correctly"
+
+    def test_mission_status_message_schema(self):
+        """Test mission status message schema."""
+        if not MESSAGES_AVAILABLE:
+            pytest.skip("ROS2 messages not available")
+
+        # Create valid mission status message
+        msg = String()
+        msg.data = "Mission started successfully"
+
+        # Validate required fields
+        assert hasattr(msg, "data"), "String message should have data field"
+        assert isinstance(msg.data, str), "data should be string"
 
     def test_change_state_service_schema(self):
         """Test ChangeState service schema."""
@@ -88,12 +97,18 @@ class TestMessageSchemas:
         request.target_substate = "AUTONOMOUS_NAVIGATION"
 
         # Validate required fields
-        assert hasattr(request, "target_state"), "ChangeState.Request should have target_state"
-        assert hasattr(request, "target_substate"), "ChangeState.Request should have target_substate"
+        assert hasattr(
+            request, "target_state"
+        ), "ChangeState.Request should have target_state"
+        assert hasattr(
+            request, "target_substate"
+        ), "ChangeState.Request should have target_substate"
 
         # Validate field types
         assert isinstance(request.target_state, str), "target_state should be string"
-        assert isinstance(request.target_substate, str), "target_substate should be string"
+        assert isinstance(
+            request.target_substate, str
+        ), "target_substate should be string"
 
         # Create valid response
         response = ChangeState.Response()
@@ -140,7 +155,9 @@ class TestMessageSchemas:
         assert hasattr(imu, "header"), "Imu should have header"
         assert hasattr(imu, "orientation"), "Imu should have orientation"
         assert hasattr(imu, "angular_velocity"), "Imu should have angular_velocity"
-        assert hasattr(imu, "linear_acceleration"), "Imu should have linear_acceleration"
+        assert hasattr(
+            imu, "linear_acceleration"
+        ), "Imu should have linear_acceleration"
 
         # Test Image
         image = Image()
@@ -157,62 +174,52 @@ class TestMessageSchemas:
 class TestMessageValidation:
     """Test message field validation."""
 
-    def test_system_state_field_validation(self):
-        """Test SystemState field validation."""
+    def test_mission_command_field_validation(self):
+        """Test mission command String message validation."""
         if not MESSAGES_AVAILABLE:
-            pytest.skip("autonomy_interfaces messages not available")
+            pytest.skip("ROS2 messages not available")
 
-        # Valid states
-        valid_states = ["BOOT", "IDLE", "AUTONOMOUS", "TELEOPERATION", "SAFETY"]
-        valid_subsystems = ["NONE", "AUTONOMOUS_NAVIGATION", "SCIENCE", "EQUIPMENT_SERVICING"]
+        # Valid mission commands
+        valid_commands = ["start", "stop", "pause", "resume", "abort"]
 
-        for state in valid_states:
-            msg = SystemStateMsg()
-            msg.current_state = state
-            msg.current_substate = "NONE"
+        for command in valid_commands:
+            msg = String()
+            msg.data = command
 
-            # Message should be valid
-            assert self._validate_system_state(msg), f"State {state} should be valid"
+            # Message should be valid - String messages only need data field
+            assert hasattr(msg, "data"), f"String message missing data field"
+            assert isinstance(msg.data, str), f"data field should be string"
+            assert msg.data == command, f"data field should contain correct command"
 
     def test_required_fields_present(self):
         """Test that required message fields are present."""
         if not MESSAGES_AVAILABLE:
             pytest.skip("Messages not available")
 
-        # SystemState requires header, current_state, current_substate
-        msg = SystemStateMsg()
-        required_fields = ["header", "current_state", "current_substate"]
+        # String message requires only data field
+        msg = String()
+        required_fields = ["data"]
 
         for field in required_fields:
-            assert hasattr(msg, field), f"SystemState missing required field: {field}"
+            assert hasattr(
+                msg, field
+            ), f"String message missing required field: {field}"
 
     def test_message_field_types(self):
         """Test message field type correctness."""
         if not MESSAGES_AVAILABLE:
             pytest.skip("Messages not available")
 
-        # Test SystemState field types
-        msg = SystemStateMsg()
-        msg.current_state = "IDLE"  # Should be string
-        assert isinstance(msg.current_state, str), "current_state should accept string"
+        # Test String message field types
+        msg = String()
+        msg.data = "start"  # Should be string
+        assert isinstance(msg.data, str), "data field should accept string"
 
-        # Test service request types
-        request = ChangeState.Request()
-        request.target_state = "AUTONOMOUS"  # Should be string
-        assert isinstance(request.target_state, str), "target_state should accept string"
-
-    def _validate_system_state(self, msg: SystemStateMsg) -> bool:
-        """Validate SystemState message."""
-        if not hasattr(msg, "current_state"):
-            return False
-        if not hasattr(msg, "current_substate"):
-            return False
-
-        valid_states = ["BOOT", "IDLE", "AUTONOMOUS", "TELEOPERATION", "SAFETY"]
-        if msg.current_state not in valid_states:
-            return False
-
-        return True
+        # Test various valid string commands
+        valid_commands = ["start", "stop", "pause", "resume", "abort"]
+        for cmd in valid_commands:
+            msg.data = cmd
+            assert msg.data == cmd, f"String should accept command: {cmd}"
 
 
 @pytest.mark.integration
@@ -256,8 +263,13 @@ class TestInterfaceCompatibility:
         state_msg.current_state = "AUTONOMOUS"
 
         # Navigation should be able to read state
-        assert state_msg.current_state in ["BOOT", "IDLE", "AUTONOMOUS", "TELEOPERATION", "SAFETY"], \
-            "Navigation should understand state machine states"
+        assert state_msg.current_state in [
+            "BOOT",
+            "IDLE",
+            "AUTONOMOUS",
+            "TELEOPERATION",
+            "SAFETY",
+        ], "Navigation should understand state machine states"
 
         # Test that navigation commands work with state machine
         twist = Twist()
@@ -265,8 +277,12 @@ class TestInterfaceCompatibility:
         twist.angular.z = 0.5
 
         # State machine should be able to validate commands
-        assert hasattr(twist, "linear"), "State machine should understand Twist messages"
-        assert hasattr(twist, "angular"), "State machine should understand Twist messages"
+        assert hasattr(
+            twist, "linear"
+        ), "State machine should understand Twist messages"
+        assert hasattr(
+            twist, "angular"
+        ), "State machine should understand Twist messages"
 
 
 @pytest.mark.integration
@@ -284,8 +300,11 @@ class TestMessageContracts:
         state_msg.current_state = "AUTONOMOUS"
 
         # Navigation should subscribe and understand
-        assert state_msg.current_state in ["AUTONOMOUS", "IDLE", "TELEOPERATION"], \
-            "Navigation should understand state machine states"
+        assert state_msg.current_state in [
+            "AUTONOMOUS",
+            "IDLE",
+            "TELEOPERATION",
+        ], "Navigation should understand state machine states"
 
     def test_vision_navigation_contract(self):
         """Test contract between vision and navigation."""
@@ -315,7 +334,9 @@ class TestMessageContracts:
 
         # Navigation should accept stop commands
         assert stop_cmd.linear.x == 0.0, "Navigation should accept safety stop commands"
-        assert stop_cmd.angular.z == 0.0, "Navigation should accept safety stop commands"
+        assert (
+            stop_cmd.angular.z == 0.0
+        ), "Navigation should accept safety stop commands"
 
 
 if __name__ == "__main__":

@@ -12,7 +12,8 @@ Tests vision system performance under various degradation conditions:
 This addresses the critical gap identified in GAPS.md:
 - Vision failures prevent autonomous operation
 - Need 40+ tests for comprehensive coverage
-"""
+
+NOTE: This test is skipped because Complex vision system replaced with basic camera placeholder."""
 
 import os
 import sys
@@ -25,6 +26,7 @@ import pytest
 
 try:
     import cv2
+
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
@@ -34,6 +36,7 @@ try:
     from rclpy.node import Node
     from sensor_msgs.msg import Image
     from std_msgs.msg import Header
+
     ROS2_AVAILABLE = True
 except ImportError:
     ROS2_AVAILABLE = False
@@ -43,11 +46,10 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 sys.path.insert(0, PROJECT_ROOT)
 
 # Import simulation framework
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 try:
-    from environment_tiers import EnvironmentSimulator, EnvironmentTier
+    from simulation.environments.environment_factory import EnvironmentFactory
 except ImportError:
-    EnvironmentSimulator = None
+    EnvironmentFactory = None
 
 
 @pytest.fixture
@@ -115,19 +117,23 @@ class VisionDegradationSimulator:
         center_x, center_y = w // 2, h // 2
         y, x = np.ogrid[:h, :w]
         distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-        max_dist = np.sqrt(center_x ** 2 + center_y ** 2)
+        max_dist = np.sqrt(center_x**2 + center_y**2)
         glare_mask = 1.0 - (distance / max_dist) * glare_intensity
         glare_mask = np.clip(glare_mask, 0.5, 1.0)
 
         # Apply glare to all channels
         for c in range(image.shape[2]):
             degraded[:, :, c] = degraded[:, :, c] * glare_mask
-            degraded[:, :, c] = np.clip(degraded[:, :, c] + glare_intensity * 50, 0, 255)
+            degraded[:, :, c] = np.clip(
+                degraded[:, :, c] + glare_intensity * 50, 0, 255
+            )
 
         return degraded.astype(np.uint8)
 
     @staticmethod
-    def apply_poor_lighting(image: np.ndarray, darkness_level: float = 0.4) -> np.ndarray:
+    def apply_poor_lighting(
+        image: np.ndarray, darkness_level: float = 0.4
+    ) -> np.ndarray:
         """
         Simulate poor lighting conditions.
 
@@ -209,8 +215,16 @@ class TestVisionDegradation:
 
         for pos in positions:
             x, y = pos
-            cv2.rectangle(image, (x, y), (x + marker_size, y + marker_size), (0, 0, 0), -1)
-            cv2.rectangle(image, (x + 10, y + 10), (x + marker_size - 10, y + marker_size - 10), (255, 255, 255), -1)
+            cv2.rectangle(
+                image, (x, y), (x + marker_size, y + marker_size), (0, 0, 0), -1
+            )
+            cv2.rectangle(
+                image,
+                (x + 10, y + 10),
+                (x + marker_size - 10, y + marker_size - 10),
+                (255, 255, 255),
+                -1,
+            )
 
         return image
 
@@ -231,17 +245,23 @@ class TestVisionDegradation:
             detection_rate = detection_count / 4.0  # 4 markers in test image
             detection_rates.append(detection_rate)
 
-            self.test_results.append({
-                "test": "aruco_dust",
-                "dust_level": dust_level,
-                "detection_rate": detection_rate,
-                "detection_count": detection_count,
-            })
+            self.test_results.append(
+                {
+                    "test": "aruco_dust",
+                    "dust_level": dust_level,
+                    "detection_rate": detection_rate,
+                    "detection_count": detection_count,
+                }
+            )
 
         # Detection should degrade gracefully with dust
-        assert detection_rates[0] > detection_rates[-1], "Detection should decrease with more dust"
+        assert (
+            detection_rates[0] > detection_rates[-1]
+        ), "Detection should decrease with more dust"
         # Even with heavy dust, some detection should be possible
-        assert detection_rates[-1] > 0.0, "Should detect at least some markers even with heavy dust"
+        assert (
+            detection_rates[-1] > 0.0
+        ), "Should detect at least some markers even with heavy dust"
 
     def test_aruco_detection_glare_conditions(self, ros_context):
         """Test ArUco marker detection with glare."""
@@ -257,15 +277,19 @@ class TestVisionDegradation:
             detection_rate = detection_count / 4.0
             detection_rates.append(detection_rate)
 
-            self.test_results.append({
-                "test": "aruco_glare",
-                "glare_level": glare_level,
-                "detection_rate": detection_rate,
-                "detection_count": detection_count,
-            })
+            self.test_results.append(
+                {
+                    "test": "aruco_glare",
+                    "glare_level": glare_level,
+                    "detection_rate": detection_rate,
+                    "detection_count": detection_count,
+                }
+            )
 
         # Detection should be affected by glare
-        assert detection_rates[0] >= detection_rates[-1], "Detection should decrease with more glare"
+        assert (
+            detection_rates[0] >= detection_rates[-1]
+        ), "Detection should decrease with more glare"
 
     def test_aruco_detection_poor_lighting(self, ros_context):
         """Test ArUco marker detection with poor lighting."""
@@ -281,15 +305,19 @@ class TestVisionDegradation:
             detection_rate = detection_count / 4.0
             detection_rates.append(detection_rate)
 
-            self.test_results.append({
-                "test": "aruco_lighting",
-                "darkness_level": darkness,
-                "detection_rate": detection_rate,
-                "detection_count": detection_count,
-            })
+            self.test_results.append(
+                {
+                    "test": "aruco_lighting",
+                    "darkness_level": darkness,
+                    "detection_rate": detection_rate,
+                    "detection_count": detection_count,
+                }
+            )
 
         # Detection should degrade with poor lighting
-        assert detection_rates[0] > detection_rates[-1], "Detection should decrease with less light"
+        assert (
+            detection_rates[0] > detection_rates[-1]
+        ), "Detection should decrease with less light"
 
     def test_object_detection_poor_visibility(self, ros_context):
         """Test object detection with poor visibility conditions."""
@@ -308,21 +336,27 @@ class TestVisionDegradation:
             degraded = test_image.copy()
             degraded = self.vision_sim.apply_dust(degraded, degradation["dust"])
             degraded = self.vision_sim.apply_glare(degraded, degradation["glare"])
-            degraded = self.vision_sim.apply_poor_lighting(degraded, degradation["lighting"])
+            degraded = self.vision_sim.apply_poor_lighting(
+                degraded, degradation["lighting"]
+            )
 
             # Simulate object detection
             detection_confidence = self._simulate_object_detection(degraded)
 
             detection_rates.append(detection_confidence)
 
-            self.test_results.append({
-                "test": "object_detection_visibility",
-                "degradation": degradation,
-                "detection_confidence": detection_confidence,
-            })
+            self.test_results.append(
+                {
+                    "test": "object_detection_visibility",
+                    "degradation": degradation,
+                    "detection_confidence": detection_confidence,
+                }
+            )
 
         # Detection confidence should decrease with worse conditions
-        assert detection_rates[0] > detection_rates[-1], "Confidence should decrease with worse conditions"
+        assert (
+            detection_rates[0] > detection_rates[-1]
+        ), "Confidence should decrease with worse conditions"
 
     def test_depth_estimation_poor_conditions(self, ros_context):
         """Test depth estimation accuracy under poor conditions."""
@@ -350,16 +384,22 @@ class TestVisionDegradation:
             depth_error = np.mean(np.abs(estimated_depth - depth_map))
             depth_errors.append(depth_error)
 
-            self.test_results.append({
-                "test": "depth_estimation",
-                "condition": condition,
-                "depth_error": depth_error,
-            })
+            self.test_results.append(
+                {
+                    "test": "depth_estimation",
+                    "condition": condition,
+                    "depth_error": depth_error,
+                }
+            )
 
         # Depth error should increase with worse conditions
-        assert depth_errors[0] < depth_errors[-1], "Depth error should increase with worse conditions"
+        assert (
+            depth_errors[0] < depth_errors[-1]
+        ), "Depth error should increase with worse conditions"
         # Error should be reasonable even in poor conditions
-        assert depth_errors[-1] < 0.5, "Depth error should be < 0.5m even in poor conditions"
+        assert (
+            depth_errors[-1] < 0.5
+        ), "Depth error should be < 0.5m even in poor conditions"
 
     def test_frame_rate_degradation(self, ros_context):
         """Test frame processing rate under various conditions."""
@@ -378,7 +418,9 @@ class TestVisionDegradation:
             if condition["dust"] > 0:
                 degraded = self.vision_sim.apply_dust(degraded, condition["dust"])
             if condition["lighting"] > 0:
-                degraded = self.vision_sim.apply_poor_lighting(degraded, condition["lighting"])
+                degraded = self.vision_sim.apply_poor_lighting(
+                    degraded, condition["lighting"]
+                )
 
             # Measure processing time
             start_time = time.time()
@@ -389,15 +431,19 @@ class TestVisionDegradation:
             avg_processing_time = (end_time - start_time) / 10.0
             processing_times.append(avg_processing_time)
 
-            self.test_results.append({
-                "test": "frame_rate",
-                "condition": condition["name"],
-                "avg_processing_time": avg_processing_time,
-                "fps": 1.0 / avg_processing_time if avg_processing_time > 0 else 0,
-            })
+            self.test_results.append(
+                {
+                    "test": "frame_rate",
+                    "condition": condition["name"],
+                    "avg_processing_time": avg_processing_time,
+                    "fps": 1.0 / avg_processing_time if avg_processing_time > 0 else 0,
+                }
+            )
 
         # Processing should remain reasonable even under degradation
-        assert all(t < 0.1 for t in processing_times), "Processing should be < 100ms per frame"
+        assert all(
+            t < 0.1 for t in processing_times
+        ), "Processing should be < 100ms per frame"
 
     def test_camera_calibration_drift(self, ros_context):
         """Test vision system with camera calibration drift."""
@@ -416,14 +462,18 @@ class TestVisionDegradation:
             reprojection_error = drift * 10.0  # Simplified model
             reprojection_errors.append(reprojection_error)
 
-            self.test_results.append({
-                "test": "calibration_drift",
-                "drift_level": drift,
-                "reprojection_error": reprojection_error,
-            })
+            self.test_results.append(
+                {
+                    "test": "calibration_drift",
+                    "drift_level": drift,
+                    "reprojection_error": reprojection_error,
+                }
+            )
 
         # Reprojection error should increase with drift
-        assert reprojection_errors[0] < reprojection_errors[-1], "Error should increase with drift"
+        assert (
+            reprojection_errors[0] < reprojection_errors[-1]
+        ), "Error should increase with drift"
         # Error should be manageable for small drift
         assert reprojection_errors[1] < 1.0, "Small drift should have minimal impact"
 
@@ -442,7 +492,9 @@ class TestVisionDegradation:
         _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
 
         # Find contours (simplified marker detection)
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         # Filter by area (markers should be reasonably sized)
         marker_count = 0
@@ -475,7 +527,7 @@ class TestVisionDegradation:
         contrast = np.std(gray) / 255.0
 
         # Combine quality metrics
-        confidence = (image_quality * 0.6 + contrast * 0.4)
+        confidence = image_quality * 0.6 + contrast * 0.4
         return np.clip(confidence, 0.0, 1.0)
 
 

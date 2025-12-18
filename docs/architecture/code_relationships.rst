@@ -10,7 +10,7 @@ Python Import Dependencies
 The following diagram shows the import dependencies within the Autonomy codebase:
 
 .. code-imports::
-   :path: ../Autonomy/code
+   :path: ../autonomy/code
    :output: autonomy_import_graph.png
    :max-depth: 3
    :exclude-patterns: __pycache__,*.pyc,test_*
@@ -28,7 +28,7 @@ State Management Class Hierarchy
 Class inheritance relationships in the state management system:
 
 .. code-hierarchy::
-   :path: ../Autonomy/code/state_management
+   :path: ../autonomy/code/state_management
    :output: state_management_hierarchy.png
    :base-class: SystemState
    :title: State Management Class Hierarchy
@@ -39,7 +39,7 @@ Navigation System Dependencies
 Import relationships within the navigation subsystem:
 
 .. code-imports::
-   :path: ../Autonomy/code/navigation
+   :path: ../autonomy/code/navigation
    :output: navigation_dependencies.png
    :max-depth: 2
    :exclude-patterns: __pycache__,*.pyc,test_*
@@ -51,7 +51,7 @@ Computer Vision Module Structure
 Dependencies within the computer vision components:
 
 .. code-imports::
-   :path: ../Autonomy/code/computer_vision
+   :path: ../autonomy/code/computer_vision
    :output: computer_vision_dependencies.png
    :max-depth: 2
    :exclude-patterns: __pycache__,*.pyc,test_*

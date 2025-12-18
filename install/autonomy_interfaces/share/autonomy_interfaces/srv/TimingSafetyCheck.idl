@@ -1,0 +1,101 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/TimingSafetyCheck.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Timing Safety Check Service" "\n"
+      "Monitors timing constraints and deadlines for safety-critical operations")
+    struct TimingSafetyCheck_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "Check real-time performance")
+      boolean real_time_check;
+
+      @verbatim (language="comment", text=
+        "Time window to analyze (seconds)")
+      double time_window;
+
+      @verbatim (language="comment", text=
+        "Specific components to check timing for")
+      sequence<string> monitored_components;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct TimingSafetyCheck_Response {
+      @verbatim (language="comment", text=
+        "Overall timing safety status")
+      boolean timing_safe;
+
+      @verbatim (language="comment", text=
+        "\"NOMINAL\", \"WARNING\", \"CRITICAL\", \"FAILED\"")
+      string timing_status;
+
+      @verbatim (language="comment", text=
+        "Timing metrics" "\n"
+        "Average response time (ms)")
+      double avg_response_time;
+
+      @verbatim (language="comment", text=
+        "Maximum response time (ms)")
+      double max_response_time;
+
+      @verbatim (language="comment", text=
+        "Minimum response time (ms)")
+      double min_response_time;
+
+      @verbatim (language="comment", text=
+        "Response time jitter (ms)")
+      double jitter;
+
+      @verbatim (language="comment", text=
+        "Number of deadline misses in time window")
+      int32 deadline_misses;
+
+      @verbatim (language="comment", text=
+        "Rate of deadline misses (per second)")
+      double deadline_miss_rate;
+
+      @verbatim (language="comment", text=
+        "Component timing" "\n"
+        "Components that were checked")
+      sequence<string> components_checked;
+
+      @verbatim (language="comment", text=
+        "Average response times per component")
+      sequence<double> component_avg_times;
+
+      @verbatim (language="comment", text=
+        "Deadline misses per component")
+      sequence<int32> component_deadlines_missed;
+
+      @verbatim (language="comment", text=
+        "System health" "\n"
+        "Current CPU utilization (0.0-1.0)")
+      double cpu_utilization;
+
+      @verbatim (language="comment", text=
+        "Current memory utilization (0.0-1.0)")
+      double memory_utilization;
+
+      @verbatim (language="comment", text=
+        "Current number of active threads")
+      int32 thread_count;
+
+      @verbatim (language="comment", text=
+        "Whether real-time scheduling is active")
+      boolean real_time_scheduling;
+
+      @verbatim (language="comment", text=
+        "Recommendations" "\n"
+        "Actions to improve timing if needed")
+      sequence<string> timing_recommendations;
+
+      @verbatim (language="comment", text=
+        "When check was performed")
+      string timestamp;
+    };
+  };
+};

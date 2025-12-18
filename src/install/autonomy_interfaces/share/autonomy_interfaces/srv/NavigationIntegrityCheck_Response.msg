@@ -1,0 +1,22 @@
+
+# Response
+bool integrity_ok           # Overall navigation integrity status
+float64 integrity_score     # Integrity score (0.0-1.0)
+string integrity_level      # "NOMINAL", "DEGRADED", "CRITICAL", "FAILED"
+
+# Component status
+string[] checked_components # Components that were checked
+bool[] component_status     # Status of each component
+string[] component_details  # Detailed status for each component
+
+# Metrics
+float64 position_accuracy   # Current position accuracy (meters)
+float64 heading_accuracy    # Current heading accuracy (degrees)
+float64 velocity_consistency # Velocity consistency score (0.0-1.0)
+int32 satellite_count       # Number of satellites used
+float64 hdop                # Horizontal dilution of precision
+
+# Recommendations
+string[] recommendations    # Recommended actions if integrity is compromised
+string timestamp            # When check was performed
+

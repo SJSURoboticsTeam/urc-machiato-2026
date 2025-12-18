@@ -1,0 +1,190 @@
+@startuml ROS2 Message Definitions
+title ROS2 Interface Definitions
+
+package "Core Messages" as core {
+    class SystemState {
+        +header: Header
+        +state: string
+        +timestamp: time
+        +reason: string
+        +metadata: Dict
+    }
+
+    class StateTransition {
+        +header: Header
+        +from_state: string
+        +to_state: string
+        +transition_reason: string
+        +transition_time: time
+    }
+
+    class ContextState {
+        +header: Header
+        +context_id: string
+        +state_data: Dict
+        +confidence: float
+        +last_update: time
+    }
+}
+
+package "Navigation Messages" as nav {
+    class NavigationStatus {
+        +header: Header
+        +current_pose: PoseStamped
+        +target_pose: PoseStamped
+        +velocity: Twist
+        +status: string
+        +waypoint_progress: int
+        +total_waypoints: int
+    }
+
+    class PathSegment {
+        +header: Header
+        +waypoints: PoseStamped[]
+        +segment_id: string
+        +cost: float
+        +is_valid: bool
+    }
+}
+
+package "Vision Messages" as vision {
+    class VisionDetection {
+        +header: Header
+        +detections: Detection[]
+        +timestamp: time
+        +frame_id: string
+        +processing_time: float
+    }
+
+    class Detection {
+        +class_id: string
+        +confidence: float
+        +bbox: BoundingBox
+        +pose: PoseStamped
+        +features: Feature[]
+    }
+
+    class ArucoDetection {
+        +header: Header
+        +marker_id: int
+        +corners: Point[]
+        +pose: PoseStamped
+        +dictionary: string
+    }
+}
+
+package "Hardware Messages" as hw {
+    class HardwareStatus {
+        +header: Header
+        +component_status: ComponentStatus[]
+        +power_status: PowerStatus
+        +temperature_status: TemperatureStatus
+        +error_flags: uint32
+    }
+
+    class ComponentStatus {
+        +component_id: string
+        +status: string
+        +health_score: float
+        +last_update: time
+        +error_count: uint32
+    }
+}
+
+package "Safety Messages" as safety {
+    class SafetyStatus {
+        +header: Header
+        +safety_level: SafetyLevel
+        +active_conditions: string[]
+        +recommended_action: string
+        +override_active: bool
+        +last_check: time
+    }
+
+    class SafetyAlert {
+        +header: Header
+        +alert_level: AlertLevel
+        +condition: string
+        +description: string
+        +recommended_action: string
+        +auto_resolved: bool
+    }
+}
+
+package "Services" as services {
+    class ChangeState {
+        +target_state: string
+        +reason: string
+        +force_transition: bool
+        ---
+        +success: bool
+        +message: string
+        +transition_id: string
+    }
+
+    class ConfigureMission {
+        +mission_type: string
+        +parameters: Dict
+        +timeout: float
+        ---
+        +mission_id: string
+        +estimated_duration: float
+        +validation_errors: string[]
+    }
+
+    class GetSubsystemStatus {
+        +subsystem_name: string
+        ---
+        +status: SubsystemStatus
+        +health_score: float
+        +last_update: time
+    }
+}
+
+package "Actions" as actions {
+    class NavigateToPose {
+        +target_pose: PoseStamped
+        +tolerance_position: float
+        +tolerance_orientation: float
+        ---
+        +current_pose: PoseStamped
+        +status: string
+        +distance_remaining: float
+        ---
+        +result: NavigationResult
+        +final_pose: PoseStamped
+        +execution_time: float
+    }
+
+    class PerformTyping {
+        +keyboard_type: string
+        +text_sequence: string
+        +timeout: float
+        ---
+        +progress_percentage: float
+        +current_character: string
+        +status: string
+        ---
+        +success: bool
+        +characters_typed: uint32
+        +execution_time: float
+    }
+}
+
+note as N7
+  **QoS Profiles:**
+  - **Sensor Data**: BEST_EFFORT, volatile
+  - **Commands**: RELIABLE, transient_local
+  - **Status**: RELIABLE, volatile
+  - **Actions**: RELIABLE, volatile
+
+  **Message Frequency:**
+  - Sensor data: 10-100Hz
+  - Status: 1-10Hz
+  - Commands: Event-driven
+
+  **Created:** 2024-12-16
+  **Source:** src/autonomy/interfaces/autonomy_interfaces/
+  **Stakeholders:** ROS2 Team, Interface Designers
+end note
+@enduml

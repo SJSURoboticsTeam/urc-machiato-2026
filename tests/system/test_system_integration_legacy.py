@@ -39,7 +39,12 @@ class TestSystemIntegration(unittest.TestCase):
     def test_system_health_monitoring(self):
         """Test system health monitoring across components."""
         # Mock health status
-        health_status = {"vision": "healthy", "navigation": "healthy", "control": "healthy", "safety": "healthy"}
+        health_status = {
+            "vision": "healthy",
+            "navigation": "healthy",
+            "control": "healthy",
+            "safety": "healthy",
+        }
 
         for component, status in health_status.items():
             self.system_components[component].get_health = Mock(return_value=status)

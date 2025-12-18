@@ -100,13 +100,15 @@ class TestRunner:
         if verbose:
             cmd.append("-v")
         if coverage:
-            cmd.extend([
-                "--cov=Autonomy",
-                "--cov-report=html:tests/reports/coverage_html",
-                "--cov-report=xml:tests/reports/coverage.xml",
-                "--cov-report=term-missing",
-                "--junitxml=tests/reports/junit.xml"
-            ])
+            cmd.extend(
+                [
+                    "--cov=Autonomy",
+                    "--cov-report=html:tests/reports/coverage_html",
+                    "--cov-report=xml:tests/reports/coverage.xml",
+                    "--cov-report=term-missing",
+                    "--junitxml=tests/reports/junit.xml",
+                ]
+            )
 
         return self._run_command(cmd, "All Tests")
 
@@ -178,7 +180,7 @@ class TestRunner:
                 cmd,
                 cwd=self.project_root,
                 capture_output=False,  # Show output live
-                text=True
+                text=True,
             )
             print("-" * 50)
             if result.returncode == 0:
@@ -195,16 +197,24 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Autonomy System Test Runner")
     parser.add_argument("--unit", action="store_true", help="Run unit tests")
-    parser.add_argument("--integration", action="store_true", help="Run integration tests")
+    parser.add_argument(
+        "--integration", action="store_true", help="Run integration tests"
+    )
     parser.add_argument("--system", action="store_true", help="Run system tests")
-    parser.add_argument("--performance", action="store_true", help="Run performance tests")
+    parser.add_argument(
+        "--performance", action="store_true", help="Run performance tests"
+    )
     parser.add_argument("--safety", action="store_true", help="Run safety tests")
     parser.add_argument("--aoi", action="store_true", help="Run automated AoI tests")
-    parser.add_argument("--automated", action="store_true", help="Run complete automated test suite")
+    parser.add_argument(
+        "--automated", action="store_true", help="Run complete automated test suite"
+    )
     parser.add_argument("--all", action="store_true", help="Run all tests")
     parser.add_argument("--reports", action="store_true", help="Generate test reports")
     parser.add_argument("--status", action="store_true", help="Check test status")
-    parser.add_argument("--no-coverage", action="store_true", help="Skip coverage reporting")
+    parser.add_argument(
+        "--no-coverage", action="store_true", help="Skip coverage reporting"
+    )
     parser.add_argument("--quiet", action="store_true", help="Quiet output")
 
     args = parser.parse_args()
@@ -259,11 +269,13 @@ def main():
         print("  python tests/run_tests.py --status")
         print("  python tests/run_tests.py --unit")
         print("  python tests/run_tests.py --aoi              # Automated AoI testing")
-        print("  python tests/run_tests.py --automated        # Complete automated suite")
+        print(
+            "  python tests/run_tests.py --automated        # Complete automated suite"
+        )
         print("  python tests/run_tests.py --all --reports")
         return runner.check_test_status()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

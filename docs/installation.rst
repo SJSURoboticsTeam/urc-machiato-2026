@@ -66,7 +66,7 @@ Project Setup
 
    .. code-block:: bash
 
-      cd Autonomy/ros2_ws
+      cd autonomy/ros2_ws
       colcon build
 
 3. **Set Python Path:**

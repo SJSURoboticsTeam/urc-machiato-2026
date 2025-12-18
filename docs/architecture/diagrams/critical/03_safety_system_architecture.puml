@@ -1,0 +1,68 @@
+@startuml
+title Safety System Architecture
+
+package "Safety System" as safety {
+    [Watchdog Timer] as watchdog
+    [Emergency Response\nCoordinator] as emergency
+    [Redundant Safety\nMonitor] as redundant
+    [Geofencing System] as geofence
+    [Proximity Monitor] as proximity
+    [Thermal Monitor] as thermal
+}
+
+package "Hardware Interfaces" as hardware {
+    [Motor Controllers] as motors
+    [Sensor Systems] as sensors
+    [Power Systems] as power
+    [Communication\nInterfaces] as comm
+}
+
+package "Autonomy Stack" as autonomy {
+    [State Machine] as state
+    [Navigation] as nav
+    [Motion Control] as motion
+}
+
+watchdog --> motors : emergency_stop
+watchdog --> emergency : trigger_response
+watchdog --> power : power_cycle
+emergency --> motors : disable_power
+emergency --> comm : alert_operator
+emergency --> state : emergency_transition
+
+redundant --> sensors : monitor_health
+redundant --> watchdog : health_report
+redundant --> emergency : redundancy_failure
+
+geofence --> emergency : boundary_violation
+proximity --> emergency : collision_risk
+thermal --> emergency : temperature_alert
+
+emergency --> autonomy : pause_operations
+emergency --> comm : status_broadcast
+
+note right of emergency
+    **ESCALATION LEVELS:**
+    1. WARNING (log + monitor)
+    2. CRITICAL (operator alert)
+    3. EMERGENCY (auto-stop)
+    4. FATAL (shutdown)
+
+    **Response Times:**
+    - Emergency: < 100ms
+    - Critical: < 500ms
+    - Warning: < 2s
+end note
+
+note as N3
+  Safety Standards:
+  - SIL 2 rated components
+  - Redundant monitoring
+  - Fail-safe defaults
+  - Manual override capability
+
+  Created: 2024-12-16
+  Source: src/autonomy/core/safety_system/
+  Stakeholders: Safety Team, Integration Team, Competition Directors
+end note
+@enduml

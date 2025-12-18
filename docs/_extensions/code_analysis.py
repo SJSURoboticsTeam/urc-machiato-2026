@@ -7,12 +7,12 @@ class hierarchies, and module relationships.
 
 Usage in RST files:
     .. code-imports::
-       :path: ../Autonomy/code
+       :path: ../autonomy/code
        :output: import_graph.png
        :max-depth: 3
 
     .. code-hierarchy::
-       :path: ../Autonomy/code/state_management
+       :path: ../autonomy/code/state_management
        :output: class_hierarchy.png
 """
 
@@ -35,20 +35,22 @@ class CodeImportsDirective(SphinxDirective):
     required_arguments = 0
     optional_arguments = 0
     option_spec = {
-        'path': str,
-        'output': str,
-        'max-depth': int,
-        'exclude-patterns': str,
-        'title': str,
+        "path": str,
+        "output": str,
+        "max-depth": int,
+        "exclude-patterns": str,
+        "title": str,
     }
 
     def run(self) -> List[nodes.Node]:
         """Generate import dependency diagram."""
-        source_path = self.options.get('path', '../Autonomy/code')
-        output_file = self.options.get('output', 'import_graph.png')
-        max_depth = self.options.get('max-depth', 3)
-        exclude_patterns = self.options.get('exclude-patterns', '__pycache__,*.pyc,test_*')
-        title = self.options.get('title', 'Python Import Dependencies')
+        source_path = self.options.get("path", "../autonomy/code")
+        output_file = self.options.get("output", "import_graph.png")
+        max_depth = self.options.get("max-depth", 3)
+        exclude_patterns = self.options.get(
+            "exclude-patterns", "__pycache__,*.pyc,test_*"
+        )
+        title = self.options.get("title", "Python Import Dependencies")
 
         # Convert relative path to absolute
         if not os.path.isabs(source_path):
@@ -61,8 +63,8 @@ class CodeImportsDirective(SphinxDirective):
                 self.env.srcdir,
                 output_file,
                 max_depth,
-                exclude_patterns.split(','),
-                title
+                exclude_patterns.split(","),
+                title,
             )
         except Exception as e:
             self.logger.warning(f"Failed to generate import graph: {e}")
@@ -84,18 +86,18 @@ class CodeHierarchyDirective(SphinxDirective):
     required_arguments = 0
     optional_arguments = 0
     option_spec = {
-        'path': str,
-        'output': str,
-        'base-class': str,
-        'title': str,
+        "path": str,
+        "output": str,
+        "base-class": str,
+        "title": str,
     }
 
     def run(self) -> List[nodes.Node]:
         """Generate class hierarchy diagram."""
-        source_path = self.options.get('path', '../Autonomy/code')
-        output_file = self.options.get('output', 'class_hierarchy.png')
-        base_class = self.options.get('base-class', '')
-        title = self.options.get('title', 'Class Hierarchy')
+        source_path = self.options.get("path", "../autonomy/code")
+        output_file = self.options.get("output", "class_hierarchy.png")
+        base_class = self.options.get("base-class", "")
+        title = self.options.get("title", "Class Hierarchy")
 
         # Convert relative path to absolute
         if not os.path.isabs(source_path):
@@ -104,11 +106,7 @@ class CodeHierarchyDirective(SphinxDirective):
         # Generate the diagram
         try:
             generate_class_hierarchy(
-                source_path,
-                self.env.srcdir,
-                output_file,
-                base_class,
-                title
+                source_path, self.env.srcdir, output_file, base_class, title
             )
         except Exception as e:
             self.logger.warning(f"Failed to generate class hierarchy: {e}")
@@ -123,17 +121,19 @@ class CodeHierarchyDirective(SphinxDirective):
         return [figure_node]
 
 
-def analyze_python_imports(source_path: str, exclude_patterns: List[str] = None) -> nx.DiGraph:
+def analyze_python_imports(
+    source_path: str, exclude_patterns: List[str] = None
+) -> nx.DiGraph:
     """Analyze Python files to build import dependency graph."""
     if exclude_patterns is None:
-        exclude_patterns = ['__pycache__', '*.pyc', 'test_*', 'tests']
+        exclude_patterns = ["__pycache__", "*.pyc", "test_*", "tests"]
 
     G = nx.DiGraph()
     source_path = Path(source_path)
 
     # Find all Python files
     python_files = []
-    for pattern in ['**/*.py']:
+    for pattern in ["**/*.py"]:
         python_files.extend(source_path.glob(pattern))
 
     # Filter out excluded files
@@ -150,7 +150,7 @@ def analyze_python_imports(source_path: str, exclude_patterns: List[str] = None)
     # Analyze each file
     for file_path in filtered_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Parse the AST
@@ -158,7 +158,9 @@ def analyze_python_imports(source_path: str, exclude_patterns: List[str] = None)
 
             # Extract module name from file path
             rel_path = file_path.relative_to(source_path)
-            module_name = str(rel_path).replace('/', '.').replace('\\', '.').replace('.py', '')
+            module_name = (
+                str(rel_path).replace("/", ".").replace("\\", ".").replace(".py", "")
+            )
 
             # Find imports
             imports = extract_imports(tree)
@@ -198,21 +200,57 @@ def extract_imports(tree: ast.AST) -> List[str]:
     return imports
 
 
-def clean_import_name(import_name: str, current_module: str, source_path: Path) -> Optional[str]:
+def clean_import_name(
+    import_name: str, current_module: str, source_path: Path
+) -> Optional[str]:
     """Clean and resolve import names to module paths within the project."""
     # Skip standard library and external packages
     stdlib_modules = {
-        'os', 'sys', 'json', 're', 'pathlib', 'typing', 'dataclasses',
-        'collections', 'itertools', 'functools', 'datetime', 'time',
-        'threading', 'multiprocessing', 'subprocess', 'logging', 'argparse',
-        'ast', 'inspect', 'importlib', 'pkgutil', 'warnings', 'weakref',
-        'abc', 'enum', 'numbers', 'math', 'random', 'statistics',
-        'cv2', 'numpy', 'pandas', 'matplotlib', 'networkx', 'pyyaml',
-        'structlog', 'pytest', 'black', 'isort', 'flake8', 'mypy'
+        "os",
+        "sys",
+        "json",
+        "re",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "collections",
+        "itertools",
+        "functools",
+        "datetime",
+        "time",
+        "threading",
+        "multiprocessing",
+        "subprocess",
+        "logging",
+        "argparse",
+        "ast",
+        "inspect",
+        "importlib",
+        "pkgutil",
+        "warnings",
+        "weakref",
+        "abc",
+        "enum",
+        "numbers",
+        "math",
+        "random",
+        "statistics",
+        "cv2",
+        "numpy",
+        "pandas",
+        "matplotlib",
+        "networkx",
+        "pyyaml",
+        "structlog",
+        "pytest",
+        "black",
+        "isort",
+        "flake8",
+        "mypy",
     }
 
     # Check if it's a standard library or external package
-    first_part = import_name.split('.')[0]
+    first_part = import_name.split(".")[0]
     if first_part in stdlib_modules:
         return None
 
@@ -221,12 +259,12 @@ def clean_import_name(import_name: str, current_module: str, source_path: Path) 
     # import resolution that considers __init__.py files and PYTHONPATH
 
     # Check if it looks like a local import
-    if import_name.startswith('Autonomy') or import_name.startswith('autonomy'):
+    if import_name.startswith("Autonomy") or import_name.startswith("autonomy"):
         return import_name
 
     # For relative imports within the analyzed codebase
     # This is a basic heuristic - could be improved
-    if '.' in import_name and len(import_name.split('.')) >= 2:
+    if "." in import_name and len(import_name.split(".")) >= 2:
         return import_name
 
     return None
@@ -238,7 +276,7 @@ def generate_import_graph(
     output_file: str,
     max_depth: int,
     exclude_patterns: List[str],
-    title: str
+    title: str,
 ) -> None:
     """Generate import dependency graph."""
     # Analyze imports
@@ -258,19 +296,15 @@ def generate_import_graph(
     plantuml_content = generate_import_plantuml(G, title)
 
     # Write PlantUML file
-    plantuml_file = Path(docs_path) / '_build' / 'plantuml' / f"{output_file}.puml"
+    plantuml_file = Path(docs_path) / "_build" / "plantuml" / f"{output_file}.puml"
     plantuml_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(plantuml_file, 'w') as f:
+    with open(plantuml_file, "w") as f:
         f.write(plantuml_content)
 
 
 def generate_class_hierarchy(
-    source_path: str,
-    docs_path: str,
-    output_file: str,
-    base_class: str,
-    title: str
+    source_path: str, docs_path: str, output_file: str, base_class: str, title: str
 ) -> None:
     """Generate class hierarchy diagram."""
     # This is a simplified implementation
@@ -296,10 +330,10 @@ DerivedClass2 <|-- DerivedClass3
 """
 
     # Write PlantUML file
-    plantuml_file = Path(docs_path) / '_build' / 'plantuml' / f"{output_file}.puml"
+    plantuml_file = Path(docs_path) / "_build" / "plantuml" / f"{output_file}.puml"
     plantuml_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(plantuml_file, 'w') as f:
+    with open(plantuml_file, "w") as f:
         f.write(plantuml_content)
 
 
@@ -316,12 +350,12 @@ title {title}
     # Group nodes by package
     packages = {}
     for node in G.nodes():
-        parts = node.split('.')
+        parts = node.split(".")
         if len(parts) > 1:
-            package = '.'.join(parts[:-1])
+            package = ".".join(parts[:-1])
             class_name = parts[-1]
         else:
-            package = 'root'
+            package = "root"
             class_name = node
 
         if package not in packages:
@@ -330,41 +364,41 @@ title {title}
 
     # Create packages and classes
     for package, classes in packages.items():
-        if package != 'root':
+        if package != "root":
             plantuml += f'package "{package}" {{\n'
-            indent = '  '
+            indent = "  "
         else:
-            indent = ''
+            indent = ""
 
         for class_name in classes:
-            plantuml += f'{indent}class {class_name}\n'
+            plantuml += f"{indent}class {class_name}\n"
 
-        if package != 'root':
-            plantuml += '}\n'
+        if package != "root":
+            plantuml += "}\n"
 
-    plantuml += '\n'
+    plantuml += "\n"
 
     # Add dependencies
     for source, target in G.edges():
-        source_parts = source.split('.')
-        target_parts = target.split('.')
+        source_parts = source.split(".")
+        target_parts = target.split(".")
 
         source_name = source_parts[-1]
         target_name = target_parts[-1]
 
-        plantuml += f'{source_name} --> {target_name}\n'
+        plantuml += f"{source_name} --> {target_name}\n"
 
-    plantuml += '\n@enduml\n'
+    plantuml += "\n@enduml\n"
     return plantuml
 
 
 def setup(app: Sphinx) -> Dict[str, any]:
     """Setup the code analysis extension."""
-    app.add_directive('code-imports', CodeImportsDirective)
-    app.add_directive('code-hierarchy', CodeHierarchyDirective)
+    app.add_directive("code-imports", CodeImportsDirective)
+    app.add_directive("code-hierarchy", CodeHierarchyDirective)
 
     return {
-        'version': '1.0',
-        'parallel_read_safe': True,
-        'parallel_write_safe': True,
+        "version": "1.0",
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
     }

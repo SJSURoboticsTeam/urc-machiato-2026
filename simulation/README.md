@@ -485,13 +485,13 @@ python3 simulation/tools/compare_real_world.py
 simulation:
   time_step: 0.01
   real_time_factor: 1.0
-  
+
 sensors:
   gps:
     update_rate: 10.0
     noise_std: 2.5
     failure_rate: 0.001
-    
+
   imu:
     update_rate: 100.0
     gyro_noise_std: 0.01
@@ -629,7 +629,7 @@ pr.print_stats(sort='time')
 
 ### Before (Scattered)
 ```
-Autonomy/simulation/     # Gazebo worlds
+autonomy/simulation/     # Gazebo worlds
 tests/                   # Consolidated test framework
 tests/fixtures/         # Mock sensors
 bridges/                # Network simulation

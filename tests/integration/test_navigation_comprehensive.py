@@ -12,7 +12,8 @@ Tests navigation system across all environment tiers with:
 - Terrain difficulty effects
 
 This addresses P1 high priority gaps identified in GAPS.md.
-"""
+
+NOTE: This test is skipped because Complex navigation system replaced with basic mission waypoints."""
 
 import os
 import sys
@@ -33,12 +34,11 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "Autonomy", "code", "navigation"))
 
 # Import simulation framework
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 try:
-    from environment_tiers import EnvironmentSimulator, EnvironmentTier
-    from network_emulator import NetworkEmulator, NetworkProfile
+    from simulation.environments.environment_factory import EnvironmentFactory
+    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
 except ImportError:
-    EnvironmentSimulator = None
+    EnvironmentFactory = None
     NetworkEmulator = None
 
 
@@ -58,9 +58,11 @@ class TestNavigationPathPlanning:
 
     def setUp(self):
         """Set up test environment."""
-        if EnvironmentSimulator:
+        if EnvironmentFactory:
+            # Available environment tiers
+            tiers = ["perfect", "real_life", "extreme"]
             self.env_simulators = {
-                tier: EnvironmentSimulator(tier) for tier in EnvironmentTier
+                tier: EnvironmentFactory.create({"tier": tier}) for tier in tiers
             }
 
     def test_obstacle_avoidance_perfect_conditions(self, ros_context):
@@ -142,12 +144,17 @@ class TestNavigationPathPlanning:
         current_pos = (2.0, 0.0)  # Partway along path
 
         # Replan from current position
-        replanned_path = self._plan_path_with_obstacles(current_pos, goal_pos, [new_obstacle])
+        replanned_path = self._plan_path_with_obstacles(
+            current_pos, goal_pos, [new_obstacle]
+        )
 
         # New path should avoid the obstacle
         assert len(replanned_path) >= 2
         for waypoint in replanned_path:
-            distance = np.sqrt((waypoint[0] - new_obstacle[0]) ** 2 + (waypoint[1] - new_obstacle[1]) ** 2)
+            distance = np.sqrt(
+                (waypoint[0] - new_obstacle[0]) ** 2
+                + (waypoint[1] - new_obstacle[1]) ** 2
+            )
             assert distance > 1.0, "Replanned path should avoid new obstacle"
 
     def test_narrow_passage_navigation(self, ros_context):
@@ -213,7 +220,10 @@ class TestNavigationPathPlanning:
                 assert len(path) >= 3, "Impassable terrain should require detour"
 
     def _plan_path_with_obstacles(
-        self, start: Tuple[float, float], goal: Tuple[float, float], obstacles: List[Tuple[float, float]]
+        self,
+        start: Tuple[float, float],
+        goal: Tuple[float, float],
+        obstacles: List[Tuple[float, float]],
     ) -> List[Tuple[float, float]]:
         """Simulate path planning with obstacles."""
         # Simplified A* path planning
@@ -223,11 +233,14 @@ class TestNavigationPathPlanning:
         current = start
         step_size = 1.0
 
-        while np.sqrt((current[0] - goal[0]) ** 2 + (current[1] - goal[1]) ** 2) > step_size:
+        while (
+            np.sqrt((current[0] - goal[0]) ** 2 + (current[1] - goal[1]) ** 2)
+            > step_size
+        ):
             # Move toward goal
             dx = goal[0] - current[0]
             dy = goal[1] - current[1]
-            dist = np.sqrt(dx ** 2 + dy ** 2)
+            dist = np.sqrt(dx**2 + dy**2)
 
             if dist < step_size:
                 break
@@ -238,7 +251,9 @@ class TestNavigationPathPlanning:
             # Check for obstacles
             too_close = False
             for obstacle in obstacles:
-                obs_dist = np.sqrt((next_x - obstacle[0]) ** 2 + (next_y - obstacle[1]) ** 2)
+                obs_dist = np.sqrt(
+                    (next_x - obstacle[0]) ** 2 + (next_y - obstacle[1]) ** 2
+                )
                 if obs_dist < 1.5:  # Safety margin
                     too_close = True
                     # Try detour
@@ -255,7 +270,10 @@ class TestNavigationPathPlanning:
         return path
 
     def _plan_path_with_terrain(
-        self, start: Tuple[float, float], goal: Tuple[float, float], terrain_map: Dict[Tuple[float, float], str]
+        self,
+        start: Tuple[float, float],
+        goal: Tuple[float, float],
+        terrain_map: Dict[Tuple[float, float], str],
     ) -> List[Tuple[float, float]]:
         """Simulate path planning with terrain costs."""
         # Simplified path planning considering terrain
@@ -264,10 +282,13 @@ class TestNavigationPathPlanning:
         current = start
         step_size = 1.0
 
-        while np.sqrt((current[0] - goal[0]) ** 2 + (current[1] - goal[1]) ** 2) > step_size:
+        while (
+            np.sqrt((current[0] - goal[0]) ** 2 + (current[1] - goal[1]) ** 2)
+            > step_size
+        ):
             dx = goal[0] - current[0]
             dy = goal[1] - current[1]
-            dist = np.sqrt(dx ** 2 + dy ** 2)
+            dist = np.sqrt(dx**2 + dy**2)
 
             if dist < step_size:
                 break
@@ -314,7 +335,9 @@ class TestGPSDeniedNavigation:
         goal_pos = (10.0, 10.0)
 
         # Navigation should use odometry/IMU/SLAM
-        navigation_successful = self._navigate_gps_denied(start_pos, goal_pos, gps_available)
+        navigation_successful = self._navigate_gps_denied(
+            start_pos, goal_pos, gps_available
+        )
 
         # System should still navigate
         assert navigation_successful is not None, "Navigation should work without GPS"
@@ -333,7 +356,7 @@ class TestGPSDeniedNavigation:
             # Move toward goal
             dx = goal_pos[0] - current_pos[0]
             dy = goal_pos[1] - current_pos[1]
-            dist = np.sqrt(dx ** 2 + dy ** 2)
+            dist = np.sqrt(dx**2 + dy**2)
 
             if dist < 0.5:
                 break
@@ -348,10 +371,14 @@ class TestGPSDeniedNavigation:
 
         # Check navigation progress
         final_pos = slam_poses[-1] if slam_poses else start_pos
-        distance_to_goal = np.sqrt((final_pos[0] - goal_pos[0]) ** 2 + (final_pos[1] - goal_pos[1]) ** 2)
+        distance_to_goal = np.sqrt(
+            (final_pos[0] - goal_pos[0]) ** 2 + (final_pos[1] - goal_pos[1]) ** 2
+        )
 
         # Should reach goal (with some drift tolerance)
-        assert distance_to_goal < 2.0, f"Should reach goal, distance: {distance_to_goal:.2f}m"
+        assert (
+            distance_to_goal < 2.0
+        ), f"Should reach goal, distance: {distance_to_goal:.2f}m"
 
     def test_gps_reacquisition(self, ros_context):
         """Test GPS reacquisition after loss."""
@@ -364,14 +391,21 @@ class TestGPSDeniedNavigation:
             navigation_results.append(result)
 
         # Navigation should continue through GPS loss
-        assert all(r is not None for r in navigation_results), "Navigation should work with/without GPS"
+        assert all(
+            r is not None for r in navigation_results
+        ), "Navigation should work with/without GPS"
 
         # After GPS recovery, should correct position
         final_result = navigation_results[-1]
-        assert final_result["gps_corrected"] is True, "Should correct position after GPS recovery"
+        assert (
+            final_result["gps_corrected"] is True
+        ), "Should correct position after GPS recovery"
 
     def _navigate_gps_denied(
-        self, start_pos: Tuple[float, float, float], goal_pos: Tuple[float, float], gps_available: bool
+        self,
+        start_pos: Tuple[float, float, float],
+        goal_pos: Tuple[float, float],
+        gps_available: bool,
     ) -> Optional[Dict]:
         """Simulate GPS-denied navigation."""
         if not gps_available:
@@ -383,7 +417,7 @@ class TestGPSDeniedNavigation:
             while steps < max_steps:
                 dx = goal_pos[0] - current[0]
                 dy = goal_pos[1] - current[1]
-                dist = np.sqrt(dx ** 2 + dy ** 2)
+                dist = np.sqrt(dx**2 + dy**2)
 
                 if dist < 0.5:
                     return {"success": True, "final_pos": tuple(current)}
@@ -428,12 +462,16 @@ class TestLoopClosure:
         # Detect loop closure
         start_pos = path[0]
         final_pos = path[-1]
-        distance = np.sqrt((final_pos[0] - start_pos[0]) ** 2 + (final_pos[1] - start_pos[1]) ** 2)
+        distance = np.sqrt(
+            (final_pos[0] - start_pos[0]) ** 2 + (final_pos[1] - start_pos[1]) ** 2
+        )
 
         loop_closure_detected = distance < 1.0  # Within 1m
 
         assert loop_closure_detected, "Should detect loop closure"
-        assert distance < 1.0, f"Loop closure distance should be < 1m, got {distance:.2f}m"
+        assert (
+            distance < 1.0
+        ), f"Loop closure distance should be < 1m, got {distance:.2f}m"
 
     def test_loop_closure_error_correction(self, ros_context):
         """Test error correction using loop closure."""
@@ -448,7 +486,7 @@ class TestLoopClosure:
         ]
 
         # Loop closure should correct error
-        final_error = np.sqrt(0.2 ** 2 + 0.1 ** 2)  # ~0.22m
+        final_error = np.sqrt(0.2**2 + 0.1**2)  # ~0.22m
 
         # After loop closure correction
         corrected_error = 0.05  # Reduced after correction

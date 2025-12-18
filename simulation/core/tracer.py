@@ -20,13 +20,14 @@ from simulation.core.logging_config import get_simulation_logger
 @dataclass
 class TraceSpan:
     """Represents a traced operation span."""
+
     name: str
     start_time: float
     end_time: Optional[float] = None
     duration: Optional[float] = None
     attributes: Dict[str, Any] = None
-    parent: Optional['TraceSpan'] = None
-    children: List['TraceSpan'] = None
+    parent: Optional["TraceSpan"] = None
+    children: List["TraceSpan"] = None
     thread_id: int = None
     operation_id: str = None
 
@@ -43,7 +44,7 @@ class TraceSpan:
         self.end_time = time.time()
         self.duration = self.end_time - self.start_time
 
-    def add_child(self, child: 'TraceSpan'):
+    def add_child(self, child: "TraceSpan"):
         """Add child span."""
         if self.children is None:
             self.children = []
@@ -103,7 +104,7 @@ class SimulationTracer:
             name=name,
             start_time=time.time(),
             attributes=attributes.copy(),
-            operation_id=f"{name}_{self.operation_counters[name]}"
+            operation_id=f"{name}_{self.operation_counters[name]}",
         )
 
         # Add to active spans
@@ -129,6 +130,7 @@ class SimulationTracer:
         Returns:
             Decorator function
         """
+
         def decorator(func: Callable):
             operation_name = name or f"{func.__qualname__}"
 
@@ -139,7 +141,7 @@ class SimulationTracer:
                     function=func.__name__,
                     module=func.__module__,
                     args_count=len(args),
-                    kwargs_count=len(kwargs)
+                    kwargs_count=len(kwargs),
                 ) as span:
                     start_time = time.time()
                     try:
@@ -169,10 +171,11 @@ class SimulationTracer:
                                     operation_name,
                                     span.duration,
                                     slow_operation=True,
-                                    **span.attributes
+                                    **span.attributes,
                                 )
 
             return wrapper
+
         return decorator
 
     def trace_function_call(self, func: Callable, *args, **kwargs):
@@ -192,7 +195,7 @@ class SimulationTracer:
             operation_name,
             function=func.__name__,
             args_count=len(args),
-            kwargs_count=len(kwargs)
+            kwargs_count=len(kwargs),
         ) as span:
             try:
                 result = func(*args, **kwargs)
@@ -226,7 +229,9 @@ class SimulationTracer:
 
             # Keep only recent statistics
             if len(self.operation_stats[span.name]) > 1000:
-                self.operation_stats[span.name] = self.operation_stats[span.name][-1000:]
+                self.operation_stats[span.name] = self.operation_stats[span.name][
+                    -1000:
+                ]
 
         # Thread tracking
         if self.enable_thread_tracking:
@@ -287,8 +292,7 @@ class SimulationTracer:
 
         all_durations.sort(key=lambda x: x[1], reverse=True)
         report["slowest_operations"] = [
-            {"operation": op, "duration": dur}
-            for op, dur in all_durations[:10]
+            {"operation": op, "duration": dur} for op, dur in all_durations[:10]
         ]
 
         # Error analysis
@@ -321,11 +325,13 @@ class SimulationTracer:
         return {
             "start": min(start_times),
             "end": max(end_times) if end_times else max(start_times),
-            "duration": (max(end_times) if end_times else max(start_times)) - min(start_times),
+            "duration": (max(end_times) if end_times else max(start_times))
+            - min(start_times),
         }
 
-    def get_operation_timeline(self, operation_name: str = None,
-                              max_entries: int = 100) -> List[Dict[str, Any]]:
+    def get_operation_timeline(
+        self, operation_name: str = None, max_entries: int = 100
+    ) -> List[Dict[str, Any]]:
         """Get timeline of operations.
 
         Args:
@@ -374,11 +380,13 @@ class SimulationTracer:
         """
         try:
             from pathlib import Path
+
             path = Path(filepath)
             path.parent.mkdir(parents=True, exist_ok=True)
 
             if format == "json":
                 import json
+
                 data = {
                     "traces": [asdict(span) for span in self.traces],
                     "performance_report": self.get_performance_report(),
@@ -389,23 +397,33 @@ class SimulationTracer:
 
             elif format == "csv":
                 import csv
+
                 with open(path, "w", newline="") as f:
                     writer = csv.writer(f)
-                    writer.writerow([
-                        "operation", "start_time", "duration", "thread_id",
-                        "success", "error", "attributes"
-                    ])
+                    writer.writerow(
+                        [
+                            "operation",
+                            "start_time",
+                            "duration",
+                            "thread_id",
+                            "success",
+                            "error",
+                            "attributes",
+                        ]
+                    )
 
                     for span in self.traces:
-                        writer.writerow([
-                            span.name,
-                            span.start_time,
-                            span.duration or 0,
-                            span.thread_id,
-                            span.attributes.get("success", True),
-                            span.attributes.get("error", ""),
-                            str(span.attributes)
-                        ])
+                        writer.writerow(
+                            [
+                                span.name,
+                                span.start_time,
+                                span.duration or 0,
+                                span.thread_id,
+                                span.attributes.get("success", True),
+                                span.attributes.get("error", ""),
+                                str(span.attributes),
+                            ]
+                        )
 
             self.logger.info("Traces exported", filepath=str(path), format=format)
             return True
@@ -422,13 +440,15 @@ class SimulationTracer:
         """
         active_ops = []
         for span in self.active_spans:
-            active_ops.append({
-                "operation": span.name,
-                "start_time": span.start_time,
-                "duration_so_far": time.time() - span.start_time,
-                "thread_id": span.thread_id,
-                "attributes": span.attributes,
-            })
+            active_ops.append(
+                {
+                    "operation": span.name,
+                    "start_time": span.start_time,
+                    "duration_so_far": time.time() - span.start_time,
+                    "thread_id": span.thread_id,
+                    "attributes": span.attributes,
+                }
+            )
         return active_ops
 
     def profile_function(self, func: Callable, *args, **kwargs) -> Dict[str, Any]:
@@ -455,15 +475,19 @@ class SimulationTracer:
 
         try:
             # Execute with tracing
-            with self.trace_context(f"profile_{func.__name__}",
-                                   profiling=True,
-                                   args_count=len(args),
-                                   kwargs_count=len(kwargs)):
+            with self.trace_context(
+                f"profile_{func.__name__}",
+                profiling=True,
+                args_count=len(args),
+                kwargs_count=len(kwargs),
+            ):
                 result = func(*args, **kwargs)
 
             profile_data["result"] = "success"
             profile_data["traces_after"] = len(self.traces)
-            profile_data["new_traces"] = profile_data["traces_after"] - profile_data["traces_before"]
+            profile_data["new_traces"] = (
+                profile_data["traces_after"] - profile_data["traces_before"]
+            )
 
             return profile_data
 
@@ -473,7 +497,9 @@ class SimulationTracer:
             raise
         finally:
             profile_data["end_time"] = time.time()
-            profile_data["total_time"] = profile_data["end_time"] - profile_data["start_time"]
+            profile_data["total_time"] = (
+                profile_data["end_time"] - profile_data["start_time"]
+            )
 
             # Restore tracing state
             if not was_enabled:

@@ -1,0 +1,7 @@
+# Request camera calibration with image directory
+string image_directory
+string board_type  # "charuco" or "chessboard"
+int32 squares_x
+int32 squares_y
+float32 square_size
+float32 marker_size

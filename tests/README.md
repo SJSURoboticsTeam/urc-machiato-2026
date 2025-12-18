@@ -17,14 +17,15 @@ This project follows a **three-layer testing pyramid** - the industry standard f
 
 ### Run Complete Testing Pyramid
 ```bash
-./tests/run_all_tests.py
+python3 test_everything.py
 ```
 
-### Run Individual Layers
+### Run Individual Test Suites
 ```bash
-./tests/run_unit_tests.py        # Layer 1: ~5 minutes
-./tests/run_integration_tests.py # Layer 2: ~20 minutes
-./tests/run_simulation_integration.sh # Layer 3: ~30 minutes
+python3 tests/run_tests.py --unit        # Unit tests (~5 minutes)
+python3 tests/run_tests.py --integration # Integration tests (~20 minutes)
+python3 tests/run_tests.py --system      # System tests (~15 minutes)
+python3 tests/run_tests.py --performance # Performance tests (~10 minutes)
 ```
 
 ## 📊 What Each Layer Tests

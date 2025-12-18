@@ -35,7 +35,7 @@ class MockRoverSimulation(Node):
     """
 
     def __init__(self):
-        super().__init__('mock_rover_simulation')
+        super().__init__("mock_rover_simulation")
 
         # Load configuration
         self.config = self.load_config()
@@ -53,45 +53,52 @@ class MockRoverSimulation(Node):
         self.gps_origin_alt = 10.0
 
         # Publishers
-        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
-        self.imu_pub = self.create_publisher(Imu, '/imu', 10)
-        self.gps_pub = self.create_publisher(NavSatFix, '/gps/fix', 10)
-        self.slam_pub = self.create_publisher(PoseStamped, '/slam/pose', 10)  # SLAM pose
+        self.odom_pub = self.create_publisher(Odometry, "/odom", 10)
+        self.imu_pub = self.create_publisher(Imu, "/imu", 10)
+        self.gps_pub = self.create_publisher(NavSatFix, "/gps/fix", 10)
+        self.slam_pub = self.create_publisher(
+            PoseStamped, "/slam/pose", 10
+        )  # SLAM pose
 
         # Simulation timer (10 Hz for production efficiency)
         self.sim_timer = self.create_timer(0.1, self.update_simulation)
 
         # Control input (can be overridden by mission system)
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel', self.cmd_vel_callback, 10)
+            Twist, "/cmd_vel", self.cmd_vel_callback, 10
+        )
         self.current_cmd_vel = Twist()
 
-        self.get_logger().info('Mock Rover Simulation started')
-        self.get_logger().info('Robot starting at (0, 0), facing positive X')
-        self.get_logger().info('Publishing odometry, IMU, GPS, and SLAM data')
+        self.get_logger().info("Mock Rover Simulation started")
+        self.get_logger().info("Robot starting at (0, 0), facing positive X")
+        self.get_logger().info("Publishing odometry, IMU, GPS, and SLAM data")
 
     def load_config(self):
         """Load configuration from YAML file based on environment"""
-        env = os.environ.get('ROVER_ENV', 'production')  # Default to production
-        config_file = f'{env}.yaml'
+        env = os.environ.get("ROVER_ENV", "production")  # Default to production
+        config_file = f"{env}.yaml"
 
         # Try multiple possible config locations
         possible_paths = [
-            os.path.join(os.path.dirname(__file__), '..', 'config', config_file),
-            os.path.join(os.path.dirname(__file__), 'config', config_file),
-            f'config/{config_file}'
+            os.path.join(os.path.dirname(__file__), "..", "config", config_file),
+            os.path.join(os.path.dirname(__file__), "config", config_file),
+            f"config/{config_file}",
         ]
 
         for config_path in possible_paths:
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     config = yaml.safe_load(f)
-                    self.get_logger().info(f'Loaded {env} configuration from {config_path}')
+                    self.get_logger().info(
+                        f"Loaded {env} configuration from {config_path}"
+                    )
                     return config
             except FileNotFoundError:
                 continue
 
-        self.get_logger().warn(f'Config file {config_file} not found in any expected location, using defaults')
+        self.get_logger().warn(
+            f"Config file {config_file} not found in any expected location, using defaults"
+        )
         return {}
 
     def cmd_vel_callback(self, msg: Twist):
@@ -139,9 +146,9 @@ class MockRoverSimulation(Node):
     def publish_odometry(self):
         """Publish realistic odometry data"""
         odom = Odometry()
-        odom.header = self.create_header('odom')
-        odom.header.frame_id = 'odom'
-        odom.child_frame_id = 'base_link'
+        odom.header = self.create_header("odom")
+        odom.header.frame_id = "odom"
+        odom.child_frame_id = "base_link"
 
         # Position
         odom.pose.pose.position.x = self.robot_x
@@ -156,12 +163,42 @@ class MockRoverSimulation(Node):
 
         # Add small pose covariance (realistic odometry uncertainty)
         odom.pose.covariance = [
-            0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.001
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.001,
         ]
 
         # Velocity
@@ -170,12 +207,42 @@ class MockRoverSimulation(Node):
 
         # Velocity covariance
         odom.twist.covariance = [
-            0.1, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.1, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.1
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
         ]
 
         self.odom_pub.publish(odom)
@@ -183,12 +250,14 @@ class MockRoverSimulation(Node):
     def publish_imu(self):
         """Publish realistic IMU data"""
         imu = Imu()
-        imu.header = self.create_header('imu_link')
-        imu.header.frame_id = 'imu_link'
+        imu.header = self.create_header("imu_link")
+        imu.header.frame_id = "imu_link"
 
         # Accelerometer (gravity + motion)
         gravity = 9.81
-        motion_accel_x = -self.linear_velocity * self.angular_velocity  # Centripetal acceleration
+        motion_accel_x = (
+            -self.linear_velocity * self.angular_velocity
+        )  # Centripetal acceleration
         motion_accel_y = 0.0
 
         imu.linear_acceleration.x = motion_accel_x + random.gauss(0, 0.1)
@@ -208,22 +277,40 @@ class MockRoverSimulation(Node):
 
         # Covariances (realistic IMU specs)
         imu.linear_acceleration_covariance = [
-            0.01, 0.0, 0.0,
-            0.0, 0.01, 0.0,
-            0.0, 0.0, 0.01
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
+            0.0,
+            0.0,
+            0.0,
+            0.01,
         ]
 
         imu.angular_velocity_covariance = [
-            0.001, 0.0, 0.0,
-            0.0, 0.001, 0.0,
-            0.0, 0.0, 0.001
+            0.001,
+            0.0,
+            0.0,
+            0.0,
+            0.001,
+            0.0,
+            0.0,
+            0.0,
+            0.001,
         ]
 
         # Orientation covariance (3x3 matrix = 9 values)
         imu.orientation_covariance = [
-            0.001, 0.0, 0.0,  # Roll variance, roll-pitch covariance, roll-yaw covariance
-            0.0, 0.001, 0.0,  # Pitch-roll covariance, pitch variance, pitch-yaw covariance
-            0.0, 0.0, 0.001   # Yaw-roll covariance, yaw-pitch covariance, yaw variance
+            0.001,
+            0.0,
+            0.0,  # Roll variance, roll-pitch covariance, roll-yaw covariance
+            0.0,
+            0.001,
+            0.0,  # Pitch-roll covariance, pitch variance, pitch-yaw covariance
+            0.0,
+            0.0,
+            0.001,  # Yaw-roll covariance, yaw-pitch covariance, yaw variance
         ]
 
         self.imu_pub.publish(imu)
@@ -231,15 +318,19 @@ class MockRoverSimulation(Node):
     def publish_gps(self):
         """Publish realistic GPS data"""
         gps = NavSatFix()
-        gps.header = self.create_header('gps_link')
-        gps.header.frame_id = 'gps_link'
+        gps.header = self.create_header("gps_link")
+        gps.header.frame_id = "gps_link"
 
         # Convert local coordinates to GPS
         # Approximate conversion: 1 degree ≈ 111,320 meters
         lat_offset = self.robot_y / 111320.0  # Convert meters to degrees latitude
-        lon_offset = self.robot_x / (111320.0 * math.cos(math.radians(self.gps_origin_lat)))
+        lon_offset = self.robot_x / (
+            111320.0 * math.cos(math.radians(self.gps_origin_lat))
+        )
 
-        gps.latitude = self.gps_origin_lat + lat_offset + random.gauss(0, 0.00001)  # GPS noise
+        gps.latitude = (
+            self.gps_origin_lat + lat_offset + random.gauss(0, 0.00001)
+        )  # GPS noise
         gps.longitude = self.gps_origin_lon + lon_offset + random.gauss(0, 0.00001)
         gps.altitude = self.gps_origin_alt + random.gauss(0, 0.5)  # Altitude variation
 
@@ -249,9 +340,15 @@ class MockRoverSimulation(Node):
 
         # Position covariance (GPS accuracy)
         gps.position_covariance = [
-            1.0, 0.0, 0.0,  # East position error
-            0.0, 1.0, 0.0,  # North position error
-            0.0, 0.0, 4.0   # Altitude error
+            1.0,
+            0.0,
+            0.0,  # East position error
+            0.0,
+            1.0,
+            0.0,  # North position error
+            0.0,
+            0.0,
+            4.0,  # Altitude error
         ]
         gps.position_covariance_type = 1  # COVARIANCE_TYPE_APPROXIMATED
 
@@ -260,8 +357,8 @@ class MockRoverSimulation(Node):
     def publish_slam_pose(self):
         """Publish SLAM pose with localization characteristics"""
         pose = PoseStamped()
-        pose.header = self.create_header('map')
-        pose.header.frame_id = 'map'
+        pose.header = self.create_header("map")
+        pose.header.frame_id = "map"
 
         # SLAM pose (similar to odometry but with different characteristics)
         # Add small localization drift and corrections
@@ -300,5 +397,5 @@ def main():
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

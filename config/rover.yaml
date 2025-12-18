@@ -1,0 +1,75 @@
+# URC 2026 Rover Configuration - Flat & Simple
+# All settings at top level with clear names - no nesting complexity
+
+# === CORE SIMULATION ===
+simulation_update_rate_hz: 10 # How fast simulation runs (Hz)
+simulation_odom_noise: 0.01 # Position noise (meters)
+simulation_imu_noise: 0.001 # IMU sensor noise
+simulation_gps_noise: 0.5 # GPS position noise (meters)
+
+# === MISSION EXECUTION ===
+mission_execution_rate_hz: 10 # Mission update frequency (Hz)
+mission_odom_logging_interval: 10 # Log position every N readings
+mission_execution_logging_interval: 5 # Log progress every N steps
+mission_timeout_seconds: 1800 # Max mission time (30 minutes)
+mission_waypoint_timeout_seconds: 300 # Max time per waypoint (5 min)
+mission_max_speed_mps: 1.0 # Maximum mission speed
+mission_heading_tolerance_degrees: 5.0 # Heading accuracy required
+mission_emergency_stop_enabled: true # Allow emergency stops
+mission_auto_recovery_enabled: true # Auto-recover from failures
+
+# === NAVIGATION & SLAM ===
+slam_pose_logging_interval: 10 # Log position every N poses
+slam_map_publish_interval: 10 # Update map every N poses
+slam_path_history_limit: 50 # Keep last N positions in memory
+
+# === NETWORK & COMMUNICATION ===
+network_qos_depth_sensor: 1 # Keep last N sensor messages
+network_qos_depth_command: 5 # Keep last N command messages
+network_qos_depth_status: 1 # Keep last N status messages
+
+# === HARDWARE SETTINGS ===
+hardware_use_mock: true # Use fake hardware for testing
+hardware_websocket_url: "ws://localhost:8080" # WebSocket server
+hardware_can_enabled: false # Enable CAN bus
+hardware_can_interface: "can0" # CAN interface name
+hardware_cameras_enabled: true # Enable cameras
+hardware_camera_front_url: "http://camera1.local:8080" # Front camera
+hardware_camera_rear_url: "http://camera2.local:8080" # Rear camera
+
+# === SAFETY LIMITS ===
+safety_distance_meters: 0.3 # Min distance to obstacles
+safety_max_speed_mps: 2.0 # Maximum rover speed
+safety_boundary_radius_meters: 100.0 # Max distance from start
+safety_thermal_limit_celsius: 70.0 # Overheat shutdown temp
+safety_battery_critical_percent: 10.0 # Low battery emergency
+safety_motor_max_rpm: 1500 # Maximum motor speed
+safety_imu_accel_max: 50.0 # m/s² (unreasonable acceleration)
+safety_imu_gyro_max: 20.0 # rad/s (unreasonable rotation)
+safety_communication_timeout: 5.0 # seconds for watchdog
+safety_auto_recovery_enabled: false # Auto-recover from safety events
+safety_watchdog_heartbeat_timeout: 5.0 # seconds
+safety_sensor_integrity_timeout: 2.0 # seconds
+
+# === TESTING & DEBUG ===
+testing_phase_interval: 2.0 # Seconds between test phases
+testing_performance_monitor_interval: 0.2 # Performance check frequency
+
+# === MONITORING ===
+enable_monitoring: true # Collect performance data
+log_level: "INFO" # DEBUG, INFO, WARN, ERROR
+
+# === MISSION WAYPOINTS ===
+waypoints:
+  - name: "Start Point"
+    x: 0.0
+    y: 0.0
+    tolerance: 1.0
+  - name: "Checkpoint 1"
+    x: 10.0
+    y: 5.0
+    tolerance: 1.0
+  - name: "Checkpoint 2"
+    x: 20.0
+    y: 10.0
+    tolerance: 1.5

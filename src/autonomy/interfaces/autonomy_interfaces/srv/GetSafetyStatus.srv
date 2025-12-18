@@ -1,0 +1,6 @@
+---
+string overall_safety
+SafetyAlert[] active_alerts
+MonitoringStats monitoring_stats
+
+

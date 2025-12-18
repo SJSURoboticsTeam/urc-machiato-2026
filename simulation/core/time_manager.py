@@ -154,9 +154,7 @@ class TimeManager:
             "simulation_time_ratio": self.get_simulation_time_ratio(),
             "is_real_time": self.is_real_time(),
             "average_step_time": (
-                sum(self.step_times) / len(self.step_times)
-                if self.step_times
-                else 0
+                sum(self.step_times) / len(self.step_times) if self.step_times else 0
             ),
             "max_step_time": self.max_step_time,
             "step_size": self.step_size,

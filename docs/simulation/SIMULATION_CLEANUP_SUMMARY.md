@@ -15,7 +15,7 @@
 - `bridges/priority_message_router.py` → functionality in `simulation/network/`
 
 ### **✅ DIRECTORIES RENAMED**
-- `Autonomy/simulation/` → `Autonomy/gazebo_simulation/`
+- `autonomy/simulation/` → `autonomy/gazebo_simulation/`
   - **Purpose**: Clarify scope (ROS2/Gazebo specific vs general simulation)
 
 ### **✅ IMPORT STATEMENTS UPDATED**
@@ -51,7 +51,7 @@ simulation/                          # ← NEW CONSOLIDATED FRAMEWORK
 ├── examples/                       # Usage examples
 └── README.md                       # Documentation
 
-Autonomy/gazebo_simulation/         # ← RENAMED: ROS2/Gazebo specific
+autonomy/gazebo_simulation/         # ← RENAMED: ROS2/Gazebo specific
 ├── launch/                         # ROS2 launch files
 ├── worlds/                         # Gazebo world files
 ├── test_scenarios/                 # Gazebo test scenarios
@@ -100,7 +100,7 @@ env = env_factory.create({"tier": "perfect"})
 
 ### **Directory Structure**
 - ✅ `simulation/` - Single consolidated framework
-- ✅ `Autonomy/gazebo_simulation/` - ROS2/Gazebo specific
+- ✅ `autonomy/gazebo_simulation/` - ROS2/Gazebo specific
 - ✅ Old `tests/simulation/` - Removed
 - ✅ Redundant bridge files - Removed
 
@@ -179,4 +179,3 @@ env = env_factory.create({"tier": "perfect"})
 
 *Cleanup performed on: December 13, 2025*
 *Verification: All imports working, no structural conflicts, pre-commit passing*
-

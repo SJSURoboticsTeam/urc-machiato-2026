@@ -4,8 +4,20 @@ A complete autonomous robotics system for the University Rover Challenge 2026, f
 
 ## 🚀 Quick Start
 
-### For Development
-See [`Autonomy/QUICKSTART.md`](Autonomy/QUICKSTART.md) for getting started with development.
+### One-Command Launch
+```bash
+# Development frontend only
+./start.py dev frontend
+
+# Testing dashboard (backend + frontend)
+./start.py dev dashboard
+
+# Full autonomy system
+./start.py prod autonomy
+
+# Simulation environment
+./start.py dev simulation
+```
 
 ### For Production Deployment
 See [`DEPLOYMENT.md`](DEPLOYMENT.md) for production deployment instructions.
@@ -63,18 +75,33 @@ docker-compose ps
 ## 🚀 Usage
 
 ### Basic Operation
+
+#### Unified Launcher
+Use the single `./start.py` command for all components:
+
+```bash
+# Frontend development server
+./start.py dev frontend
+
+# Testing dashboard (includes backend WebSocket server)
+./start.py dev dashboard
+
+# Full autonomy system with ROS2
+./start.py prod autonomy
+
+# Gazebo simulation
+./start.py dev simulation
+```
+
+#### Manual ROS2 Commands (Advanced)
 ```bash
 # Validate configuration
 python scripts/validate_config.py
 
-# Start integrated system (includes submodules)
-ros2 launch integrated_system integrated_system.launch.py
-
-# Or start individual components
-ros2 launch mission_system mission_system.launch.py  # Autonomy + bridges
-
-# Start teleoperation frontend
-./scripts/manage_submodules.sh teleop
+# Direct ROS2 launches (for advanced users)
+ros2 launch autonomy/launch/integrated_system.launch.py
+ros2 launch autonomy/launch/mission_system.launch.py
+ros2 launch autonomy/launch/rover_simulation.launch.py
 
 # Monitor system
 ros2 topic echo /mission/status
@@ -97,7 +124,7 @@ Access the web interface at `http://localhost:5173` for real-time monitoring and
 
 ## 📁 Directory Structure
 
-### `/Autonomy/`
+### `/autonomy/`
 Main robotics autonomy codebase and development environment.
 - **`docs/`** - Technical documentation and guides
 - **`code/`** - Core autonomy subsystems (navigation, SLAM, computer vision, etc.)
@@ -114,10 +141,8 @@ Data bridge components for inter-system communication:
 - `websocket_slam_bridge.py` - SLAM WebSocket bridge
 
 ### `/config/`
-Configuration files for different environments:
-- `development.yaml` - Development settings
-- `production.yaml` - Production deployment settings
-- `mission_configs.yaml` - Mission-specific configuration
+Configuration files:
+- `rover.yaml` - Single unified configuration file with environment overrides
 
 ### `/docs/`
 Sphinx documentation system (regenerable from source).
@@ -139,7 +164,7 @@ Mission implementations for URC competition:
 - `object_detection_mission.py` - Object detection mission
 - `waypoint_navigation_mission.py` - GPS waypoint navigation
 
-### `/RobotDefinition/`
+### `/robot_definition/`
 Robot hardware definitions, URDF files, and BOM.
 
 ### `/scripts/`
@@ -151,12 +176,12 @@ Utility and management scripts:
 ### `/tests/`
 Comprehensive test suite with mocks and fixtures.
 
-### `/submodules/`
+### `/vendor/`
 Git submodules for external components:
 - **`teleoperation/`**: Web-based teleoperation interface
 - **`control-systems/`**: STM32-based control systems for drive and arm motion
 
-**Note**: Submodules are readonly. See [`submodules/README.md`](submodules/README.md) for details.
+**Note**: Submodules are readonly. See [`vendor/README.md`](vendor/README.md) for details.
 
 ## 🤝 Contributing
 
@@ -170,4 +195,4 @@ This project is licensed under the MIT License - see the [`LICENSE`](LICENSE) fi
 
 - **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
 - **[API Documentation](docs/)** - Complete technical documentation
-- **[Development Guide](Autonomy/QUICKSTART.md)** - Getting started with development
+- **[Development Guide](autonomy/QUICKSTART.md)** - Getting started with development

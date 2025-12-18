@@ -171,7 +171,9 @@ class SensorFactory:
         # Update rate validation
         update_rate = config.get("update_rate", 10.0)
         if not (0.1 <= update_rate <= 50.0):
-            raise ValueError(f"GPS update rate {update_rate}Hz not in valid range [0.1, 50.0]")
+            raise ValueError(
+                f"GPS update rate {update_rate}Hz not in valid range [0.1, 50.0]"
+            )
 
         # Noise model validation
         noise_model = config.get("noise_model", {})
@@ -186,7 +188,9 @@ class SensorFactory:
         # Update rate validation
         update_rate = config.get("update_rate", 100.0)
         if not (10.0 <= update_rate <= 1000.0):
-            raise ValueError(f"IMU update rate {update_rate}Hz not in valid range [10.0, 1000.0]")
+            raise ValueError(
+                f"IMU update rate {update_rate}Hz not in valid range [10.0, 1000.0]"
+            )
 
         # Noise model validation
         noise_model = config.get("noise_model", {})

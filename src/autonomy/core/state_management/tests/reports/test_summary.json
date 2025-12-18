@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-12-16T03:41:11.730808",
+  "duration_seconds": 3.484245,
+  "summary": {
+    "total_tests": 4,
+    "passed": 0,
+    "failed": 4,
+    "success_rate": 0.0
+  },
+  "test_results": [
+    {
+      "name": "Unit Tests",
+      "passed": false
+    },
+    {
+      "name": "Performance Tests",
+      "passed": false
+    },
+    {
+      "name": "Scenario Tests",
+      "passed": false
+    },
+    {
+      "name": "Integration Tests",
+      "passed": false
+    }
+  ],
+  "system_info": {
+    "python_version": "3.10.12",
+    "platform": "Linux-5.15.0-164-generic-aarch64-with-glibc2.35",
+    "cpu_count": 10,
+    "memory_total": 15,
+    "ros2_available": true,
+    "ros2_distro": "humble",
+    "test_environment": "Local development"
+  },
+  "reports_generated": [
+    "/home/ubuntu/urc-machiato-2026/src/autonomy/core/state_management/tests/reports/test_summary.html",
+    "/home/ubuntu/urc-machiato-2026/src/autonomy/core/state_management/tests/reports/test_summary.json",
+    "/home/ubuntu/urc-machiato-2026/src/autonomy/core/state_management/tests/reports/coverage_html/index.html",
+    "/home/ubuntu/urc-machiato-2026/src/autonomy/core/state_management/tests/reports/benchmarks.json"
+  ]
+}

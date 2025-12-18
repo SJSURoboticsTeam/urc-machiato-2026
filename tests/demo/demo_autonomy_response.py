@@ -81,14 +81,16 @@ def simulate_scenario(scenario_name, description):
     if velocity_issues:
         print("   ⚠️ Motor velocity anomalies detected")
         for motor_idx in velocity_issues:
-            print(f"   🔧 Motor {motor_idx}: velocity spike ({motor_velocities[motor_idx]:.1f} rad/s)")
+            print(
+                f"   🔧 Motor {motor_idx}: velocity spike ({motor_velocities[motor_idx]:.1f} rad/s)"
+            )
         print("   🔍 Initiating motor health check")
         print("   🛡️ Enabling redundant motor compensation")
 
     # Overall decision
     print("\n🎯 Overall Autonomy Decision:")
-    critical_issues = (max_temp > 70 or battery_pct < 10 or len(velocity_issues) > 0)
-    moderate_issues = (max_temp > 55 or battery_pct < 20)
+    critical_issues = max_temp > 70 or battery_pct < 10 or len(velocity_issues) > 0
+    moderate_issues = max_temp > 55 or battery_pct < 20
 
     if critical_issues:
         print("   🚨 CRITICAL MODE: Safety protocols activated")
@@ -113,17 +115,13 @@ def main():
     print()
 
     scenarios = [
-        ("Normal Operation",
-         "All systems operating within normal parameters"),
-
-        ("Thermal Stress",
-         "Motors running hot due to continuous operation"),
-
-        ("Battery Critical",
-         "Battery level dangerously low, needs immediate attention"),
-
-        ("Motor Issues",
-         "One motor showing velocity spikes and overheating")
+        ("Normal Operation", "All systems operating within normal parameters"),
+        ("Thermal Stress", "Motors running hot due to continuous operation"),
+        (
+            "Battery Critical",
+            "Battery level dangerously low, needs immediate attention",
+        ),
+        ("Motor Issues", "One motor showing velocity spikes and overheating"),
     ]
 
     for scenario_name, description in scenarios:
@@ -143,5 +141,5 @@ def main():
     print("Ready for real teleoperation integration! 🚀")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

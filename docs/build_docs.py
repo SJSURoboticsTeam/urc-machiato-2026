@@ -34,10 +34,12 @@ class DocsBuilder:
 
     def __init__(self, docs_dir: Path):
         self.docs_dir = docs_dir
-        self.build_dir = docs_dir / '_build'
+        self.build_dir = docs_dir / "_build"
         self.source_dir = docs_dir
 
-    def run_command(self, cmd: list, cwd: Path = None, check: bool = True) -> subprocess.CompletedProcess:
+    def run_command(
+        self, cmd: list, cwd: Path = None, check: bool = True
+    ) -> subprocess.CompletedProcess:
         """Run a command and return the result."""
         try:
             result = subprocess.run(
@@ -45,7 +47,7 @@ class DocsBuilder:
                 cwd=cwd or self.docs_dir,
                 capture_output=True,
                 text=True,
-                check=check
+                check=check,
             )
             return result
         except subprocess.CalledProcessError as e:
@@ -64,6 +66,7 @@ class DocsBuilder:
             import breathe
             import sphinx
             import sphinx_js
+
             print("✅ Python dependencies OK")
         except ImportError as e:
             print(f"❌ Missing Python dependency: {e}")
@@ -71,7 +74,7 @@ class DocsBuilder:
             return False
 
         # Check system tools
-        tools = ['doxygen', 'jsdoc']
+        tools = ["doxygen", "jsdoc"]
         for tool in tools:
             if not shutil.which(tool):
                 print(f"❌ Missing system tool: {tool}")
@@ -85,11 +88,11 @@ class DocsBuilder:
         print("🧹 Cleaning build artifacts...")
 
         dirs_to_clean = [
-            self.build_dir / 'html',
-            self.build_dir / 'doxygen',
-            self.build_dir / 'jsdoc',
-            self.build_dir / 'doctrees',
-            self.build_dir / 'latex'
+            self.build_dir / "html",
+            self.build_dir / "doxygen",
+            self.build_dir / "jsdoc",
+            self.build_dir / "doctrees",
+            self.build_dir / "latex",
         ]
 
         for dir_path in dirs_to_clean:
@@ -103,7 +106,7 @@ class DocsBuilder:
         """Build Sphinx documentation."""
         print("📚 Building Sphinx documentation...")
 
-        cmd = ['make', 'html']
+        cmd = ["make", "html"]
         result = self.run_command(cmd)
 
         if result.returncode == 0:
@@ -118,7 +121,7 @@ class DocsBuilder:
         """Build Doxygen documentation."""
         print("⚙️ Building Doxygen documentation...")
 
-        cmd = ['make', 'doxygen']
+        cmd = ["make", "doxygen"]
         result = self.run_command(cmd)
 
         if result.returncode == 0:
@@ -133,7 +136,7 @@ class DocsBuilder:
         """Build JSDoc documentation."""
         print("🌐 Building JSDoc documentation...")
 
-        cmd = ['make', 'jsdoc']
+        cmd = ["make", "jsdoc"]
         result = self.run_command(cmd)
 
         if result.returncode == 0:
@@ -150,26 +153,26 @@ class DocsBuilder:
 
         # Link check
         print("   Checking links...")
-        result = self.run_command(['make', 'linkcheck'], check=False)
+        result = self.run_command(["make", "linkcheck"], check=False)
         if result.returncode != 0:
             print("⚠️ Link check found issues (see _build/linkcheck/output.txt)")
 
         # Doctest
         print("   Running doctests...")
-        result = self.run_command(['make', 'doctest'], check=False)
+        result = self.run_command(["make", "doctest"], check=False)
         if result.returncode != 0:
             print("⚠️ Doctest failures found")
 
         print("✅ Validation completed")
 
-    def serve_docs(self, host: str = 'localhost', port: int = 8000):
+    def serve_docs(self, host: str = "localhost", port: int = 8000):
         """Serve documentation locally."""
         print(f"🚀 Serving documentation at http://{host}:{port}/")
         print("Press Ctrl+C to stop")
 
         try:
-            cmd = ['python3', '-m', 'http.server', str(port)]
-            self.run_command(cmd, cwd=self.build_dir / 'html')
+            cmd = ["python3", "-m", "http.server", str(port)]
+            self.run_command(cmd, cwd=self.build_dir / "html")
         except KeyboardInterrupt:
             print("\n🛑 Server stopped")
 
@@ -213,50 +216,46 @@ def main():
     parser = argparse.ArgumentParser(
         description="Build URC 2026 documentation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
 
     parser.add_argument(
-        '--clean',
-        action='store_true',
-        help='Clean build artifacts before building'
+        "--clean", action="store_true", help="Clean build artifacts before building"
     )
 
     parser.add_argument(
-        '--serve',
-        action='store_true',
-        help='Serve documentation locally after building'
+        "--serve",
+        action="store_true",
+        help="Serve documentation locally after building",
     )
 
     parser.add_argument(
-        '--validate',
-        action='store_true',
-        help='Run validation checks after building'
+        "--validate", action="store_true", help="Run validation checks after building"
     )
 
     parser.add_argument(
-        '--host',
-        default=os.getenv('DOCS_HOST', 'localhost'),
-        help='Host for local server (default: localhost)'
+        "--host",
+        default=os.getenv("DOCS_HOST", "localhost"),
+        help="Host for local server (default: localhost)",
     )
 
     parser.add_argument(
-        '--port',
+        "--port",
         type=int,
-        default=int(os.getenv('DOCS_PORT', '8000')),
-        help='Port for local server (default: 8000)'
+        default=int(os.getenv("DOCS_PORT", "8000")),
+        help="Port for local server (default: 8000)",
     )
 
     args = parser.parse_args()
 
     # Find docs directory
     script_dir = Path(__file__).parent
-    if (script_dir / 'conf.py').exists():
+    if (script_dir / "conf.py").exists():
         docs_dir = script_dir
     else:
         # Try to find docs directory from project root
         project_root = script_dir.parent
-        docs_dir = project_root / 'docs'
+        docs_dir = project_root / "docs"
         if not docs_dir.exists():
             print("❌ Cannot find docs directory")
             sys.exit(1)
@@ -272,5 +271,5 @@ def main():
     sys.exit(0 if success else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

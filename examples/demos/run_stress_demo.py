@@ -11,7 +11,7 @@ import sys
 import time
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def run_quick_network_demo():
@@ -23,9 +23,9 @@ def run_quick_network_demo():
         from stress_test_network_communication import run_network_stress_test
 
         print("Testing moderate network stress (5 seconds)...")
-        results = run_network_stress_test('moderate', duration=5.0)
+        results = run_network_stress_test("moderate", duration=5.0)
 
-        if 'error' not in results:
+        if "error" not in results:
             print("✅ Network test completed:")
             print(".1f")
             print(".1f")
@@ -51,7 +51,7 @@ def run_quick_can_demo():
         print("Testing moderate CAN stress (10 seconds)...")
         results = run_can_stress_test_level(CANStressLevel.MODERATE)
 
-        if 'error' not in results:
+        if "error" not in results:
             print("✅ CAN test completed:")
             print(".1f")
             print(".1f")
@@ -77,7 +77,7 @@ def run_quick_movement_demo():
         print("Testing moderate movement stress (10 seconds)...")
         results = run_movement_stress_test_level(MovementStressLevel.MODERATE)
 
-        if 'error' not in results:
+        if "error" not in results:
             print("✅ Movement test completed:")
             print(".1f")
             print(f"   Emergency stops: {results['emergency_stops']}")
@@ -99,25 +99,35 @@ def run_intra_vs_inter_demo():
         from simple_latency_test import run_latency_test
 
         print("Testing intra-process communication (5 seconds)...")
-        intra_results = run_latency_test('latency_test_intra', use_intra_process=True, num_messages=100)
+        intra_results = run_latency_test(
+            "latency_test_intra", use_intra_process=True, num_messages=100
+        )
 
         time.sleep(1)  # Brief pause
 
         print("Testing inter-process communication (5 seconds)...")
-        inter_results = run_latency_test('latency_test_inter', use_intra_process=False, num_messages=100)
+        inter_results = run_latency_test(
+            "latency_test_inter", use_intra_process=False, num_messages=100
+        )
 
         # Compare results
         print("\n📊 Performance Comparison:")
         print(".1f")
         print(".1f")
-        if intra_results['avg_latency_ms'] > 0 and inter_results['avg_latency_ms'] > 0:
-            improvement = ((inter_results['avg_latency_ms'] - intra_results['avg_latency_ms']
-                            ) / inter_results['avg_latency_ms']) * 100
+        if intra_results["avg_latency_ms"] > 0 and inter_results["avg_latency_ms"] > 0:
+            improvement = (
+                (inter_results["avg_latency_ms"] - intra_results["avg_latency_ms"])
+                / inter_results["avg_latency_ms"]
+            ) * 100
             print(".1f")
             if improvement > 50:
-                print("   ✅ Excellent performance improvement with intra-process communication!")
+                print(
+                    "   ✅ Excellent performance improvement with intra-process communication!"
+                )
             elif improvement > 20:
-                print("   ⚠️ Good performance improvement with intra-process communication")
+                print(
+                    "   ⚠️ Good performance improvement with intra-process communication"
+                )
             else:
                 print("   🤔 Limited performance improvement observed")
 
@@ -129,7 +139,9 @@ def main():
     """Run the quick stress test demo."""
     print("🚀 URC 2026 Communication Stress Test Demo")
     print("=" * 48)
-    print("This demo shows communication resilience under harsher-than-real-world conditions")
+    print(
+        "This demo shows communication resilience under harsher-than-real-world conditions"
+    )
     print("Each test runs for a short duration to demonstrate the testing framework")
     print()
 
@@ -157,5 +169,5 @@ def main():
     print("  cat tests/performance/README_STRESS_TESTING.md")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

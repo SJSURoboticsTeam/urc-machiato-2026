@@ -24,7 +24,7 @@ WORKDIR /home/urc
 FROM base AS sensor-bridge
 
 # Copy sensor bridge code
-COPY --chown=urc Autonomy/code/sensor_bridge/ ./sensor_bridge/
+COPY --chown=urc src/autonomy/perception/sensor_bridge/ ./sensor_bridge/
 
 # Set environment
 ENV PYTHONPATH=/home/urc
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install --no-cache-dir torch torchvision
 
 # Copy computer vision code
-COPY --chown=urc Autonomy/code/computer_vision/ ./computer_vision/
+COPY --chown=urc src/autonomy/perception/computer_vision/ ./computer_vision/
 
 ENV PYTHONPATH=/home/urc
 
@@ -61,7 +61,7 @@ CMD ["python3", "-m", "computer_vision"]
 FROM base AS autonomy-system
 
 # Copy autonomy system code
-COPY --chown=urc Autonomy/code/ ./autonomy/
+COPY --chown=urc src/autonomy/ ./autonomy/
 
 # Configuration volume mount point
 VOLUME ["/app/config"]

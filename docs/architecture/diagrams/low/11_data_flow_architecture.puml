@@ -1,0 +1,124 @@
+@startuml Data Flow Architecture
+title Data Flow Architecture
+
+database "Sensor Data Sources" as sensors {
+    folder "Raw Sensors" {
+        [Camera Streams] as camera
+        [IMU Readings] as imu
+        [GPS Positions] as gps
+        [Wheel Encoders] as encoders
+        [LiDAR Scans] as lidar
+        [Temperature Sensors] as temp
+    }
+
+    folder "External Data" {
+        [Telemetry Commands] as telemetry
+        [Operator Inputs] as operator
+        [Mission Parameters] as mission
+    }
+}
+
+database "Perception Pipeline" as perception {
+    [Image Processing] as vision
+    [Point Cloud Processing] as pcl
+    [Sensor Fusion] as fusion
+    [Feature Extraction] as features
+    [Object Detection] as detection
+    [Terrain Analysis] as terrain
+}
+
+database "Planning & Control" as planning {
+    [Path Planning] as path
+    [Motion Planning] as motion
+    [Trajectory Generation] as trajectory
+    [PID Controllers] as pid
+    [Safety Monitors] as safety
+    [State Estimation] as state_est
+}
+
+database "Actuation & Feedback" as actuation {
+    [Motor Commands] as motors
+    [Servo Commands] as servos
+    [LED Indicators] as leds
+    [Audio Feedback] as audio
+    [Status Displays] as display
+}
+
+database "Logging & Monitoring" as logging {
+    [System Logs] as syslogs
+    [Performance Metrics] as metrics
+    [Diagnostic Data] as diagnostics
+    [Health Status] as health
+    [Audit Trail] as audit
+}
+
+' Data flow connections
+sensors --> perception : raw_sensor_data
+perception --> planning : processed_features
+planning --> actuation : control_commands
+actuation --> sensors : feedback_signals
+
+' Cross-cutting flows
+perception --> logging : debug_data
+planning --> logging : planning_metrics
+actuation --> logging : execution_status
+
+' Control flow feedback loops
+actuation --> planning : execution_feedback
+planning --> perception : attention_commands
+sensors --> planning : direct_sensor_data
+
+' External interfaces
+telemetry --> planning : remote_commands
+operator --> planning : manual_inputs
+mission --> planning : mission_goals
+planning --> telemetry : rover_status
+
+note right of perception
+    **Processing Stages:**
+    1. **Acquisition**: Raw sensor capture
+    2. **Preprocessing**: Filtering, calibration
+    3. **Feature Extraction**: Keypoint detection
+    4. **Fusion**: Multi-sensor integration
+    5. **Classification**: Object recognition
+
+    **Data Rates:**
+    - Camera: 30 FPS
+    - IMU: 100 Hz
+    - GPS: 10 Hz
+    - Control: 50 Hz
+end note
+
+note right of planning
+    **Planning Hierarchy:**
+    1. **Mission Planning**: High-level goals
+    2. **Path Planning**: Route optimization
+    3. **Motion Planning**: Obstacle avoidance
+    4. **Trajectory Planning**: Smooth execution
+    5. **Control**: Low-level tracking
+
+    **Decision Types:**
+    - Reactive: Immediate responses
+    - Predictive: Anticipatory actions
+    - Adaptive: Learning-based adjustments
+end note
+
+note as N11
+  **Data Flow Patterns:**
+  - **Push**: Sensor data streams
+  - **Pull**: On-demand queries
+  - **Event-driven**: State changes
+  - **Periodic**: Regular updates
+  - **Asynchronous**: Non-blocking operations
+
+  **Quality of Service:**
+  - **Reliability**: Critical data = RELIABLE
+  - **Latency**: Control data < 10ms
+  - **Throughput**: Video streams = BEST_EFFORT
+  - **Durability**: Status data = TRANSIENT_LOCAL
+
+  **Created:** 2024-12-16
+  **Source:** src/autonomy/, src/perception/, src/control/
+  **Stakeholders:** Systems Team, Integration Team, Performance Team
+end note
+@enduml

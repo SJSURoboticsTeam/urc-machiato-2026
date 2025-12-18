@@ -1,0 +1,43 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/ContextUpdate.msg
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "ContextUpdate.msg" "\n"
+      "Simplified context update for dashboard display")
+    struct ContextUpdate {
+      @verbatim (language="comment", text=
+        "Core status indicators")
+      float battery_level;
+
+      string mission_status;
+
+      float mission_progress;
+
+      boolean communication_active;
+
+      boolean safety_active;
+
+      @verbatim (language="comment", text=
+        "Active adaptive actions")
+      sequence<string> active_adaptations;
+
+      @verbatim (language="comment", text=
+        "Alert level" "\n"
+        "NONE, WARNING, CRITICAL")
+      string alert_level;
+
+      @verbatim (language="comment", text=
+        "Quick action buttons available")
+      sequence<string> available_actions;
+
+      @verbatim (language="comment", text=
+        "Timestamp")
+      builtin_interfaces::msg::Time timestamp;
+    };
+  };
+};

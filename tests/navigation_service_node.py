@@ -26,21 +26,21 @@ class NavigationServiceNode(Node):
     """ROS2 node that provides navigation services for integration testing."""
 
     def __init__(self):
-        super().__init__('navigation_service_node')
+        super().__init__("navigation_service_node")
 
         # Services
         self.path_planning_service = self.create_service(
-            GetPlan, '/plan', self.plan_path_callback
+            GetPlan, "/plan", self.plan_path_callback
         )
 
         self.compute_path_service = self.create_service(
-            ComputePathToPose, '/compute_path_to_pose', self.compute_path_callback
+            ComputePathToPose, "/compute_path_to_pose", self.compute_path_callback
         )
 
         # Publishers
-        self.path_pub = self.create_publisher(Path, '/planned_path', 10)
+        self.path_pub = self.create_publisher(Path, "/planned_path", 10)
 
-        self.get_logger().info('Navigation Service Node initialized')
+        self.get_logger().info("Navigation Service Node initialized")
 
     def plan_path_callback(self, request, response):
         """Handle path planning requests."""
@@ -48,7 +48,7 @@ class NavigationServiceNode(Node):
             # Create a simple path from start to goal
             path = Path()
             path.header.stamp = self.get_clock().now().to_msg()
-            path.header.frame_id = 'map'
+            path.header.frame_id = "map"
 
             # Generate waypoints (simple straight line for testing)
             start = request.start.pose.position
@@ -70,10 +70,10 @@ class NavigationServiceNode(Node):
             response.plan = path
             self.path_pub.publish(path)
 
-            self.get_logger().info(f'Planned path with {len(path.poses)} waypoints')
+            self.get_logger().info(f"Planned path with {len(path.poses)} waypoints")
 
         except Exception as e:
-            self.get_logger().error(f'Path planning failed: {e}')
+            self.get_logger().error(f"Path planning failed: {e}")
             response.plan = Path()  # Return empty path
 
         return response
@@ -84,7 +84,7 @@ class NavigationServiceNode(Node):
             # Mock path computation
             path = Path()
             path.header.stamp = self.get_clock().now().to_msg()
-            path.header.frame_id = 'map'
+            path.header.frame_id = "map"
 
             # Simple path to goal
             start = Point(x=0.0, y=0.0, z=0.0)
@@ -105,16 +105,16 @@ class NavigationServiceNode(Node):
                 path.poses.append(pose)
 
             # Mock response
-            if hasattr(response, 'path'):
+            if hasattr(response, "path"):
                 response.path = path
-            if hasattr(response, 'planning_time'):
+            if hasattr(response, "planning_time"):
                 response.planning_time = 0.1
 
             self.path_pub.publish(path)
-            self.get_logger().info('Computed path to pose')
+            self.get_logger().info("Computed path to pose")
 
         except Exception as e:
-            self.get_logger().error(f'Path computation failed: {e}')
+            self.get_logger().error(f"Path computation failed: {e}")
 
         return response
 
@@ -149,5 +149,5 @@ def main():
             rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

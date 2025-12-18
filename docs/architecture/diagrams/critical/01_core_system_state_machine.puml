@@ -1,0 +1,41 @@
+@startuml
+title Rover State Machine
+
+[*] --> BOOT
+BOOT --> READY : initialization_complete
+
+READY --> TELEOP : manual_control_request
+READY --> AUTO : mission_start
+READY --> SHUTDOWN : power_down
+
+TELEOP --> READY : control_release
+TELEOP --> PAUSED : pause_command
+TELEOP --> ESTOP : emergency_trigger
+
+AUTO --> READY : mission_complete
+AUTO --> PAUSED : pause_command
+AUTO --> ESTOP : emergency_trigger
+
+PAUSED --> TELEOP : resume_manual
+PAUSED --> AUTO : resume_mission
+PAUSED --> READY : mission_abort
+
+ESTOP --> READY : emergency_reset
+
+SHUTDOWN --> [*]
+
+note right of ESTOP
+  EMERGENCY CONDITIONS:
+  - Thermal overload
+  - Battery critical (< 20%)
+  - Motor failure
+  - Communication loss
+  - Geofencing breach
+end note
+
+note as N1
+  Created: 2024-12-16
+  Source: src/autonomy/core/state_management/autonomy_state_machine/states.py
+  Stakeholders: Autonomy Team, Safety Team
+end note
+@enduml

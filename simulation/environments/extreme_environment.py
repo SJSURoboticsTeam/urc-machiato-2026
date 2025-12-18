@@ -49,7 +49,9 @@ class ExtremeEnvironment(BaseEnvironment):
         # Add extreme variations
         self.temperature += np.random.normal(0, 5.0)  # ±5°C variation
         self.wind_speed += np.random.normal(0, 5.0)  # ±5 m/s variation
-        self.visibility *= np.random.uniform(0.8, 1.0)  # 20-100% of already poor visibility
+        self.visibility *= np.random.uniform(
+            0.8, 1.0
+        )  # 20-100% of already poor visibility
 
         # Initialize extreme event timers
         self._next_dust_burst = np.random.uniform(10.0, 60.0)  # 10-60 seconds
@@ -81,7 +83,7 @@ class ExtremeEnvironment(BaseEnvironment):
             self.wind_speed = min(40.0, self.wind_speed + gust_strength)
 
             # Rapid wind direction changes
-            self.wind_direction += np.random.uniform(-math.pi/2, math.pi/2)
+            self.wind_direction += np.random.uniform(-math.pi / 2, math.pi / 2)
 
             # Schedule next gust
             self._next_wind_gust = self.simulation_time + np.random.uniform(5.0, 20.0)
@@ -102,20 +104,32 @@ class ExtremeEnvironment(BaseEnvironment):
             self._dust_burst_original = self.dust_density - dust_increase
 
             # Schedule next burst
-            self._next_dust_burst = self.simulation_time + np.random.uniform(60.0, 300.0)
+            self._next_dust_burst = self.simulation_time + np.random.uniform(
+                60.0, 300.0
+            )
 
         # Handle dust burst end
-        if hasattr(self, '_dust_burst_end') and self.simulation_time >= self._dust_burst_end:
+        if (
+            hasattr(self, "_dust_burst_end")
+            and self.simulation_time >= self._dust_burst_end
+        ):
             # Gradually reduce dust
             dust_reduction = 0.02 * dt
-            self.dust_density = max(self._dust_burst_original, self.dust_density - dust_reduction)
+            self.dust_density = max(
+                self._dust_burst_original, self.dust_density - dust_reduction
+            )
 
         # Extreme humidity variations (very low but can spike)
         humidity_spike = np.random.random()
         if humidity_spike < 0.001:  # 0.1% chance
             self.humidity = np.random.uniform(0.1, 0.3)  # Temporary moisture
-            self._humidity_spike_end = self.simulation_time + np.random.uniform(10.0, 60.0)
-        elif hasattr(self, '_humidity_spike_end') and self.simulation_time >= self._humidity_spike_end:
+            self._humidity_spike_end = self.simulation_time + np.random.uniform(
+                10.0, 60.0
+            )
+        elif (
+            hasattr(self, "_humidity_spike_end")
+            and self.simulation_time >= self._humidity_spike_end
+        ):
             self.humidity = 0.05  # Back to extreme dryness
 
         # Visibility affected by multiple factors
@@ -124,7 +138,9 @@ class ExtremeEnvironment(BaseEnvironment):
         humidity_factor = 1.0 - self.humidity * 0.2  # Moisture can help or hurt
         lighting_factor = 0.5 + self.lighting * 0.5  # Poor lighting
 
-        self.visibility = min(1.0, dust_factor * wind_factor * humidity_factor * lighting_factor)
+        self.visibility = min(
+            1.0, dust_factor * wind_factor * humidity_factor * lighting_factor
+        )
         self.visibility = max(0.05, self.visibility)  # Never completely blind
 
     def _update_terrain(self, dt: float):
@@ -138,7 +154,9 @@ class ExtremeEnvironment(BaseEnvironment):
             # Sudden terrain difficulty changes
             difficulty_change = np.random.uniform(-0.3, 0.3)
             self.terrain_difficulty += difficulty_change
-            self.terrain_difficulty = np.clip(self.terrain_difficulty, 0.5, 1.0)  # Always difficult
+            self.terrain_difficulty = np.clip(
+                self.terrain_difficulty, 0.5, 1.0
+            )  # Always difficult
 
             # Slope changes
             slope_change = np.random.uniform(-0.2, 0.2)
@@ -152,7 +170,9 @@ class ExtremeEnvironment(BaseEnvironment):
                 self.traction = min(0.6, self.traction + 0.05)  # Slightly better
 
             # Schedule next shift
-            self._next_terrain_shift = self.simulation_time + np.random.uniform(30.0, 120.0)
+            self._next_terrain_shift = self.simulation_time + np.random.uniform(
+                30.0, 120.0
+            )
 
         # Continuous traction degradation
         if np.random.random() < 0.01:  # 1% chance per second
@@ -161,10 +181,15 @@ class ExtremeEnvironment(BaseEnvironment):
             self.traction = max(0.1, self.traction - traction_loss)
 
             # Recovery takes time
-            self._traction_recovery_time = self.simulation_time + np.random.uniform(60.0, 300.0)
+            self._traction_recovery_time = self.simulation_time + np.random.uniform(
+                60.0, 300.0
+            )
 
         # Traction recovery
-        if hasattr(self, '_traction_recovery_time') and self.simulation_time >= self._traction_recovery_time:
+        if (
+            hasattr(self, "_traction_recovery_time")
+            and self.simulation_time >= self._traction_recovery_time
+        ):
             traction_gain = 0.01 * dt
             self.traction = min(0.5, self.traction + traction_gain)  # Limited recovery
 
@@ -186,19 +211,25 @@ class ExtremeEnvironment(BaseEnvironment):
         return {
             **base_effects,
             # GPS nearly unusable
-            "gps_accuracy_factor": base_effects["gps_accuracy_factor"] * 0.3,  # 70% degradation
+            "gps_accuracy_factor": base_effects["gps_accuracy_factor"]
+            * 0.3,  # 70% degradation
             # IMU heavily affected
-            "imu_noise_multiplier": base_effects["imu_noise_multiplier"] * 3.0,  # 3x noise
+            "imu_noise_multiplier": base_effects["imu_noise_multiplier"]
+            * 3.0,  # 3x noise
             # Camera severely impaired
             "camera_visibility_factor": self.visibility * 0.4,  # Additional impairment
             # LiDAR very limited range
-            "lidar_range_factor": base_effects["lidar_range_factor"] * 0.5,  # 50% range loss
+            "lidar_range_factor": base_effects["lidar_range_factor"]
+            * 0.5,  # 50% range loss
             # Rover struggles
             "traction_multiplier": self.traction * 0.7,  # Additional traction loss
-            "rolling_resistance_factor": base_effects["rolling_resistance_factor"] * 1.5,
+            "rolling_resistance_factor": base_effects["rolling_resistance_factor"]
+            * 1.5,
             "wind_resistance_factor": base_effects["wind_resistance_factor"] * 2.0,
             # High safety risk
-            "collision_risk_factor": min(0.9, base_effects["collision_risk_factor"] * 2.0),
+            "collision_risk_factor": min(
+                0.9, base_effects["collision_risk_factor"] * 2.0
+            ),
             "thermal_stress_factor": 0.8,  # Severe thermal stress
         }
 
@@ -246,7 +277,9 @@ class ExtremeEnvironment(BaseEnvironment):
         self.wind_speed = min(50.0, self.wind_speed + 20.0)
 
         # Long duration storm
-        self._storm_end_time = self.simulation_time + np.random.uniform(600.0, 1800.0)  # 10-30 minutes
+        self._storm_end_time = self.simulation_time + np.random.uniform(
+            600.0, 1800.0
+        )  # 10-30 minutes
 
     def _trigger_wind_shear(self):
         """Trigger wind shear event."""
@@ -269,7 +302,9 @@ class ExtremeEnvironment(BaseEnvironment):
         self.slope_angle += np.random.uniform(0.2, 0.4)
 
         # Recovery takes time
-        self._terrain_recovery_time = self.simulation_time + np.random.uniform(300.0, 900.0)
+        self._terrain_recovery_time = self.simulation_time + np.random.uniform(
+            300.0, 900.0
+        )
 
     def _trigger_thermal_extreme(self):
         """Trigger thermal extreme event."""
@@ -280,4 +315,6 @@ class ExtremeEnvironment(BaseEnvironment):
         self.temperature += temp_change
 
         # Duration of extreme thermal event
-        self._thermal_event_end = self.simulation_time + np.random.uniform(300.0, 1200.0)
+        self._thermal_event_end = self.simulation_time + np.random.uniform(
+            300.0, 1200.0
+        )

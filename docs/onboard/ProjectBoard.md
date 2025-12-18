@@ -1,6 +1,6 @@
 ## Robotics 2025 Project Board (User-level)
 
-This user-level GitHub Project tracks planning and TODOs from the `Autonomy/**` folder in `robotics2025`.
+This user-level GitHub Project tracks planning and TODOs from the `autonomy/**` folder in `robotics2025`.
 
 ### Quick Links
 - Project: https://github.com/users/ahmad-kad/projects/5
@@ -19,7 +19,7 @@ This user-level GitHub Project tracks planning and TODOs from the `Autonomy/**` 
 - Task, Bug, Epic, Visual Artifact (with purpose, preview, sources, acceptance)
 
 ### Automations
-- TODO comments become issues (scoped to `Autonomy/**`).
+- TODO comments become issues (scoped to `autonomy/**`).
 - Path-based labeler applies `area:*` and `visual-artifact`.
 - New issues/PRs are auto-added to the user-level project.
 
@@ -29,5 +29,3 @@ This user-level GitHub Project tracks planning and TODOs from the `Autonomy/**` 
 ### Conventions
 - Use `Fixes #<issue>` in PRs to auto-close and mark Done.
 - Keep acceptance criteria checklist accurate.
-
-

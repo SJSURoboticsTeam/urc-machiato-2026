@@ -1,0 +1,28 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/GetAdaptationHistory.srv
+// generated code does not contain a copyright notice
+
+#include "autonomy_interfaces/msg/AdaptiveAction.idl"
+#include "autonomy_interfaces/msg/ContextState.idl"
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "GetAdaptationHistory.srv" "\n"
+      "Request adaptation decision history")
+    struct GetAdaptationHistory_Request {
+      @verbatim (language="comment", text=
+        "Maximum number of entries to return (0 = all)")
+      int32 limit;
+
+      @verbatim (language="comment", text=
+        "Include full context with each action")
+      boolean include_context;
+    };
+    struct GetAdaptationHistory_Response {
+      sequence<autonomy_interfaces::msg::AdaptiveAction> actions;
+
+      sequence<autonomy_interfaces::msg::ContextState> contexts;
+    };
+  };
+};

@@ -96,7 +96,7 @@ class HardwareInterface:
             self.sensors = RealSensorInterface(node)
             self.actuators = RealActuatorInterface(node)
 
-        self.node.get_logger().info(f'Hardware interface initialized (mock={use_mock})')
+        self.node.get_logger().info(f"Hardware interface initialized (mock={use_mock})")
 
 
 class MockSensorInterface(SensorInterface):
@@ -108,21 +108,26 @@ class MockSensorInterface(SensorInterface):
         self.vision_detections = []
         self.last_gps_update = 0.0
 
-        # Subscribe to simulated sensor data
+        # Subscribe to simulated sensor data (optimized QoS)
         qos_sensor = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=5,  # Optimized for sensor messages
+            deadline=rclpy.duration.Duration(milliseconds=20),
         )
 
         self.odom_sub = node.create_subscription(
-            Odometry, '/odom', self._odom_callback, qos_sensor)
+            Odometry, "/odom", self._odom_callback, qos_sensor
+        )
         self.gps_sub = node.create_subscription(
-            NavSatFix, '/gps/fix', self._gps_callback, qos_sensor)
+            NavSatFix, "/gps/fix", self._gps_callback, qos_sensor
+        )
         self.imu_sub = node.create_subscription(
-            Imu, '/imu/data', self._imu_callback, qos_sensor)
+            Imu, "/imu/data", self._imu_callback, qos_sensor
+        )
         self.vision_sub = node.create_subscription(
-            VisionDetection, '/vision/detections', self._vision_callback, qos_sensor)
+            VisionDetection, "/vision/detections", self._vision_callback, qos_sensor
+        )
 
         # Stored sensor data
         self.latest_odometry: Optional[Odometry] = None
@@ -138,7 +143,7 @@ class MockSensorInterface(SensorInterface):
         self.current_position = (
             msg.pose.pose.position.x,
             msg.pose.pose.position.y,
-            self._quaternion_to_heading(msg.pose.pose.orientation)
+            self._quaternion_to_heading(msg.pose.pose.orientation),
         )
 
     def _gps_callback(self, msg: NavSatFix):
@@ -181,7 +186,7 @@ class MockSensorInterface(SensorInterface):
         """Get pose of specific ArUco tag from vision data"""
         # Look for ArUco tag in recent detections
         for detection in reversed(self.vision_detections):
-            if hasattr(detection, 'tag_id') and detection.tag_id == tag_id:
+            if hasattr(detection, "tag_id") and detection.tag_id == tag_id:
                 pose = PoseStamped()
                 pose.header = detection.header
                 # Convert detection to pose (simplified)
@@ -215,8 +220,12 @@ class MockSensorInterface(SensorInterface):
         import math
 
         # Simplified conversion for yaw
-        siny_cosp = 2.0 * (orientation.w * orientation.z + orientation.x * orientation.y)
-        cosy_cosp = 1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z)
+        siny_cosp = 2.0 * (
+            orientation.w * orientation.z + orientation.x * orientation.y
+        )
+        cosy_cosp = 1.0 - 2.0 * (
+            orientation.y * orientation.y + orientation.z * orientation.z
+        )
         return math.atan2(siny_cosp, cosy_cosp)
 
 
@@ -226,17 +235,18 @@ class MockActuatorInterface(ActuatorInterface):
     def __init__(self, node: Node):
         self.node = node
 
-        # Publishers for mock hardware control
+        # Publishers for mock hardware control (optimized QoS)
         qos_reliable = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=20,  # Updated for control message optimization
+            deadline=rclpy.duration.Duration(milliseconds=50),
         )
 
-        self.cmd_vel_pub = node.create_publisher(Twist, '/cmd_vel', qos_reliable)
+        self.cmd_vel_pub = node.create_publisher(Twist, "/cmd_vel", qos_reliable)
 
         # Mock LED control (would publish to LED topic)
-        self.led_pub = node.create_publisher(String, '/led/status', qos_reliable)
+        self.led_pub = node.create_publisher(String, "/led/status", qos_reliable)
 
     def send_velocity_command(self, linear_x: float, angular_z: float):
         """Send velocity command to mock motors"""
@@ -245,21 +255,22 @@ class MockActuatorInterface(ActuatorInterface):
         twist.angular.z = angular_z
 
         self.cmd_vel_pub.publish(twist)
-        self.node.get_logger().debug('.2f')
+        self.node.get_logger().debug(".2f")
 
     def emergency_stop(self):
         """Mock emergency stop"""
-        self.node.get_logger().warn('MOCK EMERGENCY STOP ACTIVATED')
+        self.node.get_logger().warn("MOCK EMERGENCY STOP ACTIVATED")
         self.send_velocity_command(0.0, 0.0)
-        self.set_led_status('EMERGENCY_RED_BLINK')
+        self.set_led_status("EMERGENCY_RED_BLINK")
 
     def navigate_to_position(self, position: Dict[str, float]) -> bool:
         """Mock navigation to position"""
-        self.node.get_logger().info(f'Mock navigation to position: {position}')
+        self.node.get_logger().info(f"Mock navigation to position: {position}")
 
         # In a real implementation, this would use the navigation stack
         # For mock, just simulate success after delay
         import time
+
         time.sleep(1.0)  # Simulate navigation time
 
         return True  # Mock success
@@ -269,7 +280,7 @@ class MockActuatorInterface(ActuatorInterface):
         msg = String()
         msg.data = status
         self.led_pub.publish(msg)
-        self.node.get_logger().debug(f'Mock LED status: {status}')
+        self.node.get_logger().debug(f"Mock LED status: {status}")
 
 
 class RealSensorInterface(SensorInterface):
@@ -277,7 +288,7 @@ class RealSensorInterface(SensorInterface):
 
     def __init__(self, node: Node):
         self.node = node
-        self.node.get_logger().info('Real sensor interface initialized')
+        self.node.get_logger().info("Real sensor interface initialized")
 
         # Initialize real sensor drivers here
         # - CAN bus for drive/IMU data
@@ -296,7 +307,7 @@ class RealActuatorInterface(ActuatorInterface):
 
     def __init__(self, node: Node):
         self.node = node
-        self.node.get_logger().info('Real actuator interface initialized')
+        self.node.get_logger().info("Real actuator interface initialized")
 
         # Initialize real actuator drivers here
         # - Motor controllers (PWM/speed controllers)
@@ -322,24 +333,28 @@ def create_hardware_interface(node: Node, config: Dict[str, Any]) -> HardwareInt
     Returns:
         Configured HardwareInterface instance
     """
-    use_mock = config.get('use_mock', True)
+    use_mock = config.get("use_mock", True)
 
     interface = HardwareInterface(node, use_mock)
 
     # Configure sensor sources based on config
-    sensor_sources = config.get('sensor_sources', {})
+    sensor_sources = config.get("sensor_sources", {})
 
-    if 'websocket' in sensor_sources:
+    if "websocket" in sensor_sources:
         # Configure WebSocket sensor bridge
-        interface.websocket_url = sensor_sources['websocket'].get('url', 'ws://localhost:8080')
+        interface.websocket_url = sensor_sources["websocket"].get(
+            "url", "ws://localhost:8080"
+        )
 
-    if 'can_bus' in sensor_sources:
+    if "can_bus" in sensor_sources:
         # Configure CAN bus sensors
-        interface.can_interface = sensor_sources['can_bus'].get('interface', 'can0')
+        interface.can_interface = sensor_sources["can_bus"].get("interface", "can0")
 
-    if 'network_cameras' in sensor_sources:
+    if "network_cameras" in sensor_sources:
         # Configure network camera clients
-        interface.camera_endpoints = sensor_sources['network_cameras'].get('endpoints', [])
+        interface.camera_endpoints = sensor_sources["network_cameras"].get(
+            "endpoints", []
+        )
 
     return interface
 
@@ -361,30 +376,30 @@ def validate_hardware_config(config: Dict[str, Any]) -> List[str]:
         return errors
 
     # Check required fields
-    if 'use_mock' not in config:
+    if "use_mock" not in config:
         errors.append("Missing 'use_mock' field in hardware config")
 
     # Validate sensor sources
-    sensor_sources = config.get('sensor_sources', {})
+    sensor_sources = config.get("sensor_sources", {})
     if not isinstance(sensor_sources, dict):
         errors.append("'sensor_sources' must be a dictionary")
     else:
         # Validate WebSocket config
-        if 'websocket' in sensor_sources:
-            ws_config = sensor_sources['websocket']
-            if 'url' not in ws_config:
+        if "websocket" in sensor_sources:
+            ws_config = sensor_sources["websocket"]
+            if "url" not in ws_config:
                 errors.append("WebSocket config missing 'url' field")
 
         # Validate CAN bus config
-        if 'can_bus' in sensor_sources:
-            can_config = sensor_sources['can_bus']
-            if 'interface' not in can_config:
+        if "can_bus" in sensor_sources:
+            can_config = sensor_sources["can_bus"]
+            if "interface" not in can_config:
                 errors.append("CAN bus config missing 'interface' field")
 
         # Validate network cameras config
-        if 'network_cameras' in sensor_sources:
-            cam_config = sensor_sources['network_cameras']
-            if 'endpoints' not in cam_config:
+        if "network_cameras" in sensor_sources:
+            cam_config = sensor_sources["network_cameras"]
+            if "endpoints" not in cam_config:
                 errors.append("Network cameras config missing 'endpoints' field")
 
     return errors

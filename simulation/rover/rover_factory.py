@@ -144,12 +144,16 @@ class RoverFactory:
         if "wheelbase" in config:
             wheelbase = config["wheelbase"]
             if not (0.1 <= wheelbase <= 2.0):
-                raise ValueError(f"Wheelbase {wheelbase}m not in valid range [0.1, 2.0]")
+                raise ValueError(
+                    f"Wheelbase {wheelbase}m not in valid range [0.1, 2.0]"
+                )
 
         if "track_width" in config:
             track_width = config["track_width"]
             if not (0.1 <= track_width <= 1.5):
-                raise ValueError(f"Track width {track_width}m not in valid range [0.1, 1.5]")
+                raise ValueError(
+                    f"Track width {track_width}m not in valid range [0.1, 1.5]"
+                )
 
         # Mass
         if "mass" in config:
@@ -161,9 +165,13 @@ class RoverFactory:
         if "max_velocity" in config:
             max_vel = config["max_velocity"]
             if not (0.1 <= max_vel <= 5.0):
-                raise ValueError(f"Max velocity {max_vel}m/s not in valid range [0.1, 5.0]")
+                raise ValueError(
+                    f"Max velocity {max_vel}m/s not in valid range [0.1, 5.0]"
+                )
 
         if "max_acceleration" in config:
             max_acc = config["max_acceleration"]
             if not (0.1 <= max_acc <= 3.0):
-                raise ValueError(f"Max acceleration {max_acc}m/s² not in valid range [0.1, 3.0]")
+                raise ValueError(
+                    f"Max acceleration {max_acc}m/s² not in valid range [0.1, 3.0]"
+                )

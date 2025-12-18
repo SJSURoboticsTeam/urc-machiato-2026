@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import patch
 
 # Add paths for testing
-sys.path.append(os.path.join(os.path.dirname(__file__), 'Autonomy/code'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "autonomy/code"))
 
 try:
     ROS2_AVAILABLE = True
@@ -30,7 +30,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             self.skipTest("ROS2 not available")
 
         # Mock the CAN serial to avoid hardware dependencies
-        with patch('submodules.teleoperation.server.can_serial.CanSerial'):
+        with patch("submodules.teleoperation.server.can_serial.CanSerial"):
             # Import after mocking
             try:
                 self.py_server_available = True
@@ -45,10 +45,10 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
         # Required topics from integration guide
         required_topics = [
-            '/teleoperation/joint_states',
-            '/teleoperation/chassis_velocity',
-            '/teleoperation/motor_temperatures',
-            '/teleoperation/system_status'
+            "/teleoperation/joint_states",
+            "/teleoperation/chassis_velocity",
+            "/teleoperation/motor_temperatures",
+            "/teleoperation/system_status",
         ]
 
         # Check that autonomy system expects these topics
@@ -56,8 +56,8 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
         # For now, just verify the topic names follow ROS2 conventions
         for topic in required_topics:
-            self.assertTrue(topic.startswith('/'), f"Topic {topic} should start with /")
-            self.assertIn('/', topic[1:], f"Topic {topic} should have namespace")
+            self.assertTrue(topic.startswith("/"), f"Topic {topic} should start with /")
+            self.assertIn("/", topic[1:], f"Topic {topic} should have namespace")
 
         print("✅ ROS2 topic naming conventions verified")
 
@@ -74,22 +74,22 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
             # Verify message structures can be created
             joint_state = JointState()
-            self.assertTrue(hasattr(joint_state, 'header'))
-            self.assertTrue(hasattr(joint_state, 'name'))
-            self.assertTrue(hasattr(joint_state, 'position'))
-            self.assertTrue(hasattr(joint_state, 'velocity'))
+            self.assertTrue(hasattr(joint_state, "header"))
+            self.assertTrue(hasattr(joint_state, "name"))
+            self.assertTrue(hasattr(joint_state, "position"))
+            self.assertTrue(hasattr(joint_state, "velocity"))
 
             twist_stamped = TwistStamped()
-            self.assertTrue(hasattr(twist_stamped, 'header'))
-            self.assertTrue(hasattr(twist_stamped, 'twist'))
+            self.assertTrue(hasattr(twist_stamped, "header"))
+            self.assertTrue(hasattr(twist_stamped, "twist"))
 
             temp_array = Float32MultiArray()
-            self.assertTrue(hasattr(temp_array, 'data'))
+            self.assertTrue(hasattr(temp_array, "data"))
 
             battery_state = BatteryState()
-            self.assertTrue(hasattr(battery_state, 'voltage'))
-            self.assertTrue(hasattr(battery_state, 'current'))
-            self.assertTrue(hasattr(battery_state, 'percentage'))
+            self.assertTrue(hasattr(battery_state, "voltage"))
+            self.assertTrue(hasattr(battery_state, "current"))
+            self.assertTrue(hasattr(battery_state, "percentage"))
 
             print("✅ ROS2 message types available and compatible")
 
@@ -111,13 +111,13 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             class MockTeleoperationROS2Publisher:
                 def __init__(self):
                     self.control_data = {
-                        'motor_positions': [0.0, 0.0, 0.0, 0.0],
-                        'motor_velocities': [0.0, 0.0, 0.0, 0.0],
-                        'motor_temperatures': [25.0, 25.0, 25.0, 25.0],
-                        'chassis_velocity': {'x': 0.0, 'y': 0.0, 'rot': 0.0},
-                        'battery_voltage': 24.0,
-                        'battery_current': 0.0,
-                        'battery_percentage': 85.0
+                        "motor_positions": [0.0, 0.0, 0.0, 0.0],
+                        "motor_velocities": [0.0, 0.0, 0.0, 0.0],
+                        "motor_temperatures": [25.0, 25.0, 25.0, 25.0],
+                        "chassis_velocity": {"x": 0.0, "y": 0.0, "rot": 0.0},
+                        "battery_voltage": 24.0,
+                        "battery_current": 0.0,
+                        "battery_percentage": 85.0,
                     }
 
                 def create_test_messages(self):
@@ -125,30 +125,38 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
                     # Joint States (from integration guide)
                     joint_state = JointState()
-                    joint_state.header.frame_id = 'base_link'
+                    joint_state.header.frame_id = "base_link"
                     joint_state.name = [
-                        'swerve_front_left', 'swerve_front_right',
-                        'swerve_rear_left', 'swerve_rear_right'
+                        "swerve_front_left",
+                        "swerve_front_right",
+                        "swerve_rear_left",
+                        "swerve_rear_right",
                     ]
-                    joint_state.position = self.control_data['motor_positions']
-                    joint_state.velocity = self.control_data['motor_velocities']
+                    joint_state.position = self.control_data["motor_positions"]
+                    joint_state.velocity = self.control_data["motor_velocities"]
 
                     # Chassis Velocity (from integration guide)
                     twist_stamped = TwistStamped()
-                    twist_stamped.header.frame_id = 'odom'
-                    twist_stamped.twist.linear.x = self.control_data['chassis_velocity']['x']
-                    twist_stamped.twist.linear.y = self.control_data['chassis_velocity']['y']
-                    twist_stamped.twist.angular.z = self.control_data['chassis_velocity']['rot']
+                    twist_stamped.header.frame_id = "odom"
+                    twist_stamped.twist.linear.x = self.control_data[
+                        "chassis_velocity"
+                    ]["x"]
+                    twist_stamped.twist.linear.y = self.control_data[
+                        "chassis_velocity"
+                    ]["y"]
+                    twist_stamped.twist.angular.z = self.control_data[
+                        "chassis_velocity"
+                    ]["rot"]
 
                     # Temperatures (from integration guide)
                     temp_array = Float32MultiArray()
-                    temp_array.data = self.control_data['motor_temperatures']
+                    temp_array.data = self.control_data["motor_temperatures"]
 
                     # System Status (from integration guide)
                     battery_state = BatteryState()
-                    battery_state.voltage = self.control_data['battery_voltage']
-                    battery_state.current = self.control_data['battery_current']
-                    battery_state.percentage = self.control_data['battery_percentage']
+                    battery_state.voltage = self.control_data["battery_voltage"]
+                    battery_state.current = self.control_data["battery_current"]
+                    battery_state.percentage = self.control_data["battery_percentage"]
 
                     return joint_state, twist_stamped, temp_array, battery_state
 
@@ -160,12 +168,12 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             joint_state, twist_stamped, temp_array, battery_state = messages
 
             # Verify message structures match integration guide
-            self.assertEqual(joint_state.header.frame_id, 'base_link')
+            self.assertEqual(joint_state.header.frame_id, "base_link")
             self.assertEqual(len(joint_state.name), 4)
             self.assertEqual(len(joint_state.position), 4)
 
-            self.assertEqual(twist_stamped.header.frame_id, 'odom')
-            self.assertTrue(hasattr(twist_stamped.twist.linear, 'x'))
+            self.assertEqual(twist_stamped.header.frame_id, "odom")
+            self.assertTrue(hasattr(twist_stamped.twist.linear, "x"))
 
             self.assertEqual(len(temp_array.data), 4)
 
@@ -182,25 +190,27 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
         # Check that autonomy system expects the topics defined in integration guide
         autonomy_topics = [
-            '/autonomy/gnss/fix',  # GPS data
-            '/autonomy/imu/data',  # IMU data
-            '/autonomy/wheel/odom',  # Wheel odometry
+            "/autonomy/gnss/fix",  # GPS data
+            "/autonomy/imu/data",  # IMU data
+            "/autonomy/wheel/odom",  # Wheel odometry
         ]
 
         # The teleoperation system should provide complementary data
         teleoperation_topics = [
-            '/teleoperation/joint_states',     # Motor positions/velocities
-            '/teleoperation/chassis_velocity',  # Actual chassis velocity
-            '/teleoperation/motor_temperatures',  # Thermal monitoring
-            '/teleoperation/system_status',    # Battery/power status
+            "/teleoperation/joint_states",  # Motor positions/velocities
+            "/teleoperation/chassis_velocity",  # Actual chassis velocity
+            "/teleoperation/motor_temperatures",  # Thermal monitoring
+            "/teleoperation/system_status",  # Battery/power status
         ]
 
         # Verify topic naming consistency
         for topic in autonomy_topics + teleoperation_topics:
-            self.assertTrue(topic.startswith('/'), f"Topic {topic} should start with /")
+            self.assertTrue(topic.startswith("/"), f"Topic {topic} should start with /")
             # Should follow ROS2 naming conventions
-            parts = topic.strip('/').split('/')
-            self.assertGreaterEqual(len(parts), 2, f"Topic {topic} should have namespace/subtopic")
+            parts = topic.strip("/").split("/")
+            self.assertGreaterEqual(
+                len(parts), 2, f"Topic {topic} should have namespace/subtopic"
+            )
 
         print("✅ Topic naming and structure verified")
 
@@ -234,7 +244,7 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
             # Test that JointState can hold the expected motor data
             joint_state = JointState()
-            joint_state.name = ['motor1', 'motor2', 'motor3', 'motor4']
+            joint_state.name = ["motor1", "motor2", "motor3", "motor4"]
             joint_state.position = [0.1, 0.2, 0.3, 0.4]  # radians
             joint_state.velocity = [1.0, 1.1, 1.2, 1.3]  # rad/s
 
@@ -262,8 +272,8 @@ class TestTeleoperationCompatibility(unittest.TestCase):
 
             for _ in range(iterations):
                 joint_state = JointState()
-                joint_state.header.frame_id = 'base_link'
-                joint_state.name = ['m1', 'm2', 'm3', 'm4']
+                joint_state.header.frame_id = "base_link"
+                joint_state.name = ["m1", "m2", "m3", "m4"]
                 joint_state.position = [0.0, 0.0, 0.0, 0.0]
                 joint_state.velocity = [0.0, 0.0, 0.0, 0.0]
 
@@ -272,7 +282,9 @@ class TestTeleoperationCompatibility(unittest.TestCase):
             avg_time = total_time / iterations
 
             # Should be much faster than 100ms latency requirement
-            self.assertLess(avg_time, 0.001, f"Message creation too slow: {avg_time:.6f}s")
+            self.assertLess(
+                avg_time, 0.001, f"Message creation too slow: {avg_time:.6f}s"
+            )
 
             print(f"✅ Performance requirements met: {avg_time:.6f}s per message")
 
@@ -287,13 +299,15 @@ def run_compatibility_tests():
     return result.wasSuccessful()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("🔗 Teleoperation Compatibility Test")
     print("=" * 50)
 
     success = run_compatibility_tests()
 
-    print(f"\n{'✅' if success else '❌'} Teleoperation compatibility test {'PASSED' if success else 'FAILED'}")
+    print(
+        f"\n{'✅' if success else '❌'} Teleoperation compatibility test {'PASSED' if success else 'FAILED'}"
+    )
 
     if success:
         print("\n🎉 Teleoperation submodule is compatible with the autonomy system!")

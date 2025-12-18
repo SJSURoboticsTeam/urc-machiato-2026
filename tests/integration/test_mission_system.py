@@ -12,56 +12,58 @@ import time
 import unittest
 from unittest.mock import MagicMock
 
-from bridges.priority_message_router import PriorityMessageRouter
-from simulation.can.can_bus_mock_simulator import CANBusMockSimulator
+# Simplified mission system - removed complex dependencies
 
-# Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'missions'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'bridges'))
+# Add project paths for simplified system
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "missions"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "autonomy", "code")
+)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "bridges"))
 
 
 class MockDeliveryMission:
     """Mock delivery mission for testing without ROS2."""
 
     def __init__(self):
-        self.state = 'initialized'
+        self.state = "initialized"
 
     def initialize(self, params):
-        self.state = 'ready'
+        self.state = "ready"
         return True
 
     def start(self):
-        self.state = 'navigating_pickup'
+        self.state = "navigating_pickup"
 
     def update_position(self, position):
-        if self.state == 'navigating_pickup':
-            self.state = 'at_pickup'
-        elif self.state == 'navigating_delivery':
-            self.state = 'at_delivery'
+        if self.state == "navigating_pickup":
+            self.state = "at_pickup"
+        elif self.state == "navigating_delivery":
+            self.state = "at_delivery"
 
     def perform_pickup(self):
-        self.state = 'pickup_complete'
+        self.state = "pickup_complete"
 
     def navigate_to_delivery(self):
-        self.state = 'navigating_delivery'
+        self.state = "navigating_delivery"
 
     def complete_delivery(self):
-        self.state = 'completed'
+        self.state = "completed"
 
 
 class MockScienceMission:
     """Mock science mission for testing."""
 
     def __init__(self):
-        self.state = 'initialized'
+        self.state = "initialized"
 
     def initialize(self, params):
-        self.state = 'ready'
+        self.state = "ready"
         return True
 
     def start(self):
-        self.state = 'navigating_sample_1'
+        self.state = "navigating_sample_1"
 
     def collect_sample(self):
         pass
@@ -70,34 +72,34 @@ class MockScienceMission:
         pass
 
     def start_analysis(self):
-        self.state = 'analyzing'
+        self.state = "analyzing"
 
     def complete_analysis(self):
-        self.state = 'completed'
+        self.state = "completed"
 
 
 class MockEquipmentServicingMission:
     """Mock equipment servicing mission for testing."""
 
     def __init__(self):
-        self.state = 'initialized'
+        self.state = "initialized"
 
     def initialize(self, params):
-        self.state = 'ready'
+        self.state = "ready"
         return True
 
     def start(self):
-        self.state = 'navigating_equipment'
+        self.state = "navigating_equipment"
 
     def update_position(self, position):
-        if self.state == 'navigating_equipment':
-            self.state = 'at_equipment'
+        if self.state == "navigating_equipment":
+            self.state = "at_equipment"
 
     def start_servicing(self):
-        self.state = 'servicing'
+        self.state = "servicing"
 
     def complete_servicing(self):
-        self.state = 'completed'
+        self.state = "completed"
 
 
 class MockMissionExecutor:
@@ -137,7 +139,7 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test resources."""
-        if hasattr(self.mock_can, 'stop'):
+        if hasattr(self.mock_can, "stop"):
             self.mock_can.stop()
 
     def test_delivery_mission_workflow(self):
@@ -146,40 +148,40 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
         # Initialize mission
         mission = MockDeliveryMission()
-        self.assertEqual(mission.state, 'initialized')
+        self.assertEqual(mission.state, "initialized")
 
         # Test mission parameters
         params = {
-            'pickup_location': [10.0, 5.0, 0.0],
-            'delivery_location': [20.0, 15.0, 0.0],
-            'payload_type': 'sample_container'
+            "pickup_location": [10.0, 5.0, 0.0],
+            "delivery_location": [20.0, 15.0, 0.0],
+            "payload_type": "sample_container",
         }
 
         success = mission.initialize(params)
         self.assertTrue(success, "Mission initialization failed")
-        self.assertEqual(mission.state, 'ready')
+        self.assertEqual(mission.state, "ready")
 
         # Simulate mission execution steps
         # 1. Navigate to pickup
         mission.start()
-        self.assertEqual(mission.state, 'navigating_pickup')
+        self.assertEqual(mission.state, "navigating_pickup")
 
         # Simulate navigation completion (mock GPS updates)
         mission.update_position([10.0, 5.0, 0.0])
-        self.assertEqual(mission.state, 'at_pickup')
+        self.assertEqual(mission.state, "at_pickup")
 
         # 2. Perform pickup operation
         mission.perform_pickup()
-        self.assertEqual(mission.state, 'pickup_complete')
+        self.assertEqual(mission.state, "pickup_complete")
 
         # 3. Navigate to delivery
         mission.navigate_to_delivery()
-        self.assertEqual(mission.state, 'navigating_delivery')
+        self.assertEqual(mission.state, "navigating_delivery")
 
         # 4. Complete delivery
         mission.update_position([20.0, 15.0, 0.0])
         mission.complete_delivery()
-        self.assertEqual(mission.state, 'completed')
+        self.assertEqual(mission.state, "completed")
 
         print("✅ Delivery mission workflow test passed")
 
@@ -191,48 +193,48 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
         # Initialize with science parameters
         params = {
-            'sampling_locations': [
+            "sampling_locations": [
                 [5.0, 5.0, 0.0],
                 [15.0, 10.0, 0.0],
-                [25.0, 5.0, 0.0]
+                [25.0, 5.0, 0.0],
             ],
-            'analysis_duration': 30.0,
-            'sample_types': ['soil', 'rock', 'atmospheric']
+            "analysis_duration": 30.0,
+            "sample_types": ["soil", "rock", "atmospheric"],
         }
 
         success = mission.initialize(params)
         self.assertTrue(success)
-        self.assertEqual(mission.state, 'ready')
+        self.assertEqual(mission.state, "ready")
 
         # Execute science mission
         mission.start()
-        self.assertEqual(mission.state, 'navigating_sample_1')
+        self.assertEqual(mission.state, "navigating_sample_1")
 
         # Simulate collecting samples
-        for i, location in enumerate(params['sampling_locations']):
+        for i, location in enumerate(params["sampling_locations"]):
             mission.update_position(location)
-            state_name = f'at_sample_{i+1}'
+            state_name = f"at_sample_{i+1}"
             self.assertEqual(mission.state, state_name)
 
             mission.collect_sample()
-            state_name = f'sampling_{i+1}'
+            state_name = f"sampling_{i+1}"
             self.assertEqual(mission.state, state_name)
 
             # Simulate sampling completion
             mission.complete_sampling()
-            if i < len(params['sampling_locations']) - 1:
-                next_state = f'navigating_sample_{i+2}'
+            if i < len(params["sampling_locations"]) - 1:
+                next_state = f"navigating_sample_{i+2}"
             else:
-                next_state = 'analyzing'
+                next_state = "analyzing"
             self.assertEqual(mission.state, next_state)
 
         # Complete analysis
         mission.start_analysis()
-        self.assertEqual(mission.state, 'analyzing')
+        self.assertEqual(mission.state, "analyzing")
 
         # Simulate analysis completion
         mission.complete_analysis()
-        self.assertEqual(mission.state, 'completed')
+        self.assertEqual(mission.state, "completed")
 
         print("✅ Science mission workflow test passed")
 
@@ -243,27 +245,27 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         mission = MockEquipmentServicingMission()
 
         params = {
-            'equipment_location': [30.0, 20.0, 0.0],
-            'service_type': 'maintenance',
-            'equipment_id': 'solar_panel_array'
+            "equipment_location": [30.0, 20.0, 0.0],
+            "service_type": "maintenance",
+            "equipment_id": "solar_panel_array",
         }
 
         success = mission.initialize(params)
         self.assertTrue(success)
 
         mission.start()
-        self.assertEqual(mission.state, 'navigating_equipment')
+        self.assertEqual(mission.state, "navigating_equipment")
 
         # Navigate to equipment
-        mission.update_position(params['equipment_location'])
-        self.assertEqual(mission.state, 'at_equipment')
+        mission.update_position(params["equipment_location"])
+        self.assertEqual(mission.state, "at_equipment")
 
         # Perform servicing
         mission.start_servicing()
-        self.assertEqual(mission.state, 'servicing')
+        self.assertEqual(mission.state, "servicing")
 
         mission.complete_servicing()
-        self.assertEqual(mission.state, 'completed')
+        self.assertEqual(mission.state, "completed")
 
         print("✅ Equipment servicing mission workflow test passed")
 
@@ -275,9 +277,9 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
         # Test mission queue management
         missions = [
-            {'type': 'delivery', 'id': 'del_001'},
-            {'type': 'science', 'id': 'sci_001'},
-            {'type': 'equipment', 'id': 'equip_001'}
+            {"type": "delivery", "id": "del_001"},
+            {"type": "science", "id": "sci_001"},
+            {"type": "equipment", "id": "equip_001"},
         ]
 
         # Queue missions
@@ -302,25 +304,25 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         print("\n🧪 Testing CAN Mock Simulator Integration")
 
         # Test sensor data generation
-        imu_data = self.mock_can.get_mock_reading('imu')
-        self.assertTrue(imu_data['mock'])
-        self.assertIn('accel_x', imu_data['data'])
-        self.assertIn('gyro_z', imu_data['data'])
+        imu_data = self.mock_can.get_mock_reading("imu")
+        self.assertTrue(imu_data["mock"])
+        self.assertIn("accel_x", imu_data["data"])
+        self.assertIn("gyro_z", imu_data["data"])
 
-        gps_data = self.mock_can.get_mock_reading('gps')
-        self.assertTrue(gps_data['mock'])
-        self.assertIn('latitude', gps_data['data'])
-        self.assertIn('longitude', gps_data['data'])
+        gps_data = self.mock_can.get_mock_reading("gps")
+        self.assertTrue(gps_data["mock"])
+        self.assertIn("latitude", gps_data["data"])
+        self.assertIn("longitude", gps_data["data"])
 
-        battery_data = self.mock_can.get_mock_reading('battery')
-        self.assertTrue(battery_data['mock'])
-        self.assertIn('voltage', battery_data['data'])
-        self.assertIn('charge_level', battery_data['data'])
+        battery_data = self.mock_can.get_mock_reading("battery")
+        self.assertTrue(battery_data["mock"])
+        self.assertIn("voltage", battery_data["data"])
+        self.assertIn("charge_level", battery_data["data"])
 
         # Test motor control simulation
-        self.mock_can.set_motor_command('motor_left', 5.0)
-        motor_data = self.mock_can.get_mock_reading('motor_left')
-        self.assertIn('velocity', motor_data['data'])
+        self.mock_can.set_motor_command("motor_left", 5.0)
+        motor_data = self.mock_can.get_mock_reading("motor_left")
+        self.assertIn("velocity", motor_data["data"])
 
         print("✅ CAN mock simulator integration test passed")
 
@@ -331,15 +333,15 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         router = PriorityMessageRouter(max_queue_size=10)
 
         # Test message priority assignment
-        critical_msg = {'type': 'safety_trigger', 'data': 'emergency'}
-        high_msg = {'type': 'navigation_command', 'data': 'move_forward'}
-        normal_msg = {'type': 'sensor_data', 'data': 'imu_reading'}
-        low_msg = {'type': 'telemetry', 'data': 'status_update'}
+        critical_msg = {"type": "safety_trigger", "data": "emergency"}
+        high_msg = {"type": "navigation_command", "data": "move_forward"}
+        normal_msg = {"type": "sensor_data", "data": "imu_reading"}
+        low_msg = {"type": "telemetry", "data": "status_update"}
 
         self.assertEqual(router.determine_priority(critical_msg).value, 1)  # CRITICAL
-        self.assertEqual(router.determine_priority(high_msg).value, 2)     # HIGH
-        self.assertEqual(router.determine_priority(normal_msg).value, 3)   # NORMAL
-        self.assertEqual(router.determine_priority(low_msg).value, 4)      # LOW
+        self.assertEqual(router.determine_priority(high_msg).value, 2)  # HIGH
+        self.assertEqual(router.determine_priority(normal_msg).value, 3)  # NORMAL
+        self.assertEqual(router.determine_priority(low_msg).value, 4)  # LOW
 
         # Test message ordering
         messages = [low_msg, normal_msg, high_msg, critical_msg]
@@ -354,10 +356,10 @@ class MissionSystemIntegrationTest(unittest.TestCase):
                 break
             dequeued.append(msg)
 
-        self.assertEqual(dequeued[0]['type'], 'safety_trigger')
-        self.assertEqual(dequeued[1]['type'], 'navigation_command')
-        self.assertEqual(dequeued[2]['type'], 'sensor_data')
-        self.assertEqual(dequeued[3]['type'], 'telemetry')
+        self.assertEqual(dequeued[0]["type"], "safety_trigger")
+        self.assertEqual(dequeued[1]["type"], "navigation_command")
+        self.assertEqual(dequeued[2]["type"], "sensor_data")
+        self.assertEqual(dequeued[3]["type"], "telemetry")
 
         print("✅ Priority message routing test passed")
 
@@ -370,17 +372,17 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
         # Mock state machine transitions during mission
         states_during_delivery = [
-            'IDLE',
-            'AUTONOMOUS',  # Enter autonomous mode
-            'AUTONOMOUS_NAVIGATION',  # Start navigation
-            'AUTONOMOUS_NAVIGATION',  # Continue navigation
-            'IDLE'  # Mission complete
+            "IDLE",
+            "AUTONOMOUS",  # Enter autonomous mode
+            "AUTONOMOUS_NAVIGATION",  # Start navigation
+            "AUTONOMOUS_NAVIGATION",  # Continue navigation
+            "IDLE",  # Mission complete
         ]
 
         # Verify state transition logic would work
         self.assertEqual(len(states_during_delivery), 5)
-        self.assertEqual(states_during_delivery[0], 'IDLE')
-        self.assertEqual(states_during_delivery[-1], 'IDLE')
+        self.assertEqual(states_during_delivery[0], "IDLE")
+        self.assertEqual(states_during_delivery[-1], "IDLE")
 
         print("✅ State machine integration test passed")
 
@@ -422,25 +424,27 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
         # Test mission recovery from navigation failure
         mission = DeliveryMission()
-        mission.initialize({
-            'pickup_location': [10.0, 5.0, 0.0],
-            'delivery_location': [20.0, 15.0, 0.0]
-        })
+        mission.initialize(
+            {
+                "pickup_location": [10.0, 5.0, 0.0],
+                "delivery_location": [20.0, 15.0, 0.0],
+            }
+        )
 
         mission.start()
-        self.assertEqual(mission.state, 'navigating_pickup')
+        self.assertEqual(mission.state, "navigating_pickup")
 
         # Simulate navigation failure (e.g., obstacle)
         mission.handle_navigation_failure("obstacle_detected")
-        self.assertEqual(mission.state, 'recovery')
+        self.assertEqual(mission.state, "recovery")
 
         # Test recovery
         mission.attempt_recovery()
-        self.assertEqual(mission.state, 'navigating_pickup')
+        self.assertEqual(mission.state, "navigating_pickup")
 
         # Simulate successful recovery
         mission.update_position([10.0, 5.0, 0.0])
-        self.assertEqual(mission.state, 'at_pickup')
+        self.assertEqual(mission.state, "at_pickup")
 
         print("✅ Failure recovery test passed")
 
@@ -451,12 +455,12 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         executor = MissionExecutor()
 
         # Queue multiple missions
-        mission_types = ['delivery', 'science', 'equipment', 'delivery']
+        mission_types = ["delivery", "science", "equipment", "delivery"]
         for i, mission_type in enumerate(mission_types):
             mission_data = {
-                'type': mission_type,
-                'id': f'{mission_type}_{i}',
-                'priority': 'normal'
+                "type": mission_type,
+                "id": f"{mission_type}_{i}",
+                "priority": "normal",
             }
             executor.queue_mission(mission_data)
 
@@ -468,16 +472,18 @@ class MissionSystemIntegrationTest(unittest.TestCase):
             current = executor.get_current_mission()
             if current:
                 # Simulate completion
-                completed_missions.append(current['id'])
+                completed_missions.append(current["id"])
                 executor.complete_current_mission()
 
         self.assertEqual(len(completed_missions), 4)
-        self.assertEqual(completed_missions, ['delivery_0', 'science_1', 'equipment_2', 'delivery_3'])
+        self.assertEqual(
+            completed_missions, ["delivery_0", "science_1", "equipment_2", "delivery_3"]
+        )
 
         print("✅ Concurrent mission handling test passed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("🚀 URC 2026 Mission System Integration Tests")
     print("=" * 50)
 

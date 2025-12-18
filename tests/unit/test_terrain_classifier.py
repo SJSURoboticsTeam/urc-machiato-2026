@@ -1,119 +1,209 @@
 #!/usr/bin/env python3
 """
-Unit tests for experimental TerrainClassifier.
+Unit tests for Terrain Intelligence - Centralized Vision Processing Integration
 
-These tests ensure the experimental API is at least internally consistent
-and behaves as documented (placeholders, reserved methods, etc.).
+Tests terrain analyzer integration with centralized vision processing system.
+Validates terrain map subscription and processing rather than direct image processing.
 """
 
 import os
 import sys
 from typing import Any, Dict
+from unittest.mock import Mock, patch
 
 import pytest
+import rclpy
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import OccupancyGrid
+from sensor_msgs.msg import PointCloud2
 
-# Add Autonomy/code to path so we can import experimental modules directly
+# Add autonomy modules to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-AUTONOMY_CODE_ROOT = os.path.join(PROJECT_ROOT, "Autonomy", "code")
+AUTONOMY_CODE_ROOT = os.path.join(PROJECT_ROOT, "src", "autonomy")
 sys.path.insert(0, AUTONOMY_CODE_ROOT)
 
-from experimental.terrain_classifier import (  # type: ignore  # noqa: E402
-    TerrainClassifier,
-    TerrainProperties,
-    TerrainType,
-)
+try:
+    from core.terrain_intelligence.terrain_analyzer import TerrainAnalyzer, TerrainType
+except ImportError:
+    # Fallback for testing without full ROS2 environment
+    TerrainAnalyzer = None
 
 
-class TestTerrainClassifierBasics:
-    """Basic behavior of TerrainClassifier and enums."""
-
-    def test_terrain_type_enum(self) -> None:
-        """Enum members exist and have expected string values."""
-        assert TerrainType.SAND.value == "sand"
-        assert TerrainType.ROCK.value == "rock"
-        assert TerrainType.GRAVEL.value == "gravel"
-        assert TerrainType.SLOPE.value == "slope"
-        assert TerrainType.OBSTACLE.value == "obstacle"
-        assert TerrainType.UNKNOWN.value == "unknown"
-
-    def test_properties_structure(self) -> None:
-        """TerrainProperties dataclass has required fields."""
-        props = TerrainProperties(
-            type=TerrainType.SAND,
-            traversability=0.5,
-            max_speed=1.0,
-            traction_coefficient=0.8,
-            roughness=0.2,
-            risk_level="medium",
-        )
-        assert props.type == TerrainType.SAND
-        assert 0.0 <= props.traversability <= 1.0
-        assert props.max_speed > 0.0
-        assert isinstance(props.risk_level, str)
-
-
-class TestTerrainClassifierAPI:
-    """Test the experimental API surface of TerrainClassifier."""
+@pytest.mark.skipif(TerrainAnalyzer is None, reason="TerrainAnalyzer not available")
+class TestTerrainAnalyzerVisionIntegration:
+    """Test Terrain Analyzer integration with centralized vision processing."""
 
     @pytest.fixture
-    def classifier(self) -> TerrainClassifier:
-        return TerrainClassifier()
+    def ros_context(self):
+        """Setup ROS2 context for testing."""
+        rclpy.init()
+        yield
+        rclpy.shutdown()
 
-    def test_default_properties_exist(self, classifier: TerrainClassifier) -> None:
-        """Default terrain properties are populated for known types."""
-        for terrain_type in [
-            TerrainType.SAND,
-            TerrainType.ROCK,
-            TerrainType.GRAVEL,
-            TerrainType.SLOPE,
-        ]:
-            props = classifier.get_terrain_properties(terrain_type)
-            assert isinstance(props, TerrainProperties)
-            assert props.type == terrain_type
+    @pytest.fixture
+    def terrain_analyzer(self, ros_context):
+        """Create terrain analyzer instance."""
+        with patch("rclpy.node.Node.__init__", return_value=None):
+            analyzer = TerrainAnalyzer.__new__(TerrainAnalyzer)
+            # Mock required attributes
+            analyzer.terrain_map = None
+            analyzer.robot_pose = None
+            analyzer.map_initialized = False
+            analyzer.bridge = Mock()
+            analyzer.get_logger = Mock(return_value=Mock())
+            analyzer.get_logger.return_value.info = Mock()
+            analyzer.get_logger.return_value.warn = Mock()
+            analyzer.get_logger.return_value.error = Mock()
+            return analyzer
 
-    def test_unknown_properties_fallback(self, classifier: TerrainClassifier) -> None:
-        """Unknown terrain types fall back to UNKNOWN properties."""
-        props_unknown = classifier.get_terrain_properties(TerrainType.UNKNOWN)
-        assert isinstance(props_unknown, TerrainProperties)
-        assert props_unknown.type == TerrainType.UNKNOWN
+    def test_terrain_map_subscription(self, terrain_analyzer):
+        """Test subscription to centralized terrain map."""
+        # Mock the subscription creation
+        with patch.object(terrain_analyzer, "create_subscription") as mock_sub:
+            # Re-initialize to trigger subscription creation
+            terrain_analyzer.__init__()
 
-    def test_classify_terrain_placeholder(self, classifier: TerrainClassifier) -> None:
-        """classify_terrain currently returns UNKNOWN as documented."""
-        dummy_sensor_data: Dict[str, Any] = {"dummy": 1}
-        terrain_type = classifier.classify_terrain(dummy_sensor_data)
-        assert terrain_type == TerrainType.UNKNOWN
+            # Verify terrain map subscription was created
+            mock_sub.assert_any_call(
+                OccupancyGrid,
+                "/vision/terrain_map",
+                terrain_analyzer.terrain_map_callback,
+                pytest.any(),  # QoS profile
+            )
 
-    def test_assess_traversability_placeholder(self, classifier: TerrainClassifier) -> None:
-        """assess_traversability returns a plausible placeholder score."""
-        score = classifier.assess_traversability((0.0, 0.0))
-        assert isinstance(score, float)
-        assert 0.0 <= score <= 1.0
+    def test_terrain_map_callback_processing(self, terrain_analyzer):
+        """Test processing of terrain map messages from vision system."""
+        # Create mock terrain map message
+        terrain_map = OccupancyGrid()
+        terrain_map.header.stamp = rclpy.time.Time().to_msg()
+        terrain_map.header.frame_id = "odom"
+        terrain_map.info.resolution = 0.1
+        terrain_map.info.width = 200
+        terrain_map.info.height = 200
+        terrain_map.info.origin.position.x = -10.0
+        terrain_map.info.origin.position.y = -10.0
+        terrain_map.data = [0] * 40000  # 200x200 grid
 
-    def test_recommend_speed_respects_max(self, classifier: TerrainClassifier) -> None:
-        """recommend_speed should not exceed max_speed for terrain."""
-        current_speed = 2.0  # m/s
-        props = classifier.get_terrain_properties(TerrainType.SAND)
-        recommended = classifier.recommend_speed(TerrainType.SAND, current_speed)
-        assert recommended <= props.max_speed
+        # Add some terrain features (simulate vision processing output)
+        # Sand area (traversable)
+        for i in range(10000, 15000):
+            terrain_map.data[i] = 10  # Low cost traversable
 
-    def test_calculate_terrain_cost_positive(self, classifier: TerrainClassifier) -> None:
-        """calculate_terrain_cost returns positive cost proportional to distance."""
-        distance = 10.0
-        cost = classifier.calculate_terrain_cost(TerrainType.GRAVEL, distance)
-        assert cost > 0.0
+        # Rock area (higher cost)
+        for i in range(25000, 30000):
+            terrain_map.data[i] = 80  # High cost obstacle
 
-        # Doubling distance should increase cost (monotonic behavior)
-        cost2 = classifier.calculate_terrain_cost(TerrainType.GRAVEL, distance * 2)
-        assert cost2 > cost
+        # Mock traversability publisher
+        terrain_analyzer.traversability_pub = Mock()
+        terrain_analyzer.traversability_pub.publish = Mock()
 
-    def test_detect_hazards_placeholder(self, classifier: TerrainClassifier) -> None:
-        """detect_hazards currently returns an empty list as placeholder."""
-        hazards = classifier.detect_hazards({"dummy": True})
+        # Call callback
+        terrain_analyzer.terrain_map_callback(terrain_map)
+
+        # Verify terrain map was stored
+        assert terrain_analyzer.terrain_map is not None
+        assert terrain_analyzer.terrain_map.info.width == 200
+        assert terrain_analyzer.terrain_map.info.height == 200
+
+        # Verify traversability map was published
+        terrain_analyzer.traversability_pub.publish.assert_called()
+
+    def test_pointcloud_integration(self, terrain_analyzer):
+        """Test point cloud processing for slope analysis."""
+        # Create mock point cloud message
+        pointcloud = PointCloud2()
+        pointcloud.header.stamp = rclpy.time.Time().to_msg()
+        pointcloud.header.frame_id = "camera_depth_optical_frame"
+
+        # Mock point cloud data processing
+        with patch.object(
+            terrain_analyzer, "process_pointcloud_for_slopes"
+        ) as mock_process:
+            mock_process.return_value = {"max_slope": 0.3, "hazard_zones": []}
+
+            terrain_analyzer.pointcloud_callback(pointcloud)
+
+            # Verify point cloud processing was called
+            mock_process.assert_called_once_with(pointcloud)
+
+    def test_traversability_cost_mapping(self, terrain_analyzer):
+        """Test traversability cost calculation from terrain map."""
+        # Initialize terrain map
+        terrain_analyzer.initialize_terrain_map()
+
+        # Test different terrain types produce different costs
+        sand_cost = terrain_analyzer.calculate_traversability_cost(
+            TerrainType.SAND, 1.0
+        )
+        rock_cost = terrain_analyzer.calculate_traversability_cost(
+            TerrainType.ROCK, 1.0
+        )
+        hazard_cost = terrain_analyzer.calculate_traversability_cost(
+            TerrainType.HAZARD, 1.0
+        )
+
+        # Verify costs are reasonable and differentiated
+        assert sand_cost < rock_cost  # Sand should be easier than rock
+        assert rock_cost < hazard_cost  # Rock should be easier than hazard
+        assert all(cost >= 0 for cost in [sand_cost, rock_cost, hazard_cost])
+
+    def test_hazard_detection_from_vision(self, terrain_analyzer):
+        """Test hazard detection using vision-processed terrain data."""
+        # Create terrain map with hazards
+        terrain_map = OccupancyGrid()
+        terrain_map.info.width = 10
+        terrain_map.info.height = 10
+        terrain_map.data = [0] * 100
+
+        # Add hazard (high occupancy values)
+        for i in range(50, 60):  # Row of hazards
+            terrain_map.data[i] = 100  # Complete obstacle
+
+        hazards = terrain_analyzer.detect_hazards_from_map(terrain_map)
+
+        # Verify hazards were detected
         assert isinstance(hazards, list)
-        assert len(hazards) == 0
+        assert len(hazards) > 0
 
-    def test_update_and_reset_dont_crash(self, classifier: TerrainClassifier) -> None:
-        """update_terrain_map and reset_classifier are no-ops but must not crash."""
-        classifier.update_terrain_map((0.0, 0.0), TerrainType.SAND)
-        classifier.reset_classifier()
-        classifier.shutdown()
+        # Verify hazard structure
+        for hazard in hazards:
+            assert "x" in hazard and "y" in hazard
+            assert "type" in hazard
+            assert hazard["type"] == TerrainType.HAZARD
+
+    def test_slope_analysis_from_pointcloud(self, terrain_analyzer):
+        """Test slope analysis from point cloud data."""
+        # Mock point cloud with slope
+        pointcloud = PointCloud2()
+
+        # Mock slope calculation
+        slopes = terrain_analyzer.analyze_slopes_from_pointcloud(pointcloud)
+
+        # Verify slope analysis structure
+        assert isinstance(slopes, dict)
+        assert "max_slope" in slopes
+        assert "average_slope" in slopes
+        assert "slope_map" in slopes
+
+    def test_terrain_type_constants(self):
+        """Test terrain type constants are properly defined."""
+        assert TerrainType.SAND == "sand"
+        assert TerrainType.ROCK == "rock"
+        assert TerrainType.SLOPE == "slope"
+        assert TerrainType.HAZARD == "hazard"
+        assert TerrainType.UNKNOWN == "unknown"
+
+    def test_robot_pose_integration(self, terrain_analyzer):
+        """Test robot pose integration for local terrain analysis."""
+        # Mock odometry message
+        odom_msg = Mock()
+        odom_msg.pose.pose.position.x = 5.0
+        odom_msg.pose.pose.position.y = 3.0
+        odom_msg.pose.pose.orientation.w = 1.0  # No rotation
+
+        terrain_analyzer.odom_callback(odom_msg)
+
+        # Verify pose was stored
+        assert terrain_analyzer.robot_pose is not None
+        assert terrain_analyzer.robot_pose[0] == 5.0  # x position
+        assert terrain_analyzer.robot_pose[1] == 3.0  # y position

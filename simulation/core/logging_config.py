@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 try:
     import structlog
+
     STRUCTLOG_AVAILABLE = True
 except ImportError:
     STRUCTLOG_AVAILABLE = False
@@ -23,7 +24,7 @@ def setup_simulation_logging(
     log_level: str = "INFO",
     log_file: str = "simulation.log",
     enable_structured: bool = True,
-    enable_json: bool = False
+    enable_json: bool = False,
 ) -> None:
     """Setup comprehensive simulation logging.
 
@@ -47,8 +48,8 @@ def setup_simulation_logging(
     else:
         # Human-readable formatter
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
 
     # Setup handlers
@@ -72,7 +73,7 @@ def setup_simulation_logging(
     logging.basicConfig(
         level=numeric_level,
         handlers=handlers,
-        force=True  # Override any existing configuration
+        force=True,  # Override any existing configuration
     )
 
     # Configure structlog if available
@@ -80,7 +81,9 @@ def setup_simulation_logging(
         _configure_structlog(enable_json)
     else:
         # Fallback structured logging without structlog
-        logging.info("Using basic logging (install structlog for enhanced structured logging)")
+        logging.info(
+            "Using basic logging (install structlog for enhanced structured logging)"
+        )
 
 
 def _configure_structlog(enable_json: bool = False):
@@ -105,14 +108,11 @@ def _configure_structlog(enable_json: bool = False):
         # Human-readable output with colors
         try:
             import colorama
+
             colorama.init()
-            shared_processors.append(
-                structlog.dev.ConsoleRenderer(colors=True)
-            )
+            shared_processors.append(structlog.dev.ConsoleRenderer(colors=True))
         except ImportError:
-            shared_processors.append(
-                structlog.dev.ConsoleRenderer()
-            )
+            shared_processors.append(structlog.dev.ConsoleRenderer())
 
     structlog.configure(
         processors=shared_processors,
@@ -139,10 +139,7 @@ class SimulationLogger:
             self.logger = logging.getLogger(name)
 
         self.component_type = component_type
-        self._context = {
-            "component": component_type,
-            "logger_name": name
-        }
+        self._context = {"component": component_type, "logger_name": name}
 
     def _add_context(self, **kwargs) -> Dict[str, Any]:
         """Add context to log message."""
@@ -176,7 +173,7 @@ class SimulationLogger:
             f"Performance: {operation}",
             operation=operation,
             duration_ms=duration * 1000,
-            **self._add_context(**metrics)
+            **self._add_context(**metrics),
         )
 
     def log_simulation_step(self, step_count: int, sim_time: float, **metrics):
@@ -185,7 +182,7 @@ class SimulationLogger:
             f"Simulation step {step_count}",
             step=step_count,
             simulation_time=sim_time,
-            **self._add_context(**metrics)
+            **self._add_context(**metrics),
         )
 
     def log_rl_step(self, episode: int, step: int, reward: float, **rl_metrics):
@@ -195,7 +192,7 @@ class SimulationLogger:
             episode=episode,
             step=step,
             reward=reward,
-            **self._add_context(**rl_metrics)
+            **self._add_context(**rl_metrics),
         )
 
     def bind_context(self, **context):
@@ -204,7 +201,9 @@ class SimulationLogger:
         return self
 
 
-def get_simulation_logger(name: str, component_type: str = "simulation") -> SimulationLogger:
+def get_simulation_logger(
+    name: str, component_type: str = "simulation"
+) -> SimulationLogger:
     """Get a simulation logger instance.
 
     Args:

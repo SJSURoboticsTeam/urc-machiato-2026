@@ -197,7 +197,9 @@ class DataRecorder:
 
         return {
             "total_records": len(self.data),
-            "recording_duration": max(timestamps) - min(timestamps) if timestamps else 0,
+            "recording_duration": max(timestamps) - min(timestamps)
+            if timestamps
+            else 0,
             "records_per_second": self.records_per_second,
             "data_size_mb": self._estimate_data_size() / (1024 * 1024),
             "memory_usage_mb": len(self.data) * 0.001,  # Rough estimate
@@ -225,13 +227,17 @@ class DataRecorder:
 
         # Find closest record
         closest_record = min(
-            self.data,
-            key=lambda r: abs(r["simulation_time"] - simulation_time)
+            self.data, key=lambda r: abs(r["simulation_time"] - simulation_time)
         )
 
         return closest_record
 
-    def playback(self, callback: callable, start_time: float = 0.0, end_time: Optional[float] = None):
+    def playback(
+        self,
+        callback: callable,
+        start_time: float = 0.0,
+        end_time: Optional[float] = None,
+    ):
         """Playback recorded data.
 
         Args:
@@ -265,7 +271,9 @@ class DataRecorder:
         if "sensors" in data:
             compressed["sensors"] = {}
             for sensor_name, sensor_data in data["sensors"].items():
-                compressed["sensors"][sensor_name] = self._compress_sensor_data(sensor_data)
+                compressed["sensors"][sensor_name] = self._compress_sensor_data(
+                    sensor_data
+                )
 
         # Copy other data as-is
         for key, value in data.items():
@@ -374,7 +382,9 @@ class DataRecorder:
         self.metadata = loaded.get("metadata", {})
         self.data = loaded.get("records", [])
 
-    def _flatten_dict(self, d: Dict[str, Any], result: Dict[str, Any], prefix: str = ""):
+    def _flatten_dict(
+        self, d: Dict[str, Any], result: Dict[str, Any], prefix: str = ""
+    ):
         """Flatten nested dictionary for CSV export.
 
         Args:

@@ -47,7 +47,7 @@ COPY --chown=urc Autonomy/ros2_ws/src/autonomy_state_management/ ./autonomy_stat
 COPY --chown=urc Autonomy/ros2_ws/src/autonomy_interfaces/ ./autonomy_interfaces/
 
 # Copy bridges for state management
-COPY --chown=urc bridges/ ./bridges/
+COPY --chown=urc src/bridges/ ./src/bridges/
 
 # Copy configuration
 COPY --chown=urc config/ ./config/
@@ -55,7 +55,7 @@ COPY --chown=urc config/ ./config/
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
     CMD ros2 node list | grep -q state_machine || exit 1
 
-CMD ["python3", "-m", "autonomy_state_management.state_machine_director"]
+CMD ["python3", "src/bridges/ros2_state_machine_bridge.py"]
 
 # ==================================================
 # SAFETY SYSTEM SERVICE
@@ -129,7 +129,7 @@ CMD ["python3", "-m", "led_status.led_status_node"]
 FROM base AS sensor-bridge-service
 
 COPY --chown=urc Autonomy/code/sensor_bridge/ ./sensor_bridge/
-COPY --chown=urc bridges/ ./bridges/
+COPY --chown=urc src/bridges/ ./src/bridges/
 COPY --chown=urc config/ ./config/
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
@@ -156,7 +156,7 @@ CMD ["python3", "-m", "slam.slam_node"]
 FROM base AS mission-service
 
 COPY --chown=urc missions/ ./missions/
-COPY --chown=urc bridges/ ./bridges/
+COPY --chown=urc src/bridges/ ./src/bridges/
 COPY --chown=urc config/ ./config/
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
@@ -200,13 +200,13 @@ FROM base AS websocket-bridge-service
 
 EXPOSE 8765
 
-COPY --chown=urc bridges/ ./bridges/
+COPY --chown=urc src/bridges/ ./src/bridges/
 COPY --chown=urc config/ ./config/
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
     CMD python3 -c "import asyncio, websockets; print('WebSocket Bridge OK')" || exit 1
 
-CMD ["python3", "bridges/websocket_mission_bridge.py"]
+CMD ["python3", "src/bridges/communication_bridge.py"]
 
 # ==================================================
 # CAN MOCK SIMULATOR SERVICE
@@ -215,13 +215,13 @@ FROM base AS can-mock-service
 
 EXPOSE 8766
 
-COPY --chown=urc bridges/ ./bridges/
+COPY --chown=urc src/bridges/ ./src/bridges/
 COPY --chown=urc config/ ./config/
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
     CMD python3 -c "import sys; sys.path.append('.'); from bridges.can_mock_simulator import CANBusMockSimulator; print('CAN Mock OK')" || exit 1
 
-CMD ["python3", "bridges/can_mock_simulator.py"]
+CMD ["python3", "simulation/can/can_bus_mock_simulator.py"]
 
 # ==================================================
 # FRONTEND SERVICE
@@ -231,13 +231,13 @@ FROM node:18-alpine AS frontend-service
 WORKDIR /app
 
 # Copy package files
-COPY frontend/package*.json ./
+COPY src/frontend/package*.json ./
 
 # Install dependencies
 RUN npm ci --only=production
 
 # Copy source code
-COPY frontend/ ./
+COPY src/frontend/ ./
 
 # Build the application
 RUN npm run build

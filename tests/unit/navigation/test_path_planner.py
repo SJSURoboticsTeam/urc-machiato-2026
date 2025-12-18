@@ -29,7 +29,11 @@ class TestPathPlanner(unittest.TestCase):
 
         # Mock path planning
         self.path_planner.plan_path.return_value = [
-            (0.0, 0.0), (2.5, 2.5), (5.0, 5.0), (7.5, 7.5), (10.0, 10.0)
+            (0.0, 0.0),
+            (2.5, 2.5),
+            (5.0, 5.0),
+            (7.5, 7.5),
+            (10.0, 10.0),
         ]
 
         path = self.path_planner.plan_path(start, goal)
@@ -67,14 +71,20 @@ class TestPathPlanner(unittest.TestCase):
 
         # Path should go around obstacle
         self.path_planner.plan_path.return_value = [
-            (0.0, 0.0), (2.5, 1.0), (5.0, 2.0), (7.5, 1.0), (10.0, 0.0)
+            (0.0, 0.0),
+            (2.5, 1.0),
+            (5.0, 2.0),
+            (7.5, 1.0),
+            (10.0, 0.0),
         ]
 
         path = self.path_planner.plan_path(start, goal, obstacles=obstacles)
 
         # Verify path avoids obstacle
         for waypoint in path[1:-1]:  # Skip start and end
-            distance_to_obstacle = np.sqrt((waypoint[0] - 5.0)**2 + (waypoint[1] - 0.0)**2)
+            distance_to_obstacle = np.sqrt(
+                (waypoint[0] - 5.0) ** 2 + (waypoint[1] - 0.0) ** 2
+            )
             self.assertGreater(distance_to_obstacle, 0.5)  # Minimum clearance
 
     def test_terrain_adaptation(self):
@@ -82,13 +92,17 @@ class TestPathPlanner(unittest.TestCase):
         start = (0.0, 0.0)
         goal = (10.0, 0.0)
         terrain_map = {
-            (5.0, 0.0): 'rough',     # Rough terrain in direct path
-            (5.0, 2.0): 'flat',      # Flat terrain detour
+            (5.0, 0.0): "rough",  # Rough terrain in direct path
+            (5.0, 2.0): "flat",  # Flat terrain detour
         }
 
         # Path should prefer flat terrain
         self.path_planner.plan_path.return_value = [
-            (0.0, 0.0), (2.5, 0.0), (5.0, 2.0), (7.5, 2.0), (10.0, 0.0)
+            (0.0, 0.0),
+            (2.5, 0.0),
+            (5.0, 2.0),
+            (7.5, 2.0),
+            (10.0, 0.0),
         ]
 
         path = self.path_planner.plan_path(start, goal, terrain_map=terrain_map)
@@ -105,7 +119,7 @@ class TestPathPlanner(unittest.TestCase):
             self.assertTrue(self._is_valid_waypoint(waypoint))
 
         # Invalid waypoints (non-numeric)
-        invalid_waypoints = [(0.0, 'invalid'), ('invalid', 0.0), None, 'string']
+        invalid_waypoints = [(0.0, "invalid"), ("invalid", 0.0), None, "string"]
         for waypoint in invalid_waypoints:
             self.assertFalse(self._is_valid_waypoint(waypoint))
 
@@ -122,7 +136,7 @@ class TestPathPlanner(unittest.TestCase):
     def test_path_cost_calculation(self):
         """Test path cost calculation (distance, terrain, obstacles)."""
         path = [(0.0, 0.0), (5.0, 0.0), (10.0, 0.0)]
-        terrain_costs = {'flat': 1.0, 'rough': 3.0}
+        terrain_costs = {"flat": 1.0, "rough": 3.0}
 
         # Calculate total cost
         expected_cost = 10.0  # Base distance
@@ -198,5 +212,5 @@ class TestWaypointNavigation(unittest.TestCase):
         self.assertEqual(call_count, len(waypoints))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

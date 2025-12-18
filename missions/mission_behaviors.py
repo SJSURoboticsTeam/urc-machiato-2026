@@ -16,9 +16,28 @@ import math
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-import rclpy
-from autonomy_interfaces.msg import VisionDetection
-from geometry_msgs.msg import PoseStamped, Twist
+try:
+    import rclpy
+    from autonomy_interfaces.msg import VisionDetection
+    from geometry_msgs.msg import PoseStamped, Twist
+
+    ROS2_AVAILABLE = True
+except ImportError:
+    # Mock classes for testing without ROS2
+    class PoseStamped:
+        def __init__(self):
+            self.pose = None
+
+    class Twist:
+        def __init__(self):
+            self.linear = None
+            self.angular = None
+
+    class VisionDetection:
+        def __init__(self):
+            self.objects = []
+
+    ROS2_AVAILABLE = False
 
 
 class WaypointNavigation:
@@ -32,7 +51,7 @@ class WaypointNavigation:
     - Timeout handling
     """
 
-    def __init__(self, node: rclpy.node.Node):
+    def __init__(self, node):
         self.node = node
         self.waypoint_tolerance = 1.0  # meters
         self.heading_tolerance = 5.0  # degrees
@@ -184,7 +203,7 @@ class ObjectDetectionMission:
     - Distance-based approach control
     """
 
-    def __init__(self, node: rclpy.node.Node):
+    def __init__(self, node):
         self.node = node
         self.target_object: Optional[str] = None
         self.approach_distance = 0.5  # meters
@@ -385,7 +404,7 @@ class FollowMeMission:
     - Person following with smooth motion
     """
 
-    def __init__(self, node: rclpy.node.Node):
+    def __init__(self, node):
         self.node = node
         self.target_tag_id = 42
         self.desired_distance = 2.0  # meters
@@ -505,7 +524,7 @@ class DeliveryMission:
     - State tracking for carried objects
     """
 
-    def __init__(self, node: rclpy.node.Node):
+    def __init__(self, node):
         self.node = node
         self.has_object = False
         self.pickup_location = None

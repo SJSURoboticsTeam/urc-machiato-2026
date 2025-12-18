@@ -1,0 +1,61 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/TypingGoal.msg
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/PoseStamped.idl"
+#include "geometry_msgs/msg/Vector3.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "Goal specification for autonomous typing task")
+    struct TypingGoal {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "Target specification" "\n"
+        "Text to type on keyboard")
+      string target_text;
+
+      @verbatim (language="comment", text=
+        "Location of keyboard in world frame")
+      geometry_msgs::msg::PoseStamped keyboard_pose;
+
+      @verbatim (language="comment", text=
+        "Performance requirements" "\n"
+        "Minimum accuracy (0.0 to 1.0)")
+      float accuracy_requirement;
+
+      @verbatim (language="comment", text=
+        "Minimum typing speed (chars/min)")
+      float speed_requirement;
+
+      @verbatim (language="comment", text=
+        "Maximum time allowed (seconds)")
+      float timeout;
+
+      @verbatim (language="comment", text=
+        "Keyboard layout information" "\n"
+        "\"qwerty\", \"azerty\", etc.")
+      string keyboard_layout;
+
+      @verbatim (language="comment", text=
+        "Distance between key centers (meters)")
+      float key_spacing_m;
+
+      @verbatim (language="comment", text=
+        "Width, height, depth of keys")
+      geometry_msgs::msg::Vector3 key_dimensions;
+
+      @verbatim (language="comment", text=
+        "Approach parameters" "\n"
+        "Distance to approach keyboard (meters)")
+      float standoff_distance;
+
+      @verbatim (language="comment", text=
+        "Desired contact force (Newtons)")
+      float contact_force;
+    };
+  };
+};

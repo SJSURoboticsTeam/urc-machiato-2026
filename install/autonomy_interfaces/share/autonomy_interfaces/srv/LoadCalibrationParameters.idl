@@ -1,0 +1,21 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/LoadCalibrationParameters.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Load calibration data into ROS parameters")
+    struct LoadCalibrationParameters_Request {
+      string calibration_file;
+
+      string parameter_namespace;
+    };
+    struct LoadCalibrationParameters_Response {
+      boolean success;
+
+      string error_message;
+    };
+  };
+};

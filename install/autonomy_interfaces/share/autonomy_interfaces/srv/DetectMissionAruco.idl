@@ -1,0 +1,131 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/DetectMissionAruco.srv
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+#include "geometry_msgs/msg/Point.idl"
+#include "geometry_msgs/msg/Quaternion.idl"
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "DetectMissionAruco.srv" "\n"
+      "Service for mission-specific ArUco tag detection with auto-alignment")
+    struct DetectMissionAruco_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "Mission type: \"AUTONOMOUS_TYPING\", \"USB_CONNECTION\", \"PANEL_OPERATIONS\"")
+      string mission_type;
+
+      @verbatim (language="comment", text=
+        "Required ArUco tag IDs for this mission")
+      sequence<int32> required_tag_ids;
+
+      @verbatim (language="comment", text=
+        "Optional ArUco tag IDs (improves alignment quality)")
+      sequence<int32> optional_tag_ids;
+
+      @verbatim (language="comment", text=
+        "Timeout in seconds (0.0 = no timeout)")
+      float detection_timeout;
+
+      @verbatim (language="comment", text=
+        "Target depth for arm positioning (meters from tag plane)")
+      float target_depth;
+
+      @verbatim (language="comment", text=
+        "Maximum detection distance in meters")
+      float max_detection_distance;
+
+      @verbatim (language="comment", text=
+        "Whether all required tags must be detected")
+      boolean require_all_tags;
+
+      @verbatim (language="comment", text=
+        "Minimum alignment quality threshold (0.0-1.0)")
+      float min_alignment_quality;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct DetectMissionAruco_Response {
+      @verbatim (language="comment", text=
+        "Whether detection and alignment calculation was successful")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "Mission type that was processed")
+      string mission_type;
+
+      @verbatim (language="comment", text=
+        "Detection results" "\n"
+        "IDs of successfully detected tags")
+      sequence<int32> detected_tag_ids;
+
+      @verbatim (language="comment", text=
+        "3D positions of detected tags")
+      sequence<geometry_msgs::msg::Point> tag_positions;
+
+      @verbatim (language="comment", text=
+        "Estimated distances to tags")
+      sequence<float> tag_distances;
+
+      @verbatim (language="comment", text=
+        "Angles to tags (radians)")
+      sequence<float> tag_angles;
+
+      @verbatim (language="comment", text=
+        "When detection occurred")
+      builtin_interfaces::msg::Time detection_time;
+
+      @verbatim (language="comment", text=
+        "Alignment calculation results" "\n"
+        "Whether alignment calculation is available")
+      boolean alignment_available;
+
+      @verbatim (language="comment", text=
+        "Calculated center point of detected tags")
+      geometry_msgs::msg::Point alignment_center;
+
+      @verbatim (language="comment", text=
+        "Calculated orientation for coplanar alignment")
+      geometry_msgs::msg::Quaternion alignment_orientation;
+
+      @verbatim (language="comment", text=
+        "Recommended arm position for alignment")
+      geometry_msgs::msg::Point arm_target_position;
+
+      @verbatim (language="comment", text=
+        "Quality score of alignment (0.0-1.0)")
+      float alignment_quality;
+
+      @verbatim (language="comment", text=
+        "Individual alignment errors for each tag")
+      sequence<float> alignment_errors;
+
+      @verbatim (language="comment", text=
+        "Mission-specific information" "\n"
+        "Whether mission can proceed based on detection results")
+      boolean mission_ready;
+
+      @verbatim (language="comment", text=
+        "Required tags that were not detected")
+      sequence<string> missing_required_tags;
+
+      @verbatim (language="comment", text=
+        "Optional tags that were detected")
+      sequence<string> detected_optional_tags;
+
+      @verbatim (language="comment", text=
+        "Warnings about alignment quality or missing tags")
+      sequence<string> alignment_warnings;
+
+      @verbatim (language="comment", text=
+        "Recommendations for improving mission success")
+      sequence<string> mission_recommendations;
+    };
+  };
+};

@@ -17,11 +17,12 @@ from typing import Dict, Optional
 from simulation.can.can_bus_mock_simulator import CANBusMockSimulator
 
 # Add project paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class CANStressLevel(Enum):
     """CAN bus stress test severity levels."""
+
     MODERATE = "moderate"
     SEVERE = "severe"
     EXTREME = "extreme"
@@ -29,6 +30,7 @@ class CANStressLevel(Enum):
 
 class CANFaultType(Enum):
     """Types of CAN bus faults to simulate."""
+
     BUS_OFF = "bus_off"
     # TODO: Implement additional fault types as needed
     # BUS_OVERLOAD = "bus_overload"
@@ -41,6 +43,7 @@ class CANFaultType(Enum):
 @dataclass
 class CANStressConfig:
     """Configuration for CAN bus stress testing."""
+
     stress_level: CANStressLevel
     test_duration: float = 30.0
     message_frequency_hz: float = 100.0
@@ -89,11 +92,13 @@ class CANStressSimulator:
 
     def inject_fault(self, fault_type: CANFaultType) -> bool:
         """Inject a specific CAN fault."""
-        self.active_faults.append({
-            'type': fault_type,
-            'timestamp': time.time(),
-            'duration': random.uniform(0.1, 2.0)  # Random fault duration
-        })
+        self.active_faults.append(
+            {
+                "type": fault_type,
+                "timestamp": time.time(),
+                "duration": random.uniform(0.1, 2.0),  # Random fault duration
+            }
+        )
 
         if fault_type == CANFaultType.BUS_OFF:
             self.is_bus_off = True
@@ -127,7 +132,9 @@ class CANStressSimulator:
             return True
         return False
 
-    def process_message_with_stress(self, sensor_name: str, message_data: Dict) -> Optional[Dict]:
+    def process_message_with_stress(
+        self, sensor_name: str, message_data: Dict
+    ) -> Optional[Dict]:
         """Process a CAN message under stress conditions."""
 
         # Check if bus is off
@@ -144,9 +151,9 @@ class CANStressSimulator:
         # Simulate electrical noise
         if self.apply_electrical_noise():
             # Corrupt the message
-            if 'data' in message_data:
-                message_data['data'] = "CORRUPTED"
-            message_data['error'] = 'electrical_noise'
+            if "data" in message_data:
+                message_data["data"] = "CORRUPTED"
+            message_data["error"] = "electrical_noise"
 
         # Simulate random faults
         if random.random() < self.config.fault_injection_rate:
@@ -167,16 +174,29 @@ class CANStressSimulator:
     def get_stress_stats(self) -> Dict:
         """Get comprehensive stress test statistics."""
         return {
-            'messages_processed': self.message_count,
-            'errors_total': self.error_count,
-            'arbitration_collisions': self.collision_count,
-            'bus_off_events': self.bus_off_events,
-            'avg_latency_ms': statistics.mean(self.latency_samples) if self.latency_samples else 0,
-            'max_latency_ms': max(self.latency_samples) if self.latency_samples else 0,
-            'error_rate_percent': (self.error_count / max(self.message_count, 1)) * 100,
-            'collision_rate_percent': (self.collision_count / max(self.message_count, 1)) * 100,
-            'bus_off_rate': self.bus_off_events / max(self.test_duration, 1),  # per second
-            'bus_availability_percent': ((self.config.test_duration - sum(f.get('duration', 0) for f in self.active_faults)) / self.config.test_duration) * 100
+            "messages_processed": self.message_count,
+            "errors_total": self.error_count,
+            "arbitration_collisions": self.collision_count,
+            "bus_off_events": self.bus_off_events,
+            "avg_latency_ms": statistics.mean(self.latency_samples)
+            if self.latency_samples
+            else 0,
+            "max_latency_ms": max(self.latency_samples) if self.latency_samples else 0,
+            "error_rate_percent": (self.error_count / max(self.message_count, 1)) * 100,
+            "collision_rate_percent": (
+                self.collision_count / max(self.message_count, 1)
+            )
+            * 100,
+            "bus_off_rate": self.bus_off_events
+            / max(self.test_duration, 1),  # per second
+            "bus_availability_percent": (
+                (
+                    self.config.test_duration
+                    - sum(f.get("duration", 0) for f in self.active_faults)
+                )
+                / self.config.test_duration
+            )
+            * 100,
         }
 
 
@@ -185,7 +205,15 @@ def run_can_stress_test_worker(stress_config: CANStressConfig) -> Dict:
 
     simulator = CANStressSimulator(stress_config)
 
-    sensors = ['imu', 'gps', 'battery', 'motor_left', 'motor_right', 'encoder_left', 'encoder_right']
+    sensors = [
+        "imu",
+        "gps",
+        "battery",
+        "motor_left",
+        "motor_right",
+        "encoder_left",
+        "encoder_right",
+    ]
     message_interval = 1.0 / stress_config.message_frequency_hz
 
     start_time = time.time()
@@ -196,10 +224,10 @@ def run_can_stress_test_worker(stress_config: CANStressConfig) -> Dict:
 
         # Generate message
         message_data = {
-            'sensor': sensor,
-            'timestamp': time.time(),
-            'data': f"stress_test_data_{random.randint(0, 1000)}",
-            'mock': True
+            "sensor": sensor,
+            "timestamp": time.time(),
+            "data": f"stress_test_data_{random.randint(0, 1000)}",
+            "mock": True,
         }
 
         # Process through stress simulator
@@ -246,18 +274,20 @@ def run_can_stress_test_level(level: CANStressLevel) -> Dict:
     print(".3f")
     print(".1f")
     # Performance assessment
-    if results['error_rate_percent'] < 5 and results['bus_availability_percent'] > 95:
+    if results["error_rate_percent"] < 5 and results["bus_availability_percent"] > 95:
         assessment = "✅ EXCELLENT - Handles stress well"
-    elif results['error_rate_percent'] < 15 and results['bus_availability_percent'] > 85:
+    elif (
+        results["error_rate_percent"] < 15 and results["bus_availability_percent"] > 85
+    ):
         assessment = "⚠️ GOOD - Some issues under stress"
     else:
         assessment = "❌ POOR - Significant problems"
 
     print(f"   • Assessment: {assessment}")
 
-    results['stress_level'] = level.value
-    results['config'] = config
-    results['actual_duration'] = actual_duration
+    results["stress_level"] = level.value
+    results["config"] = config
+    results["actual_duration"] = actual_duration
 
     return results
 
@@ -271,7 +301,11 @@ def run_comprehensive_can_stress_test():
     results = {}
 
     # Test all stress levels
-    stress_levels = [CANStressLevel.MODERATE, CANStressLevel.SEVERE, CANStressLevel.EXTREME]
+    stress_levels = [
+        CANStressLevel.MODERATE,
+        CANStressLevel.SEVERE,
+        CANStressLevel.EXTREME,
+    ]
 
     for level in stress_levels:
         results[level.value] = run_can_stress_test_level(level)
@@ -287,9 +321,9 @@ def run_comprehensive_can_stress_test():
 
     for level_name, result in results.items():
         level_short = level_name[:3].upper()
-        error_rate = result['error_rate_percent']
-        bus_avail = result['bus_availability_percent']
-        latency = result['avg_latency_ms']
+        error_rate = result["error_rate_percent"]
+        bus_avail = result["bus_availability_percent"]
+        latency = result["avg_latency_ms"]
 
         if error_rate < 5 and bus_avail > 95:
             assessment = "✅"
@@ -298,24 +332,26 @@ def run_comprehensive_can_stress_test():
         else:
             assessment = "❌"
 
-        print(f"{level_short:8} | {error_rate:10.1f}% | {bus_avail:9.1f}% | {latency:7.1f}ms | {assessment}")
+        print(
+            f"{level_short:8} | {error_rate:10.1f}% | {bus_avail:9.1f}% | {latency:7.1f}ms | {assessment}"
+        )
 
     # Overall assessment
-    extreme_results = results['extreme']
+    extreme_results = results["extreme"]
 
     print("\n🎯 CAN BUS STRESS TEST ASSESSMENT")
 
-    if extreme_results['bus_availability_percent'] > 80:
+    if extreme_results["bus_availability_percent"] > 80:
         print("✅ CAN bus maintains good reliability under extreme stress")
     else:
         print("❌ CAN bus reliability degrades significantly under extreme conditions")
 
-    if extreme_results['error_rate_percent'] < 20:
+    if extreme_results["error_rate_percent"] < 20:
         print("✅ Error handling is effective under high fault conditions")
     else:
         print("⚠️ Error rates may impact system reliability")
 
-    if extreme_results['avg_latency_ms'] < 50:
+    if extreme_results["avg_latency_ms"] < 50:
         print("✅ Latency remains acceptable under stress")
     else:
         print("⚠️ High latency may affect real-time control")
@@ -354,7 +390,9 @@ def simulate_can_bus_failure_recovery():
     messages_lost = 0
 
     for i in range(50):
-        result = simulator.process_message_with_stress('motor_left', {'data': f'test_{i}'})
+        result = simulator.process_message_with_stress(
+            "motor_left", {"data": f"test_{i}"}
+        )
         if result is None:
             messages_lost += 1
         else:
@@ -374,7 +412,9 @@ def simulate_can_bus_failure_recovery():
     messages_after_recovery = 0
 
     for i in range(50):
-        result = simulator.process_message_with_stress('motor_left', {'data': f'recovery_{i}'})
+        result = simulator.process_message_with_stress(
+            "motor_left", {"data": f"recovery_{i}"}
+        )
         if result is not None:
             messages_after_recovery += 1
 
@@ -390,11 +430,11 @@ def simulate_can_bus_failure_recovery():
     return recovery_stats
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
 
     # Add path for imports
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
     # Run comprehensive CAN stress tests
     can_results = run_comprehensive_can_stress_test()

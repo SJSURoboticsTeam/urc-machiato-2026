@@ -1,21 +1,21 @@
 # Path-based labels for areas
 "area:calibration":
-  - "Autonomy/calibration/**"
+  - "autonomy/calibration/**"
 "area:cv":
-  - "Autonomy/computer_vision/**"
+  - "autonomy/computer_vision/**"
 "area:navigation":
-  - "Autonomy/navigation/**"
+  - "autonomy/navigation/**"
 "area:slam":
-  - "Autonomy/slam/**"
+  - "autonomy/slam/**"
 "area:state":
-  - "Autonomy/state_management/**"
+  - "autonomy/state_management/**"
 "area:deployment":
-  - "Autonomy/deployment/**"
+  - "autonomy/deployment/**"
   - "development/docker/**"
   - "deployment/**"
   - "mcp-servers/**"
 "visual-artifact":
-  - "Autonomy/calibration/aruco_tags/**"
-  - "Autonomy/calibration/print/**"
+  - "autonomy/calibration/aruco_tags/**"
+  - "autonomy/calibration/print/**"
   - "RobotDefinition/**"
   - "docs/**"

@@ -35,14 +35,16 @@ class PerformanceTestNode(Node):
     def get_stats(self):
         """Get performance statistics."""
         if not self.latencies:
-            return {'count': 0, 'avg_latency': 0, 'max_latency': 0}
+            return {"count": 0, "avg_latency": 0, "max_latency": 0}
 
         return {
-            'count': len(self.latencies),
-            'avg_latency': statistics.mean(self.latencies),
-            'max_latency': max(self.latencies),
-            'min_latency': min(self.latencies),
-            'p95_latency': statistics.quantiles(self.latencies, n=20)[18] if len(self.latencies) >= 20 else max(self.latencies)
+            "count": len(self.latencies),
+            "avg_latency": statistics.mean(self.latencies),
+            "max_latency": max(self.latencies),
+            "min_latency": min(self.latencies),
+            "p95_latency": statistics.quantiles(self.latencies, n=20)[18]
+            if len(self.latencies) >= 20
+            else max(self.latencies),
         }
 
 
@@ -50,18 +52,18 @@ class CoupledPublisher(PerformanceTestNode):
     """Publisher using intra-process communication."""
 
     def __init__(self):
-        super().__init__('coupled_publisher')
+        super().__init__("coupled_publisher")
 
         # QoS for intra-process communication
         qos_intra = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,  # Enable intra-process
-            depth=100
+            depth=100,
         )
 
-        self.imu_pub = self.create_publisher(Imu, '/imu_coupled', qos_intra)
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel_coupled', qos_intra)
-        self.status_pub = self.create_publisher(String, '/status_coupled', qos_intra)
+        self.imu_pub = self.create_publisher(Imu, "/imu_coupled", qos_intra)
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel_coupled", qos_intra)
+        self.status_pub = self.create_publisher(String, "/status_coupled", qos_intra)
 
         self.timer = self.create_timer(0.01, self.publish_messages)  # 100Hz
 
@@ -95,20 +97,20 @@ class CoupledSubscriber(PerformanceTestNode):
     """Subscriber using intra-process communication."""
 
     def __init__(self):
-        super().__init__('coupled_subscriber')
+        super().__init__("coupled_subscriber")
 
         # QoS for intra-process communication
         qos_intra = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,  # Enable intra-process
-            depth=100
+            depth=100,
         )
 
         self.imu_sub = self.create_subscription(
-            Imu, '/imu_coupled', self.imu_callback, qos_intra
+            Imu, "/imu_coupled", self.imu_callback, qos_intra
         )
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel_coupled', self.cmd_vel_callback, qos_intra
+            Twist, "/cmd_vel_coupled", self.cmd_vel_callback, qos_intra
         )
 
     def imu_callback(self, msg):
@@ -128,18 +130,18 @@ class DecoupledPublisher(PerformanceTestNode):
     """Publisher using inter-process communication."""
 
     def __init__(self):
-        super().__init__('decoupled_publisher')
+        super().__init__("decoupled_publisher")
 
         # QoS for inter-process communication (different durability)
         qos_inter = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,  # Inter-process
-            depth=100
+            depth=100,
         )
 
-        self.imu_pub = self.create_publisher(Imu, '/imu_decoupled', qos_inter)
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel_decoupled', qos_inter)
-        self.status_pub = self.create_publisher(String, '/status_decoupled', qos_inter)
+        self.imu_pub = self.create_publisher(Imu, "/imu_decoupled", qos_inter)
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel_decoupled", qos_inter)
+        self.status_pub = self.create_publisher(String, "/status_decoupled", qos_inter)
 
         self.timer = self.create_timer(0.01, self.publish_messages)  # 100Hz
 
@@ -171,20 +173,20 @@ class DecoupledSubscriber(PerformanceTestNode):
     """Subscriber using inter-process communication."""
 
     def __init__(self):
-        super().__init__('decoupled_subscriber')
+        super().__init__("decoupled_subscriber")
 
         # QoS for inter-process communication
         qos_inter = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,  # Inter-process
-            depth=100
+            depth=100,
         )
 
         self.imu_sub = self.create_subscription(
-            Imu, '/imu_decoupled', self.imu_callback, qos_inter
+            Imu, "/imu_decoupled", self.imu_callback, qos_inter
         )
         self.cmd_vel_sub = self.create_subscription(
-            Twist, '/cmd_vel_decoupled', self.cmd_vel_callback, qos_inter
+            Twist, "/cmd_vel_decoupled", self.cmd_vel_callback, qos_inter
         )
 
     def imu_callback(self, msg):
@@ -203,9 +205,9 @@ def measure_system_resources():
     """Measure current system resource usage."""
     process = psutil.Process()
     return {
-        'cpu_percent': psutil.cpu_percent(interval=0.1),
-        'memory_mb': process.memory_info().rss / 1024 / 1024,
-        'memory_percent': process.memory_percent()
+        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "memory_mb": process.memory_info().rss / 1024 / 1024,
+        "memory_percent": process.memory_percent(),
     }
 
 
@@ -255,17 +257,19 @@ def run_coupled_test(duration: float = 10.0):
     rclpy.shutdown()
 
     return {
-        'type': 'coupled',
-        'duration': duration,
-        'imu_messages': imu_stats['count'],
-        'cmd_vel_messages': message_stats['count'],
-        'avg_latency_ms': imu_stats['avg_latency'],
-        'max_latency_ms': imu_stats['max_latency'],
-        'p95_latency_ms': imu_stats['p95_latency'],
-        'throughput_msgs_per_sec': (imu_stats['count'] + message_stats['count']) / duration,
-        'baseline_cpu': baseline_resources['cpu_percent'],
-        'final_cpu': final_resources['cpu_percent'],
-        'memory_delta_mb': final_resources['memory_mb'] - baseline_resources['memory_mb']
+        "type": "coupled",
+        "duration": duration,
+        "imu_messages": imu_stats["count"],
+        "cmd_vel_messages": message_stats["count"],
+        "avg_latency_ms": imu_stats["avg_latency"],
+        "max_latency_ms": imu_stats["max_latency"],
+        "p95_latency_ms": imu_stats["p95_latency"],
+        "throughput_msgs_per_sec": (imu_stats["count"] + message_stats["count"])
+        / duration,
+        "baseline_cpu": baseline_resources["cpu_percent"],
+        "final_cpu": final_resources["cpu_percent"],
+        "memory_delta_mb": final_resources["memory_mb"]
+        - baseline_resources["memory_mb"],
     }
 
 
@@ -315,17 +319,19 @@ def run_decoupled_test(duration: float = 10.0):
     rclpy.shutdown()
 
     return {
-        'type': 'decoupled',
-        'duration': duration,
-        'imu_messages': imu_stats['count'],
-        'cmd_vel_messages': imu_stats['count'],  # Same count for both
-        'avg_latency_ms': imu_stats['avg_latency'],
-        'max_latency_ms': imu_stats['max_latency'],
-        'p95_latency_ms': imu_stats['p95_latency'],
-        'throughput_msgs_per_sec': (imu_stats['count'] + message_stats['count']) / duration,
-        'baseline_cpu': baseline_resources['cpu_percent'],
-        'final_cpu': final_resources['cpu_percent'],
-        'memory_delta_mb': final_resources['memory_mb'] - baseline_resources['memory_mb']
+        "type": "decoupled",
+        "duration": duration,
+        "imu_messages": imu_stats["count"],
+        "cmd_vel_messages": imu_stats["count"],  # Same count for both
+        "avg_latency_ms": imu_stats["avg_latency"],
+        "max_latency_ms": imu_stats["max_latency"],
+        "p95_latency_ms": imu_stats["p95_latency"],
+        "throughput_msgs_per_sec": (imu_stats["count"] + message_stats["count"])
+        / duration,
+        "baseline_cpu": baseline_resources["cpu_percent"],
+        "final_cpu": final_resources["cpu_percent"],
+        "memory_delta_mb": final_resources["memory_mb"]
+        - baseline_resources["memory_mb"],
     }
 
 
@@ -368,27 +374,40 @@ def main():
     # Performance comparison
     print("\n⚡ PERFORMANCE COMPARISON:")
 
-    if coupled_results['avg_latency_ms'] > 0 and decoupled_results['avg_latency_ms'] > 0:
+    if (
+        coupled_results["avg_latency_ms"] > 0
+        and decoupled_results["avg_latency_ms"] > 0
+    ):
         latency_improvement = (
-            (decoupled_results['avg_latency_ms'] - coupled_results['avg_latency_ms']) / decoupled_results['avg_latency_ms']) * 100
+            (decoupled_results["avg_latency_ms"] - coupled_results["avg_latency_ms"])
+            / decoupled_results["avg_latency_ms"]
+        ) * 100
         print(".1f")
 
         if latency_improvement > 50:
-            print("  ✅ Excellent performance improvement with intra-process communication!")
+            print(
+                "  ✅ Excellent performance improvement with intra-process communication!"
+            )
         elif latency_improvement > 20:
             print("  ⚠️ Good performance improvement with intra-process communication")
         else:
             print("  🤔 Limited performance improvement observed")
 
     throughput_improvement = (
-        (coupled_results['throughput_msgs_per_sec'] - decoupled_results['throughput_msgs_per_sec']) / max(
-            decoupled_results['throughput_msgs_per_sec'], 1)) * 100
+        (
+            coupled_results["throughput_msgs_per_sec"]
+            - decoupled_results["throughput_msgs_per_sec"]
+        )
+        / max(decoupled_results["throughput_msgs_per_sec"], 1)
+    ) * 100
     print(".1f")
 
-    cpu_savings = decoupled_results['final_cpu'] - coupled_results['final_cpu']
+    cpu_savings = decoupled_results["final_cpu"] - coupled_results["final_cpu"]
     print(".1f")
 
-    memory_savings = decoupled_results['memory_delta_mb'] - coupled_results['memory_delta_mb']
+    memory_savings = (
+        decoupled_results["memory_delta_mb"] - coupled_results["memory_delta_mb"]
+    )
     print(".2f")
 
     print("\n🎯 SYSTEM IMPACT ASSESSMENT:")
@@ -411,6 +430,7 @@ def main():
     print("\n✨ Performance test completed!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import threading
+
     main()

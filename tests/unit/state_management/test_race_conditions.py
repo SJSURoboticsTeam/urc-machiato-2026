@@ -13,7 +13,9 @@ import time
 import pytest
 
 # Add the state machine to path
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 STATE_MGMT_ROOT = os.path.join(PROJECT_ROOT, "Autonomy", "code", "state_management")
 sys.path.insert(0, STATE_MGMT_ROOT)
 sys.path.insert(0, os.path.join(STATE_MGMT_ROOT, "autonomy_state_machine"))
@@ -21,7 +23,9 @@ sys.path.insert(0, os.path.join(STATE_MGMT_ROOT, "autonomy_state_machine"))
 try:
     from autonomy_state_machine.states import SystemState
 except ImportError:
-    pytest.skip("autonomy_state_machine package not importable", allow_module_level=True)
+    pytest.skip(
+        "autonomy_state_machine package not importable", allow_module_level=True
+    )
 
 
 class MockStateMachine:
@@ -47,7 +51,9 @@ class MockStateMachine:
 
         # This could be corrupted by concurrent access
         if str(from_state) == str(to_state):
-            self.errors.append(f"Thread {thread_id}: Invalid transition {from_state} -> {to_state}")
+            self.errors.append(
+                f"Thread {thread_id}: Invalid transition {from_state} -> {to_state}"
+            )
 
         return True
 
@@ -69,11 +75,15 @@ class TestRaceConditions:
                     if i % 4 == 0:
                         state_machine.unsafe_transition(SystemState.IDLE, thread_id)
                     elif i % 4 == 1:
-                        state_machine.unsafe_transition(SystemState.AUTONOMOUS, thread_id)
+                        state_machine.unsafe_transition(
+                            SystemState.AUTONOMOUS, thread_id
+                        )
                     elif i % 4 == 2:
                         state_machine.unsafe_transition(SystemState.SAFETY, thread_id)
                     else:
-                        state_machine.unsafe_transition(SystemState.TELEOPERATION, thread_id)
+                        state_machine.unsafe_transition(
+                            SystemState.TELEOPERATION, thread_id
+                        )
                 except Exception as e:
                     errors_found.append(f"Thread {thread_id}: {str(e)}")
 

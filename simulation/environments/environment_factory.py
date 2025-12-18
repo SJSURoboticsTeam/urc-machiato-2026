@@ -10,7 +10,6 @@ import logging
 from typing import Any, Dict, Optional, Type
 
 from simulation.environments.base_environment import BaseEnvironment
-
 from simulation.environments.extreme_environment import ExtremeEnvironment
 from simulation.environments.perfect_environment import PerfectEnvironment
 from simulation.environments.real_life_environment import RealLifeEnvironment
@@ -164,4 +163,6 @@ class EnvironmentFactory:
             raise ValueError("Extreme environment wind speed should be ≥ 10 m/s")
 
         if "temperature" in config and abs(config["temperature"] - 25) < 20:
-            raise ValueError("Extreme environment temperature should differ from 25°C by ≥ 20°C")
+            raise ValueError(
+                "Extreme environment temperature should differ from 25°C by ≥ 20°C"
+            )

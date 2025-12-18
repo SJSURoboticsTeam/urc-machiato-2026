@@ -1,82 +1,88 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="3" tests="90" time="43.805" timestamp="2025-12-12T20:08:27.773221+00:00" hostname="infinite-shoveler"><testcase classname="" name="tests.integration" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/integration/test_streamlined_autonomy.py', 46, 'Skipped: NavigationNode/autonomy_interfaces not available; streamlined autonomy integration tests require full ROS2 build.')</skipped></testcase><testcase classname="" name="tests.system" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/system/test_missions.py', 43, 'Skipped: missions package not importable; system mission tests require missions to be installed/packaged.')</skipped></testcase><testcase classname="" name="tests.unit.control" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/unit/control/test_state_machine.py', 32, 'Skipped: autonomy_state_machine package not importable; state machine unit tests require state_management to be on PYTHONPATH.')</skipped></testcase><testcase classname="tests.performance.test_performance_load.PerformanceLoadTest" name="test_can_sensor_data_latency" time="0.002" /><testcase classname="tests.performance.test_performance_load.PerformanceLoadTest" name="test_concurrent_operations" time="0.214" /><testcase classname="tests.performance.test_performance_load.PerformanceLoadTest" name="test_memory_leak_detection" time="0.007" /><testcase classname="tests.performance.test_performance_load.PerformanceLoadTest" name="test_message_throughput" time="0.006" /><testcase classname="tests.performance.test_performance_load.PerformanceLoadTest" name="test_network_stress_simulation" time="0.129"><failure message="AssertionError: 275 not less than 200">self = &lt;test_performance_load.PerformanceLoadTest testMethod=test_network_stress_simulation&gt;
-
-    def test_network_stress_simulation(self):
-        """Test system under simulated network stress."""
-        print("\n#x1F310 Testing Network Stress Simulation")
-
-        # Simulate high-frequency message traffic
-        num_messages = 500
-        burst_size = 50
-        burst_delay = 0.01  # 10ms between bursts
-
-        latencies = []
-        queue_sizes = []
-
-        start_time = time.time()
-
-        for burst in range(num_messages // burst_size):
-            burst_start = time.time()
-
-            # Send burst of messages
-            for i in range(burst_size):
-                msg = {
-                    'type': 'sensor_data',
-                    'id': f'burst_{burst}_{i}',
-                    'timestamp': time.time()
-                }
-                enqueue_start = time.time()
-                self.message_router.enqueue_message(msg)
-                enqueue_end = time.time()
-                latencies.append((enqueue_end - enqueue_start) * 1000)
-
-            # Record queue size
-            queue_sizes.append(self.message_router.get_queue_status()['queue_size'])
-
-            # Small delay between bursts
-            time.sleep(burst_delay)
-
-            # Process some messages to prevent infinite queue growth
-            for _ in range(burst_size // 2):
-                self.message_router.dequeue_message()
-
-        # Process remaining messages
-        remaining = 0
-        while True:
-            msg = self.message_router.dequeue_message()
-            if msg is None:
-                break
-            remaining += 1
-
-        end_time = time.time()
-        total_time = end_time - start_time
-
-        # Analyze results
-        avg_latency = statistics.mean(latencies)
-        max_latency = max(latencies)
-        avg_queue_size = statistics.mean(queue_sizes)
-        max_queue_size = max(queue_sizes)
-
-        self.results['network_stress'] = {
-            'messages_sent': num_messages,
-            'total_time': total_time,
-            'throughput_msg_per_sec': num_messages / total_time,
-            'avg_enqueue_latency_ms': avg_latency,
-            'max_enqueue_latency_ms': max_latency,
-            'avg_queue_size': avg_queue_size,
-            'max_queue_size': max_queue_size
-        }
-
-        print("✅ Network stress test completed")
-        print(".1f")
-        print(".3f")
-        print(".3f")
-        print(".1f")
-        print(".1f")
-
-        # Performance requirements under stress
-        self.assertLess(avg_latency, 5.0)      # &lt; 5ms average enqueue latency
-        self.assertLess(max_latency, 20.0)     # &lt; 20ms max enqueue latency
-&gt;       self.assertLess(max_queue_size, 200)   # Queue shouldn't grow too large
-E       AssertionError: 275 not less than 200
-
-tests/performance/test_performance_load.py:355: AssertionError</failure></testcase><testcase classname="tests.performance.test_performance_load.PerformanceLoadTest" name="test_system_resource_monitoring" time="5.047" /><testcase classname="tests.performance.test_ros2_communication_performance.ROS2CommunicationPerformanceTest" name="test_high_frequency_throughput" time="13.155" /><testcase classname="tests.performance.test_ros2_communication_performance.ROS2CommunicationPerformanceTest" name="test_inter_process_latency" time="11.225" /><testcase classname="tests.performance.test_ros2_communication_performance.ROS2CommunicationPerformanceTest" name="test_intra_process_latency" time="3.653" /><testcase classname="tests.performance.test_ros2_communication_performance.ROS2CommunicationPerformanceTest" name="test_resource_usage_comparison" time="9.436" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_autonomy_system_subscriptions" time="0.011" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_data_format_compatibility" time="0.001" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_dependency_compatibility" time="0.001" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_integration_guide_compliance" time="0.001" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_message_type_compatibility" time="0.000" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_performance_requirements" time="0.018" /><testcase classname="tests.teleoperation.test_teleoperation_compatibility.TestTeleoperationCompatibility" name="test_ros2_topic_requirements" time="0.001" /><testcase classname="tests.test_can_mock_system.TestCANMockSimulator" name="test_get_mock_reading_known_sensor" time="0.001" /><testcase classname="tests.test_can_mock_system.TestCANMockSimulator" name="test_get_mock_reading_unknown_sensor" time="0.000" /><testcase classname="tests.test_can_mock_system.TestCANMockSimulator" name="test_mock_data_realistic_ranges" time="0.001" /><testcase classname="tests.test_can_mock_system.TestCANMockSimulator" name="test_motor_command_simulation" time="0.000" /><testcase classname="tests.test_can_mock_system.TestPriorityMessageRouter" name="test_message_enqueue_dequeue" time="0.000" /><testcase classname="tests.test_can_mock_system.TestPriorityMessageRouter" name="test_priority_assignment" time="0.000" /><testcase classname="tests.test_can_mock_system.TestPriorityMessageRouter" name="test_priority_ordering" time="0.000" /><testcase classname="tests.test_can_mock_system.TestPriorityMessageRouter" name="test_queue_size_limits" time="0.000" /><testcase classname="tests.test_can_mock_system.TestPriorityMessageRouter" name="test_queue_status_tracking" time="0.000" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_bearing_calculation" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_distance_calculation" time="0.000" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_obstacle_avoidance" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_path_cost_calculation" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_path_planning_basic" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_path_smoothing" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_terrain_adaptation" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestPathPlanner" name="test_waypoint_validation" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestWaypointNavigation" name="test_multiple_waypoint_sequence" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestWaypointNavigation" name="test_set_target_waypoint" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestWaypointNavigation" name="test_waypoint_arrival_detection" time="0.001" /><testcase classname="tests.unit.navigation.test_path_planner.TestWaypointNavigation" name="test_waypoint_progress_tracking" time="0.001" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_clear_all_triggers" time="0.001" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_clear_trigger" time="0.001" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_emergency_stop_recovery" time="0.000" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_get_safety_status" time="0.000" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_initialization" time="0.000" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_proximity_violation_recovery" time="0.000" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_safestop_recovery" time="0.001" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_software_estop_recovery" time="0.001" /><testcase classname="tests.unit.safety.test_safety_manager.TestSafetyManager" name="test_trigger_safety_event" time="0.001" /><testcase classname="tests.unit.test_autonomy_infrastructure" name="test_mission_executor_import" time="0.001" /><testcase classname="tests.unit.test_autonomy_infrastructure" name="test_configuration_loading" time="0.000" /><testcase classname="tests.unit.test_autonomy_infrastructure" name="test_mock_teleoperation_import" time="0.000" /><testcase classname="tests.unit.test_autonomy_infrastructure" name="test_data_structures" time="0.000" /><testcase classname="tests.unit.test_autonomy_infrastructure" name="test_validation_functions" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierBasics" name="test_terrain_type_enum" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierBasics" name="test_properties_structure" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_default_properties_exist" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_unknown_properties_fallback" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_classify_terrain_placeholder" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_assess_traversability_placeholder" time="0.002" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_recommend_speed_respects_max" time="0.001" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_calculate_terrain_cost_positive" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_detect_hazards_placeholder" time="0.000" /><testcase classname="tests.unit.test_terrain_classifier.TestTerrainClassifierAPI" name="test_update_and_reset_dont_crash" time="0.000" /><testcase classname="tests.unit.test_utilities.TestCoreUtilities" name="test_safe_execute_success" time="0.000" /><testcase classname="tests.unit.test_utilities.TestCoreUtilities" name="test_safe_execute_failure" time="0.000" /><testcase classname="tests.unit.test_utilities.TestCoreUtilities" name="test_result_types" time="0.000" /><testcase classname="tests.unit.test_utilities.TestNodeParameters" name="test_navigation_parameters" time="0.000" /><testcase classname="tests.unit.test_utilities.TestNodeParameters" name="test_led_parameters" time="0.000" /><testcase classname="tests.unit.test_utilities.TestNodeParameters" name="test_vision_parameters" time="0.000" /><testcase classname="tests.unit.test_utilities.TestMessagePipeline" name="test_pipeline_success" time="0.000" /><testcase classname="tests.unit.test_utilities.TestMessagePipeline" name="test_pipeline_failure" time="0.000" /><testcase classname="tests.unit.test_utilities.TestMessagePipeline" name="test_pipeline_with_tracing" time="0.000" /><testcase classname="tests.unit.test_utilities.TestValidationErrors" name="test_validation_error" time="0.000" /><testcase classname="tests.unit.test_utilities.TestValidationErrors" name="test_processing_error" time="0.000" /><testcase classname="tests.unit.test_utilities.TestParameterValidation" name="test_parameter_declaration" time="0.000" /><testcase classname="tests.unit.test_utilities.TestIntegrationPatterns" name="test_complete_parameter_workflow" time="0.000" /><testcase classname="tests.unit.test_utilities.TestIntegrationPatterns" name="test_pipeline_with_error_handling" time="0.000" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_coordinate_transformation" time="0.001" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_detection_robustness" time="0.001" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_keyboard_key_mapping" time="0.001" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_keyboard_marker_mapping" time="0.006" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_keyboard_pose_tracking" time="0.001" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_marker_detection_empty_image" time="0.001" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_marker_detection_multiple_markers" time="0.002" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_marker_detection_single_marker" time="0.002" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_pose_estimation_failure" time="0.000" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_pose_estimation_success" time="0.001" /><testcase classname="tests.unit.vision.test_aruco_detection.TestArucoDetection" name="test_pose_filtering" time="0.001" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="0" skipped="4" tests="7" time="1.093" timestamp="2025-12-16T01:46:34.199470+00:00" hostname="infinite-shoveler"><testcase classname="" name="tests.integration" time="0.000"><error message="collection failure">../.local/lib/python3.10/site-packages/pluggy/_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+../.local/lib/python3.10/site-packages/pluggy/_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+../.local/lib/python3.10/site-packages/_pytest/python.py:193: in pytest_collect_file
+    module: Module = ihook.pytest_pycollect_makemodule(
+../.local/lib/python3.10/site-packages/_pytest/config/compat.py:79: in fixed_hook
+    return hook(**kw)
+../.local/lib/python3.10/site-packages/pluggy/_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+../.local/lib/python3.10/site-packages/pluggy/_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+/opt/ros/humble/lib/python3.10/site-packages/launch_testing/pytest/hooks.py:193: in pytest_pycollect_makemodule
+    entrypoint = find_launch_test_entrypoint(path)
+/opt/ros/humble/lib/python3.10/site-packages/launch_testing/pytest/hooks.py:180: in find_launch_test_entrypoint
+    module = import_path(path, root=None, consider_namespace_packages=False)
+../.local/lib/python3.10/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/usr/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+&lt;frozen importlib._bootstrap&gt;:1050: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1027: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1006: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:688: in _load_unlocked
+    ???
+../.local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/integration/test_ros2_state_machine_bridge.py:17: in &lt;module&gt;
+    from bridges.ros2_state_machine_bridge import SystemState
+E   ModuleNotFoundError: No module named 'bridges.ros2_state_machine_bridge'</error></testcase><testcase classname="" name="tests.performance" time="0.000"><error message="collection failure">../.local/lib/python3.10/site-packages/pluggy/_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+../.local/lib/python3.10/site-packages/pluggy/_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+../.local/lib/python3.10/site-packages/_pytest/python.py:193: in pytest_collect_file
+    module: Module = ihook.pytest_pycollect_makemodule(
+../.local/lib/python3.10/site-packages/_pytest/config/compat.py:79: in fixed_hook
+    return hook(**kw)
+../.local/lib/python3.10/site-packages/pluggy/_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+../.local/lib/python3.10/site-packages/pluggy/_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+/opt/ros/humble/lib/python3.10/site-packages/launch_testing/pytest/hooks.py:193: in pytest_pycollect_makemodule
+    entrypoint = find_launch_test_entrypoint(path)
+/opt/ros/humble/lib/python3.10/site-packages/launch_testing/pytest/hooks.py:180: in find_launch_test_entrypoint
+    module = import_path(path, root=None, consider_namespace_packages=False)
+../.local/lib/python3.10/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/usr/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+&lt;frozen importlib._bootstrap&gt;:1050: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1027: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1006: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:688: in _load_unlocked
+    ???
+../.local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/performance/test_performance_load.py:21: in &lt;module&gt;
+    from src.bridges.priority_message_router import PriorityMessageRouter
+E   ModuleNotFoundError: No module named 'src.bridges.priority_message_router'</error></testcase><testcase classname="" name="tests.system" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/system/test_missions.py', 43, 'Skipped: missions package not importable; system mission tests require missions to be installed/packaged.')</skipped></testcase><testcase classname="" name="tests.unit.control" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/unit/control/test_state_machine.py', 32, 'Skipped: autonomy_state_machine package not importable; state machine unit tests require state_management to be on PYTHONPATH.')</skipped></testcase><testcase classname="" name="tests.unit.safety" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/unit/safety/test_safety_manager.py', 33, 'Skipped: autonomy_state_machine.safety_manager not importable; safety unit tests require state_management to be on PYTHONPATH.')</skipped></testcase><testcase classname="" name="tests.unit.state_management" time="0.000"><skipped message="collection skipped">('/home/ubuntu/urc-machiato-2026/tests/unit/state_management/test_core_states.py', 29, 'Skipped: autonomy_state_machine package not importable')</skipped></testcase><testcase classname="" name="tests.unit.test_utilities" time="0.000"><error message="collection failure">../.local/lib/python3.10/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+../.local/lib/python3.10/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/usr/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+&lt;frozen importlib._bootstrap&gt;:1050: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1027: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1006: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:688: in _load_unlocked
+    ???
+../.local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:177: in exec_module
+    source_stat, co = _rewrite_test(fn, self.config)
+../.local/lib/python3.10/site-packages/_pytest/assertion/rewrite.py:357: in _rewrite_test
+    tree = ast.parse(source, filename=strfn)
+/usr/lib/python3.10/ast.py:50: in parse
+    return compile(source, filename, mode, flags,
+E     File "/home/ubuntu/urc-machiato-2026/tests/unit/test_utilities.py", line 57
+E       def get_logger(self):
+E                            ^
+E   IndentationError: unindent does not match any outer indentation level</error></testcase></testsuite></testsuites>

@@ -15,7 +15,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -24,27 +24,30 @@ logger = logging.getLogger(__name__)
 
 class JointType(Enum):
     """Types of robotic joints."""
-    REVOLUTE = "revolute"     # Rotary joint
-    PRISMATIC = "prismatic"   # Linear joint
+
+    REVOLUTE = "revolute"  # Rotary joint
+    PRISMATIC = "prismatic"  # Linear joint
 
 
 @dataclass
 class JointConfig:
     """Configuration for a robotic joint."""
+
     name: str
     joint_type: JointType
     position_limits: Tuple[float, float]  # min, max in radians or meters
-    velocity_limit: float                  # rad/s or m/s
-    acceleration_limit: float              # rad/s² or m/s²
+    velocity_limit: float  # rad/s or m/s
+    acceleration_limit: float  # rad/s² or m/s²
     gear_ratio: float = 1.0
-    offset: float = 0.0                    # Zero position offset
+    offset: float = 0.0  # Zero position offset
 
 
 @dataclass
 class LinkConfig:
     """Configuration for a robotic link."""
-    length: float      # Link length in meters
-    mass: float        # Link mass in kg
+
+    length: float  # Link length in meters
+    mass: float  # Link mass in kg
     com_offset: float  # Center of mass offset from joint
 
 
@@ -90,16 +93,16 @@ class RoboticArmSimulator:
                     "position_limits": (-np.pi, np.pi),
                     "velocity_limit": 1.5,
                     "acceleration_limit": 3.0,
-                    "gear_ratio": 100.0
+                    "gear_ratio": 100.0,
                 },
                 # Joint 2: Shoulder
                 {
                     "name": "shoulder",
                     "joint_type": "revolute",
-                    "position_limits": (-np.pi/2, np.pi/2),
+                    "position_limits": (-np.pi / 2, np.pi / 2),
                     "velocity_limit": 1.2,
                     "acceleration_limit": 2.5,
-                    "gear_ratio": 80.0
+                    "gear_ratio": 80.0,
                 },
                 # Joint 3: Elbow
                 {
@@ -108,16 +111,16 @@ class RoboticArmSimulator:
                     "position_limits": (-np.pi, 0),
                     "velocity_limit": 1.0,
                     "acceleration_limit": 2.0,
-                    "gear_ratio": 60.0
+                    "gear_ratio": 60.0,
                 },
                 # Joint 4: Wrist pitch
                 {
                     "name": "wrist_pitch",
                     "joint_type": "revolute",
-                    "position_limits": (-np.pi/2, np.pi/2),
+                    "position_limits": (-np.pi / 2, np.pi / 2),
                     "velocity_limit": 2.0,
                     "acceleration_limit": 4.0,
-                    "gear_ratio": 40.0
+                    "gear_ratio": 40.0,
                 },
                 # Joint 5: Wrist roll
                 {
@@ -126,32 +129,36 @@ class RoboticArmSimulator:
                     "position_limits": (-np.pi, np.pi),
                     "velocity_limit": 2.5,
                     "acceleration_limit": 5.0,
-                    "gear_ratio": 30.0
+                    "gear_ratio": 30.0,
                 },
                 # Joint 6: Gripper rotation (placeholder for linear actuator)
                 {
                     "name": "gripper_rotation",
                     "joint_type": "revolute",
-                    "position_limits": (-np.pi/4, np.pi/4),
+                    "position_limits": (-np.pi / 4, np.pi / 4),
                     "velocity_limit": 1.0,
                     "acceleration_limit": 2.0,
-                    "gear_ratio": 20.0
-                }
+                    "gear_ratio": 20.0,
+                },
             ],
             "links": [
                 {"length": 0.2, "mass": 2.0, "com_offset": 0.1},  # Base to shoulder
                 {"length": 0.3, "mass": 1.5, "com_offset": 0.15},  # Shoulder to elbow
-                {"length": 0.25, "mass": 1.0, "com_offset": 0.125}, # Elbow to wrist
-                {"length": 0.1, "mass": 0.5, "com_offset": 0.05},   # Wrist pitch to roll
-                {"length": 0.08, "mass": 0.3, "com_offset": 0.04},  # Wrist roll to gripper
-                {"length": 0.05, "mass": 0.2, "com_offset": 0.025}  # Gripper
+                {"length": 0.25, "mass": 1.0, "com_offset": 0.125},  # Elbow to wrist
+                {"length": 0.1, "mass": 0.5, "com_offset": 0.05},  # Wrist pitch to roll
+                {
+                    "length": 0.08,
+                    "mass": 0.3,
+                    "com_offset": 0.04,
+                },  # Wrist roll to gripper
+                {"length": 0.05, "mass": 0.2, "com_offset": 0.025},  # Gripper
             ],
             "end_effector": {
-                "gripper_open_width": 0.1,      # meters
-                "gripper_close_width": 0.0,     # meters
-                "max_grip_force": 50.0,         # Newtons
-                "grip_sensor_resolution": 0.001 # meters
-            }
+                "gripper_open_width": 0.1,  # meters
+                "gripper_close_width": 0.0,  # meters
+                "max_grip_force": 50.0,  # Newtons
+                "grip_sensor_resolution": 0.001,  # meters
+            },
         }
 
     def _load_configuration(self, config: Dict):
@@ -176,9 +183,9 @@ class RoboticArmSimulator:
 
     def _initialize_state(self):
         """Initialize arm state."""
-        self.joint_positions = np.zeros(self.dof)      # Current joint positions
-        self.joint_velocities = np.zeros(self.dof)     # Current joint velocities
-        self.joint_torques = np.zeros(self.dof)        # Current joint torques
+        self.joint_positions = np.zeros(self.dof)  # Current joint positions
+        self.joint_velocities = np.zeros(self.dof)  # Current joint velocities
+        self.joint_torques = np.zeros(self.dof)  # Current joint torques
 
         self.joint_position_targets = np.zeros(self.dof)  # Target positions
         self.joint_velocity_targets = np.zeros(self.dof)  # Target velocities
@@ -244,8 +251,9 @@ class RoboticArmSimulator:
 
         return T
 
-    def inverse_kinematics(self, target_pose: np.ndarray,
-                          current_joints: Optional[np.ndarray] = None) -> Optional[np.ndarray]:
+    def inverse_kinematics(
+        self, target_pose: np.ndarray, current_joints: Optional[np.ndarray] = None
+    ) -> Optional[np.ndarray]:
         """
         Calculate inverse kinematics.
 
@@ -286,9 +294,11 @@ class RoboticArmSimulator:
             joints -= learning_rate * gradient
 
             # Apply joint limits
-            joints = np.clip(joints,
-                           [j.position_limits[0] for j in self.joints],
-                           [j.position_limits[1] for j in self.joints])
+            joints = np.clip(
+                joints,
+                [j.position_limits[0] for j in self.joints],
+                [j.position_limits[1] for j in self.joints],
+            )
 
         # Check if solution is valid
         final_error = pose_error(joints)
@@ -319,7 +329,9 @@ class RoboticArmSimulator:
             return False
 
         # Plan trajectory (simple linear interpolation for simulation)
-        trajectory = self._plan_trajectory(self.joint_positions, target_joints, duration)
+        trajectory = self._plan_trajectory(
+            self.joint_positions, target_joints, duration
+        )
 
         # Execute movement
         self._execute_trajectory(trajectory)
@@ -343,11 +355,15 @@ class RoboticArmSimulator:
         # Validate joint limits
         for i, (target, joint) in enumerate(zip(target_joints, self.joints)):
             if not (joint.position_limits[0] <= target <= joint.position_limits[1]):
-                self.logger.error(f"Joint {i} target {target} outside limits {joint.position_limits}")
+                self.logger.error(
+                    f"Joint {i} target {target} outside limits {joint.position_limits}"
+                )
                 return False
 
         # Plan and execute trajectory
-        trajectory = self._plan_trajectory(self.joint_positions, target_joints, duration)
+        trajectory = self._plan_trajectory(
+            self.joint_positions, target_joints, duration
+        )
         self._execute_trajectory(trajectory)
 
         return True
@@ -368,7 +384,9 @@ class RoboticArmSimulator:
         max_width = self.end_effector_config["gripper_open_width"]
 
         if not (min_width <= width <= max_width):
-            self.logger.error(f"Gripper width {width} outside limits [{min_width}, {max_width}]")
+            self.logger.error(
+                f"Gripper width {width} outside limits [{min_width}, {max_width}]"
+            )
             return False
 
         self.gripper_width = width
@@ -381,7 +399,7 @@ class RoboticArmSimulator:
 
         # Simulate gripping logic
         if width < 0.01:  # Closed position
-            self.object_gripped = (self.gripper_force > 10.0)  # Mock gripping detection
+            self.object_gripped = self.gripper_force > 10.0  # Mock gripping detection
         else:
             self.object_gripped = False
 
@@ -397,7 +415,9 @@ class RoboticArmSimulator:
             "joint_torques": self.joint_torques.tolist(),
             "end_effector_pose": {
                 "position": end_effector_pose[:3, 3].tolist(),
-                "orientation": self._rotation_matrix_to_quaternion(end_effector_pose[:3, :3]).tolist()
+                "orientation": self._rotation_matrix_to_quaternion(
+                    end_effector_pose[:3, :3]
+                ).tolist(),
             },
             "gripper_width": self.gripper_width,
             "gripper_force": self.gripper_force,
@@ -407,7 +427,7 @@ class RoboticArmSimulator:
             "collision_detected": self.collision_detected,
             "joint_limit_violation": self.joint_limit_violation,
             "mock": True,
-            "simulated": True
+            "simulated": True,
         }
 
     def emergency_stop_arm(self) -> bool:
@@ -459,21 +479,29 @@ class RoboticArmSimulator:
             self.position_errors_integral[i] += error * dt
             derivative = (error - self.previous_position_errors[i]) / dt
 
-            torque = (self.kp[i] * error +
-                     self.ki[i] * self.position_errors_integral[i] +
-                     self.kd[i] * derivative)
+            torque = (
+                self.kp[i] * error
+                + self.ki[i] * self.position_errors_integral[i]
+                + self.kd[i] * derivative
+            )
 
             # Apply velocity limits
-            velocity = np.clip(torque * 0.1, -self.joints[i].velocity_limit, self.joints[i].velocity_limit)
+            velocity = np.clip(
+                torque * 0.1,
+                -self.joints[i].velocity_limit,
+                self.joints[i].velocity_limit,
+            )
             self.joint_velocities[i] = velocity
 
             # Integrate position
             self.joint_positions[i] += velocity * dt
 
             # Apply position limits
-            self.joint_positions[i] = np.clip(self.joint_positions[i],
-                                            self.joints[i].position_limits[0],
-                                            self.joints[i].position_limits[1])
+            self.joint_positions[i] = np.clip(
+                self.joint_positions[i],
+                self.joints[i].position_limits[0],
+                self.joints[i].position_limits[1],
+            )
 
             self.previous_position_errors[i] = error
 
@@ -488,8 +516,9 @@ class RoboticArmSimulator:
 
         self.last_update_time = time.time()
 
-    def _plan_trajectory(self, start_joints: np.ndarray, end_joints: np.ndarray,
-                        duration: float) -> List[np.ndarray]:
+    def _plan_trajectory(
+        self, start_joints: np.ndarray, end_joints: np.ndarray, duration: float
+    ) -> List[np.ndarray]:
         """Plan joint trajectory (simple linear interpolation)."""
         num_points = max(10, int(duration * 50))  # 50 Hz trajectory
         trajectory = []
@@ -497,7 +526,7 @@ class RoboticArmSimulator:
         for i in range(num_points + 1):
             t = i / num_points
             # Linear interpolation with smooth acceleration/deceleration
-            s = 3*t**2 - 2*t**3  # Smooth step function
+            s = 3 * t**2 - 2 * t**3  # Smooth step function
             joints = start_joints + s * (end_joints - start_joints)
             trajectory.append(joints.copy())
 
@@ -520,38 +549,26 @@ class RoboticArmSimulator:
         elbow_angle = abs(self.joint_positions[2])
 
         # Mock collision condition
-        return shoulder_angle > np.pi/3 and elbow_angle > np.pi/4
+        return shoulder_angle > np.pi / 3 and elbow_angle > np.pi / 4
 
     def _rotation_z(self, angle: float) -> np.ndarray:
         """Rotation matrix around Z axis."""
         c, s = np.cos(angle), np.sin(angle)
-        return np.array([[c, -s, 0, 0],
-                        [s,  c, 0, 0],
-                        [0,  0, 1, 0],
-                        [0,  0, 0, 1]])
+        return np.array([[c, -s, 0, 0], [s, c, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
     def _rotation_y(self, angle: float) -> np.ndarray:
         """Rotation matrix around Y axis."""
         c, s = np.cos(angle), np.sin(angle)
-        return np.array([[c, 0, s, 0],
-                        [0, 1, 0, 0],
-                        [-s, 0, c, 0],
-                        [0, 0, 0, 1]])
+        return np.array([[c, 0, s, 0], [0, 1, 0, 0], [-s, 0, c, 0], [0, 0, 0, 1]])
 
     def _rotation_x(self, angle: float) -> np.ndarray:
         """Rotation matrix around X axis."""
         c, s = np.cos(angle), np.sin(angle)
-        return np.array([[1, 0, 0, 0],
-                        [0, c, -s, 0],
-                        [0, s, c, 0],
-                        [0, 0, 0, 1]])
+        return np.array([[1, 0, 0, 0], [0, c, -s, 0], [0, s, c, 0], [0, 0, 0, 1]])
 
     def _translation_z(self, distance: float) -> np.ndarray:
         """Translation matrix along Z axis."""
-        return np.array([[1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, distance],
-                        [0, 0, 0, 1]])
+        return np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, distance], [0, 0, 0, 1]])
 
     def _rotation_matrix_to_quaternion(self, R: np.ndarray) -> np.ndarray:
         """Convert rotation matrix to quaternion."""

@@ -83,7 +83,7 @@ class EnvironmentSimulator:
     def __init__(self, tier: EnvironmentTier):
         factory = EnvironmentFactory()
         self.env = factory.create({"tier": tier.value})
-    
+
     def apply_gps_degradation(self, gps_data):
         return self.env.apply_gps_degradation(gps_data)
     # ... wrap other methods
@@ -113,4 +113,3 @@ Move simulation framework to `tests/simulation/` and update imports.
 2. ✅ Or update all test imports to use actual framework
 3. ✅ Verify tests can actually import and use simulation
 4. ✅ Ensure tests apply simulation degradation to data
-
