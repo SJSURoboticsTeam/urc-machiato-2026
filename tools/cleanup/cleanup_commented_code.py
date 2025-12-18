@@ -3,12 +3,11 @@
 Automated script to clean up commented-out code blocks.
 """
 
-import os
 import re
 from pathlib import Path
 
 
-def cleanup_commented_code():
+def cleanup_commented_code() -> None:
     """Clean up commented-out code blocks."""
 
     cleanup_patterns = [
@@ -39,7 +38,6 @@ def cleanup_commented_code():
 
         try:
             content = py_file.read_text()
-            original_content = content
             original_lines = len(content.split("\n"))
 
             # Apply cleanup patterns

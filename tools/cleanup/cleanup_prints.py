@@ -3,12 +3,11 @@
 Automated script to clean up debug print statements and replace with proper logging.
 """
 
-import os
 import re
 from pathlib import Path
 
 
-def cleanup_print_statements():
+def cleanup_print_statements() -> None:
     """Clean up debug print statements in Python files."""
 
     # Patterns to replace

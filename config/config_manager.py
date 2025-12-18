@@ -4,10 +4,9 @@ Configuration Management System - Competition Ready
 Simple, validated configuration management with environment support.
 """
 
-import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import yaml
 
@@ -209,12 +208,14 @@ class ConfigurationManager:
                     max_val = rules.get("max")
                     if min_val is not None and value < min_val:
                         self.validation_errors.append(
-                            f"Value too low for {section_name}.{key}: {value} < {min_val}"
+                            f"Value too low for {section_name}.{key}: "
+                            f"{value} < {min_val}"
                         )
                         valid = False
                     if max_val is not None and value > max_val:
                         self.validation_errors.append(
-                            f"Value too high for {section_name}.{key}: {value} > {max_val}"
+                            f"Value too high for {section_name}.{key}: "
+                            f"{value} > {max_val}"
                         )
                         valid = False
 

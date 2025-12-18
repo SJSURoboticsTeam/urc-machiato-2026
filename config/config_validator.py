@@ -9,7 +9,6 @@ Author: URC 2026 Autonomy Team
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -102,7 +101,8 @@ class ConfigurationValidator:
             mode = config[component]
             if mode not in schema["valid_modes"]:
                 errors.append(
-                    f"Invalid mode '{mode}' for {component}. Must be one of: {schema['valid_modes']}"
+                    f"Invalid mode '{mode}' for {component}. "
+                    f"Must be one of: {schema['valid_modes']}"
                 )
 
         # Check component dependencies
@@ -435,7 +435,8 @@ def validate_all_configs(
         if fail_on_errors:
             print(" To generate default configurations, run:")
             print(
-                '   python3 -c "from config.config_validator import ConfigurationValidator; '
+                '   python3 -c "from config.config_validator import '
+                "ConfigurationValidator; "
                 'ConfigurationValidator().generate_default_configs()"'
             )
             return False

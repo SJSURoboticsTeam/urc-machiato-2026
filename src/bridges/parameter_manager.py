@@ -230,6 +230,13 @@ class ParameterManager:
         use_default = default_value if default_value is not None else config["default"]
 
         try:
+            # Declare parameter if it doesn't exist
+            try:
+                self.node.declare_parameter(param_name, use_default)
+            except Exception:
+                # Parameter might already be declared
+                pass
+
             # Get parameter value
             param_value = self.node.get_parameter(param_name).value
 

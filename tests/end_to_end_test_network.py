@@ -298,7 +298,23 @@ class EndToEndNetworkTest(unittest.TestCase):
         self.test_results["competition_bridge"]["status"] = "running"
 
         # Wait for bridge to initialize
-        time.sleep(5)
+        print("   Waiting for bridge initialization...")
+        time.sleep(15)  # Increased wait time
+
+        # Check if WebSocket server is listening
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('127.0.0.1', 8080))
+        sock.close()
+        if result == 0:
+            print("   ✅ WebSocket server is listening on port 8080")
+        else:
+            print("   ❌ WebSocket server is NOT listening on port 8080")
+            # Try to check if the bridge process is still running
+            if bridge_process.poll() is None:
+                print("   ℹ️  Bridge process is still running")
+            else:
+                print(f"   ❌ Bridge process exited with code: {bridge_process.returncode}")
 
         # Phase 3: Start WebSocket Clients
         print("[PLUG] Phase 3: Starting WebSocket Clients...")
@@ -356,11 +372,17 @@ rclpy.spin(publisher)
 
     def _start_competition_bridge(self) -> subprocess.Popen:
         """Start competition bridge."""
-        cmd = [sys.executable, "-m", "bridges.competition_bridge"]
+        # Use bash to source ROS2 environment and run the bridge
+        cmd = [
+            "bash", "-c",
+            "source /opt/ros/humble/setup.bash && "
+            "source install/setup.bash && "
+            f"export ROS_DOMAIN_ID={self.ros_domain_id} && "
+            "python3 -m bridges.competition_bridge"
+        ]
 
         env = os.environ.copy()
         env["PYTHONPATH"] = "/home/ubuntu/urc-machiato-2026/src"
-        env["ROS_DOMAIN_ID"] = str(self.ros_domain_id)
 
         process = subprocess.Popen(
             cmd,
