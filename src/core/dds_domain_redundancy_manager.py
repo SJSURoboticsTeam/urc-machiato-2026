@@ -381,20 +381,20 @@ class DDSDomainRedundancyManager:
 
             # Step 3: Restart all nodes in new domain
             self._restart_all_nodes_in_domain(target_domain_id)
-        self.get_logger().info(f"[SUCCESS] Domain failover completed successfully")
+            self.get_logger().info(f"[SUCCESS] Domain failover completed successfully")
             return True
 
         except Exception as e:
-        self.get_logger().info(f"[ERROR] Domain failover failed: {e}")
+            self.get_logger().info(f"[ERROR] Domain failover failed: {e}")
             # Attempt rollback
             try:
                 self.current_domain_id = old_domain
                 if old_domain in self.domains:
                     self.domains[old_domain].status = DomainStatus.ACTIVE
                 self._restart_all_nodes_in_domain(old_domain)
-        self.get_logger().info("[SUCCESS] Failover rollback completed")
+                self.get_logger().info("[SUCCESS] Failover rollback completed")
             except Exception as rollback_error:
-        self.get_logger().info(f"[ERROR] Failover rollback also failed: {rollback_error}")
+                self.get_logger().info(f"[ERROR] Failover rollback also failed: {rollback_error}")
             return False
 
     def _activate_domain(self, domain_id: int):
@@ -451,7 +451,7 @@ class DDSDomainRedundancyManager:
             # Set environment for correct domain
             env = os.environ.copy()
             env['ROS_DOMAIN_ID'] = str(node_info.domain_id)
-        self.get_logger().info(f"[START] Restarting {node_name} in domain {node_info.domain_id}")
+            self.get_logger().info(f"[START] Restarting {node_name} in domain {node_info.domain_id}")
             # Start new process
             process = subprocess.Popen(
                 node_info.restart_command.split(),
@@ -466,7 +466,7 @@ class DDSDomainRedundancyManager:
             node_info.restart_count += 1
 
         except Exception as e:
-        self.get_logger().info(f"Failed to restart node {node_name}: {e}")
+            self.get_logger().info(f"Failed to restart node {node_name}: {e}")
     def _stop_node_process(self, node_name: str, graceful: bool = True):
         """Stop a node process."""
         if node_name not in self.node_processes:

@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional
 @dataclass
 class MockMessage:
     """Base class for mock ROS2 messages."""
+
     timestamp: float = None
 
     def __post_init__(self):
@@ -49,7 +50,9 @@ class MockPublisher:
 class MockSubscription:
     """Mock ROS2 subscription for testing."""
 
-    def __init__(self, topic_name: str, message_type: type, callback: Callable, qos_profile=None):
+    def __init__(
+        self, topic_name: str, message_type: type, callback: Callable, qos_profile=None
+    ):
         self.topic_name = topic_name
         self.message_type = message_type
         self.callback = callback
@@ -125,6 +128,8 @@ class MockTimer:
                     pass
                 except Exception as e:
                     self.get_logger().info(f"Timer callback error: {e}")
+
+
 class MockNode:
     """Mock ROS2 node for testing."""
 
@@ -143,7 +148,9 @@ class MockNode:
         self.publishers[topic] = publisher
         return publisher
 
-    def create_subscription(self, msg_type, topic, callback, qos_profile=None, **kwargs):
+    def create_subscription(
+        self, msg_type, topic, callback, qos_profile=None, **kwargs
+    ):
         """Create a mock subscription."""
         subscription = MockSubscription(topic, msg_type, callback, qos_profile)
         self.subscriptions[topic] = subscription
@@ -223,17 +230,14 @@ class MockLogger:
 
     def _log(self, level: str, msg: str):
         """Internal logging method."""
-        entry = {
-            'level': level,
-            'message': msg,
-            'timestamp': time.time()
-        }
+        entry = {"level": level, "message": msg, "timestamp": time.time()}
         self.messages.append(entry)
         self.get_logger().info(f"[{level}] {msg}")
+
     def get_messages(self, level: str = None) -> List[Dict]:
         """Get logged messages, optionally filtered by level."""
         if level:
-            return [msg for msg in self.messages if msg['level'] == level]
+            return [msg for msg in self.messages if msg["level"] == level]
         return self.messages.copy()
 
 
@@ -281,12 +285,14 @@ class MockRCLPY:
 
     class QoSProfile:
         """Mock QoS profile."""
+
         def __init__(self, **kwargs):
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
     class Node:
         """Factory for mock nodes."""
+
         def __new__(cls, node_name: str = "mock_node"):
             return MockNode(node_name)
 
@@ -305,7 +311,8 @@ def setup_mock_environment():
     except ImportError:
         # ROS2 not available, setup mocks
         import sys
-        sys.modules['rclpy'] = mock_rclpy
+
+        sys.modules["rclpy"] = mock_rclpy
         return True
 
 
@@ -316,11 +323,14 @@ if __name__ == "__main__":
         self.get_logger().info("[SUCCESS] Mock environment setup successful")
         # Test basic functionality
         import rclpy
+
         node = rclpy.Node("test_node")
 
         publisher = node.create_publisher(str, "/test_topic", None)
         publisher.publish("test message")
-        self.get_logger().info(f"[SUCCESS] Published {publisher.get_message_count()} messages")
+        self.get_logger().info(
+            f"[SUCCESS] Published {publisher.get_message_count()} messages"
+        )
         timer = node.create_timer(0.1, lambda: None)
         timer.start()
         time.sleep(0.05)
