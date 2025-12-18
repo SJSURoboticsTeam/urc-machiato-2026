@@ -272,7 +272,7 @@ class DDSDomainRedundancyManager:
                     self._trigger_health_callbacks(domain_id, health_score)
 
             except Exception as e:
-        self.get_logger().info(f"Domain health check error for {domain_id}: {e}")
+                self.get_logger().info(f"Domain health check error for {domain_id}: {e}")
                 domain.health_score = 0.0
                 domain.status = DomainStatus.FAILED
 

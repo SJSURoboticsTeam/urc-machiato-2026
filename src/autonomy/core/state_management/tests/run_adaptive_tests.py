@@ -606,7 +606,7 @@ exec {" ".join(cmd)}
             # Run performance tests repeatedly
             while time.time() - start_time < duration:
                 if not self.run_performance_tests():
-        self.get_logger().info("[ERROR] Stress test failed during execution")
+                    self.get_logger().info("[ERROR] Stress test failed during execution")
                     return False
 
                 # Brief pause between test runs

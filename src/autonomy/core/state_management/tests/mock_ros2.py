@@ -120,10 +120,11 @@ class MockTimer:
         while not self.cancelled:
             time.sleep(self.period)
             if not self.cancelled:
-        try:
-            self.get_logger().info(f"Timer callback error: {e}")
-            self.get_logger().info(f"Timer callback error: {e}")
-            self.get_logger().info(f"Timer callback error: {e}")
+                try:
+                    # Timer callback logic here
+                    pass
+                except Exception as e:
+                    self.get_logger().info(f"Timer callback error: {e}")
 class MockNode:
     """Mock ROS2 node for testing."""
 

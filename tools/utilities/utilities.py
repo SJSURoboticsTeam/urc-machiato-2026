@@ -116,9 +116,9 @@ def get_validated_parameter(
         value = node.get_parameter(name).value
         if validator and not validator(value):
             error_msg = f"Parameter '{name}' failed validation, using default: {default_value}"
-                if logger:
+            if logger:
                 logger.warn(error_msg, parameter=name, value=value, default=default_value)
-                else:
+            else:
                 node.get_logger().warn(error_msg)
                 return default_value
         return value
