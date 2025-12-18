@@ -179,7 +179,10 @@ class CompetitionBridge(Node):
     def _initialize_websocket_manager(self) -> None:
         """Initialize WebSocket manager with command handlers."""
         self.websocket_manager = WebSocketManager(
-            self.logger, self.telemetry_manager.telemetry_data
+            self.logger,
+            self.telemetry_manager.telemetry_data,
+            port=self.websocket_port,
+            max_clients=self.max_clients
         )
 
         # Register command handlers

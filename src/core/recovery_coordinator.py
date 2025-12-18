@@ -83,6 +83,7 @@ class RecoveryCoordinator:
         self.recovery_lock = threading.RLock()
         self.phase_timeout = 30.0  # 30 seconds per phase
         self.overall_timeout = 300.0  # 5 minutes total
+        self.max_checkpoints = 20  # Limit checkpoint history to reduce memory
 
         # Callbacks
         self.progress_callbacks: List[Callable] = []
@@ -447,6 +448,10 @@ class RecoveryCoordinator:
             phase=phase, description=f"Starting {phase.value} phase"
         )
         self.checkpoints.append(checkpoint)
+
+        # Limit checkpoint history to reduce memory usage
+        if len(self.checkpoints) > self.max_checkpoints:
+            self.checkpoints.pop(0)  # Remove oldest checkpoint
 
         logger.info(f"[UPDATE] Recovery phase: {phase.value}")
 

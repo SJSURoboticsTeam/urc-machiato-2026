@@ -19,7 +19,7 @@ from typing import Any, Dict, List
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
-def test_enhanced_state_sync_election():
+def test_enhanced_state_sync_election() -> None:
     """Test the enhanced state synchronization election algorithm."""
     print("[REFRESH] Testing Enhanced State Sync Election...")
 
@@ -123,7 +123,7 @@ def test_enhanced_state_sync_election():
     return success
 
 
-def test_enhanced_websocket_health():
+def test_enhanced_websocket_health() -> None:
     """Test the enhanced WebSocket health monitoring."""
     print("[NETWORK] Testing Enhanced WebSocket Health Monitoring...")
 
@@ -189,7 +189,7 @@ def test_enhanced_websocket_health():
     return success
 
 
-def test_coordinated_recovery():
+def test_coordinated_recovery() -> None:
     """Test the coordinated recovery system."""
     print("[TOOL] Testing Coordinated Recovery System...")
 
@@ -245,7 +245,7 @@ def test_coordinated_recovery():
     recovery_coord.add_completion_callback(completion_cb)
 
     # Initiate recovery
-    success = recovery_coord.initiate_recovery("Test coordinated recovery")
+    recovery_coord.initiate_recovery("Test coordinated recovery")
 
     # Wait for completion
     timeout = 10
@@ -277,7 +277,7 @@ def test_coordinated_recovery():
     return recovery_success
 
 
-def test_performance_improvements():
+def test_performance_improvements() -> None:
     """Test that performance improvements are maintained."""
     print(" Testing Performance Improvements...")
 
@@ -359,7 +359,6 @@ def run_validation_tests():
     total = len(results)
 
     for test_name, result in results:
-        status = "[PASS] PASSED" if result else "[FAIL] FAILED"
         print("20")
         if result:
             passed += 1

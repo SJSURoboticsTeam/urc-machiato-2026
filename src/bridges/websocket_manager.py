@@ -39,17 +39,28 @@ class WebSocketManager:
     - Connection health monitoring
     """
 
-    def __init__(self, logger, telemetry_data: Dict[str, Any], redundancy_manager=None):
+    def __init__(
+        self,
+        logger,
+        telemetry_data: Dict[str, Any],
+        port: int = 8080,
+        max_clients: int = 10,
+        redundancy_manager=None
+    ):
         """
         Initialize the WebSocket Manager.
 
         Args:
             logger: Logger instance for WebSocket operations
             telemetry_data: Reference to telemetry data dictionary
+            port: WebSocket server port
+            max_clients: Maximum number of concurrent clients
             redundancy_manager: Optional redundancy manager for failover
         """
         self.logger = logger
         self.telemetry_data = telemetry_data
+        self.port = port
+        self.max_clients = max_clients
         self.redundancy_manager = redundancy_manager
 
         # WebSocket server components
@@ -93,7 +104,7 @@ class WebSocketManager:
             return False
 
         try:
-            self.websocket_thread = threading.Thread(target=self.websocket_server_loop)
+            self.websocket_thread = threading.Thread(target=self._run_async_server)
             self.websocket_thread.daemon = True
             self.websocket_thread.start()
             self.logger.info(f"WebSocket server thread started on port {self.port}")
@@ -101,6 +112,24 @@ class WebSocketManager:
         except Exception as e:
             self.logger.error(f"Failed to start WebSocket server: {e}")
             return False
+
+    def _run_async_server(self) -> None:
+        """Run the async WebSocket server in a new event loop."""
+        try:
+            # Create new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            # Run the server
+            loop.run_until_complete(self.websocket_server_loop())
+
+        except Exception as e:
+            self.logger.error(f"WebSocket server thread error: {e}")
+        finally:
+            try:
+                loop.close()
+            except:
+                pass
 
     def stop_server(self) -> None:
         """Stop the WebSocket server."""
