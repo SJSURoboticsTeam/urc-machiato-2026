@@ -70,9 +70,10 @@ class ROS2UniversalMonitor:
             self.ros2_env[
                 "PATH"
             ] = f"/opt/ros/humble/bin:{self.ros2_env.get('PATH', '')}"
-            self.ros2_env[
-                "PYTHONPATH"
-            ] = f"/opt/ros/humble/lib/python3.10/site-packages:{self.ros2_env.get('PYTHONPATH', '')}"
+            self.ros2_env["PYTHONPATH"] = (
+                f"/opt/ros/humble/lib/python3.10/site-packages:"
+                f"{self.ros2_env.get('PYTHONPATH', '')}"
+            )
             self.ros2_env["ROS_PYTHON_VERSION"] = "3"
             self.ros2_env["ROS_VERSION"] = "2"
             self.ros2_env["ROS_DISTRO"] = "humble"
@@ -93,9 +94,10 @@ class ROS2UniversalMonitor:
                 self.ros2_env[
                     "LD_LIBRARY_PATH"
                 ] = f"{install_path}/lib:{self.ros2_env.get('LD_LIBRARY_PATH', '')}"
-                self.ros2_env[
-                    "PYTHONPATH"
-                ] = f"{install_path}/lib/python3.10/site-packages:{self.ros2_env.get('PYTHONPATH', '')}"
+                self.ros2_env["PYTHONPATH"] = (
+                    f"{install_path}/lib/python3.10/site-packages:"
+                    f"{self.ros2_env.get('PYTHONPATH', '')}"
+                )
 
             # Test ROS2 availability
             result = subprocess.run(
@@ -291,7 +293,8 @@ class ROS2UniversalMonitor:
         timestamp = self.websocket_data.get("timestamp", 0)
 
         print(
-            f"\n[NETWORK] WebSocket Telemetry Data ({time.strftime('%H:%M:%S', time.localtime(timestamp))})"
+            f"\n[NETWORK] WebSocket Telemetry Data "
+            f"({time.strftime('%H:%M:%S', time.localtime(timestamp))})"
         )
         print("=" * 60)
 
@@ -302,14 +305,16 @@ class ROS2UniversalMonitor:
         # Mission status
         if "current_mission" in data and data["current_mission"] != "none":
             print(
-                f"[OBJECTIVE] Mission: {data['current_mission']} | Status: {data.get('mission_status', 'unknown')}"
+                f"[OBJECTIVE] Mission: {data['current_mission']} | "
+                f"Status: {data.get('mission_status', 'unknown')}"
             )
 
         # GPS data
         if "gps_position" in data:
             gps = data["gps_position"]
             print(
-                f" GPS: {gps.get('lat', 'N/A'):.6f}, {gps.get('lon', 'N/A'):.6f} | Alt: {gps.get('alt', 'N/A'):.1f}m"
+                f" GPS: {gps.get('lat', 'N/A'):.6f}, {gps.get('lon', 'N/A'):.6f} | "
+                f"Alt: {gps.get('alt', 'N/A'):.1f}m"
             )
 
         # IMU data
@@ -317,7 +322,8 @@ class ROS2UniversalMonitor:
             imu = data["imu_data"]
             accel = imu.get("accel", [0, 0, 0])
             print(
-                f"[REFRESH] IMU: Accel [{accel[0]:.2f}, {accel[1]:.2f}, {accel[2]:.2f}] m/s²"
+                f"[REFRESH] IMU: Accel [{accel[0]:.2f}, {accel[1]:.2f}, "
+                f"{accel[2]:.2f}] m/s²"
             )
 
         # Battery
@@ -486,7 +492,8 @@ class ROS2UniversalMonitor:
                 self.display_topic_data()
 
                 print(
-                    f"\n⏰ Next update in 5 seconds... (Last update: {time.strftime('%H:%M:%S')})"
+                    f"\n⏰ Next update in 5 seconds... "
+                    f"(Last update: {time.strftime('%H:%M:%S')})"
                 )
                 print("-" * 80)
 

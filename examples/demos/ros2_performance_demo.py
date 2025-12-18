@@ -3,7 +3,8 @@
 Simple ROS2 Intra-Process vs Inter-Process Communication Performance Demo
 
 This script demonstrates the performance difference between intra-process and inter-process
-communication by running both publisher and subscriber in the same process vs separate processes.
+communication by running both publisher and subscriber in the same process vs
+separate processes.
 """
 
 import statistics
@@ -168,7 +169,8 @@ def run_inter_process_test():
     # Initialize ROS2
     rclpy.init()
 
-    # Create both publisher and subscriber in same process (but QoS prevents intra-process)
+    # Create both publisher and subscriber in same process
+    # (but QoS prevents intra-process)
     publisher = PerformancePublisher("perf_test_inter", qos_inter)
     subscriber = PerformanceSubscriber("perf_test_inter", qos_inter)
 

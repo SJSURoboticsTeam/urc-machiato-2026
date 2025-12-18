@@ -14,7 +14,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-def run_quick_network_demo():
+def run_quick_network_demo() -> None:
     """Run a quick network stress demo."""
     print("[NETWORK] Quick Network Stress Demo")
     print("-" * 30)
@@ -37,7 +37,7 @@ def run_quick_network_demo():
         print(f"[FAIL] Network demo failed: {e}")
 
 
-def run_quick_can_demo():
+def run_quick_can_demo() -> None:
     """Run a quick CAN bus stress demo."""
     print("\n[TOOL] Quick CAN Bus Stress Demo")
     print("-" * 32)
@@ -63,7 +63,7 @@ def run_quick_can_demo():
         print(f"[FAIL] CAN demo failed: {e}")
 
 
-def run_quick_movement_demo():
+def run_quick_movement_demo() -> None:
     """Run a quick movement control stress demo."""
     print("\n Quick Movement Control Stress Demo")
     print("-" * 38)
@@ -90,7 +90,7 @@ def run_quick_movement_demo():
         print(f"[FAIL] Movement demo failed: {e}")
 
 
-def run_intra_vs_inter_demo():
+def run_intra_vs_inter_demo() -> None:
     """Demonstrate intra-process vs inter-process performance."""
     print("\n[REFRESH] Intra-Process vs Inter-Process Performance Demo")
     print("-" * 52)
@@ -122,7 +122,8 @@ def run_intra_vs_inter_demo():
             print(".1f")
             if improvement > 50:
                 print(
-                    "   [PASS] Excellent performance improvement with intra-process communication!"
+                    "   [PASS] Excellent performance improvement with "
+                    "intra-process communication!"
                 )
             elif improvement > 20:
                 print(
@@ -135,12 +136,13 @@ def run_intra_vs_inter_demo():
         print(f"[FAIL] Performance demo failed: {e}")
 
 
-def main():
+def main() -> None:
     """Run the quick stress test demo."""
     print("[IGNITE] URC 2026 Communication Stress Test Demo")
     print("=" * 48)
     print(
-        "This demo shows communication resilience under harsher-than-real-world conditions"
+        "This demo shows communication resilience under "
+        "harsher-than-real-world conditions"
     )
     print("Each test runs for a short duration to demonstrate the testing framework")
     print()
