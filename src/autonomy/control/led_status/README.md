@@ -9,6 +9,7 @@
 ## 🎯 Quick Start
 
 ### Launch LED Status System (3 commands)
+
 ```bash
 cd autonomy/code/led_status
 
@@ -24,6 +25,7 @@ ros2 topic echo /state_machine/led_info
 ```
 
 ### URC Compliance Check (5 minutes)
+
 ```bash
 # Test required URC LED patterns
 ros2 topic pub /state_machine/led_info std_msgs/String "data: 'AUTONOMOUS_RED'"      # 🔴 Red for autonomous
@@ -37,6 +39,7 @@ ros2 topic pub /state_machine/led_info std_msgs/String "data: 'SAFETY_RED_BLINK'
 ## 📊 System Architecture
 
 ### LED Status Communication Flow
+
 ```mermaid
 graph TB
     subgraph "🏗️ State Machine"
@@ -76,6 +79,7 @@ graph TB
 ```
 
 ### LED Pattern State Machine
+
 ```mermaid
 stateDiagram-v2
     [*] --> OFF
@@ -142,6 +146,7 @@ led_status/
 ## 🎬 Workflow Overview
 
 ### LED Status Lifecycle
+
 ```mermaid
 sequenceDiagram
     participant SM as State Machine
@@ -164,6 +169,7 @@ sequenceDiagram
 ```
 
 ### Emergency Response Sequence
+
 ```mermaid
 sequenceDiagram
     participant Sensor
@@ -192,6 +198,7 @@ sequenceDiagram
 ### LED Hardware Requirements
 
 #### GPIO Pin Configuration
+
 ```
 Raspberry Pi GPIO Pinout:
 ┌─────────────────┬─────────────────┬─────────────────┐
@@ -205,6 +212,7 @@ Raspberry Pi GPIO Pinout:
 ```
 
 #### Electrical Specifications
+
 ```
 Power Requirements:
 - Voltage: 3.3V (Raspberry Pi GPIO)
@@ -225,27 +233,30 @@ Environmental:
 ### LED Pattern Definitions
 
 #### Core URC Patterns
-| Pattern | Color | Behavior | URC Requirement | Description |
-|---------|-------|----------|-----------------|-------------|
-| **AUTONOMOUS_RED** | Red | Solid | ✓ Required | Autonomous operation |
-| **TELEOPERATION_BLUE** | Blue | Solid | ✓ Required | Manual control |
-| **WAYPOINT_SUCCESS** | Green | 3s Blink | ✓ Required | Target arrival |
-| **SAFETY_RED_BLINK** | Red | Fast Blink (5Hz) | ✓ Safety | Emergency state |
-| **BOOT_YELLOW_BLINK** | Yellow | Slow Blink (1Hz) | ✓ Startup | Initialization |
-| **CALIBRATION_YELLOW** | Yellow | Solid | ✓ Setup | Sensor calibration |
+
+| Pattern                | Color  | Behavior         | URC Requirement | Description          |
+| ---------------------- | ------ | ---------------- | --------------- | -------------------- |
+| **AUTONOMOUS_RED**     | Red    | Solid            | ✓ Required      | Autonomous operation |
+| **TELEOPERATION_BLUE** | Blue   | Solid            | ✓ Required      | Manual control       |
+| **WAYPOINT_SUCCESS**   | Green  | 3s Blink         | ✓ Required      | Target arrival       |
+| **SAFETY_RED_BLINK**   | Red    | Fast Blink (5Hz) | ✓ Safety        | Emergency state      |
+| **BOOT_YELLOW_BLINK**  | Yellow | Slow Blink (1Hz) | ✓ Startup       | Initialization       |
+| **CALIBRATION_YELLOW** | Yellow | Solid            | ✓ Setup         | Sensor calibration   |
 
 #### Extended Patterns
-| Pattern | Color | Behavior | Use Case |
-|---------|-------|----------|----------|
-| **IDLE_GREEN** | Green | Solid | Ready state |
-| **SHUTDOWN_RED_FADE** | Red | Fade Out | Graceful shutdown |
-| **TRANSITION_WHITE** | White | Pulse | State changes |
-| **ERROR_RED_BLINK** | Red | Medium Blink (2Hz) | Error conditions |
-| **WARNING_YELLOW** | Yellow | Medium Blink (2Hz) | Warning states |
+
+| Pattern               | Color  | Behavior           | Use Case          |
+| --------------------- | ------ | ------------------ | ----------------- |
+| **IDLE_GREEN**        | Green  | Solid              | Ready state       |
+| **SHUTDOWN_RED_FADE** | Red    | Fade Out           | Graceful shutdown |
+| **TRANSITION_WHITE**  | White  | Pulse              | State changes     |
+| **ERROR_RED_BLINK**   | Red    | Medium Blink (2Hz) | Error conditions  |
+| **WARNING_YELLOW**    | Yellow | Medium Blink (2Hz) | Warning states    |
 
 ### Performance Metrics
 
 #### Response Times
+
 ```
 LED State Change Latency:
 - Message reception: < 5ms
@@ -269,6 +280,7 @@ System Resource Usage:
 ## 🎯 Key Features
 
 ### ✅ URC Competition Compliance
+
 - **Red LED**: Autonomous operation (competition requirement)
 - **Blue LED**: Teleoperation/manual driving (competition requirement)
 - **Green Flash**: Successful target arrival (competition requirement)
@@ -276,12 +288,14 @@ System Resource Usage:
 - **Color Coding**: Unambiguous status indication
 
 ### ✅ State Machine Integration
+
 - **Automatic Mapping**: State changes automatically update LED status
 - **Context Awareness**: Different LED patterns for different mission phases
 - **Real-time Updates**: Immediate response to state transitions
 - **Fallback Support**: Maintains compatibility with legacy mission topics
 
 ### ✅ Advanced LED Patterns
+
 - **Solid Colors**: Continuous color indication for stable states
 - **Blink Patterns**: 1Hz and 5Hz flashing for different alert levels
 - **Fade Effects**: Smooth color transitions for shutdown sequences
@@ -289,12 +303,14 @@ System Resource Usage:
 - **Brightness Control**: PWM-based brightness adjustment
 
 ### ✅ Hardware Abstraction
+
 - **GPIO Interface**: Direct hardware control with error handling
 - **PWM Support**: Smooth brightness control and pattern generation
 - **Simulation Mode**: Software-only testing without hardware
 - **Real Hardware**: Production-ready GPIO control for Raspberry Pi
 
 ### ✅ Production Ready
+
 - **Error Recovery**: Automatic retry mechanisms for hardware failures
 - **Resource Efficient**: Minimal CPU and memory usage
 - **ROS2 Native**: Full integration with ROS2 ecosystem
@@ -307,6 +323,7 @@ System Resource Usage:
 ### Custom LED Patterns
 
 #### Creating Custom Patterns
+
 ```python
 from autonomy_led_status.led_pattern_manager import LEDPattern, LEDColor
 
@@ -327,6 +344,7 @@ led_controller.set_pattern("CUSTOM_ALERT")
 ```
 
 #### RGB Color Mixing
+
 ```python
 # Predefined colors
 LEDColor.RED    = (255, 0, 0)    # Autonomous
@@ -347,6 +365,7 @@ LEDColor.WHITE = LEDColor.RED + LEDColor.GREEN + LEDColor.BLUE  # (255, 255, 255
 ### Hardware Integration Examples
 
 #### Raspberry Pi GPIO Setup
+
 ```python
 import RPi.GPIO as GPIO
 from autonomy_led_status.led_hardware_interface import LEDHardwareInterface
@@ -372,6 +391,7 @@ led_hw.set_fast_blink()       # 5Hz blink
 ```
 
 #### PWM Brightness Control
+
 ```python
 # Brightness levels (0-100%)
 led_hw.set_brightness(100)  # Full brightness
@@ -386,6 +406,7 @@ led_hw.fade_to_color(255, 255, 255, duration=1.0)  # Fade to white
 ### Multi-LED Array Support
 
 #### Distributed LED Systems
+
 ```python
 # Multiple LED arrays for redundancy
 led_arrays = [
@@ -411,6 +432,7 @@ if len(working_arrays) < 2:
 ### State Machine Integration
 
 #### Automatic State Mapping
+
 ```python
 # State machine publishes LED info automatically
 state_led_mapping = {
@@ -432,6 +454,7 @@ def led_info_callback(msg):
 ### Mission Status Integration
 
 #### Legacy Mission Topic Support
+
 ```python
 # Subscribe to mission status topics
 self.mission_status_sub = self.create_subscription(
@@ -457,43 +480,44 @@ def mission_status_callback(self, msg):
 ### Frontend Integration
 
 #### Web Interface LED Control
+
 ```javascript
 // Web dashboard LED status display
 class LEDStatusWidget {
-    constructor() {
-        this.ros = new ROSLIB.Ros();
-        this.ledSubscriber = new ROSLIB.Topic({
-            ros: this.ros,
-            name: '/state_machine/led_info',
-            messageType: 'std_msgs/String'
-        });
-    }
+  constructor() {
+    this.ros = new ROSLIB.Ros();
+    this.ledSubscriber = new ROSLIB.Topic({
+      ros: this.ros,
+      name: "/state_machine/led_info",
+      messageType: "std_msgs/String",
+    });
+  }
 
-    init() {
-        this.ledSubscriber.subscribe((message) => {
-            this.updateLEDStatus(message.data);
-        });
-    }
+  init() {
+    this.ledSubscriber.subscribe((message) => {
+      this.updateLEDStatus(message.data);
+    });
+  }
 
-    updateLEDStatus(pattern) {
-        // Update visual LED indicator
-        const ledElement = document.getElementById('led-status');
-        ledElement.className = `led-${pattern.toLowerCase()}`;
+  updateLEDStatus(pattern) {
+    // Update visual LED indicator
+    const ledElement = document.getElementById("led-status");
+    ledElement.className = `led-${pattern.toLowerCase()}`;
 
-        // Update status text
-        const statusText = this.patternToText(pattern);
-        document.getElementById('led-text').textContent = statusText;
-    }
+    // Update status text
+    const statusText = this.patternToText(pattern);
+    document.getElementById("led-text").textContent = statusText;
+  }
 
-    patternToText(pattern) {
-        const mapping = {
-            'AUTONOMOUS_RED': '🤖 Autonomous Mode',
-            'TELEOPERATION_BLUE': '🎮 Manual Control',
-            'WAYPOINT_SUCCESS': '✅ Mission Success!',
-            'SAFETY_RED_BLINK': '🚨 Emergency State'
-        };
-        return mapping[pattern] || pattern;
-    }
+  patternToText(pattern) {
+    const mapping = {
+      AUTONOMOUS_RED: "🤖 Autonomous Mode",
+      TELEOPERATION_BLUE: "🎮 Manual Control",
+      WAYPOINT_SUCCESS: "✅ Mission Success!",
+      SAFETY_RED_BLINK: "🚨 Emergency State",
+    };
+    return mapping[pattern] || pattern;
+  }
 }
 ```
 
@@ -502,6 +526,7 @@ class LEDStatusWidget {
 ## 📞 Support & Resources
 
 ### Documentation Links
+
 - **[Quick Start Guide](QUICKSTART.md)** - Fast-track setup
 - **[LED Procedures](led_procedures.md)** - Step-by-step guides
 - **[Troubleshooting Guide](led_troubleshooting.md)** - Issue resolution
@@ -509,6 +534,7 @@ class LEDStatusWidget {
 - **[Visual Guides](led_visuals.md)** - Screenshots & diagrams
 
 ### Development Resources
+
 - **Source Code**: All Python modules with comprehensive docstrings
 - **Test Suite**: Integration and unit tests with hardware simulation
 - **Configuration Files**: YAML examples for different LED hardware
@@ -517,6 +543,7 @@ class LEDStatusWidget {
 ### LED Pattern Reference
 
 #### Quick Pattern Commands
+
 ```bash
 # Test all URC required patterns
 ros2 topic pub /state_machine/led_info std_msgs/String "data: 'AUTONOMOUS_RED'"
@@ -532,6 +559,7 @@ ros2 topic pub /state_machine/led_info std_msgs/String "data: 'SHUTDOWN_RED_FADE
 ```
 
 #### Hardware Testing Commands
+
 ```bash
 # GPIO pin testing
 sudo raspi-gpio get 18  # Check red pin status
@@ -555,6 +583,7 @@ led.set_color(255, 0, 0); led.set_solid()  # Red solid
 ## 🎉 Success Metrics
 
 ### Competition Compliance Achieved
+
 - [x] **Red LED**: Autonomous operation (URC requirement met)
 - [x] **Blue LED**: Teleoperation (URC requirement met)
 - [x] **Green Flash**: Mission success indication (URC requirement met)
@@ -562,6 +591,7 @@ led.set_color(255, 0, 0); led.set_solid()  # Red solid
 - [x] **50m Visibility**: Hardware meets distance requirements
 
 ### Performance Targets Met
+
 - [x] **Response Time**: < 20ms state change to LED update
 - [x] **CPU Usage**: < 2% during normal operation
 - [x] **Memory Usage**: < 15MB total system
@@ -569,6 +599,7 @@ led.set_color(255, 0, 0); led.set_solid()  # Red solid
 - [x] **Reliability**: 99.9% uptime during missions
 
 ### System Integration Success
+
 - [x] **State Machine Sync**: 100% state-LED synchronization
 - [x] **Real-time Updates**: Immediate pattern changes
 - [x] **Error Recovery**: Automatic hardware fault recovery
@@ -579,6 +610,7 @@ led.set_color(255, 0, 0); led.set_solid()  # Red solid
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 - **🌈 RGB Animation**: Advanced color transition patterns
 - **📊 LED Telemetry**: LED status broadcasting for monitoring
 - **🎛️ Brightness Sensing**: Automatic adjustment based on ambient light
@@ -586,6 +618,7 @@ led.set_color(255, 0, 0); led.set_solid()  # Red solid
 - **📱 Mobile Control**: Smartphone LED control interface
 
 ### Hardware Improvements
+
 - **💡 Addressable LEDs**: Individual LED control (WS2812 support)
 - **🔋 Solar Power**: Extended operation with solar charging
 - **📡 Wireless Control**: Remote LED management via WiFi
@@ -600,4 +633,4 @@ led.set_color(255, 0, 0); led.set_solid()  # Red solid
 
 ---
 
-*"LED status: Silent communication that judges and teams can see from 50 meters away - the universal language of autonomous robots."*
+_"LED status: Silent communication that judges and teams can see from 50 meters away - the universal language of autonomous robots."_

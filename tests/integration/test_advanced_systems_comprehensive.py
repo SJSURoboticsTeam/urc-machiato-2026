@@ -15,16 +15,16 @@ Author: URC 2026 Autonomy Team
 
 import asyncio
 import json
-import time
-import threading
-import unittest
-from unittest.mock import Mock, patch, MagicMock
-import sys
 import os
-from typing import Dict, List, Any, Optional
+import sys
+import threading
+import time
+import unittest
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock, patch
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 
 class MockROS2Node:
@@ -44,9 +44,11 @@ class MockROS2Node:
 
     def get_parameter(self, name: str):
         """Mock parameter retrieval."""
+
         class MockParameter:
             def __init__(self, value):
                 self.value = value
+
         return MockParameter(self.parameters.get(name))
 
     def create_publisher(self, msg_type, topic, qos_profile):
@@ -116,10 +118,10 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
     def _init_advanced_systems(self):
         """Initialize all advanced systems with mocks."""
         # Import and initialize managers
-        from core.state_synchronization_manager import DistributedStateManager
+        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
+        from core.state_synchronization_manager import DistributedStateManager
 
         # Create state managers
         self.state_mgr_primary = DistributedStateManager("competition_bridge")
@@ -141,9 +143,9 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Create mock WebSocket servers
         self.ws_servers = {
-            'primary': MockWebSocketServer(8080),
-            'secondary': MockWebSocketServer(8081),
-            'tertiary': MockWebSocketServer(8082)
+            "primary": MockWebSocketServer(8080),
+            "secondary": MockWebSocketServer(8081),
+            "tertiary": MockWebSocketServer(8082),
         }
 
     def test_state_synchronization_comprehensive(self):
@@ -170,11 +172,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Test state updates from primary
         test_states = {
-            'telemetry_rate_hz': 10.0,
-            'battery_level': 85.5,
-            'system_mode': 'autonomous',
-            'emergency_stop': False,
-            'mission_status': 'active'
+            "telemetry_rate_hz": 10.0,
+            "battery_level": 85.5,
+            "system_mode": "autonomous",
+            "emergency_stop": False,
+            "mission_status": "active",
         }
 
         for key, value in test_states.items():
@@ -187,9 +189,15 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
             secondary_val = self.state_mgr_secondary.get_state(key)
             tertiary_val = self.state_mgr_tertiary.get_state(key)
 
-            self.assertEqual(primary_val, expected_value, f"Primary state {key} mismatch")
-            self.assertEqual(secondary_val, expected_value, f"Secondary state {key} mismatch")
-            self.assertEqual(tertiary_val, expected_value, f"Tertiary state {key} mismatch")
+            self.assertEqual(
+                primary_val, expected_value, f"Primary state {key} mismatch"
+            )
+            self.assertEqual(
+                secondary_val, expected_value, f"Secondary state {key} mismatch"
+            )
+            self.assertEqual(
+                tertiary_val, expected_value, f"Tertiary state {key} mismatch"
+            )
 
         # Test master failover (simplified - in real deployment, managers would communicate)
         print("  Testing master failover...")
@@ -200,23 +208,46 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         self.state_mgr_secondary._trigger_election()
 
         # Verify election worked (tertiary_bridge wins due to alphabetical ordering)
-        self.assertEqual(self.state_mgr_secondary.role.name, 'SLAVE', "Secondary should become slave")
-        self.assertEqual(self.state_mgr_secondary.master_node_id, 'tertiary_bridge', "Tertiary should be master")
+        self.assertEqual(
+            self.state_mgr_secondary.role.name, "SLAVE", "Secondary should become slave"
+        )
+        self.assertEqual(
+            self.state_mgr_secondary.master_node_id,
+            "tertiary_bridge",
+            "Tertiary should be master",
+        )
 
         # Verify tertiary became master
-        self.assertEqual(self.state_mgr_tertiary.role.name, 'MASTER', "Tertiary should become master")
-        self.assertEqual(self.state_mgr_tertiary.master_node_id, 'tertiary_bridge', "Tertiary should be master")
+        self.assertEqual(
+            self.state_mgr_tertiary.role.name, "MASTER", "Tertiary should become master"
+        )
+        self.assertEqual(
+            self.state_mgr_tertiary.master_node_id,
+            "tertiary_bridge",
+            "Tertiary should be master",
+        )
 
         # Test state updates work after failover
-        new_master = next(mgr for mgr in [self.state_mgr_secondary, self.state_mgr_tertiary]
-                         if mgr.role.name == 'MASTER')
-        new_master.update_state('failover_test', True)
+        new_master = next(
+            mgr
+            for mgr in [self.state_mgr_secondary, self.state_mgr_tertiary]
+            if mgr.role.name == "MASTER"
+        )
+        new_master.update_state("failover_test", True)
         time.sleep(0.01)
 
         # Verify state propagates from new master
-        for mgr in [self.state_mgr_primary, self.state_mgr_secondary, self.state_mgr_tertiary]:
+        for mgr in [
+            self.state_mgr_primary,
+            self.state_mgr_secondary,
+            self.state_mgr_tertiary,
+        ]:
             if mgr != new_master:
-                self.assertEqual(mgr.get_state('failover_test'), True, "State should propagate from new master")
+                self.assertEqual(
+                    mgr.get_state("failover_test"),
+                    True,
+                    "State should propagate from new master",
+                )
 
         # Cleanup
         self.state_mgr_primary.stop()
@@ -230,34 +261,50 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         print("🔗 Testing Comprehensive DDS Domain Redundancy...")
 
         # Register nodes
-        self.dds_mgr.register_node("competition_bridge", "python3 src/bridges/competition_bridge.py")
-        self.dds_mgr.register_node("secondary_bridge", "python3 src/bridges/secondary_websocket_bridge.py")
-        self.dds_mgr.register_node("tertiary_bridge", "python3 src/bridges/tertiary_websocket_bridge.py")
+        self.dds_mgr.register_node(
+            "competition_bridge", "python3 src/bridges/competition_bridge.py"
+        )
+        self.dds_mgr.register_node(
+            "secondary_bridge", "python3 src/bridges/secondary_websocket_bridge.py"
+        )
+        self.dds_mgr.register_node(
+            "tertiary_bridge", "python3 src/bridges/tertiary_websocket_bridge.py"
+        )
 
         # Start manager
         self.dds_mgr.start()
 
         # Test initial state
         status = self.dds_mgr.get_system_status()
-        self.assertEqual(status['current_domain'], 42, "Should start with primary domain")
-        self.assertEqual(len(status['domains']), 3, "Should have 3 domains configured")
-        self.assertEqual(len(status['nodes']), 3, "Should have 3 nodes registered")
+        self.assertEqual(
+            status["current_domain"], 42, "Should start with primary domain"
+        )
+        self.assertEqual(len(status["domains"]), 3, "Should have 3 domains configured")
+        self.assertEqual(len(status["nodes"]), 3, "Should have 3 nodes registered")
 
         # Test domain failover
         print("  Testing domain failover...")
-        success = self.dds_mgr.trigger_domain_failover(target_domain_id=43)  # Failover to backup
+        success = self.dds_mgr.trigger_domain_failover(
+            target_domain_id=43
+        )  # Failover to backup
         self.assertTrue(success, "Domain failover should succeed")
 
         # Verify failover
         status_after = self.dds_mgr.get_system_status()
-        self.assertEqual(status_after['current_domain'], 43, "Should be on backup domain after failover")
+        self.assertEqual(
+            status_after["current_domain"],
+            43,
+            "Should be on backup domain after failover",
+        )
 
         # Test emergency failover
         success_emergency = self.dds_mgr.trigger_domain_failover(target_domain_id=44)
         self.assertTrue(success_emergency, "Emergency failover should succeed")
 
         status_emergency = self.dds_mgr.get_system_status()
-        self.assertEqual(status_emergency['current_domain'], 44, "Should be on emergency domain")
+        self.assertEqual(
+            status_emergency["current_domain"], 44, "Should be on emergency domain"
+        )
 
         # Test health monitoring (simulated)
         # This would normally monitor actual DDS health
@@ -271,63 +318,99 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Register nodes with initial configs
         initial_configs = {
-            'competition_bridge': {
-                'telemetry_rate_hz': 5.0,
-                'websocket_port': 8080,
-                'max_clients': 50
+            "competition_bridge": {
+                "telemetry_rate_hz": 5.0,
+                "websocket_port": 8080,
+                "max_clients": 50,
             },
-            'secondary_bridge': {
-                'telemetry_rate_hz': 2.0,
-                'websocket_port': 8081,
-                'max_clients': 25
+            "secondary_bridge": {
+                "telemetry_rate_hz": 2.0,
+                "websocket_port": 8081,
+                "max_clients": 25,
             },
-            'tertiary_bridge': {
-                'telemetry_rate_hz': 1.0,
-                'websocket_port': 8082,
-                'max_clients': 10
-            }
+            "tertiary_bridge": {
+                "telemetry_rate_hz": 1.0,
+                "websocket_port": 8082,
+                "max_clients": 10,
+            },
         }
 
         for node_name, config in initial_configs.items():
             self.config_mgr.register_node(node_name, config.copy())
 
         # Test single parameter updates
-        success1 = self.config_mgr.update_node_config('competition_bridge', 'telemetry_rate_hz', 10.0)
+        success1 = self.config_mgr.update_node_config(
+            "competition_bridge", "telemetry_rate_hz", 10.0
+        )
         self.assertTrue(success1, "Single parameter update should succeed")
 
         # Test multiple parameter updates
         updates = [
-            {'node_name': 'competition_bridge', 'parameter_name': 'max_clients', 'new_value': 100},
-            {'node_name': 'secondary_bridge', 'parameter_name': 'telemetry_rate_hz', 'new_value': 5.0}
+            {
+                "node_name": "competition_bridge",
+                "parameter_name": "max_clients",
+                "new_value": 100,
+            },
+            {
+                "node_name": "secondary_bridge",
+                "parameter_name": "telemetry_rate_hz",
+                "new_value": 5.0,
+            },
         ]
         success2 = self.config_mgr.update_multiple_configs(updates)
         self.assertTrue(success2, "Multiple parameter updates should succeed")
 
         # Verify updates applied
-        comp_config = self.config_mgr.get_node_config('competition_bridge')
-        sec_config = self.config_mgr.get_node_config('secondary_bridge')
+        comp_config = self.config_mgr.get_node_config("competition_bridge")
+        sec_config = self.config_mgr.get_node_config("secondary_bridge")
 
-        self.assertEqual(comp_config['telemetry_rate_hz'], 10.0, "Competition bridge rate should be updated")
-        self.assertEqual(comp_config['max_clients'], 100, "Competition bridge clients should be updated")
-        self.assertEqual(sec_config['telemetry_rate_hz'], 5.0, "Secondary bridge rate should be updated")
+        self.assertEqual(
+            comp_config["telemetry_rate_hz"],
+            10.0,
+            "Competition bridge rate should be updated",
+        )
+        self.assertEqual(
+            comp_config["max_clients"],
+            100,
+            "Competition bridge clients should be updated",
+        )
+        self.assertEqual(
+            sec_config["telemetry_rate_hz"],
+            5.0,
+            "Secondary bridge rate should be updated",
+        )
 
         # Test rollback
         rollback_success = self.config_mgr.rollback_to_version(1)
         self.assertTrue(rollback_success, "Configuration rollback should succeed")
 
         # Verify rollback to version 1 (undoes changes from version 2)
-        comp_config_rolled = self.config_mgr.get_node_config('competition_bridge')
-        self.assertEqual(comp_config_rolled['telemetry_rate_hz'], 10.0, "Should rollback to version 1 state (10.0)")
-        self.assertEqual(comp_config_rolled['max_clients'], 50, "Should rollback to version 1 state (50)")
+        comp_config_rolled = self.config_mgr.get_node_config("competition_bridge")
+        self.assertEqual(
+            comp_config_rolled["telemetry_rate_hz"],
+            10.0,
+            "Should rollback to version 1 state (10.0)",
+        )
+        self.assertEqual(
+            comp_config_rolled["max_clients"],
+            50,
+            "Should rollback to version 1 state (50)",
+        )
 
         # Test validation
         # Try invalid update (negative rate)
-        invalid_success = self.config_mgr.update_node_config('competition_bridge', 'telemetry_rate_hz', -5.0)
+        invalid_success = self.config_mgr.update_node_config(
+            "competition_bridge", "telemetry_rate_hz", -5.0
+        )
         self.assertFalse(invalid_success, "Invalid parameter update should fail")
 
         # Verify invalid update was rejected
-        comp_config_final = self.config_mgr.get_node_config('competition_bridge')
-        self.assertNotEqual(comp_config_final['telemetry_rate_hz'], -5.0, "Invalid rate should be rejected")
+        comp_config_final = self.config_mgr.get_node_config("competition_bridge")
+        self.assertNotEqual(
+            comp_config_final["telemetry_rate_hz"],
+            -5.0,
+            "Invalid rate should be rejected",
+        )
 
         # Test configuration history
         history = self.config_mgr.get_config_history()
@@ -339,7 +422,10 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         """Test comprehensive WebSocket redundancy."""
         print("🌐 Testing Comprehensive WebSocket Redundancy...")
 
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
 
         # Register endpoints
         endpoints = [
@@ -348,22 +434,22 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
                 port=8080,
                 priority=EndpointPriority.PRIMARY,
                 telemetry_scope=["full_telemetry", "commands", "state"],
-                max_clients=50
+                max_clients=50,
             ),
             WebSocketEndpoint(
                 name="secondary_bridge",
                 port=8081,
                 priority=EndpointPriority.SECONDARY,
                 telemetry_scope=["state", "mission", "emergency"],
-                max_clients=25
+                max_clients=25,
             ),
             WebSocketEndpoint(
                 name="tertiary_bridge",
                 port=8082,
                 priority=EndpointPriority.TERTIARY,
                 telemetry_scope=["emergency", "health"],
-                max_clients=10
-            )
+                max_clients=10,
+            ),
         ]
 
         for endpoint in endpoints:
@@ -374,10 +460,12 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Test endpoint registration
         status = self.ws_mgr.get_system_status()
-        self.assertEqual(len(status['endpoints']), 3, "Should have 3 endpoints registered")
+        self.assertEqual(
+            len(status["endpoints"]), 3, "Should have 3 endpoints registered"
+        )
 
         # Test endpoint priorities (these are integer values: 1, 2, 3)
-        priorities = [ep['priority'] for ep in status['endpoints'].values()]
+        priorities = [ep["priority"] for ep in status["endpoints"].values()]
         self.assertIn(1, priorities, "Should have primary endpoint (priority 1)")
         self.assertIn(2, priorities, "Should have secondary endpoint (priority 2)")
         self.assertIn(3, priorities, "Should have tertiary endpoint (priority 3)")
@@ -387,7 +475,9 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Test failover simulation
         # Simulate primary endpoint failure
-        primary_endpoint = next(ep for ep in self.ws_mgr.endpoints.values() if ep.priority.name == 'PRIMARY')
+        primary_endpoint = next(
+            ep for ep in self.ws_mgr.endpoints.values() if ep.priority.name == "PRIMARY"
+        )
         primary_endpoint.is_healthy = False
 
         # Trigger health check
@@ -395,7 +485,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Verify failover
         status_after_failure = self.ws_mgr.get_system_status()
-        failed_endpoints = sum(1 for ep in status_after_failure['endpoints'].values() if ep['health'] == 'DOWN')
+        failed_endpoints = sum(
+            1
+            for ep in status_after_failure["endpoints"].values()
+            if ep["health"] == "DOWN"
+        )
         self.assertGreater(failed_endpoints, 0, "Should detect failed endpoint")
 
         # Stop redundancy system
@@ -416,33 +510,44 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         # Register everything
         self.state_mgr_primary.register_node("competition_bridge")
 
-        self.dds_mgr.register_node("competition_bridge", "python3 src/bridges/competition_bridge.py")
+        self.dds_mgr.register_node(
+            "competition_bridge", "python3 src/bridges/competition_bridge.py"
+        )
 
-        self.config_mgr.register_node("competition_bridge", {
-            'telemetry_rate_hz': 5.0,
-            'websocket_port': 8080
-        })
+        self.config_mgr.register_node(
+            "competition_bridge", {"telemetry_rate_hz": 5.0, "websocket_port": 8080}
+        )
 
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
-        endpoint = WebSocketEndpoint("competition_bridge", 8080, EndpointPriority.PRIMARY)
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
+
+        endpoint = WebSocketEndpoint(
+            "competition_bridge", 8080, EndpointPriority.PRIMARY
+        )
         self.ws_mgr.add_endpoint(endpoint)
 
         # Test integrated operation
         # 1. Update configuration
-        config_success = self.config_mgr.update_node_config('competition_bridge', 'telemetry_rate_hz', 10.0)
-        self.assertTrue(config_success, "Config update in integrated system should succeed")
+        config_success = self.config_mgr.update_node_config(
+            "competition_bridge", "telemetry_rate_hz", 10.0
+        )
+        self.assertTrue(
+            config_success, "Config update in integrated system should succeed"
+        )
 
         # 2. Update state
-        state_success = self.state_mgr_primary.update_state('telemetry_rate_hz', 10.0)
+        state_success = self.state_mgr_primary.update_state("telemetry_rate_hz", 10.0)
         self.assertTrue(state_success, "State update in integrated system should work")
 
         # 3. Check DDS status
         dds_status = self.dds_mgr.get_system_status()
-        self.assertEqual(len(dds_status['nodes']), 1, "DDS should have registered node")
+        self.assertEqual(len(dds_status["nodes"]), 1, "DDS should have registered node")
 
         # 4. Check WebSocket status
         ws_status = self.ws_mgr.get_system_status()
-        self.assertEqual(len(ws_status['endpoints']), 1, "WS should have endpoint")
+        self.assertEqual(len(ws_status["endpoints"]), 1, "WS should have endpoint")
 
         # Test system status reporting
         state_sys_status = self.state_mgr_primary.get_system_status()
@@ -451,10 +556,16 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         ws_sys_status = self.ws_mgr.get_system_status()
 
         # Verify all systems report healthy
-        self.assertIn('state_version', state_sys_status, "State system should report version")
-        self.assertIn('current_domain', dds_sys_status, "DDS system should report domain")
-        self.assertIn('current_version', config_sys_status, "Config system should report version")
-        self.assertIn('endpoints', ws_sys_status, "WS system should report endpoints")
+        self.assertIn(
+            "state_version", state_sys_status, "State system should report version"
+        )
+        self.assertIn(
+            "current_domain", dds_sys_status, "DDS system should report domain"
+        )
+        self.assertIn(
+            "current_version", config_sys_status, "Config system should report version"
+        )
+        self.assertIn("endpoints", ws_sys_status, "WS system should report endpoints")
 
         # Cleanup
         self.state_mgr_primary.stop()
@@ -475,7 +586,7 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Scenario 1: State manager failure during update
         print("    Testing state manager failure recovery...")
-        self.state_mgr_primary.update_state('test_key', 'test_value')
+        self.state_mgr_primary.update_state("test_key", "test_value")
         self.state_mgr_primary.stop()  # Simulate crash
 
         # System should continue with other managers
@@ -483,9 +594,15 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         config_status = self.config_mgr.get_system_status()
         ws_status = self.ws_mgr.get_system_status()
 
-        self.assertIsNotNone(dds_status, "DDS should continue after state manager failure")
-        self.assertIsNotNone(config_status, "Config should continue after state manager failure")
-        self.assertIsNotNone(ws_status, "WS should continue after state manager failure")
+        self.assertIsNotNone(
+            dds_status, "DDS should continue after state manager failure"
+        )
+        self.assertIsNotNone(
+            config_status, "Config should continue after state manager failure"
+        )
+        self.assertIsNotNone(
+            ws_status, "WS should continue after state manager failure"
+        )
 
         # Scenario 2: DDS domain failover with state preservation
         print("    Testing DDS failover with state preservation...")
@@ -493,7 +610,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Scenario 3: WebSocket endpoint failure
         print("    Testing WebSocket endpoint failure...")
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
+
         endpoint = WebSocketEndpoint("test_endpoint", 8090, EndpointPriority.PRIMARY)
         self.ws_mgr.add_endpoint(endpoint)
 
@@ -503,19 +624,27 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
         # Verify failure detection
         status_after_failure = self.ws_mgr.get_system_status()
-        failed_endpoints = sum(1 for ep in status_after_failure['endpoints'].values() if ep['health'] == 'DOWN')
-        self.assertGreater(failed_endpoints, 0, "Should detect WebSocket endpoint failure")
+        failed_endpoints = sum(
+            1
+            for ep in status_after_failure["endpoints"].values()
+            if ep["health"] == "DOWN"
+        )
+        self.assertGreater(
+            failed_endpoints, 0, "Should detect WebSocket endpoint failure"
+        )
 
         # Scenario 4: Configuration rollback after failure
         print("    Testing configuration rollback...")
-        self.config_mgr.register_node("test_node", {'param': 'original'})
-        self.config_mgr.update_node_config("test_node", 'param', 'modified')
+        self.config_mgr.register_node("test_node", {"param": "original"})
+        self.config_mgr.update_node_config("test_node", "param", "modified")
 
         rollback_success = self.config_mgr.rollback_to_version(1)
         self.assertTrue(rollback_success, "Configuration rollback should work")
 
         rolled_config = self.config_mgr.get_node_config("test_node")
-        self.assertEqual(rolled_config['param'], 'original', "Should rollback to original value")
+        self.assertEqual(
+            rolled_config["param"], "original", "Should rollback to original value"
+        )
 
         # Cleanup
         self.dds_mgr.stop()
@@ -537,8 +666,10 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         update_count = 100
 
         for i in range(update_count):
-            self.state_mgr_primary.update_state(f'perf_test_{i}', f'value_{i}')
-            self.config_mgr.update_node_config('competition_bridge', 'telemetry_rate_hz', 5.0 + i)
+            self.state_mgr_primary.update_state(f"perf_test_{i}", f"value_{i}")
+            self.config_mgr.update_node_config(
+                "competition_bridge", "telemetry_rate_hz", 5.0 + i
+            )
 
         end_time = time.time()
         total_time = end_time - start_time
@@ -549,10 +680,15 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         print(".1f")
 
         # Verify reasonable performance (should handle > 50 updates/second)
-        self.assertGreater(updates_per_second, 50, f"Performance too low: {updates_per_second} updates/sec")
+        self.assertGreater(
+            updates_per_second,
+            50,
+            f"Performance too low: {updates_per_second} updates/sec",
+        )
 
         # Check memory usage (basic check)
         import psutil
+
         process = psutil.Process()
         memory_mb = process.memory_info().rss / 1024 / 1024
         print(".1f")
@@ -570,15 +706,18 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         """Clean up after tests."""
         # Stop any running systems
         try:
-            if hasattr(self, 'state_mgr_primary') and self.state_mgr_primary.running:
+            if hasattr(self, "state_mgr_primary") and self.state_mgr_primary.running:
                 self.state_mgr_primary.stop()
-            if hasattr(self, 'state_mgr_secondary') and self.state_mgr_secondary.running:
+            if (
+                hasattr(self, "state_mgr_secondary")
+                and self.state_mgr_secondary.running
+            ):
                 self.state_mgr_secondary.stop()
-            if hasattr(self, 'state_mgr_tertiary') and self.state_mgr_tertiary.running:
+            if hasattr(self, "state_mgr_tertiary") and self.state_mgr_tertiary.running:
                 self.state_mgr_tertiary.stop()
-            if hasattr(self, 'dds_mgr') and self.dds_mgr.running:
+            if hasattr(self, "dds_mgr") and self.dds_mgr.running:
                 self.dds_mgr.stop()
-            if hasattr(self, 'ws_mgr'):
+            if hasattr(self, "ws_mgr"):
                 self.ws_mgr.stop_redundancy_system()
         except:
             pass  # Ignore cleanup errors in tests
@@ -591,12 +730,16 @@ def run_comprehensive_tests():
     """Run the comprehensive test suite."""
     print("🧪 Advanced Systems Comprehensive Test Suite")
     print("=" * 60)
-    print("Testing: State Sync + DDS Redundancy + Dynamic Config + WebSocket Redundancy")
+    print(
+        "Testing: State Sync + DDS Redundancy + Dynamic Config + WebSocket Redundancy"
+    )
     print("Mode: Full Integration with ROS2 Simulation")
     print("=" * 60)
 
     # Create test suite
-    suite = unittest.TestLoader().loadTestsFromTestCase(AdvancedSystemsComprehensiveTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(
+        AdvancedSystemsComprehensiveTest
+    )
 
     # Run tests with verbose output
     runner = unittest.TextTestRunner(verbosity=2, stream=sys.stdout)
@@ -627,7 +770,9 @@ def run_comprehensive_tests():
                 print(f"   - {test}: {traceback[:100]}...")
 
     print(f"\n⏱️  Total Tests Run: {result.testsRun}")
-    print(f"⏱️  Time Taken: {time.time() - time.time():.2f}s")  # This won't be accurate since we reset time
+    print(
+        f"⏱️  Time Taken: {time.time() - time.time():.2f}s"
+    )  # This won't be accurate since we reset time
 
     return result.wasSuccessful()
 

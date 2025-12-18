@@ -10,18 +10,23 @@ Author: URC 2026 Autonomy Team
 
 import asyncio
 import json
-import time
-import threading
-from typing import Dict, Any, Optional
+import os
 
 # Add src to path for imports
 import sys
-import os
+import threading
+import time
+from typing import Any, Dict, Optional
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from bridges.websocket_redundancy_manager import get_redundancy_manager, WebSocketEndpoint, EndpointPriority
-from core.state_synchronization_manager import get_state_manager
+from bridges.websocket_redundancy_manager import (
+    EndpointPriority,
+    WebSocketEndpoint,
+    get_redundancy_manager,
+)
 from core.dynamic_config_manager import get_dynamic_config_manager
+from core.state_synchronization_manager import get_state_manager
 
 
 class SecondaryWebSocketBridge:
@@ -120,7 +125,7 @@ class SecondaryWebSocketBridge:
         try:
             import websockets
         except ImportError:
-        self.get_logger().info("websockets library not available, simulating WebSocket server")
+            self.get_logger().info("websockets library not available, simulating WebSocket server")
             while self.running:
                 time.sleep(1)
             return

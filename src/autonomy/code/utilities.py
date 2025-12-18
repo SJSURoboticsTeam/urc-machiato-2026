@@ -5,31 +5,34 @@ Simplified Utilities Module for URC 2026 Competition
 This module provides basic utility functions for the competition codebase.
 """
 
-import os
-import yaml
 import json
-from typing import Any, Dict, Optional, Callable, TypeVar, Union
+import os
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, Optional, TypeVar, Union
 
+import yaml
 
 # Type definitions
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ValidationError(Exception):
     """Raised when validation fails."""
+
     pass
 
 
 class ProcessingError(Exception):
     """Raised when processing fails."""
+
     pass
 
 
 @dataclass
 class OperationResult:
     """Result of an operation with success/failure status."""
+
     success: bool
     data: Any = None
     error: Optional[str] = None
@@ -38,6 +41,7 @@ class OperationResult:
 @dataclass
 class Failure:
     """Represents a failure with error details."""
+
     message: str
     code: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
@@ -46,6 +50,7 @@ class Failure:
 @dataclass
 class NodeParameters:
     """Container for ROS2 node parameters."""
+
     name: str
     namespace: str = ""
     parameters: Dict[str, Any] = None
@@ -58,6 +63,7 @@ class NodeParameters:
 @dataclass
 class MessagePipeline:
     """Pipeline for processing messages."""
+
     name: str
     processors: list[Callable] = None
     validators: list[Callable] = None
@@ -71,6 +77,7 @@ class MessagePipeline:
 
 class AutonomyNode:
     """Simplified base class for autonomy nodes."""
+
     def __init__(self, name: str, namespace: str = ""):
         self.name = name
         self.namespace = namespace
@@ -79,17 +86,24 @@ class AutonomyNode:
     def _setup_logger(self):
         """Set up basic logging."""
         import logging
-        logger = logging.getLogger(f"{self.namespace}.{self.name}" if self.namespace else self.name)
+
+        logger = logging.getLogger(
+            f"{self.namespace}.{self.name}" if self.namespace else self.name
+        )
         logger.setLevel(logging.INFO)
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
         return logger
 
 
-def safe_execute(func: Callable[[], T], default: T = None) -> tuple[T, Optional[Exception]]:
+def safe_execute(
+    func: Callable[[], T], default: T = None
+) -> tuple[T, Optional[Exception]]:
     """
     Execute a function safely, returning result and any exception.
 
@@ -106,8 +120,13 @@ def safe_execute(func: Callable[[], T], default: T = None) -> tuple[T, Optional[
         return default, e
 
 
-def get_validated_parameter(params: Dict[str, Any], key: str, expected_type: type,
-                          default: Any = None, required: bool = False) -> Any:
+def get_validated_parameter(
+    params: Dict[str, Any],
+    key: str,
+    expected_type: type,
+    default: Any = None,
+    required: bool = False,
+) -> Any:
     """
     Get and validate a parameter from a dictionary.
 
@@ -135,7 +154,9 @@ def get_validated_parameter(params: Dict[str, Any], key: str, expected_type: typ
             # Try to convert
             value = expected_type(value)
         except (ValueError, TypeError):
-            raise ValidationError(f"Parameter '{key}' must be of type {expected_type.__name__}")
+            raise ValidationError(
+                f"Parameter '{key}' must be of type {expected_type.__name__}"
+            )
 
     return value
 
@@ -158,10 +179,10 @@ def load_config_file(config_path: str) -> Dict[str, Any]:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     try:
-        with open(config_path, 'r') as f:
-            if config_path.endswith('.yaml') or config_path.endswith('.yml'):
+        with open(config_path, "r") as f:
+            if config_path.endswith(".yaml") or config_path.endswith(".yml"):
                 return yaml.safe_load(f) or {}
-            elif config_path.endswith('.json'):
+            elif config_path.endswith(".json"):
                 return json.load(f) or {}
             else:
                 raise ValueError(f"Unsupported config file format: {config_path}")
@@ -174,6 +195,10 @@ def success(data: Any = None) -> OperationResult:
     return OperationResult(success=True, data=data)
 
 
-def failure(message: str, code: Optional[str] = None, details: Optional[Dict[str, Any]] = None) -> OperationResult:
+def failure(
+    message: str, code: Optional[str] = None, details: Optional[Dict[str, Any]] = None
+) -> OperationResult:
     """Create a failed operation result."""
-    return OperationResult(success=False, error=message, data=Failure(message, code, details))
+    return OperationResult(
+        success=False, error=message, data=Failure(message, code, details)
+    )

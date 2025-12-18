@@ -12,14 +12,14 @@ Tests the integration between Competition Bridge and all advanced systems:
 Author: URC 2026 Autonomy Team
 """
 
+import os
+import sys
 import time
 import unittest
-import sys
-import os
 from unittest.mock import Mock, patch
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
 class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
@@ -41,16 +41,17 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
         # Create state manager
         from core.state_synchronization_manager import DistributedStateManager
+
         state_mgr = DistributedStateManager("competition_bridge_test")
         state_mgr.start()
         state_mgr.register_node("competition_bridge_test")
 
         # Simulate competition bridge telemetry updates
         telemetry_data = {
-            'battery_voltage': 24.5,
-            'system_status': 'operational',
-            'mission_progress': 75,
-            'emergency_stop_active': False
+            "battery_voltage": 24.5,
+            "system_status": "operational",
+            "mission_progress": 75,
+            "emergency_stop_active": False,
         }
 
         # Update state manager with telemetry data
@@ -60,16 +61,19 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         # Verify state updates
         for key, expected_value in telemetry_data.items():
             actual_value = state_mgr.get_state(f"telemetry_{key}")
-            self.assertEqual(actual_value, str(expected_value),
-                           f"State {key} should be updated correctly")
+            self.assertEqual(
+                actual_value,
+                str(expected_value),
+                f"State {key} should be updated correctly",
+            )
 
         # Trigger election to establish master
         state_mgr._trigger_election()
 
         # Test state manager status
         status = state_mgr.get_system_status()
-        self.assertEqual(status['role'], 'master', "State manager should be master")
-        self.assertIsNotNone(status['master_node'], "Master node should be set")
+        self.assertEqual(status["role"], "master", "State manager should be master")
+        self.assertIsNotNone(status["master_node"], "Master node should be set")
 
         print("  ✅ Competition Bridge + State Sync integration works")
         state_mgr.stop()
@@ -80,18 +84,25 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
         # Create DDS manager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
+
         dds_mgr = DDSDomainRedundancyManager(primary_domain=100)
         dds_mgr.start()
 
         # Register competition-related nodes
-        dds_mgr.register_node("competition_bridge", "ros2 run competition_bridge competition_bridge")
+        dds_mgr.register_node(
+            "competition_bridge", "ros2 run competition_bridge competition_bridge"
+        )
         dds_mgr.register_node("state_manager", "ros2 run state_manager state_manager")
         dds_mgr.register_node("telemetry_node", "ros2 run telemetry telemetry_node")
 
         # Verify domain setup
         status = dds_mgr.get_system_status()
-        self.assertEqual(status['current_domain'], 100, "Should start on primary domain")
-        self.assertEqual(len(status['nodes']), 3, "Should have registered competition nodes")
+        self.assertEqual(
+            status["current_domain"], 100, "Should start on primary domain"
+        )
+        self.assertEqual(
+            len(status["nodes"]), 3, "Should have registered competition nodes"
+        )
 
         # Test domain health monitoring
         health_score = dds_mgr._measure_domain_health(100)
@@ -106,7 +117,9 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         self.assertTrue(success, "Domain failover should succeed")
 
         failover_status = dds_mgr.get_system_status()
-        self.assertEqual(failover_status['current_domain'], 101, "Should failover to backup domain")
+        self.assertEqual(
+            failover_status["current_domain"], 101, "Should failover to backup domain"
+        )
 
         print("  ✅ Competition Bridge + DDS Domain integration works")
 
@@ -120,23 +133,32 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
         # Create config manager
         from core.dynamic_config_manager import DynamicConfigManager
+
         config_mgr = DynamicConfigManager()
 
         # Setup competition bridge configuration
         bridge_config = {
-            'websocket_port': 8080,
-            'max_clients': 50,
-            'telemetry_rate_hz': 10.0,
-            'emergency_stop_timeout': 5.0,
-            'log_level': 'INFO'
+            "websocket_port": 8080,
+            "max_clients": 50,
+            "telemetry_rate_hz": 10.0,
+            "emergency_stop_timeout": 5.0,
+            "log_level": "INFO",
         }
 
         config_mgr.register_node("competition_bridge", bridge_config)
 
         # Test configuration updates (simulating runtime config changes)
         updates = [
-            {'node_name': 'competition_bridge', 'parameter_name': 'telemetry_rate_hz', 'new_value': 20.0},
-            {'node_name': 'competition_bridge', 'parameter_name': 'max_clients', 'new_value': 100}
+            {
+                "node_name": "competition_bridge",
+                "parameter_name": "telemetry_rate_hz",
+                "new_value": 20.0,
+            },
+            {
+                "node_name": "competition_bridge",
+                "parameter_name": "max_clients",
+                "new_value": 100,
+            },
         ]
 
         success = config_mgr.update_multiple_configs(updates)
@@ -144,8 +166,14 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
         # Verify updated configuration
         current_config = config_mgr.get_node_config("competition_bridge")
-        self.assertEqual(current_config['telemetry_rate_hz'], 20.0, "Telemetry rate should be updated")
-        self.assertEqual(current_config['max_clients'], 100, "Max clients should be updated")
+        self.assertEqual(
+            current_config["telemetry_rate_hz"],
+            20.0,
+            "Telemetry rate should be updated",
+        )
+        self.assertEqual(
+            current_config["max_clients"], 100, "Max clients should be updated"
+        )
 
         # Test configuration history
         history = config_mgr.get_config_history()
@@ -158,13 +186,22 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         print("🌐 Testing Competition Bridge + WebSocket Redundancy Integration...")
 
         # Create WebSocket manager
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager, WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+            WebSocketRedundancyManager,
+        )
+
         ws_mgr = WebSocketRedundancyManager()
         ws_mgr.start_redundancy_system()
 
         # Setup competition bridge endpoints
-        primary_endpoint = WebSocketEndpoint("competition_primary", 8080, EndpointPriority.PRIMARY)
-        secondary_endpoint = WebSocketEndpoint("competition_secondary", 8081, EndpointPriority.SECONDARY)
+        primary_endpoint = WebSocketEndpoint(
+            "competition_primary", 8080, EndpointPriority.PRIMARY
+        )
+        secondary_endpoint = WebSocketEndpoint(
+            "competition_secondary", 8081, EndpointPriority.SECONDARY
+        )
 
         # Initialize endpoints properly
         for ep in [primary_endpoint, secondary_endpoint]:
@@ -177,20 +214,28 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
         # Verify endpoints are set up
         status = ws_mgr.get_system_status()
-        self.assertEqual(len(status['endpoints']), 2, "Should have two endpoints")
+        self.assertEqual(len(status["endpoints"]), 2, "Should have two endpoints")
 
         # Test primary endpoint health
-        primary_status = status['endpoints']['competition_primary']
-        self.assertEqual(primary_status['health'], 'healthy', "Primary endpoint should be healthy")
-        self.assertTrue(primary_status['is_healthy'], "Primary endpoint should be marked healthy")
+        primary_status = status["endpoints"]["competition_primary"]
+        self.assertEqual(
+            primary_status["health"], "healthy", "Primary endpoint should be healthy"
+        )
+        self.assertTrue(
+            primary_status["is_healthy"], "Primary endpoint should be marked healthy"
+        )
 
         # Test load balancing
         primary_endpoint.clients = [Mock()] * 48  # 96% load (ensures DEGRADED status)
         ws_mgr._check_endpoint_health()
 
         updated_status = ws_mgr.get_system_status()
-        primary_load_status = updated_status['endpoints']['competition_primary']
-        self.assertEqual(primary_load_status['health'], 'degraded', "Primary should be degraded under high load")
+        primary_load_status = updated_status["endpoints"]["competition_primary"]
+        self.assertEqual(
+            primary_load_status["health"],
+            "degraded",
+            "Primary should be degraded under high load",
+        )
 
         print("  ✅ Competition Bridge + WebSocket Redundancy integration works")
         ws_mgr.stop_redundancy_system()
@@ -200,11 +245,11 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         print("🔧 Testing Competition Bridge + Recovery Coordination Integration...")
 
         # Create recovery coordinator
-        from core.recovery_coordinator import RecoveryCoordinator
-        from core.state_synchronization_manager import DistributedStateManager
+        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
-        from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
+        from core.recovery_coordinator import RecoveryCoordinator
+        from core.state_synchronization_manager import DistributedStateManager
 
         # Create all system managers
         recovery_coord = RecoveryCoordinator()
@@ -225,7 +270,11 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         dds_mgr.register_node("recovery_test", "echo test")
 
         # Add healthy WebSocket endpoint
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
+
         ws_endpoint = WebSocketEndpoint("recovery_test", 8080, EndpointPriority.PRIMARY)
         ws_endpoint.is_running = True
         ws_endpoint.response_time = 0.05
@@ -250,10 +299,17 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
 
         # Verify recovery completed successfully
         final_status = recovery_coord.get_recovery_status()
-        recovery_success = not recovery_coord.recovery_active and final_status['current_phase'] == 'complete'
+        recovery_success = (
+            not recovery_coord.recovery_active
+            and final_status["current_phase"] == "complete"
+        )
 
         self.assertTrue(recovery_success, "Recovery should complete successfully")
-        self.assertEqual(final_status['current_phase'], 'complete', "Recovery phase should be complete")
+        self.assertEqual(
+            final_status["current_phase"],
+            "complete",
+            "Recovery phase should be complete",
+        )
 
         print("  ✅ Competition Bridge + Recovery Coordination integration works")
 
@@ -270,101 +326,136 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         systems = {}
 
         # State synchronization
-        systems['state'] = DistributedStateManager("competition_scenario")
-        systems['state'].start()
-        systems['state'].register_node("competition_scenario")
-        systems['state']._trigger_election()
+        systems["state"] = DistributedStateManager("competition_scenario")
+        systems["state"].start()
+        systems["state"].register_node("competition_scenario")
+        systems["state"]._trigger_election()
 
         # DDS domain redundancy
-        systems['dds'] = DDSDomainRedundancyManager()
-        systems['dds'].start()
-        systems['dds'].register_node("competition_scenario", "ros2 run competition competition_node")
+        systems["dds"] = DDSDomainRedundancyManager()
+        systems["dds"].start()
+        systems["dds"].register_node(
+            "competition_scenario", "ros2 run competition competition_node"
+        )
 
         # Dynamic configuration
-        systems['config'] = DynamicConfigManager()
-        systems['config'].register_node("competition_scenario", {
-            'competition_mode': 'active',
-            'safety_enabled': True,
-            'telemetry_enabled': True
-        })
+        systems["config"] = DynamicConfigManager()
+        systems["config"].register_node(
+            "competition_scenario",
+            {
+                "competition_mode": "active",
+                "safety_enabled": True,
+                "telemetry_enabled": True,
+            },
+        )
 
         # WebSocket redundancy
-        systems['websocket'] = WebSocketRedundancyManager()
-        systems['websocket'].start_redundancy_system()
+        systems["websocket"] = WebSocketRedundancyManager()
+        systems["websocket"].start_redundancy_system()
 
-        from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
-        ws_endpoint = WebSocketEndpoint("competition_ws", 8080, EndpointPriority.PRIMARY)
+        from bridges.websocket_redundancy_manager import (
+            EndpointPriority,
+            WebSocketEndpoint,
+        )
+
+        ws_endpoint = WebSocketEndpoint(
+            "competition_ws", 8080, EndpointPriority.PRIMARY
+        )
         ws_endpoint.is_running = True
         ws_endpoint.response_time = 0.05
         ws_endpoint.last_health_check = time.time()
-        systems['websocket'].add_endpoint(ws_endpoint)
-        systems['websocket']._check_endpoint_health()
+        systems["websocket"].add_endpoint(ws_endpoint)
+        systems["websocket"]._check_endpoint_health()
 
         # Recovery coordination
-        systems['recovery'] = RecoveryCoordinator()
+        systems["recovery"] = RecoveryCoordinator()
         for name, system in systems.items():
-            if name != 'recovery':
-                systems['recovery'].register_system_manager(name, system)
+            if name != "recovery":
+                systems["recovery"].register_system_manager(name, system)
 
         # Simulate competition telemetry flow
         print("  📊 Simulating competition telemetry flow...")
 
         telemetry_updates = [
-            ('battery_level', '95'),
-            ('gps_signal', 'strong'),
-            ('mission_status', 'waypoint_navigation'),
-            ('system_health', 'nominal'),
-            ('competition_time_remaining', '3600')  # 1 hour
+            ("battery_level", "95"),
+            ("gps_signal", "strong"),
+            ("mission_status", "waypoint_navigation"),
+            ("system_health", "nominal"),
+            ("competition_time_remaining", "3600"),  # 1 hour
         ]
 
         for key, value in telemetry_updates:
-            systems['state'].update_state(f"telemetry_{key}", value)
+            systems["state"].update_state(f"telemetry_{key}", value)
 
         # Verify telemetry propagation
         for key, expected_value in telemetry_updates:
-            actual_value = systems['state'].get_state(f"telemetry_{key}")
-            self.assertEqual(actual_value, expected_value,
-                           f"Telemetry {key} should be propagated correctly")
+            actual_value = systems["state"].get_state(f"telemetry_{key}")
+            self.assertEqual(
+                actual_value,
+                expected_value,
+                f"Telemetry {key} should be propagated correctly",
+            )
 
         # Test configuration updates during competition
         config_updates = [
-            {'node_name': 'competition_scenario', 'parameter_name': 'competition_mode', 'new_value': 'emergency'},
-            {'node_name': 'competition_scenario', 'parameter_name': 'safety_enabled', 'new_value': False}
+            {
+                "node_name": "competition_scenario",
+                "parameter_name": "competition_mode",
+                "new_value": "emergency",
+            },
+            {
+                "node_name": "competition_scenario",
+                "parameter_name": "safety_enabled",
+                "new_value": False,
+            },
         ]
 
-        success = systems['config'].update_multiple_configs(config_updates)
+        success = systems["config"].update_multiple_configs(config_updates)
         self.assertTrue(success, "Competition configuration updates should succeed")
 
         # Test system health monitoring
-        state_status = systems['state'].get_system_status()
-        dds_status = systems['dds'].get_system_status()
-        ws_status = systems['websocket'].get_system_status()
+        state_status = systems["state"].get_system_status()
+        dds_status = systems["dds"].get_system_status()
+        ws_status = systems["websocket"].get_system_status()
 
-        self.assertEqual(state_status['role'], 'master', "State system should be healthy")
-        self.assertIsNotNone(dds_status['current_domain'], "DDS system should be healthy")
-        self.assertEqual(len(ws_status['endpoints']), 1, "WebSocket system should have endpoints")
+        self.assertEqual(
+            state_status["role"], "master", "State system should be healthy"
+        )
+        self.assertIsNotNone(
+            dds_status["current_domain"], "DDS system should be healthy"
+        )
+        self.assertEqual(
+            len(ws_status["endpoints"]), 1, "WebSocket system should have endpoints"
+        )
 
         # Test recovery coordination
-        recovery_success = systems['recovery'].initiate_recovery("End-to-end competition test")
+        recovery_success = systems["recovery"].initiate_recovery(
+            "End-to-end competition test"
+        )
 
         timeout = 10
         start_time = time.time()
-        while systems['recovery'].recovery_active and (time.time() - start_time) < timeout:
+        while (
+            systems["recovery"].recovery_active and (time.time() - start_time) < timeout
+        ):
             time.sleep(0.1)
 
-        recovery_status = systems['recovery'].get_recovery_status()
-        self.assertEqual(recovery_status['current_phase'], 'complete',
-                        "Recovery should complete for healthy systems")
+        recovery_status = systems["recovery"].get_recovery_status()
+        self.assertEqual(
+            recovery_status["current_phase"],
+            "complete",
+            "Recovery should complete for healthy systems",
+        )
 
         print("  ✅ End-to-end competition scenario integration works")
 
         # Cleanup all systems
         for name, system in systems.items():
-            if name == 'state':
+            if name == "state":
                 system.stop()
-            elif name == 'dds':
+            elif name == "dds":
                 system.stop()
-            elif name == 'websocket':
+            elif name == "websocket":
                 system.stop_redundancy_system()
 
 

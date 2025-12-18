@@ -7,9 +7,11 @@ This directory contains the complete mission control system for the URC 2026 Mar
 ### Core Components
 
 #### **MissionExecutor** (`mission_executor.py`)
+
 The central mission execution engine that orchestrates all mission activities.
 
 **Key Features:**
+
 - **Composition-based Architecture**: Uses specialized components for different concerns
 - **ROS2 Integration**: Full ROS2 node with publishers, subscribers, and services
 - **Health Monitoring**: Integrated system health checks and emergency response
@@ -17,6 +19,7 @@ The central mission execution engine that orchestrates all mission activities.
 - **Configuration Validation**: Startup validation of environment and configuration
 
 **Responsibilities:**
+
 - Mission lifecycle management (start, pause, resume, stop)
 - Real-time navigation and waypoint following
 - Emergency response coordination
@@ -24,9 +27,11 @@ The central mission execution engine that orchestrates all mission activities.
 - Health monitoring and safety systems
 
 #### **Mission Behaviors** (`mission_behaviors.py`)
+
 Common mission behaviors and utilities shared across different mission types.
 
 **Key Features:**
+
 - **Reusable Behaviors**: Common navigation, detection, and control patterns
 - **Safety Integration**: Built-in safety checks and emergency handling
 - **Configuration Support**: Environment-aware behavior parameters
@@ -35,27 +40,33 @@ Common mission behaviors and utilities shared across different mission types.
 ### Supporting Infrastructure
 
 #### **Non-Invasive Monitoring System** (`monitoring_system.py`)
+
 Event-driven monitoring that doesn't impact real-time performance.
 
 **Key Features:**
+
 - **Event-Driven Collection**: Only triggers on specific events (detections, failures, emergencies)
 - **Configurable Sampling**: HIGH/MEDIUM/LOW/OFF sampling rates
 - **Resource-Aware**: Memory-bounded with asynchronous processing
 - **Performance Tracking**: Monitors its own overhead (< 0.5ms per event)
 
 #### **Configuration Validation** (`config_validator.py`)
+
 Validates configuration and environment variables at startup.
 
 **Key Features:**
+
 - **Environment Validation**: ROS2 domain, discovery server, hardware interfaces
 - **Configuration Parsing**: YAML configuration validation
 - **Network Connectivity**: ROS2 discovery server reachability checks
 - **Graceful Degradation**: Clear error messages for missing dependencies
 
 #### **Custom Exceptions** (`exceptions.py`)
+
 Comprehensive exception hierarchy for robust error handling.
 
 **Key Features:**
+
 - **Specific Exception Types**: RoboticsException, ValidationError, ThermalError, etc.
 - **Context Preservation**: Error context maintained for debugging
 - **Auto-logging**: Critical errors automatically logged
@@ -64,45 +75,55 @@ Comprehensive exception hierarchy for robust error handling.
 ## 📊 Mission Types
 
 ### **Waypoint Navigation** (`waypoint_navigation_mission.py`)
+
 Autonomous GPS waypoint navigation with obstacle avoidance.
 
 **Capabilities:**
+
 - Multi-waypoint route execution
 - Real-time position tracking
 - Heading and distance control
 - Timeout and error handling
 
 ### **Object Detection & Approach** (`object_detection_mission.py`)
+
 Computer vision-based object detection and autonomous approach.
 
 **Capabilities:**
+
 - Real-time object detection
 - Distance estimation and approach
 - Vision-guided navigation
 - Target validation and tracking
 
 ### **Follow-Me Mission** (`follow_me_mission.py`)
+
 ArUco tag-based following behavior.
 
 **Capabilities:**
+
 - ArUco tag detection and tracking
 - Dynamic following behavior
 - Distance and heading maintenance
 - Tag timeout handling
 
 ### **Delivery Mission** (`delivery_mission.py`)
+
 Sample pickup and delivery operations.
 
 **Capabilities:**
+
 - Multi-phase mission execution
 - Location-based navigation
 - Object manipulation coordination
 - Success/failure tracking
 
 ### **Return to Operator Mission** (`return_to_operator_mission.py`)
+
 Autonomous return to operator with multi-modal localization and safe navigation.
 
 **Capabilities:**
+
 - GPS-based operator tracking and path planning
 - ArUco tag detection for precision final approach
 - SLAM-based global localization and obstacle avoidance
@@ -111,6 +132,7 @@ Autonomous return to operator with multi-modal localization and safe navigation.
 - Multi-phase mission execution (localize → plan → navigate → approach)
 
 ### **Debug Mission** (`debug_mission.py`)
+
 Testing and validation mission for system checkout.
 
 ## 🔧 Usage & Integration
@@ -164,18 +186,21 @@ ros2 topic echo /mission/progress
 ## 📈 Monitoring & Observability
 
 ### Event Types
+
 - **DETECTION**: Mission events, object detections, waypoint arrivals
 - **FAILURE**: Data quality issues, navigation failures, system errors
 - **EMERGENCY**: Thermal overloads, battery critical, motor failures
 - **PERFORMANCE_DEGRADATION**: Slow operations, resource constraints
 
 ### Sampling Rates
+
 - **HIGH**: All events (debugging)
 - **MEDIUM**: Important events only (production default)
 - **LOW**: Critical events only (minimal monitoring)
 - **OFF**: Disabled (maintenance)
 
 ### Performance Metrics
+
 - **Event Processing**: < 0.5ms per event
 - **Memory Usage**: < 50MB buffer limit
 - **CPU Overhead**: < 1% of system resources
@@ -184,18 +209,21 @@ ros2 topic echo /mission/progress
 ## 🛡️ Safety & Reliability
 
 ### Emergency Response
+
 1. **Detection**: Multi-threshold monitoring (warning → critical → emergency)
 2. **Assessment**: Severity-based evaluation (LOW, MEDIUM, HIGH, CRITICAL)
 3. **Response**: Coordinated multi-system actions
 4. **Recovery**: Automatic or manual recovery procedures
 
 ### Data Quality Assurance
+
 - **Validation**: Real-time data validation on all inputs
 - **Filtering**: Position, velocity, and temperature filtering
 - **Monitoring**: Continuous quality assessment with alerting
 - **Fallback**: Graceful degradation on data quality issues
 
 ### Configuration Management
+
 - **Validation**: Startup configuration validation
 - **Environment**: Required environment variable checking
 - **Fallback**: Sensible defaults with clear warnings
@@ -204,6 +232,7 @@ ros2 topic echo /mission/progress
 ## 🧪 Testing & Validation
 
 ### Automated Test Suite
+
 ```bash
 # Run all automated tests
 python3 tests/run_tests.py --automated
@@ -213,12 +242,14 @@ python3 tests/run_tests.py --aoi
 ```
 
 ### Configuration Validation
+
 ```bash
 # Validate production configuration
 python3 scripts/validate_config.py
 ```
 
 ### Health Checks
+
 ```bash
 # Production health check
 python3 scripts/production_health_check.py
@@ -227,6 +258,7 @@ python3 scripts/production_health_check.py
 ## 📚 API Documentation
 
 ### MissionExecutor Class
+
 ```python
 class MissionExecutor(Node):
     def start_waypoint_mission(self, waypoints: List[Dict[str, float]]) -> None:
@@ -240,6 +272,7 @@ class MissionExecutor(Node):
 ```
 
 ### Monitoring System
+
 ```python
 from missions.monitoring_system import record_detection, record_failure
 

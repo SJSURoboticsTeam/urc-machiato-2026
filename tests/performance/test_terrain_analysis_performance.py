@@ -11,24 +11,25 @@ Tests terrain intelligence performance:
 Critical for navigation safety and autonomous terrain traversal.
 """
 
-import time
 import statistics
-import unittest
-import psutil
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Any
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from sensor_msgs.msg import Image, PointCloud2, LaserScan
-from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import PoseStamped, Point
-from std_msgs.msg import Header, Float32MultiArray
-from cv_bridge import CvBridge
-import cv2
 import threading
+import time
 import tracemalloc
+import unittest
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Tuple
+
+import cv2
+import numpy as np
+import psutil
+import rclpy
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Point, PoseStamped
+from nav_msgs.msg import OccupancyGrid, Odometry
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import Image, LaserScan, PointCloud2
+from std_msgs.msg import Float32MultiArray, Header
 
 
 class TerrainAnalysisPerformanceTest(unittest.TestCase):
@@ -42,8 +43,8 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         self.num_frames = 200  # Test 200 terrain analysis frames
         self.target_classification_ms = 50.0  # Terrain classification target
         self.target_traversability_ms = 30.0  # Traversability calculation target
-        self.target_memory_delta_mb = 50.0    # Memory allocation target
-        self.target_cpu_percent = 40.0        # CPU utilization target
+        self.target_memory_delta_mb = 50.0  # Memory allocation target
+        self.target_cpu_percent = 40.0  # CPU utilization target
 
         # Performance tracking
         self.classification_times = []
@@ -122,7 +123,8 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
             # Step 2: Traversability calculation
             traversability_start = time.time()
             traversability_result = self.terrain_analyzer.calculate_traversability(
-                terrain_data, classification_result)
+                terrain_data, classification_result
+            )
             traversability_time = (time.time() - traversability_start) * 1000
 
             # Total analysis time
@@ -151,13 +153,15 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
     def _start_resource_monitoring(self):
         """Start monitoring system resources."""
         self.monitoring_active = True
-        self.monitor_thread = threading.Thread(target=self._monitor_resources, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitor_resources, daemon=True
+        )
         self.monitor_thread.start()
 
     def _stop_resource_monitoring(self):
         """Stop resource monitoring."""
         self.monitoring_active = False
-        if hasattr(self, 'monitor_thread'):
+        if hasattr(self, "monitor_thread"):
             self.monitor_thread.join(timeout=2.0)
 
     def _monitor_resources(self):
@@ -195,10 +199,22 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         p95_total = statistics.quantiles(self.total_analysis_times, n=20)[18]
 
         # Resource usage statistics
-        avg_memory_mb = statistics.mean(self.memory_usage_readings) if self.memory_usage_readings else 0
-        max_memory_mb = max(self.memory_usage_readings) if self.memory_usage_readings else 0
-        memory_delta_mb = max_memory_mb - min(self.memory_usage_readings) if self.memory_usage_readings else 0
-        avg_cpu_percent = statistics.mean(self.cpu_usage_readings) if self.cpu_usage_readings else 0
+        avg_memory_mb = (
+            statistics.mean(self.memory_usage_readings)
+            if self.memory_usage_readings
+            else 0
+        )
+        max_memory_mb = (
+            max(self.memory_usage_readings) if self.memory_usage_readings else 0
+        )
+        memory_delta_mb = (
+            max_memory_mb - min(self.memory_usage_readings)
+            if self.memory_usage_readings
+            else 0
+        )
+        avg_cpu_percent = (
+            statistics.mean(self.cpu_usage_readings) if self.cpu_usage_readings else 0
+        )
         max_cpu_percent = max(self.cpu_usage_readings) if self.cpu_usage_readings else 0
 
         # Print detailed results
@@ -228,15 +244,33 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         print("-" * 55)
 
         requirements = {
-            'Classification Time (avg)': (avg_classification, self.target_classification_ms),
-            'Classification Time (95p)': (p95_classification, self.target_classification_ms * 1.2),
-            'Traversability Time (avg)': (avg_traversability, self.target_traversability_ms),
-            'Traversability Time (95p)': (p95_traversability, self.target_traversability_ms * 1.2),
-            'Total Analysis Time (avg)': (avg_total, self.target_classification_ms + self.target_traversability_ms),
-            'Total Analysis Time (95p)': (p95_total, (self.target_classification_ms + self.target_traversability_ms) * 1.2),
-            'Memory Delta': (memory_delta_mb, self.target_memory_delta_mb),
-            'CPU Usage (avg)': (avg_cpu_percent, self.target_cpu_percent),
-            'CPU Usage (max)': (max_cpu_percent, self.target_cpu_percent * 1.2),
+            "Classification Time (avg)": (
+                avg_classification,
+                self.target_classification_ms,
+            ),
+            "Classification Time (95p)": (
+                p95_classification,
+                self.target_classification_ms * 1.2,
+            ),
+            "Traversability Time (avg)": (
+                avg_traversability,
+                self.target_traversability_ms,
+            ),
+            "Traversability Time (95p)": (
+                p95_traversability,
+                self.target_traversability_ms * 1.2,
+            ),
+            "Total Analysis Time (avg)": (
+                avg_total,
+                self.target_classification_ms + self.target_traversability_ms,
+            ),
+            "Total Analysis Time (95p)": (
+                p95_total,
+                (self.target_classification_ms + self.target_traversability_ms) * 1.2,
+            ),
+            "Memory Delta": (memory_delta_mb, self.target_memory_delta_mb),
+            "CPU Usage (avg)": (avg_cpu_percent, self.target_cpu_percent),
+            "CPU Usage (max)": (max_cpu_percent, self.target_cpu_percent * 1.2),
         }
 
         all_passed = True
@@ -255,7 +289,9 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         if all_passed:
             print("✅ ALL TERRAIN ANALYSIS REQUIREMENTS MET")
             print("   Terrain intelligence suitable for real-time navigation")
-        elif avg_total <= (self.target_classification_ms + self.target_traversability_ms):
+        elif avg_total <= (
+            self.target_classification_ms + self.target_traversability_ms
+        ):
             print("⚠️  AVERAGE PERFORMANCE OK, BUT RESOURCE/CONSISTENCY CONCERNS")
             print("   Monitor performance under competition terrain conditions")
         else:
@@ -263,7 +299,10 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
             print("   Optimization required for competition terrain navigation")
 
         # Detailed analysis and recommendations
-        if avg_classification > self.target_classification_ms or avg_traversability > self.target_traversability_ms:
+        if (
+            avg_classification > self.target_classification_ms
+            or avg_traversability > self.target_traversability_ms
+        ):
             print("\n💡 Optimization Recommendations:")
             if avg_classification > self.target_classification_ms:
                 print("   - Optimize terrain classification algorithm")
@@ -280,39 +319,40 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
 
         # Store results for regression testing
         self.test_results = {
-            'avg_classification_ms': avg_classification,
-            'max_classification_ms': max_classification,
-            'p95_classification_ms': p95_classification,
-            'avg_traversability_ms': avg_traversability,
-            'max_traversability_ms': max_traversability,
-            'p95_traversability_ms': p95_traversability,
-            'avg_total_ms': avg_total,
-            'max_total_ms': max_total,
-            'p95_total_ms': p95_total,
-            'memory_delta_mb': memory_delta_mb,
-            'avg_cpu_percent': avg_cpu_percent,
-            'max_cpu_percent': max_cpu_percent,
-            'requirements_met': all_passed,
-            'frames_analyzed': len(self.total_analysis_times)
+            "avg_classification_ms": avg_classification,
+            "max_classification_ms": max_classification,
+            "p95_classification_ms": p95_classification,
+            "avg_traversability_ms": avg_traversability,
+            "max_traversability_ms": max_traversability,
+            "p95_traversability_ms": p95_traversability,
+            "avg_total_ms": avg_total,
+            "max_total_ms": max_total,
+            "p95_total_ms": p95_total,
+            "memory_delta_mb": memory_delta_mb,
+            "avg_cpu_percent": avg_cpu_percent,
+            "max_cpu_percent": max_cpu_percent,
+            "requirements_met": all_passed,
+            "frames_analyzed": len(self.total_analysis_times),
         }
 
         # Assert critical requirements
-        self.assertLess(avg_total, (self.target_classification_ms + self.target_traversability_ms) * 1.5,
-                       ".3f")
-        self.assertLess(memory_delta_mb, self.target_memory_delta_mb * 2.0,
-                       ".2f")
-        self.assertLess(avg_cpu_percent, self.target_cpu_percent * 1.5,
-                       ".1f")
+        self.assertLess(
+            avg_total,
+            (self.target_classification_ms + self.target_traversability_ms) * 1.5,
+            ".3f",
+        )
+        self.assertLess(memory_delta_mb, self.target_memory_delta_mb * 2.0, ".2f")
+        self.assertLess(avg_cpu_percent, self.target_cpu_percent * 1.5, ".1f")
 
     def test_terrain_analysis_under_various_conditions(self):
         """Test terrain analysis under various terrain conditions."""
         print("\n🏞️  Testing Terrain Analysis Under Various Conditions")
 
         terrain_conditions = [
-            'flat_sand',      # Easy terrain
-            'rocky_surface',  # Medium difficulty
-            'steep_slopes',   # Challenging terrain
-            'mixed_terrain'   # Complex conditions
+            "flat_sand",  # Easy terrain
+            "rocky_surface",  # Medium difficulty
+            "steep_slopes",  # Challenging terrain
+            "mixed_terrain",  # Complex conditions
         ]
 
         results_by_condition = {}
@@ -336,9 +376,12 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
 
                 # Time analysis
                 start_time = time.time()
-                classification_result = self.terrain_analyzer.classify_terrain(terrain_data)
+                classification_result = self.terrain_analyzer.classify_terrain(
+                    terrain_data
+                )
                 traversability_result = self.terrain_analyzer.calculate_traversability(
-                    terrain_data, classification_result)
+                    terrain_data, classification_result
+                )
                 total_time = (time.time() - start_time) * 1000
 
                 self.total_analysis_times.append(total_time)
@@ -350,9 +393,9 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
             p95_time = statistics.quantiles(self.total_analysis_times, n=20)[18]
 
             results_by_condition[condition] = {
-                'avg_time_ms': avg_time,
-                'max_time_ms': max_time,
-                'p95_time_ms': p95_time
+                "avg_time_ms": avg_time,
+                "max_time_ms": max_time,
+                "p95_time_ms": p95_time,
             }
 
             print(".3f")
@@ -361,12 +404,14 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         print("\n📊 Terrain Condition Performance Summary:")
         print("-" * 50)
         for condition, results in results_by_condition.items():
-            passed = results['avg_time_ms'] <= (self.target_classification_ms + self.target_traversability_ms)
+            passed = results["avg_time_ms"] <= (
+                self.target_classification_ms + self.target_traversability_ms
+            )
             status = "✅ PASS" if passed else "❌ FAIL"
             print("25")
 
         # Check if performance varies significantly by terrain type
-        times = [r['avg_time_ms'] for r in results_by_condition.values()]
+        times = [r["avg_time_ms"] for r in results_by_condition.values()]
         time_variation = statistics.stdev(times) if len(times) > 1 else 0
 
         print(".3f")
@@ -386,34 +431,34 @@ class TerrainDataGenerator:
 
         # Default terrain parameters
         self.width, self.height = 640, 480
-        self.terrain_condition = 'mixed_terrain'
+        self.terrain_condition = "mixed_terrain"
 
         # Terrain generation parameters by condition
         self.terrain_params = {
-            'flat_sand': {
-                'slope_range': (-2, 2),      # Flat terrain
-                'roughness': 0.1,            # Low roughness
-                'rock_density': 0.05,        # Few rocks
-                'color_variation': 0.2       # Low color variation
+            "flat_sand": {
+                "slope_range": (-2, 2),  # Flat terrain
+                "roughness": 0.1,  # Low roughness
+                "rock_density": 0.05,  # Few rocks
+                "color_variation": 0.2,  # Low color variation
             },
-            'rocky_surface': {
-                'slope_range': (-5, 5),      # Moderate slopes
-                'roughness': 0.4,            # Medium roughness
-                'rock_density': 0.15,        # Some rocks
-                'color_variation': 0.4       # Medium color variation
+            "rocky_surface": {
+                "slope_range": (-5, 5),  # Moderate slopes
+                "roughness": 0.4,  # Medium roughness
+                "rock_density": 0.15,  # Some rocks
+                "color_variation": 0.4,  # Medium color variation
             },
-            'steep_slopes': {
-                'slope_range': (-15, 15),    # Steep slopes
-                'roughness': 0.7,            # High roughness
-                'rock_density': 0.25,        # Many rocks
-                'color_variation': 0.6       # High color variation
+            "steep_slopes": {
+                "slope_range": (-15, 15),  # Steep slopes
+                "roughness": 0.7,  # High roughness
+                "rock_density": 0.25,  # Many rocks
+                "color_variation": 0.6,  # High color variation
             },
-            'mixed_terrain': {
-                'slope_range': (-10, 10),    # Mixed slopes
-                'roughness': 0.5,            # Medium-high roughness
-                'rock_density': 0.2,         # Moderate rocks
-                'color_variation': 0.5       # Medium-high variation
-            }
+            "mixed_terrain": {
+                "slope_range": (-10, 10),  # Mixed slopes
+                "roughness": 0.5,  # Medium-high roughness
+                "rock_density": 0.2,  # Moderate rocks
+                "color_variation": 0.5,  # Medium-high variation
+            },
         }
 
     def set_terrain_condition(self, condition: str):
@@ -421,8 +466,10 @@ class TerrainDataGenerator:
         if condition in self.terrain_params:
             self.terrain_condition = condition
         else:
-            print(f"Warning: Unknown terrain condition '{condition}', using mixed_terrain")
-            self.terrain_condition = 'mixed_terrain'
+            print(
+                f"Warning: Unknown terrain condition '{condition}', using mixed_terrain"
+            )
+            self.terrain_condition = "mixed_terrain"
 
     def generate_terrain_frame(self) -> Dict[str, Any]:
         """Generate a frame of terrain data."""
@@ -438,11 +485,11 @@ class TerrainDataGenerator:
         lidar_scan = self._generate_lidar_scan(params)
 
         return {
-            'image': image,
-            'pointcloud': pointcloud,
-            'lidar_scan': lidar_scan,
-            'condition': self.terrain_condition,
-            'timestamp': time.time()
+            "image": image,
+            "pointcloud": pointcloud,
+            "lidar_scan": lidar_scan,
+            "condition": self.terrain_condition,
+            "timestamp": time.time(),
         }
 
     def _generate_terrain_image(self, params) -> np.ndarray:
@@ -451,25 +498,33 @@ class TerrainDataGenerator:
         base_color = np.array([194, 178, 128])  # Sandy brown base
 
         # Generate height map
-        height_map = np.random.normal(0, params['roughness'] * 10, (self.height, self.width))
+        height_map = np.random.normal(
+            0, params["roughness"] * 10, (self.height, self.width)
+        )
 
         # Apply slope gradient
-        slope_gradient = np.linspace(params['slope_range'][0], params['slope_range'][1], self.width)
+        slope_gradient = np.linspace(
+            params["slope_range"][0], params["slope_range"][1], self.width
+        )
         slope_map = np.tile(slope_gradient, (self.height, 1))
         height_map += slope_map
 
         # Convert height to color variation
-        color_variation = (height_map - height_map.min()) / (height_map.max() - height_map.min())
-        color_variation = color_variation * params['color_variation']
+        color_variation = (height_map - height_map.min()) / (
+            height_map.max() - height_map.min()
+        )
+        color_variation = color_variation * params["color_variation"]
 
         # Create RGB image
         image = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         for c in range(3):
             channel_variation = color_variation * (0.8 + np.random.random() * 0.4)
-            image[:, :, c] = np.clip(base_color[c] * (1 + channel_variation), 0, 255).astype(np.uint8)
+            image[:, :, c] = np.clip(
+                base_color[c] * (1 + channel_variation), 0, 255
+            ).astype(np.uint8)
 
         # Add rocks
-        num_rocks = int(self.width * self.height * params['rock_density'] / 1000)
+        num_rocks = int(self.width * self.height * params["rock_density"] / 1000)
         for _ in range(num_rocks):
             rock_size = np.random.randint(5, 20)
             rock_x = np.random.randint(rock_size, self.width - rock_size)
@@ -488,10 +543,12 @@ class TerrainDataGenerator:
         # Generate 3D points in front of the robot
         x_coords = np.random.uniform(-5, 5, num_points)  # ±5m laterally
         y_coords = np.random.uniform(0, 10, num_points)  # 0-10m forward
-        z_coords = np.random.normal(0, params['roughness'] * 2, num_points)  # Height variation
+        z_coords = np.random.normal(
+            0, params["roughness"] * 2, num_points
+        )  # Height variation
 
         # Apply slope to height
-        slope_effect = y_coords * np.radians(np.random.uniform(*params['slope_range']))
+        slope_effect = y_coords * np.radians(np.random.uniform(*params["slope_range"]))
         z_coords += slope_effect
 
         return np.column_stack([x_coords, y_coords, z_coords])
@@ -501,11 +558,11 @@ class TerrainDataGenerator:
         num_readings = 360  # 1-degree resolution
         max_range = 10.0
 
-        angles = np.linspace(0, 2*np.pi, num_readings, endpoint=False)
+        angles = np.linspace(0, 2 * np.pi, num_readings, endpoint=False)
         ranges = np.random.uniform(0.5, max_range, num_readings)
 
         # Add some terrain features to ranges
-        terrain_noise = np.random.normal(0, params['roughness'], num_readings)
+        terrain_noise = np.random.normal(0, params["roughness"], num_readings)
         ranges += terrain_noise
 
         # Ensure minimum range
@@ -526,7 +583,7 @@ class TerrainAnalyzerSimulator:
         self.traversability_base_time = 0.015  # 15ms base traversability time
 
         # Terrain type definitions
-        self.terrain_types = ['sand', 'rock', 'slope', 'hazard', 'unknown']
+        self.terrain_types = ["sand", "rock", "slope", "hazard", "unknown"]
 
     def analyze_terrain(self, terrain_data: Dict[str, Any]) -> Dict[str, Any]:
         """Complete terrain analysis (classification + traversability)."""
@@ -537,9 +594,9 @@ class TerrainAnalyzerSimulator:
         traversability = self.calculate_traversability(terrain_data, classification)
 
         return {
-            'classification': classification,
-            'traversability': traversability,
-            'timestamp': time.time()
+            "classification": classification,
+            "traversability": traversability,
+            "timestamp": time.time(),
         }
 
     def classify_terrain(self, terrain_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -547,7 +604,7 @@ class TerrainAnalyzerSimulator:
         start_time = time.time()
 
         # Simulate terrain classification processing
-        image = terrain_data['image']
+        image = terrain_data["image"]
 
         # Simulate image processing operations
         # Convert to grayscale and apply filters
@@ -561,38 +618,47 @@ class TerrainAnalyzerSimulator:
         # Simulate texture analysis
         texture_features = []
         for i in range(10):  # Analyze 10 regions
-            x, y = np.random.randint(0, image.shape[1]), np.random.randint(0, image.shape[0])
-            region = gray[y:y+32, x:x+32]
+            x, y = np.random.randint(0, image.shape[1]), np.random.randint(
+                0, image.shape[0]
+            )
+            region = gray[y : y + 32, x : x + 32]
             if region.size > 0:
                 texture_features.append(np.std(region))
 
         # Simulate classification
-        terrain_map = np.random.choice(self.terrain_types,
-                                     size=(image.shape[0]//32, image.shape[1]//32),
-                                     p=[0.5, 0.2, 0.15, 0.1, 0.05])
+        terrain_map = np.random.choice(
+            self.terrain_types,
+            size=(image.shape[0] // 32, image.shape[1] // 32),
+            p=[0.5, 0.2, 0.15, 0.1, 0.05],
+        )
 
         # Add processing time variation based on terrain complexity
-        condition = terrain_data.get('condition', 'mixed_terrain')
-        complexity_multiplier = {'flat_sand': 0.8, 'rocky_surface': 1.0,
-                               'steep_slopes': 1.3, 'mixed_terrain': 1.1}.get(condition, 1.0)
+        condition = terrain_data.get("condition", "mixed_terrain")
+        complexity_multiplier = {
+            "flat_sand": 0.8,
+            "rocky_surface": 1.0,
+            "steep_slopes": 1.3,
+            "mixed_terrain": 1.1,
+        }.get(condition, 1.0)
 
         processing_time = self.classification_base_time * complexity_multiplier
         time.sleep(processing_time)
 
         return {
-            'terrain_map': terrain_map,
-            'confidence_map': np.random.random(terrain_map.shape),
-            'processing_time': time.time() - start_time,
-            'features_extracted': len(corners) if corners is not None else 0
+            "terrain_map": terrain_map,
+            "confidence_map": np.random.random(terrain_map.shape),
+            "processing_time": time.time() - start_time,
+            "features_extracted": len(corners) if corners is not None else 0,
         }
 
-    def calculate_traversability(self, terrain_data: Dict[str, Any],
-                               classification: Dict[str, Any]) -> Dict[str, Any]:
+    def calculate_traversability(
+        self, terrain_data: Dict[str, Any], classification: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Calculate traversability costs for path planning."""
         start_time = time.time()
 
         # Simulate traversability calculation
-        terrain_map = classification['terrain_map']
+        terrain_map = classification["terrain_map"]
 
         # Create traversability cost map
         rows, cols = terrain_map.shape
@@ -600,11 +666,11 @@ class TerrainAnalyzerSimulator:
 
         # Assign costs based on terrain type
         terrain_costs = {
-            'sand': 1.0,     # Easy traversal
-            'rock': 3.0,     # Moderate difficulty
-            'slope': 2.5,    # Sloped terrain
-            'hazard': 10.0,  # Avoid if possible
-            'unknown': 2.0   # Unknown but traversable
+            "sand": 1.0,  # Easy traversal
+            "rock": 3.0,  # Moderate difficulty
+            "slope": 2.5,  # Sloped terrain
+            "hazard": 10.0,  # Avoid if possible
+            "unknown": 2.0,  # Unknown but traversable
         }
 
         for i in range(rows):
@@ -617,7 +683,9 @@ class TerrainAnalyzerSimulator:
                 traversability_map[i, j] = base_cost * slope_modifier
 
         # Simulate additional processing (gradient calculation, smoothing)
-        smoothed_map = cv2.GaussianBlur(traversability_map.astype(np.float32), (3, 3), 0)
+        smoothed_map = cv2.GaussianBlur(
+            traversability_map.astype(np.float32), (3, 3), 0
+        )
 
         # Calculate path planning costs
         gradient_x = cv2.Sobel(smoothed_map, cv2.CV_32F, 1, 0, ksize=3)
@@ -625,23 +693,25 @@ class TerrainAnalyzerSimulator:
         slope_costs = np.sqrt(gradient_x**2 + gradient_y**2)
 
         # Add processing time variation
-        condition = terrain_data.get('condition', 'mixed_terrain')
-        complexity_multiplier = {'flat_sand': 0.7, 'rocky_surface': 1.0,
-                               'steep_slopes': 1.4, 'mixed_terrain': 1.2}.get(condition, 1.0)
+        condition = terrain_data.get("condition", "mixed_terrain")
+        complexity_multiplier = {
+            "flat_sand": 0.7,
+            "rocky_surface": 1.0,
+            "steep_slopes": 1.4,
+            "mixed_terrain": 1.2,
+        }.get(condition, 1.0)
 
         processing_time = self.traversability_base_time * complexity_multiplier
         time.sleep(processing_time)
 
         return {
-            'traversability_map': smoothed_map,
-            'slope_costs': slope_costs,
-            'path_costs': smoothed_map + slope_costs * 0.5,
-            'processing_time': time.time() - start_time,
-            'map_resolution': 0.1  # meters per cell
+            "traversability_map": smoothed_map,
+            "slope_costs": slope_costs,
+            "path_costs": smoothed_map + slope_costs * 0.5,
+            "processing_time": time.time() - start_time,
+            "map_resolution": 0.1,  # meters per cell
         }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-

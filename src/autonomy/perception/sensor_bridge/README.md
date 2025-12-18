@@ -17,6 +17,7 @@ Converts real-time sensor data from WebSocket streams to ROS2 topics, designed f
 ```
 
 ### **Current Implementation (WebSocket Bridge)**
+
 - **ROS2 Timer-Based Architecture**: No threading, uses ROS2 timers for reliability
 - **Comprehensive Data Validation**: Type checking, range validation, sanity checks
 - **Adaptive Reconnection**: Exponential backoff with configurable limits
@@ -25,6 +26,7 @@ Converts real-time sensor data from WebSocket streams to ROS2 topics, designed f
 - **ROS2 Publishers**: Optimized QoS settings for real-time sensor data
 
 ### **Future Implementation (Direct ROS2)**
+
 - **ROS2 Nodes**: Deployed on sensor devices
 - **DDS Transport**: Direct peer-to-peer communication
 - **Zero Latency**: No JSON/WebSocket overhead
@@ -35,6 +37,7 @@ Converts real-time sensor data from WebSocket streams to ROS2 topics, designed f
 ## 📡 Sensor Data Flow
 
 ### **WebSocket Message Format**
+
 ```json
 {
   "timestamp": 1234567890.123,
@@ -77,19 +80,21 @@ Converts real-time sensor data from WebSocket streams to ROS2 topics, designed f
 ```
 
 ### **ROS2 Topic Mapping**
-| Sensor | WebSocket Key | ROS2 Topic | Message Type | QoS | Rate |
-|--------|---------------|------------|--------------|-----|------|
-| IMU | `imu` | `/imu/data` | `sensor_msgs/Imu` | BEST_EFFORT | 100Hz |
-| GPS | `gps` | `/gps/fix` | `sensor_msgs/NavSatFix` | RELIABLE | 10Hz |
-| Battery | `battery` | `/battery/status` | `sensor_msgs/BatteryState` | RELIABLE | 1Hz |
-| Wheel Odom | `wheel_odom` | `/wheel/odom` | `nav_msgs/Odometry` | BEST_EFFORT | 50Hz |
-| Temperature | `temperature` | `/temperature/data` | `sensor_msgs/Temperature` | RELIABLE | 5Hz |
+
+| Sensor      | WebSocket Key | ROS2 Topic          | Message Type               | QoS         | Rate  |
+| ----------- | ------------- | ------------------- | -------------------------- | ----------- | ----- |
+| IMU         | `imu`         | `/imu/data`         | `sensor_msgs/Imu`          | BEST_EFFORT | 100Hz |
+| GPS         | `gps`         | `/gps/fix`          | `sensor_msgs/NavSatFix`    | RELIABLE    | 10Hz  |
+| Battery     | `battery`     | `/battery/status`   | `sensor_msgs/BatteryState` | RELIABLE    | 1Hz   |
+| Wheel Odom  | `wheel_odom`  | `/wheel/odom`       | `nav_msgs/Odometry`        | BEST_EFFORT | 50Hz  |
+| Temperature | `temperature` | `/temperature/data` | `sensor_msgs/Temperature`  | RELIABLE    | 5Hz   |
 
 ---
 
 ## 🚀 Quick Start
 
 ### **1. Install Dependencies**
+
 ```bash
 # WebSocket client library
 pip install websockets
@@ -99,13 +104,16 @@ pip install websockets
 ```
 
 ### **2. Configure WebSocket Endpoint**
+
 Edit `config/sensor_bridge.yaml`:
+
 ```yaml
 sensor_bridge:
-  websocket_url: "ws://your-sensor-hub:8080"  # Change this
+  websocket_url: "ws://your-sensor-hub:8080" # Change this
 ```
 
 ### **3. Launch the Bridge**
+
 ```bash
 # From your ROS2 workspace
 cd ~/urc-machiato-2026/autonomy/ros2_ws
@@ -120,6 +128,7 @@ ros2 run sensor_bridge sensor_bridge_node
 ```
 
 ### **4. Verify Data Flow**
+
 ```bash
 # Check topics are being published
 ros2 topic list | grep -E "(imu|gps|battery)"
@@ -136,6 +145,7 @@ ros2 topic echo /gps/fix
 ## ✅ **Recent Improvements**
 
 ### **Version 0.1.0 - Production Ready**
+
 - **ROS2 Timer Architecture**: Replaced threading with ROS2 timers for reliability
 - **Comprehensive Error Handling**: Try/catch blocks throughout with graceful degradation
 - **Data Validation**: Type checking, range validation, and sanity checks for all sensors
@@ -146,6 +156,7 @@ ros2 topic echo /gps/fix
 - **Proper Cleanup**: Resource cleanup on shutdown prevents memory leaks
 
 ### **Key Safety Features**
+
 - **Input Validation**: All sensor data validated before processing
 - **Range Checking**: Physical limits enforced (e.g., GPS coordinates, voltages)
 - **Sanity Checks**: Unusual values logged as warnings
@@ -155,23 +166,25 @@ ros2 topic echo /gps/fix
 ## ⚙️ Configuration
 
 ### **Connection Parameters**
+
 ```yaml
 sensor_bridge:
   # WebSocket connection settings
   websocket_url: "ws://localhost:8080"
-  reconnect_interval: 3.0                    # Base reconnection delay (seconds)
-  max_reconnect_attempts: 10                 # Maximum reconnection attempts
-  connection_timeout: 5.0                    # Connection timeout (seconds)
-  max_reconnect_interval: 60.0              # Maximum backoff delay (seconds)
-  reconnect_backoff_multiplier: 1.5         # Exponential backoff multiplier
+  reconnect_interval: 3.0 # Base reconnection delay (seconds)
+  max_reconnect_attempts: 10 # Maximum reconnection attempts
+  connection_timeout: 5.0 # Connection timeout (seconds)
+  max_reconnect_interval: 60.0 # Maximum backoff delay (seconds)
+  reconnect_backoff_multiplier: 1.5 # Exponential backoff multiplier
 
   # Monitoring settings
-  health_check_interval: 1.0                # Health check frequency (seconds)
-  message_timeout: 10.0                     # Message timeout threshold (seconds)
-  enable_graceful_degradation: true         # Enable fallback modes
+  health_check_interval: 1.0 # Health check frequency (seconds)
+  message_timeout: 10.0 # Message timeout threshold (seconds)
+  enable_graceful_degradation: true # Enable fallback modes
 ```
 
 ### **Sensor Configuration**
+
 Edit `config/sensor_bridge.yaml` to enable/disable sensors and adjust QoS:
 
 ```yaml
@@ -189,6 +202,7 @@ sensor_bridge:
 ```
 
 ### **QoS Profiles**
+
 - **High-Frequency Sensors** (IMU, wheel odometry): `BEST_EFFORT` with `KEEP_LAST(10)`
 - **Standard Sensors** (GPS, temperature): `RELIABLE` with `KEEP_LAST(5)`
 - **Critical Sensors** (battery): `RELIABLE` with `TRANSIENT_LOCAL`
@@ -198,33 +212,38 @@ sensor_bridge:
 ## 🔄 Migration Path to Direct ROS2
 
 ### **Phase 1: Current WebSocket Bridge (✅ Complete)**
+
 - WebSocket JSON → ROS2 message conversion
 - Centralized sensor data aggregation
 - Easy debugging and monitoring
 
 ### **Phase 2: Hybrid Mode (In Progress)**
+
 - Deploy ROS2 nodes on high-performance sensors
 - Keep WebSocket for legacy/low-power sensors
 - Gradual migration based on sensor capabilities
 
 ### **Phase 3: Full Direct ROS2 (Future)**
+
 - All sensors publish directly via DDS
 - Remove WebSocket/JSON overhead
 - Enable 1000Hz+ sensor fusion
 
 ### **Migration Benefits**
-| Aspect | WebSocket Bridge | Direct ROS2 |
-|--------|------------------|-------------|
-| **Latency** | 2-5ms | 0.1-1ms |
-| **CPU Usage** | Medium | Low |
-| **Bandwidth** | JSON verbose | Binary efficient |
-| **Real-time** | Good (100Hz) | Excellent (1000Hz+) |
-| **Deployment** | Simple | Complex |
-| **Debugging** | Easy | Moderate |
+
+| Aspect         | WebSocket Bridge | Direct ROS2         |
+| -------------- | ---------------- | ------------------- |
+| **Latency**    | 2-5ms            | 0.1-1ms             |
+| **CPU Usage**  | Medium           | Low                 |
+| **Bandwidth**  | JSON verbose     | Binary efficient    |
+| **Real-time**  | Good (100Hz)     | Excellent (1000Hz+) |
+| **Deployment** | Simple           | Complex             |
+| **Debugging**  | Easy             | Moderate            |
 
 ### **Migration Strategy**
 
 #### **1. Identify Sensor Priorities**
+
 ```
 High Priority (Migrate First):
 ├── IMU (100Hz fusion-critical)
@@ -242,13 +261,16 @@ Low Priority:
 ```
 
 #### **2. Hardware Assessment**
+
 For each sensor device:
+
 - **Compute capability**: Can it run ROS2?
 - **Network**: DDS multicast support?
 - **Power**: ROS2 overhead acceptable?
 - **Update rate**: Does it need 100Hz+?
 
 #### **3. Gradual Migration Steps**
+
 ```python
 # Phase 1: WebSocket Bridge (Current)
 class WebSocketSensorBridge:
@@ -273,6 +295,7 @@ class DirectROSSensorBridge:
 ```
 
 #### **4. Implementation Template**
+
 ```python
 # Future ROS2 sensor node template
 class ImuSensorNode(Node):
@@ -298,6 +321,7 @@ class ImuSensorNode(Node):
 ## 🔧 Development & Testing
 
 ### **Running Tests**
+
 ```bash
 # Build the package
 cd ~/urc-machiato-2026/autonomy/ros2_ws
@@ -308,6 +332,7 @@ colcon test --packages-select sensor_bridge
 ```
 
 ### **Debugging WebSocket Connection**
+
 ```bash
 # Monitor connection status
 ros2 topic echo /sensor_bridge/status
@@ -320,6 +345,7 @@ python3 test/mock_websocket_server.py
 ```
 
 ### **Performance Monitoring**
+
 ```bash
 # Monitor topic frequencies
 ros2 topic hz /imu/data
@@ -337,12 +363,14 @@ top -p $!
 ### **WebSocketSensorBridgeNode Class**
 
 #### **Parameters**
+
 - `websocket_url` (string): WebSocket endpoint URL
 - `reconnect_interval` (float): Seconds between reconnection attempts
 - `max_reconnect_attempts` (int): Maximum reconnection attempts
 - `connection_timeout` (float): Connection timeout in seconds
 
 #### **Published Topics**
+
 - `/imu/data` - IMU sensor data
 - `/gps/fix` - GPS position data
 - `/battery/status` - Battery status
@@ -350,9 +378,11 @@ top -p $!
 - `/temperature/data` - Temperature readings
 
 #### **Services**
+
 None (publisher-only node)
 
 #### **Subscribed Topics**
+
 None (WebSocket client only)
 
 ---
@@ -360,6 +390,7 @@ None (WebSocket client only)
 ## 🚨 Troubleshooting
 
 ### **WebSocket Connection Issues**
+
 ```bash
 # Check if WebSocket server is running
 curl -I http://sensor-hub:8080
@@ -372,6 +403,7 @@ sudo ufw status
 ```
 
 ### **ROS2 Topic Issues**
+
 ```bash
 # Verify topics are being published
 ros2 topic list | grep sensor
@@ -384,6 +416,7 @@ ros2 topic hz /imu/data
 ```
 
 ### **Performance Issues**
+
 ```bash
 # Check CPU usage
 ros2 run rqt_top rqt_top
@@ -400,12 +433,14 @@ ros2 run sensor_bridge sensor_bridge_node --log-level debug
 ## 🤝 Contributing
 
 ### **Adding New Sensors**
+
 1. Add sensor configuration to `config/sensor_bridge.yaml`
 2. Implement message converter in `websocket_bridge.py`
 3. Add ROS2 publisher setup
 4. Update documentation
 
 ### **Modifying QoS Settings**
+
 ```python
 # Example: Custom QoS for high-reliability sensor
 qos_reliable_sensor = QoSProfile(
@@ -429,4 +464,4 @@ qos_reliable_sensor = QoSProfile(
 
 ---
 
-*"The WebSocket bridge is a pragmatic solution for rapid sensor integration, designed with direct ROS2 migration as the ultimate goal."*
+_"The WebSocket bridge is a pragmatic solution for rapid sensor integration, designed with direct ROS2 migration as the ultimate goal."_

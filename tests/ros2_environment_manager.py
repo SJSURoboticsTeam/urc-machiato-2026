@@ -9,23 +9,24 @@ Author: URC 2026 Autonomy Team
 """
 
 import os
-import sys
-import time
 import signal
-import psutil
 import subprocess
+import sys
 import threading
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Callable
-from dataclasses import dataclass, field
+import time
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
+import psutil
 import rclpy
 
 
 @dataclass
 class ResourceLimits:
     """Resource limits for test environment."""
+
     cpu_percent: Optional[float] = None
     memory_mb: Optional[int] = None
     network_bandwidth_mbps: Optional[float] = None
@@ -36,6 +37,7 @@ class ResourceLimits:
 @dataclass
 class ROSEnvironmentConfig:
     """ROS2 environment configuration."""
+
     domain_id: int = 42
     namespace: str = ""
     use_sim_time: bool = True
@@ -47,6 +49,7 @@ class ROSEnvironmentConfig:
 @dataclass
 class TestEnvironment:
     """Complete test environment with ROS2 setup."""
+
     name: str
     ros_config: ROSEnvironmentConfig
     resource_limits: ResourceLimits
@@ -85,15 +88,19 @@ class ROS2EnvironmentManager:
         self.monitor_threads: Dict[str, threading.Thread] = {}
 
     @contextmanager
-    def create_environment(self, name: str, ros_config: ROSEnvironmentConfig,
-                          resource_limits: ResourceLimits,
-                          workspace_path: Optional[Path] = None):
+    def create_environment(
+        self,
+        name: str,
+        ros_config: ROSEnvironmentConfig,
+        resource_limits: ResourceLimits,
+        workspace_path: Optional[Path] = None,
+    ):
         """Context manager for creating and managing test environments."""
         env = TestEnvironment(
             name=name,
             ros_config=ros_config,
             resource_limits=resource_limits,
-            workspace_path=workspace_path or Path.cwd()
+            workspace_path=workspace_path or Path.cwd(),
         )
 
         try:
@@ -130,15 +137,28 @@ class ROS2EnvironmentManager:
         """Create isolated network namespace."""
         try:
             # Create network namespace
-            subprocess.run([
-                'ip', 'netns', 'add', env.network_namespace
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["ip", "netns", "add", env.network_namespace],
+                check=True,
+                capture_output=True,
+            )
 
             # Setup loopback interface
-            subprocess.run([
-                'ip', 'netns', 'exec', env.network_namespace,
-                'ip', 'link', 'set', 'lo', 'up'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "ip",
+                    "netns",
+                    "exec",
+                    env.network_namespace,
+                    "ip",
+                    "link",
+                    "set",
+                    "lo",
+                    "up",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             print(f"  📡 Created network namespace: {env.network_namespace}")
 
@@ -155,25 +175,38 @@ class ROS2EnvironmentManager:
             if limits.cpu_percent is not None:
                 # Create CPU cgroup
                 cpu_quota = int(limits.cpu_percent * 1000)  # Convert to microseconds
-                subprocess.run([
-                    'cgcreate', '-g', f'cpu:{env.cgroup_name}'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    ["cgcreate", "-g", f"cpu:{env.cgroup_name}"],
+                    check=True,
+                    capture_output=True,
+                )
 
-                subprocess.run([
-                    'cgset', '-r', f'cpu.shares={cpu_quota}', env.cgroup_name
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    ["cgset", "-r", f"cpu.shares={cpu_quota}", env.cgroup_name],
+                    check=True,
+                    capture_output=True,
+                )
 
             # Memory limits
             if limits.memory_mb is not None:
                 memory_bytes = limits.memory_mb * 1024 * 1024
 
-                subprocess.run([
-                    'cgcreate', '-g', f'memory:{env.cgroup_name}'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    ["cgcreate", "-g", f"memory:{env.cgroup_name}"],
+                    check=True,
+                    capture_output=True,
+                )
 
-                subprocess.run([
-                    'cgset', '-r', f'memory.limit_in_bytes={memory_bytes}', env.cgroup_name
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "cgset",
+                        "-r",
+                        f"memory.limit_in_bytes={memory_bytes}",
+                        env.cgroup_name,
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
             print(f"  📊 Resource limits set for {env.cgroup_name}")
 
@@ -186,20 +219,22 @@ class ROS2EnvironmentManager:
         config = env.ros_config
 
         # Set environment variables
-        os.environ['ROS_DOMAIN_ID'] = str(config.domain_id)
-        os.environ['ROS_NAMESPACE'] = config.namespace
-        os.environ['ROS_LOG_DIR'] = str(env.log_directory)
-        os.environ['RCUTILS_LOGGING_LEVEL'] = config.log_level
+        os.environ["ROS_DOMAIN_ID"] = str(config.domain_id)
+        os.environ["ROS_NAMESPACE"] = config.namespace
+        os.environ["ROS_LOG_DIR"] = str(env.log_directory)
+        os.environ["RCUTILS_LOGGING_LEVEL"] = config.log_level
 
         if config.use_sim_time:
-            os.environ['ROS_USE_SIM_TIME'] = 'true'
+            os.environ["ROS_USE_SIM_TIME"] = "true"
 
         # Set QoS overrides if specified
         for topic, qos in config.qos_override.items():
             env_var = f"ROS_{topic.upper()}_QOS"
             os.environ[env_var] = str(qos)
 
-        print(f"  🔧 ROS2 configured: domain={config.domain_id}, namespace={config.namespace}")
+        print(
+            f"  🔧 ROS2 configured: domain={config.domain_id}, namespace={config.namespace}"
+        )
 
     def _init_ros_context(self, env: TestEnvironment):
         """Initialize ROS2 context."""
@@ -211,8 +246,9 @@ class ROS2EnvironmentManager:
             print(f"  ❌ ROS2 initialization failed: {e}")
             raise
 
-    def start_node(self, env_name: str, node_class: Any, node_name: str,
-                   **node_params) -> Any:
+    def start_node(
+        self, env_name: str, node_class: Any, node_name: str, **node_params
+    ) -> Any:
         """Start a ROS2 node in the specified environment."""
         if env_name not in self.environments:
             raise ValueError(f"Environment {env_name} not found")
@@ -221,7 +257,9 @@ class ROS2EnvironmentManager:
 
         try:
             # Create node with ROS2 context
-            node = node_class(node_name=node_name, context=env.ros_context, **node_params)
+            node = node_class(
+                node_name=node_name, context=env.ros_context, **node_params
+            )
             env.nodes.append(node)
 
             print(f"  📡 Started node: {node_name} in {env_name}")
@@ -231,8 +269,9 @@ class ROS2EnvironmentManager:
             print(f"  ❌ Failed to start node {node_name}: {e}")
             raise
 
-    def start_process(self, env_name: str, command: List[str],
-                     cwd: Optional[Path] = None) -> subprocess.Popen:
+    def start_process(
+        self, env_name: str, command: List[str], cwd: Optional[Path] = None
+    ) -> subprocess.Popen:
         """Start a process in the specified environment."""
         if env_name not in self.environments:
             raise ValueError(f"Environment {env_name} not found")
@@ -242,7 +281,7 @@ class ROS2EnvironmentManager:
         try:
             # Set environment variables
             process_env = os.environ.copy()
-            process_env['ROS_DOMAIN_ID'] = str(env.ros_config.domain_id)
+            process_env["ROS_DOMAIN_ID"] = str(env.ros_config.domain_id)
 
             # Add cgroup limits if available
             if env.cgroup_name:
@@ -255,7 +294,7 @@ class ROS2EnvironmentManager:
                 cwd=cwd or env.workspace_path,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                preexec_fn=os.setsid  # Create new process group
+                preexec_fn=os.setsid,  # Create new process group
             )
 
             env.processes.append(process)
@@ -292,18 +331,30 @@ class ROS2EnvironmentManager:
                                 continue
 
                     # Check resource limits
-                    if env.resource_limits.cpu_percent and total_cpu > env.resource_limits.cpu_percent:
-                        print(f"  ⚠️ CPU limit exceeded in {env_name}: {total_cpu:.1f}%")
+                    if (
+                        env.resource_limits.cpu_percent
+                        and total_cpu > env.resource_limits.cpu_percent
+                    ):
+                        print(
+                            f"  ⚠️ CPU limit exceeded in {env_name}: {total_cpu:.1f}%"
+                        )
 
-                    if env.resource_limits.memory_mb and total_memory > env.resource_limits.memory_mb * 1024 * 1024:
-                        print(f"  ⚠️ Memory limit exceeded in {env_name}: {total_memory / 1024 / 1024:.1f}MB")
+                    if (
+                        env.resource_limits.memory_mb
+                        and total_memory > env.resource_limits.memory_mb * 1024 * 1024
+                    ):
+                        print(
+                            f"  ⚠️ Memory limit exceeded in {env_name}: {total_memory / 1024 / 1024:.1f}MB"
+                        )
 
                     if callback:
-                        callback({
-                            'cpu_percent': total_cpu,
-                            'memory_mb': total_memory / 1024 / 1024,
-                            'process_count': process_count
-                        })
+                        callback(
+                            {
+                                "cpu_percent": total_cpu,
+                                "memory_mb": total_memory / 1024 / 1024,
+                                "process_count": process_count,
+                            }
+                        )
 
                     time.sleep(1)
 
@@ -366,24 +417,33 @@ class ROS2EnvironmentManager:
         # Remove resource limits
         if env.cgroup_name:
             try:
-                subprocess.run(['cgdelete', f'cpu:{env.cgroup_name}'],
-                             capture_output=True)
-                subprocess.run(['cgdelete', f'memory:{env.cgroup_name}'],
-                             capture_output=True)
+                subprocess.run(
+                    ["cgdelete", f"cpu:{env.cgroup_name}"], capture_output=True
+                )
+                subprocess.run(
+                    ["cgdelete", f"memory:{env.cgroup_name}"], capture_output=True
+                )
             except Exception as e:
                 print(f"  ⚠️ Error removing cgroups: {e}")
 
         # Remove network namespace
         if env.network_namespace:
             try:
-                subprocess.run(['ip', 'netns', 'delete', env.network_namespace],
-                             capture_output=True)
+                subprocess.run(
+                    ["ip", "netns", "delete", env.network_namespace],
+                    capture_output=True,
+                )
             except Exception as e:
                 print(f"  ⚠️ Error removing network namespace: {e}")
 
         # Clean up environment variables
-        ros_vars = ['ROS_DOMAIN_ID', 'ROS_NAMESPACE', 'ROS_LOG_DIR',
-                   'RCUTILS_LOGGING_LEVEL', 'ROS_USE_SIM_TIME']
+        ros_vars = [
+            "ROS_DOMAIN_ID",
+            "ROS_NAMESPACE",
+            "ROS_LOG_DIR",
+            "RCUTILS_LOGGING_LEVEL",
+            "ROS_USE_SIM_TIME",
+        ]
         for var in ros_vars:
             os.environ.pop(var, None)
 
@@ -392,22 +452,22 @@ class ROS2EnvironmentManager:
     def get_environment_status(self, env_name: str) -> Dict[str, Any]:
         """Get status of a test environment."""
         if env_name not in self.environments:
-            return {'status': 'not_found'}
+            return {"status": "not_found"}
 
         env = self.environments[env_name]
 
         status = {
-            'name': env.name,
-            'ros_domain_id': env.ros_config.domain_id,
-            'active': env_name in self.active_environments,
-            'nodes': len(env.nodes),
-            'processes': len([p for p in env.processes if p.poll() is None]),
-            'network_namespace': env.network_namespace,
-            'resource_limits': {
-                'cpu_percent': env.resource_limits.cpu_percent,
-                'memory_mb': env.resource_limits.memory_mb,
-                'network_bandwidth_mbps': env.resource_limits.network_bandwidth_mbps
-            }
+            "name": env.name,
+            "ros_domain_id": env.ros_config.domain_id,
+            "active": env_name in self.active_environments,
+            "nodes": len(env.nodes),
+            "processes": len([p for p in env.processes if p.poll() is None]),
+            "network_namespace": env.network_namespace,
+            "resource_limits": {
+                "cpu_percent": env.resource_limits.cpu_percent,
+                "memory_mb": env.resource_limits.memory_mb,
+                "network_bandwidth_mbps": env.resource_limits.network_bandwidth_mbps,
+            },
         }
 
         return status
@@ -438,31 +498,33 @@ def example_extreme_environment():
 
     # Extreme environment configuration
     ros_config = ROSEnvironmentConfig(
-        domain_id=100,
-        use_sim_time=True,
-        log_level="DEBUG"
+        domain_id=100, use_sim_time=True, log_level="DEBUG"
     )
 
     resource_limits = ResourceLimits(
         cpu_percent=10.0,  # Very limited CPU
-        memory_mb=50,      # Very limited memory
+        memory_mb=50,  # Very limited memory
         network_bandwidth_mbps=0.1,  # Very slow network
-        max_processes=5
+        max_processes=5,
     )
 
     with manager.create_environment(
         name="extreme_test",
         ros_config=ros_config,
         resource_limits=resource_limits,
-        workspace_path=Path.cwd()
+        workspace_path=Path.cwd(),
     ) as env:
         print(f"Created extreme environment: {env.name}")
 
         # Start monitoring
-        manager.monitor_environment("extreme_test", lambda metrics:
-            print(f"📊 Metrics: CPU={metrics['cpu_percent']:.1f}%, "
-                  f"Memory={metrics['memory_mb']:.1f}MB, "
-                  f"Processes={metrics['process_count']}"))
+        manager.monitor_environment(
+            "extreme_test",
+            lambda metrics: print(
+                f"📊 Metrics: CPU={metrics['cpu_percent']:.1f}%, "
+                f"Memory={metrics['memory_mb']:.1f}MB, "
+                f"Processes={metrics['process_count']}"
+            ),
+        )
 
         # Environment is automatically cleaned up when exiting context
 

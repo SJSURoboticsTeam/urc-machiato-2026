@@ -20,17 +20,19 @@ Features:
 
 import asyncio
 import json
+import os
+import signal
 import subprocess
+import sys
 import threading
 import time
-import sys
-import signal
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 import websockets
-import os
 
 # Add project path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 
 class ROS2UniversalMonitor:
     """Monitor all ROS2 topics, services, and WebSocket streams."""
@@ -44,7 +46,7 @@ class ROS2UniversalMonitor:
 
         # ROS2 environment
         self.ros2_env = os.environ.copy()
-        self.ros2_env['ROS_DOMAIN_ID'] = '42'
+        self.ros2_env["ROS_DOMAIN_ID"] = "42"
 
         # WebSocket connection
         self.websocket_connected = False
@@ -62,30 +64,47 @@ class ROS2UniversalMonitor:
         """Set up ROS2 environment."""
         try:
             # Set up environment variables directly
-            self.ros2_env['AMENT_PREFIX_PATH'] = '/opt/ros/humble'
-            self.ros2_env['CMAKE_PREFIX_PATH'] = '/opt/ros/humble'
-            self.ros2_env['COLCON_PREFIX_PATH'] = '/opt/ros/humble'
-            self.ros2_env['LD_LIBRARY_PATH'] = '/opt/ros/humble/lib'
-            self.ros2_env['PATH'] = f"/opt/ros/humble/bin:{self.ros2_env.get('PATH', '')}"
-            self.ros2_env['PYTHONPATH'] = f"/opt/ros/humble/lib/python3.10/site-packages:{self.ros2_env.get('PYTHONPATH', '')}"
-            self.ros2_env['ROS_PYTHON_VERSION'] = '3'
-            self.ros2_env['ROS_VERSION'] = '2'
-            self.ros2_env['ROS_DISTRO'] = 'humble'
+            self.ros2_env["AMENT_PREFIX_PATH"] = "/opt/ros/humble"
+            self.ros2_env["CMAKE_PREFIX_PATH"] = "/opt/ros/humble"
+            self.ros2_env["COLCON_PREFIX_PATH"] = "/opt/ros/humble"
+            self.ros2_env["LD_LIBRARY_PATH"] = "/opt/ros/humble/lib"
+            self.ros2_env[
+                "PATH"
+            ] = f"/opt/ros/humble/bin:{self.ros2_env.get('PATH', '')}"
+            self.ros2_env[
+                "PYTHONPATH"
+            ] = f"/opt/ros/humble/lib/python3.10/site-packages:{self.ros2_env.get('PYTHONPATH', '')}"
+            self.ros2_env["ROS_PYTHON_VERSION"] = "3"
+            self.ros2_env["ROS_VERSION"] = "2"
+            self.ros2_env["ROS_DISTRO"] = "humble"
 
             # Add workspace to Python path and environment
             workspace_path = os.path.dirname(os.path.abspath(__file__))
-            install_path = os.path.join(workspace_path, 'install')
+            install_path = os.path.join(workspace_path, "install")
             if os.path.exists(install_path):
-                self.ros2_env['AMENT_PREFIX_PATH'] = f"{install_path}:{self.ros2_env.get('AMENT_PREFIX_PATH', '')}"
-                self.ros2_env['CMAKE_PREFIX_PATH'] = f"{install_path}:{self.ros2_env.get('CMAKE_PREFIX_PATH', '')}"
-                self.ros2_env['COLCON_PREFIX_PATH'] = f"{install_path}:{self.ros2_env.get('COLCON_PREFIX_PATH', '')}"
-                self.ros2_env['LD_LIBRARY_PATH'] = f"{install_path}/lib:{self.ros2_env.get('LD_LIBRARY_PATH', '')}"
-                self.ros2_env['PYTHONPATH'] = f"{install_path}/lib/python3.10/site-packages:{self.ros2_env.get('PYTHONPATH', '')}"
+                self.ros2_env[
+                    "AMENT_PREFIX_PATH"
+                ] = f"{install_path}:{self.ros2_env.get('AMENT_PREFIX_PATH', '')}"
+                self.ros2_env[
+                    "CMAKE_PREFIX_PATH"
+                ] = f"{install_path}:{self.ros2_env.get('CMAKE_PREFIX_PATH', '')}"
+                self.ros2_env[
+                    "COLCON_PREFIX_PATH"
+                ] = f"{install_path}:{self.ros2_env.get('COLCON_PREFIX_PATH', '')}"
+                self.ros2_env[
+                    "LD_LIBRARY_PATH"
+                ] = f"{install_path}/lib:{self.ros2_env.get('LD_LIBRARY_PATH', '')}"
+                self.ros2_env[
+                    "PYTHONPATH"
+                ] = f"{install_path}/lib/python3.10/site-packages:{self.ros2_env.get('PYTHONPATH', '')}"
 
             # Test ROS2 availability
             result = subprocess.run(
                 ["ros2", "topic", "list"],
-                env=self.ros2_env, capture_output=True, text=True, timeout=10
+                env=self.ros2_env,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -104,11 +123,16 @@ class ROS2UniversalMonitor:
         try:
             result = subprocess.run(
                 ["ros2", "topic", "list"],
-                env=self.ros2_env, capture_output=True, text=True, timeout=5
+                env=self.ros2_env,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
 
             if result.returncode == 0:
-                topics = [line.strip() for line in result.stdout.split('\n') if line.strip()]
+                topics = [
+                    line.strip() for line in result.stdout.split("\n") if line.strip()
+                ]
                 return topics
             else:
                 print(f"❌ Failed to get topic list: {result.stderr}")
@@ -123,11 +147,16 @@ class ROS2UniversalMonitor:
         try:
             result = subprocess.run(
                 ["ros2", "service", "list"],
-                env=self.ros2_env, capture_output=True, text=True, timeout=5
+                env=self.ros2_env,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
 
             if result.returncode == 0:
-                services = [line.strip() for line in result.stdout.split('\n') if line.strip()]
+                services = [
+                    line.strip() for line in result.stdout.split("\n") if line.strip()
+                ]
                 return services
             else:
                 print(f"❌ Failed to get service list: {result.stderr}")
@@ -142,37 +171,40 @@ class ROS2UniversalMonitor:
         try:
             result = subprocess.run(
                 ["ros2", "topic", "echo", "--once", topic],
-                env=self.ros2_env, capture_output=True, text=True, timeout=2
+                env=self.ros2_env,
+                capture_output=True,
+                text=True,
+                timeout=2,
             )
 
             if result.returncode == 0 and result.stdout.strip():
                 return {
-                    'topic': topic,
-                    'data': result.stdout.strip(),
-                    'timestamp': time.time(),
-                    'success': True
+                    "topic": topic,
+                    "data": result.stdout.strip(),
+                    "timestamp": time.time(),
+                    "success": True,
                 }
             else:
                 return {
-                    'topic': topic,
-                    'data': 'No data available',
-                    'timestamp': time.time(),
-                    'success': False
+                    "topic": topic,
+                    "data": "No data available",
+                    "timestamp": time.time(),
+                    "success": False,
                 }
 
         except subprocess.TimeoutExpired:
             return {
-                'topic': topic,
-                'data': 'Timeout - topic may be inactive',
-                'timestamp': time.time(),
-                'success': False
+                "topic": topic,
+                "data": "Timeout - topic may be inactive",
+                "timestamp": time.time(),
+                "success": False,
             }
         except Exception as e:
             return {
-                'topic': topic,
-                'data': f'Error: {str(e)}',
-                'timestamp': time.time(),
-                'success': False
+                "topic": topic,
+                "data": f"Error: {str(e)}",
+                "timestamp": time.time(),
+                "success": False,
             }
 
     def monitor_service_info(self, service: str) -> Dict[str, Any]:
@@ -181,32 +213,35 @@ class ROS2UniversalMonitor:
             # Try to get service type
             result = subprocess.run(
                 ["ros2", "service", "type", service],
-                env=self.ros2_env, capture_output=True, text=True, timeout=2
+                env=self.ros2_env,
+                capture_output=True,
+                text=True,
+                timeout=2,
             )
 
             if result.returncode == 0:
                 service_type = result.stdout.strip()
                 return {
-                    'service': service,
-                    'type': service_type,
-                    'available': True,
-                    'timestamp': time.time()
+                    "service": service,
+                    "type": service_type,
+                    "available": True,
+                    "timestamp": time.time(),
                 }
             else:
                 return {
-                    'service': service,
-                    'type': 'Unknown',
-                    'available': False,
-                    'timestamp': time.time()
+                    "service": service,
+                    "type": "Unknown",
+                    "available": False,
+                    "timestamp": time.time(),
                 }
 
         except Exception as e:
             return {
-                'service': service,
-                'type': 'Error',
-                'available': False,
-                'error': str(e),
-                'timestamp': time.time()
+                "service": service,
+                "type": "Error",
+                "available": False,
+                "error": str(e),
+                "timestamp": time.time(),
             }
 
     async def websocket_monitor(self):
@@ -219,16 +254,16 @@ class ROS2UniversalMonitor:
                     print("✅ WebSocket connected - receiving telemetry data")
 
                     # Send request for telemetry data
-                    request = {'type': 'request_telemetry'}
+                    request = {"type": "request_telemetry"}
                     await websocket.send(json.dumps(request))
 
                     async for message in websocket:
                         try:
                             data = json.loads(message)
                             self.websocket_data = {
-                                'data': data,
-                                'timestamp': time.time(),
-                                'connected': True
+                                "data": data,
+                                "timestamp": time.time(),
+                                "connected": True,
                             }
 
                             # Print WebSocket data periodically
@@ -241,55 +276,61 @@ class ROS2UniversalMonitor:
             except Exception as e:
                 self.websocket_connected = False
                 self.websocket_data = {
-                    'error': str(e),
-                    'timestamp': time.time(),
-                    'connected': False
+                    "error": str(e),
+                    "timestamp": time.time(),
+                    "connected": False,
                 }
                 print(f"❌ WebSocket connection failed: {e}")
                 await asyncio.sleep(5)  # Retry after 5 seconds
 
     def display_websocket_data(self):
         """Display WebSocket telemetry data."""
-        if not self.websocket_data.get('connected', False):
+        if not self.websocket_data.get("connected", False):
             return
 
-        data = self.websocket_data.get('data', {})
-        timestamp = self.websocket_data.get('timestamp', 0)
+        data = self.websocket_data.get("data", {})
+        timestamp = self.websocket_data.get("timestamp", 0)
 
-        print(f"\n🌐 WebSocket Telemetry Data ({time.strftime('%H:%M:%S', time.localtime(timestamp))})")
+        print(
+            f"\n🌐 WebSocket Telemetry Data ({time.strftime('%H:%M:%S', time.localtime(timestamp))})"
+        )
         print("=" * 60)
 
         # System health
-        if 'system_health' in data:
+        if "system_health" in data:
             print(f"🏥 System Health: {data['system_health']}")
 
         # Mission status
-        if 'current_mission' in data and data['current_mission'] != 'none':
-            print(f"🎯 Mission: {data['current_mission']} | Status: {data.get('mission_status', 'unknown')}")
+        if "current_mission" in data and data["current_mission"] != "none":
+            print(
+                f"🎯 Mission: {data['current_mission']} | Status: {data.get('mission_status', 'unknown')}"
+            )
 
         # GPS data
-        if 'gps_position' in data:
-            gps = data['gps_position']
-            print(f"📍 GPS: {gps.get('lat', 'N/A'):.6f}, {gps.get('lon', 'N/A'):.6f} | Alt: {gps.get('alt', 'N/A'):.1f}m")
+        if "gps_position" in data:
+            gps = data["gps_position"]
+            print(
+                f"📍 GPS: {gps.get('lat', 'N/A'):.6f}, {gps.get('lon', 'N/A'):.6f} | Alt: {gps.get('alt', 'N/A'):.1f}m"
+            )
 
         # IMU data
-        if 'imu_data' in data:
-            imu = data['imu_data']
-            accel = imu.get('accel', [0, 0, 0])
+        if "imu_data" in data:
+            imu = data["imu_data"]
+            accel = imu.get("accel", [0, 0, 0])
             print(f"🔄 IMU: Accel [{accel[0]:.2f}, {accel[1]:.2f}, {accel[2]:.2f}] m/s²")
 
         # Battery
-        if 'battery_level' in data:
-            battery = data['battery_level']
-            current = data.get('current', 0)
+        if "battery_level" in data:
+            battery = data["battery_level"]
+            current = data.get("current", 0)
             print(f"🔋 Battery: {battery:.1f}% | Current: {current:.2f}A")
 
         # Emergency stop
-        if data.get('emergency_stop', False):
+        if data.get("emergency_stop", False):
             print("🚨 EMERGENCY STOP ACTIVE!")
 
         # Autonomous mode
-        if data.get('autonomous_mode', False):
+        if data.get("autonomous_mode", False):
             print("🤖 AUTONOMOUS MODE ACTIVE")
 
     def display_topic_data(self):
@@ -301,13 +342,13 @@ class ROS2UniversalMonitor:
 
         # Priority topics to show first
         priority_topics = [
-            '/state_machine/current_state',
-            '/emergency_stop',
-            '/hardware/battery_state',
-            '/hardware/gps',
-            '/hardware/imu',
-            '/mission/status',
-            '/odom'
+            "/state_machine/current_state",
+            "/emergency_stop",
+            "/hardware/battery_state",
+            "/hardware/gps",
+            "/hardware/imu",
+            "/mission/status",
+            "/odom",
         ]
 
         # Show priority topics first
@@ -321,20 +362,28 @@ class ROS2UniversalMonitor:
 
         # Show remaining topics
         for topic in topics:
-            if topic not in shown_topics and not topic.startswith('/parameter_events') and topic != '/rosout':
+            if (
+                topic not in shown_topics
+                and not topic.startswith("/parameter_events")
+                and topic != "/rosout"
+            ):
                 data = self.monitor_topic_data(topic)
-                if data['success'] or 'state_machine' in topic or 'mission' in topic:
+                if data["success"] or "state_machine" in topic or "mission" in topic:
                     self.display_single_topic(data)
                     time.sleep(0.1)
 
     def display_single_topic(self, topic_data: Dict[str, Any]):
         """Display data from a single topic."""
-        topic = topic_data['topic']
-        data = topic_data['data']
-        success = topic_data['success']
+        topic = topic_data["topic"]
+        data = topic_data["data"]
+        success = topic_data["success"]
 
         # Format topic name
-        topic_short = topic.replace('/state_machine/', 'SM/').replace('/hardware/', 'HW/').replace('/mission/', 'MS/')
+        topic_short = (
+            topic.replace("/state_machine/", "SM/")
+            .replace("/hardware/", "HW/")
+            .replace("/mission/", "MS/")
+        )
 
         if success:
             print(f"✅ {topic_short}: {data[:100]}{'...' if len(data) > 100 else ''}")
@@ -349,14 +398,16 @@ class ROS2UniversalMonitor:
         print("=" * 60)
 
         for service in services:
-            if not service.endswith('/describe_parameters') and \
-               not service.endswith('/get_parameter_types') and \
-               not service.endswith('/get_parameters') and \
-               not service.endswith('/list_parameters') and \
-               not service.endswith('/set_parameters') and \
-               not service.endswith('/set_parameters_atomically'):
+            if (
+                not service.endswith("/describe_parameters")
+                and not service.endswith("/get_parameter_types")
+                and not service.endswith("/get_parameters")
+                and not service.endswith("/list_parameters")
+                and not service.endswith("/set_parameters")
+                and not service.endswith("/set_parameters_atomically")
+            ):
                 info = self.monitor_service_info(service)
-                if info['available']:
+                if info["available"]:
                     print(f"✅ {service} ({info['type']})")
                 else:
                     print(f"❌ {service} (Unavailable)")
@@ -369,9 +420,14 @@ class ROS2UniversalMonitor:
 
         # ROS2 nodes
         try:
-            result = subprocess.run(["ros2", "node", "list"], env=self.ros2_env,
-                                  capture_output=True, text=True, timeout=5)
-            nodes = [line.strip() for line in result.stdout.split('\n') if line.strip()]
+            result = subprocess.run(
+                ["ros2", "node", "list"],
+                env=self.ros2_env,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            nodes = [line.strip() for line in result.stdout.split("\n") if line.strip()]
             print(f"🔗 ROS2 Nodes: {len(nodes)} active")
             for node in nodes[:5]:  # Show first 5
                 print(f"   • {node}")
@@ -389,7 +445,11 @@ class ROS2UniversalMonitor:
         print(f"🔧 ROS2 Services: {len(services)} active")
 
         # WebSocket status
-        ws_status = "✅ Connected" if self.websocket_data.get('connected', False) else "❌ Disconnected"
+        ws_status = (
+            "✅ Connected"
+            if self.websocket_data.get("connected", False)
+            else "❌ Disconnected"
+        )
         print(f"🌐 WebSocket Bridge: {ws_status}")
 
         print("=" * 80)
@@ -413,7 +473,7 @@ class ROS2UniversalMonitor:
                 self.display_system_overview()
 
                 # Display WebSocket data (if available)
-                if self.websocket_data.get('connected', False):
+                if self.websocket_data.get("connected", False):
                     self.display_websocket_data()
 
                 # Display ROS2 services
@@ -422,7 +482,9 @@ class ROS2UniversalMonitor:
                 # Display ROS2 topic data
                 self.display_topic_data()
 
-                print(f"\n⏰ Next update in 5 seconds... (Last update: {time.strftime('%H:%M:%S')})")
+                print(
+                    f"\n⏰ Next update in 5 seconds... (Last update: {time.strftime('%H:%M:%S')})"
+                )
                 print("-" * 80)
 
                 # Wait before next update
@@ -438,17 +500,21 @@ class ROS2UniversalMonitor:
             except asyncio.CancelledError:
                 pass
 
+
 def main():
     """Main entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(description="ROS2 Universal Monitor")
-    parser.add_argument('--websocket-only', action='store_true',
-                       help='Monitor only WebSocket data')
-    parser.add_argument('--dashboard', action='store_true',
-                       help='Launch web dashboard')
-    parser.add_argument('--websocket-url', default='ws://localhost:8080',
-                       help='WebSocket URL for telemetry (default: ws://localhost:8080)')
+    parser.add_argument(
+        "--websocket-only", action="store_true", help="Monitor only WebSocket data"
+    )
+    parser.add_argument("--dashboard", action="store_true", help="Launch web dashboard")
+    parser.add_argument(
+        "--websocket-url",
+        default="ws://localhost:8080",
+        help="WebSocket URL for telemetry (default: ws://localhost:8080)",
+    )
 
     args = parser.parse_args()
 
@@ -462,6 +528,7 @@ def main():
     else:
         # Full monitoring
         asyncio.run(monitor.run_monitor())
+
 
 if __name__ == "__main__":
     main()

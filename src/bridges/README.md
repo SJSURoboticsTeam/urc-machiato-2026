@@ -12,6 +12,7 @@ Data bridge components for connecting different system parts.
 ## Purpose
 
 These bridges handle data flow between different subsystems:
+
 - ROS2 ↔ WebSocket communication
 - SLAM ↔ Mission control data exchange
 - External sensor data integration

@@ -13,22 +13,23 @@ Optimizations:
 - Zero-copy message passing where possible
 """
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-from sensor_msgs.msg import Image, CameraInfo, PointCloud2
-from geometry_msgs.msg import PoseStamped, Point
-from std_msgs.msg import Header, Float32MultiArray, Bool
-from nav_msgs.msg import OccupancyGrid
-from cv_bridge import CvBridge
+import math
+import multiprocessing as mp
+import time
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
+from typing import Any, Dict, List, Optional, Tuple
+
 import cv2
 import numpy as np
-import math
-import time
-from typing import Optional, Tuple, List, Dict, Any
-from threading import Lock
-import multiprocessing as mp
-from concurrent.futures import ThreadPoolExecutor
+import rclpy
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Point, PoseStamped
+from nav_msgs.msg import OccupancyGrid
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import CameraInfo, Image, PointCloud2
+from std_msgs.msg import Bool, Float32MultiArray, Header
 
 
 class VisionProcessingNode(Node):
@@ -45,23 +46,23 @@ class VisionProcessingNode(Node):
     """
 
     def __init__(self):
-        super().__init__('vision_processor')
+        super().__init__("vision_processor")
 
         # Declare parameters
-        self.declare_parameter('processing_rate_hz', 15.0)
-        self.declare_parameter('enable_shared_memory', True)
-        self.declare_parameter('use_zero_copy', True)
-        self.declare_parameter('image_width', 640)  # Reduced resolution for performance
-        self.declare_parameter('image_height', 480)
-        self.declare_parameter('max_workers', 4)  # Parallel processing threads
+        self.declare_parameter("processing_rate_hz", 15.0)
+        self.declare_parameter("enable_shared_memory", True)
+        self.declare_parameter("use_zero_copy", True)
+        self.declare_parameter("image_width", 640)  # Reduced resolution for performance
+        self.declare_parameter("image_height", 480)
+        self.declare_parameter("max_workers", 4)  # Parallel processing threads
 
         # Get parameters
-        self.processing_rate = self.get_parameter('processing_rate_hz').value
-        self.enable_shared_memory = self.get_parameter('enable_shared_memory').value
-        self.use_zero_copy = self.get_parameter('use_zero_copy').value
-        self.image_width = self.get_parameter('image_width').value
-        self.image_height = self.get_parameter('image_height').value
-        self.max_workers = self.get_parameter('max_workers').value
+        self.processing_rate = self.get_parameter("processing_rate_hz").value
+        self.enable_shared_memory = self.get_parameter("enable_shared_memory").value
+        self.use_zero_copy = self.get_parameter("use_zero_copy").value
+        self.image_width = self.get_parameter("image_width").value
+        self.image_height = self.get_parameter("image_height").value
+        self.max_workers = self.get_parameter("max_workers").value
 
         # Optimized QoS for real-time vision processing
         vision_qos = QoSProfile(
@@ -69,7 +70,9 @@ class VisionProcessingNode(Node):
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
             depth=3,  # Minimal buffer
-            deadline=rclpy.duration.Duration(milliseconds=67),  # 15Hz processing deadline
+            deadline=rclpy.duration.Duration(
+                milliseconds=67
+            ),  # 15Hz processing deadline
             lifespan=rclpy.duration.Duration(milliseconds=100),
         )
 
@@ -91,29 +94,37 @@ class VisionProcessingNode(Node):
 
         # Subscribers (single image input)
         self.image_sub = self.create_subscription(
-            Image, '/camera/image_raw', self.image_callback, vision_qos)
+            Image, "/camera/image_raw", self.image_callback, vision_qos
+        )
 
         self.camera_info_sub = self.create_subscription(
-            CameraInfo, '/camera/camera_info', self.camera_info_callback, vision_qos)
+            CameraInfo, "/camera/camera_info", self.camera_info_callback, vision_qos
+        )
 
         self.pointcloud_sub = self.create_subscription(
-            PointCloud2, '/camera/depth/points', self.pointcloud_callback, vision_qos)
+            PointCloud2, "/camera/depth/points", self.pointcloud_callback, vision_qos
+        )
 
         # Publishers for processed results (smaller, optimized messages)
         self.keyboard_detection_pub = self.create_publisher(
-            PoseStamped, '/vision/keyboard_pose', vision_qos)
+            PoseStamped, "/vision/keyboard_pose", vision_qos
+        )
 
         self.terrain_map_pub = self.create_publisher(
-            OccupancyGrid, '/vision/terrain_map', vision_qos)
+            OccupancyGrid, "/vision/terrain_map", vision_qos
+        )
 
         self.obstacle_detection_pub = self.create_publisher(
-            Float32MultiArray, '/vision/obstacles', vision_qos)
+            Float32MultiArray, "/vision/obstacles", vision_qos
+        )
 
         self.feature_detection_pub = self.create_publisher(
-            Float32MultiArray, '/vision/features', vision_qos)
+            Float32MultiArray, "/vision/features", vision_qos
+        )
 
         self.processing_status_pub = self.create_publisher(
-            Bool, '/vision/processing_status', vision_qos)
+            Bool, "/vision/processing_status", vision_qos
+        )
 
         # Camera intrinsics
         self.camera_matrix = None
@@ -121,18 +132,21 @@ class VisionProcessingNode(Node):
 
         # Processing timer (controlled rate)
         self.processing_timer = self.create_timer(
-            1.0 / self.processing_rate, self.process_pending_data)
+            1.0 / self.processing_rate, self.process_pending_data
+        )
 
         # Performance monitoring
         self.performance_stats = {
-            'frames_processed': 0,
-            'avg_processing_time': 0.0,
-            'memory_usage': 0,
-            'cpu_usage': 0.0
+            "frames_processed": 0,
+            "avg_processing_time": 0.0,
+            "memory_usage": 0,
+            "cpu_usage": 0.0,
         }
 
         self.get_logger().info("Centralized Vision Processing Node initialized")
-        self.get_logger().info(f"Processing rate: {self.processing_rate}Hz, Workers: {self.max_workers}")
+        self.get_logger().info(
+            f"Processing rate: {self.processing_rate}Hz, Workers: {self.max_workers}"
+        )
 
     def camera_info_callback(self, msg: CameraInfo):
         """Update camera intrinsics for optimized processing."""
@@ -145,7 +159,9 @@ class VisionProcessingNode(Node):
             # Store in shared buffer to avoid copying
             if self.image_buffer is None:
                 # Pre-allocate buffer for performance
-                self.image_buffer = np.zeros((self.image_height, self.image_width, 3), dtype=np.uint8)
+                self.image_buffer = np.zeros(
+                    (self.image_height, self.image_width, 3), dtype=np.uint8
+                )
 
             # Decode once and store
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -179,7 +195,7 @@ class VisionProcessingNode(Node):
                 # Get image data (zero-copy if possible)
                 if self.shared_memory_enabled and self.image_buffer is not None:
                     image = self.image_buffer  # Direct reference, no copy
-                elif hasattr(self, 'latest_image'):
+                elif hasattr(self, "latest_image"):
                     image = self.latest_image
                 else:
                     return  # No image data available
@@ -188,16 +204,36 @@ class VisionProcessingNode(Node):
                 futures = []
 
                 # Keyboard detection (high priority for autonomous typing)
-                futures.append(self.executor.submit(self.detect_keyboard, image.copy() if not self.shared_memory_enabled else image))
+                futures.append(
+                    self.executor.submit(
+                        self.detect_keyboard,
+                        image.copy() if not self.shared_memory_enabled else image,
+                    )
+                )
 
                 # Terrain analysis (medium priority)
-                futures.append(self.executor.submit(self.analyze_terrain, image.copy() if not self.shared_memory_enabled else image))
+                futures.append(
+                    self.executor.submit(
+                        self.analyze_terrain,
+                        image.copy() if not self.shared_memory_enabled else image,
+                    )
+                )
 
                 # Obstacle detection (high priority for safety)
-                futures.append(self.executor.submit(self.detect_obstacles, image.copy() if not self.shared_memory_enabled else image))
+                futures.append(
+                    self.executor.submit(
+                        self.detect_obstacles,
+                        image.copy() if not self.shared_memory_enabled else image,
+                    )
+                )
 
                 # Feature extraction for SLAM (background task)
-                futures.append(self.executor.submit(self.extract_features, image.copy() if not self.shared_memory_enabled else image))
+                futures.append(
+                    self.executor.submit(
+                        self.extract_features,
+                        image.copy() if not self.shared_memory_enabled else image,
+                    )
+                )
 
                 # Wait for results and publish
                 results = [future.result() for future in futures]
@@ -238,7 +274,9 @@ class VisionProcessingNode(Node):
             edges = cv2.Canny(gray, 50, 150)
 
             # Find rectangular regions (keyboard keys)
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(
+                edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
 
             keyboard_contours = []
             for contour in contours:
@@ -256,17 +294,17 @@ class VisionProcessingNode(Node):
                 center_y = np.mean(all_points[:, :, 1])
 
                 return {
-                    'detected': True,
-                    'center_x': float(center_x),
-                    'center_y': float(center_y),
-                    'confidence': min(1.0, len(keyboard_contours) / 50.0)
+                    "detected": True,
+                    "center_x": float(center_x),
+                    "center_y": float(center_y),
+                    "confidence": min(1.0, len(keyboard_contours) / 50.0),
                 }
 
-            return {'detected': False}
+            return {"detected": False}
 
         except Exception as e:
             self.get_logger().error(f"Keyboard detection error: {e}")
-            return {'detected': False}
+            return {"detected": False}
 
     def analyze_terrain(self, image: np.ndarray) -> Dict[str, Any]:
         """Analyze terrain with optimized processing."""
@@ -284,28 +322,30 @@ class VisionProcessingNode(Node):
 
             # Create terrain map (simplified occupancy grid)
             height, width = image.shape[:2]
-            terrain_map = np.zeros((height // 10, width // 10), dtype=np.int8)  # Downsampled
+            terrain_map = np.zeros(
+                (height // 10, width // 10), dtype=np.int8
+            )  # Downsampled
 
             # Classify regions
             for i in range(0, height, 10):
                 for j in range(0, width, 10):
                     if sand_mask[i, j] > 0:
-                        terrain_map[i//10, j//10] = 10  # Traversable sand
+                        terrain_map[i // 10, j // 10] = 10  # Traversable sand
                     elif texture > 100:
-                        terrain_map[i//10, j//10] = 50  # Difficult rocks
+                        terrain_map[i // 10, j // 10] = 50  # Difficult rocks
                     else:
-                        terrain_map[i//10, j//10] = 80  # Challenging terrain
+                        terrain_map[i // 10, j // 10] = 80  # Challenging terrain
 
             return {
-                'terrain_map': terrain_map.flatten().tolist(),
-                'width': terrain_map.shape[1],
-                'height': terrain_map.shape[0],
-                'resolution': 0.1  # 10cm per cell
+                "terrain_map": terrain_map.flatten().tolist(),
+                "width": terrain_map.shape[1],
+                "height": terrain_map.shape[0],
+                "resolution": 0.1,  # 10cm per cell
             }
 
         except Exception as e:
             self.get_logger().error(f"Terrain analysis error: {e}")
-            return {'terrain_map': [], 'width': 0, 'height': 0, 'resolution': 0.1}
+            return {"terrain_map": [], "width": 0, "height": 0, "resolution": 0.1}
 
     def detect_obstacles(self, image: np.ndarray) -> List[float]:
         """Detect obstacles with optimized processing."""
@@ -320,7 +360,9 @@ class VisionProcessingNode(Node):
             edges = cv2.Canny(blurred, 50, 150)
 
             # Find contours (potential obstacles)
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(
+                edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            )
 
             obstacles = []
             for contour in contours:
@@ -329,13 +371,15 @@ class VisionProcessingNode(Node):
                     # Get bounding box
                     x, y, w, h = cv2.boundingRect(contour)
                     # Convert to normalized coordinates (0-1)
-                    obstacles.extend([
-                        x / image.shape[1],  # center_x
-                        y / image.shape[0],  # center_y
-                        w / image.shape[1],  # width
-                        h / image.shape[0],  # height
-                        area / 10000.0      # normalized area
-                    ])
+                    obstacles.extend(
+                        [
+                            x / image.shape[1],  # center_x
+                            y / image.shape[0],  # center_y
+                            w / image.shape[1],  # width
+                            h / image.shape[0],  # height
+                            area / 10000.0,  # normalized area
+                        ]
+                    )
 
             return obstacles[:50]  # Limit to top 50 obstacles
 
@@ -347,7 +391,9 @@ class VisionProcessingNode(Node):
         """Extract features for SLAM with optimized processing."""
         try:
             # Use ORB for fast feature extraction
-            orb = cv2.ORB_create(nfeatures=100, fastThreshold=20)  # Optimized parameters
+            orb = cv2.ORB_create(
+                nfeatures=100, fastThreshold=20
+            )  # Optimized parameters
 
             # Detect keypoints and descriptors
             keypoints, descriptors = orb.detectAndCompute(image, None)
@@ -366,31 +412,37 @@ class VisionProcessingNode(Node):
 
     def publish_keyboard_detection(self, result: Dict[str, Any]):
         """Publish keyboard detection results."""
-        if result.get('detected', False):
+        if result.get("detected", False):
             pose_msg = PoseStamped()
             pose_msg.header.stamp = self.get_clock().now().to_msg()
-            pose_msg.header.frame_id = 'camera_link'
+            pose_msg.header.frame_id = "camera_link"
 
             # Convert image coordinates to camera frame (simplified)
-            pose_msg.pose.position.x = (result['center_x'] - self.image_width/2) * 0.001  # 1mm per pixel approx
-            pose_msg.pose.position.y = (result['center_y'] - self.image_height/2) * 0.001
+            pose_msg.pose.position.x = (
+                result["center_x"] - self.image_width / 2
+            ) * 0.001  # 1mm per pixel approx
+            pose_msg.pose.position.y = (
+                result["center_y"] - self.image_height / 2
+            ) * 0.001
             pose_msg.pose.position.z = 0.5  # Assume 50cm in front
 
             self.keyboard_detection_pub.publish(pose_msg)
 
     def publish_terrain_analysis(self, result: Dict[str, Any]):
         """Publish terrain analysis results."""
-        if result.get('terrain_map'):
+        if result.get("terrain_map"):
             map_msg = OccupancyGrid()
             map_msg.header.stamp = self.get_clock().now().to_msg()
-            map_msg.header.frame_id = 'camera_link'
+            map_msg.header.frame_id = "camera_link"
 
-            map_msg.info.width = result['width']
-            map_msg.info.height = result['height']
-            map_msg.info.resolution = result['resolution']
+            map_msg.info.width = result["width"]
+            map_msg.info.height = result["height"]
+            map_msg.info.resolution = result["resolution"]
 
             # Convert to int8 for occupancy grid (-1 = unknown, 0-100 = occupied)
-            map_msg.data = [int(val) if val >= 0 else -1 for val in result['terrain_map']]
+            map_msg.data = [
+                int(val) if val >= 0 else -1 for val in result["terrain_map"]
+            ]
 
             self.terrain_map_pub.publish(map_msg)
 
@@ -410,14 +462,17 @@ class VisionProcessingNode(Node):
 
     def update_performance_stats(self, processing_time: float):
         """Update performance monitoring statistics."""
-        self.performance_stats['frames_processed'] += 1
-        self.performance_stats['avg_processing_time'] = (
-            (self.performance_stats['avg_processing_time'] * (self.performance_stats['frames_processed'] - 1)) +
-            processing_time
-        ) / self.performance_stats['frames_processed']
+        self.performance_stats["frames_processed"] += 1
+        self.performance_stats["avg_processing_time"] = (
+            (
+                self.performance_stats["avg_processing_time"]
+                * (self.performance_stats["frames_processed"] - 1)
+            )
+            + processing_time
+        ) / self.performance_stats["frames_processed"]
 
         # Log performance every 100 frames
-        if self.performance_stats['frames_processed'] % 100 == 0:
+        if self.performance_stats["frames_processed"] % 100 == 0:
             self.get_logger().info(
                 f"Vision Performance: {self.performance_stats['avg_processing_time']:.3f}s avg, "
                 f"{1.0/self.performance_stats['avg_processing_time']:.1f} FPS"
@@ -445,5 +500,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

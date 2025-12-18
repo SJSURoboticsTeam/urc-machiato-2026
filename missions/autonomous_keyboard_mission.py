@@ -12,30 +12,39 @@ URC Requirement: Autonomous keyboard typing is a scored task requiring:
 - Sequence execution and verification
 """
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy
-from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
-from sensor_msgs.msg import Image, CameraInfo
-from nav_msgs.msg import Odometry
-from std_msgs.msg import String, Bool
-from tf2_ros import Buffer, TransformListener
-import cv2
-from cv_bridge import CvBridge
-import numpy as np
 import math
 import time
-from typing import Optional, Tuple, List
 from enum import Enum
+from typing import List, Optional, Tuple
+
+import cv2
+import numpy as np
+import rclpy
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import CameraInfo, Image
+from std_msgs.msg import Bool, String
+from tf2_ros import Buffer, TransformListener
+
+from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.arm_controller import (
+    ArmController,
+)
 
 # Import existing autonomous typing components
-from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.keyboard_localization import KeyboardLocalizer
-from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.typing_executor import TypingExecutor
-from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.arm_controller import ArmController
+from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.keyboard_localization import (
+    KeyboardLocalizer,
+)
+from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.typing_executor import (
+    TypingExecutor,
+)
 
 
 class KeyboardMissionState(Enum):
     """States for autonomous keyboard typing mission."""
+
     IDLE = "idle"
     SEARCHING = "searching"
     LOCALIZING = "localizing"
@@ -60,23 +69,23 @@ class AutonomousKeyboardMission(Node):
     """
 
     def __init__(self):
-        super().__init__('autonomous_keyboard_mission')
+        super().__init__("autonomous_keyboard_mission")
 
         # Mission parameters
-        self.declare_parameter('keyboard_search_timeout', 60.0)  # seconds
-        self.declare_parameter('navigation_timeout', 120.0)      # seconds
-        self.declare_parameter('positioning_timeout', 30.0)      # seconds
-        self.declare_parameter('typing_timeout', 60.0)           # seconds
-        self.declare_parameter('approach_distance', 0.5)         # meters
-        self.declare_parameter('typing_sequence', 'URC2026')     # text to type
+        self.declare_parameter("keyboard_search_timeout", 60.0)  # seconds
+        self.declare_parameter("navigation_timeout", 120.0)  # seconds
+        self.declare_parameter("positioning_timeout", 30.0)  # seconds
+        self.declare_parameter("typing_timeout", 60.0)  # seconds
+        self.declare_parameter("approach_distance", 0.5)  # meters
+        self.declare_parameter("typing_sequence", "URC2026")  # text to type
 
         # Get parameters
-        self.search_timeout = self.get_parameter('keyboard_search_timeout').value
-        self.navigation_timeout = self.get_parameter('navigation_timeout').value
-        self.positioning_timeout = self.get_parameter('positioning_timeout').value
-        self.typing_timeout = self.get_parameter('typing_timeout').value
-        self.approach_distance = self.get_parameter('approach_distance').value
-        self.target_sequence = self.get_parameter('typing_sequence').value
+        self.search_timeout = self.get_parameter("keyboard_search_timeout").value
+        self.navigation_timeout = self.get_parameter("navigation_timeout").value
+        self.positioning_timeout = self.get_parameter("positioning_timeout").value
+        self.typing_timeout = self.get_parameter("typing_timeout").value
+        self.approach_distance = self.get_parameter("approach_distance").value
+        self.target_sequence = self.get_parameter("typing_sequence").value
 
         # Mission state
         self.state = KeyboardMissionState.IDLE
@@ -99,30 +108,37 @@ class AutonomousKeyboardMission(Node):
         self.arm_controller = ArmController()
 
         # Publishers
-        self.goal_pub = self.create_publisher(
-            PoseStamped, '/goal_pose', 10)
+        self.goal_pub = self.create_publisher(PoseStamped, "/goal_pose", 10)
 
-        self.arm_cmd_pub = self.create_publisher(
-            String, '/hardware/arm_command', 10)
+        self.arm_cmd_pub = self.create_publisher(String, "/hardware/arm_command", 10)
 
         self.mission_status_pub = self.create_publisher(
-            String, '/mission/keyboard_status', 10)
+            String, "/mission/keyboard_status", 10
+        )
 
         # Subscribers (optimized - use centralized vision processing)
         self.keyboard_pose_sub = self.create_subscription(
-            PoseStamped, '/vision/keyboard_pose', self.keyboard_pose_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            PoseStamped,
+            "/vision/keyboard_pose",
+            self.keyboard_pose_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.odom_sub = self.create_subscription(
-            Odometry, '/odom', self.odom_callback,
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3))
+            Odometry,
+            "/odom",
+            self.odom_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.mission_cmd_sub = self.create_subscription(
-            String, '/mission/keyboard_command', self.mission_command_callback, 10)
+            String, "/mission/keyboard_command", self.mission_command_callback, 10
+        )
 
         # Mission control subscriber (integrate with mission executor)
         self.control_sub = self.create_subscription(
-            String, '/mission/commands', self.control_callback, 10)
+            String, "/mission/commands", self.control_callback, 10
+        )
 
         # State tracking
         self.current_pose = None
@@ -164,7 +180,9 @@ class AutonomousKeyboardMission(Node):
     def start_mission(self):
         """Start the autonomous keyboard typing mission."""
         if self.state != KeyboardMissionState.IDLE:
-            self.get_logger().warn(f"Cannot start mission from state {self.state.value}")
+            self.get_logger().warn(
+                f"Cannot start mission from state {self.state.value}"
+            )
             return
 
         self.get_logger().info("🚀 Starting Autonomous Keyboard Typing Mission")
@@ -176,7 +194,9 @@ class AutonomousKeyboardMission(Node):
         self.typing_completed = False
 
         # Start search timeout
-        self.search_timer = self.create_timer(self.search_timeout, self.search_timeout_callback)
+        self.search_timer = self.create_timer(
+            self.search_timeout, self.search_timeout_callback
+        )
 
         self.publish_status()
 
@@ -231,7 +251,9 @@ class AutonomousKeyboardMission(Node):
         try:
             # Transform to map frame
             try:
-                transformed_pose = self.tf_buffer.transform(pose, 'map', timeout=rclpy.duration.Duration(seconds=1.0))
+                transformed_pose = self.tf_buffer.transform(
+                    pose, "map", timeout=rclpy.duration.Duration(seconds=1.0)
+                )
                 return transformed_pose
             except Exception as tf_error:
                 self.get_logger().warn(f"TF transform failed: {tf_error}")
@@ -253,23 +275,32 @@ class AutonomousKeyboardMission(Node):
         # Create approach pose (slightly in front of keyboard)
         approach_pose = PoseStamped()
         approach_pose.header = self.keyboard_pose.header
-        approach_pose.header.frame_id = 'map'
+        approach_pose.header.frame_id = "map"
 
         # Calculate approach position
-        dx = self.keyboard_pose.pose.position.x - (self.current_pose.pose.pose.position.x if self.current_pose else 0)
-        dy = self.keyboard_pose.pose.position.y - (self.current_pose.pose.pose.position.y if self.current_pose else 0)
-        distance = math.sqrt(dx*dx + dy*dy)
+        dx = self.keyboard_pose.pose.position.x - (
+            self.current_pose.pose.pose.position.x if self.current_pose else 0
+        )
+        dy = self.keyboard_pose.pose.position.y - (
+            self.current_pose.pose.pose.position.y if self.current_pose else 0
+        )
+        distance = math.sqrt(dx * dx + dy * dy)
 
         if distance > 0:
             # Position approach_distance meters in front of keyboard
             scale = (distance - self.approach_distance) / distance
-            approach_pose.pose.position.x = self.current_pose.pose.pose.position.x + dx * scale
-            approach_pose.pose.position.y = self.current_pose.pose.pose.position.y + dy * scale
+            approach_pose.pose.position.x = (
+                self.current_pose.pose.pose.position.x + dx * scale
+            )
+            approach_pose.pose.position.y = (
+                self.current_pose.pose.pose.position.y + dy * scale
+            )
             approach_pose.pose.position.z = 0.0
 
             # Face the keyboard
             approach_pose.pose.orientation = self.calculate_facing_orientation(
-                approach_pose.pose.position, self.keyboard_pose.pose.position)
+                approach_pose.pose.position, self.keyboard_pose.pose.position
+            )
         else:
             # Already close, use current position
             approach_pose.pose = self.keyboard_pose.pose
@@ -278,9 +309,13 @@ class AutonomousKeyboardMission(Node):
         self.goal_pub.publish(approach_pose)
 
         # Start navigation timeout
-        self.navigation_timer = self.create_timer(self.navigation_timeout, self.navigation_timeout_callback)
+        self.navigation_timer = self.create_timer(
+            self.navigation_timeout, self.navigation_timeout_callback
+        )
 
-    def calculate_facing_orientation(self, from_pos: Point, to_pos: Point) -> Quaternion:
+    def calculate_facing_orientation(
+        self, from_pos: Point, to_pos: Point
+    ) -> Quaternion:
         """Calculate quaternion to face from one position to another."""
         dx = to_pos.x - from_pos.x
         dy = to_pos.y - from_pos.y
@@ -305,8 +340,11 @@ class AutonomousKeyboardMission(Node):
         self.current_pose = msg
 
         # Check if we've reached the keyboard (simple distance check)
-        if (self.state == KeyboardMissionState.NAVIGATING and
-            self.keyboard_pose and self.is_at_keyboard_position()):
+        if (
+            self.state == KeyboardMissionState.NAVIGATING
+            and self.keyboard_pose
+            and self.is_at_keyboard_position()
+        ):
 
             self.get_logger().info("📍 Reached keyboard position")
             self.state = KeyboardMissionState.POSITIONING
@@ -322,7 +360,7 @@ class AutonomousKeyboardMission(Node):
 
         dx = self.keyboard_pose.pose.position.x - self.current_pose.pose.pose.position.x
         dy = self.keyboard_pose.pose.position.y - self.current_pose.pose.pose.position.y
-        distance = math.sqrt(dx*dx + dy*dy)
+        distance = math.sqrt(dx * dx + dy * dy)
 
         return distance < self.approach_distance
 
@@ -340,7 +378,9 @@ class AutonomousKeyboardMission(Node):
             self.arm_cmd_pub.publish(String(data=arm_cmd))
 
             # Start positioning timeout
-            self.positioning_timer = self.create_timer(self.positioning_timeout, self.positioning_timeout_callback)
+            self.positioning_timer = self.create_timer(
+                self.positioning_timeout, self.positioning_timeout_callback
+            )
 
         except Exception as e:
             self.get_logger().error(f"Arm positioning error: {e}")
@@ -351,9 +391,9 @@ class AutonomousKeyboardMission(Node):
         # This would use the existing keyboard localization
         # to determine the 3D position for typing
         return {
-            'x': 0.3,  # meters forward
-            'y': 0.0,  # centered
-            'z': 0.2   # appropriate height
+            "x": 0.3,  # meters forward
+            "y": 0.0,  # centered
+            "z": 0.2,  # appropriate height
         }
 
     def positioning_timeout_callback(self):
@@ -401,18 +441,24 @@ class AutonomousKeyboardMission(Node):
 
         # Publish mission completion to mission executor
         completion_msg = String()
-        completion_msg.data = json.dumps({
-            'mission': 'keyboard_typing',
-            'status': 'completed',
-            'sequence': self.target_sequence,
-            'timestamp': time.time()
-        })
+        completion_msg.data = json.dumps(
+            {
+                "mission": "keyboard_typing",
+                "status": "completed",
+                "sequence": self.target_sequence,
+                "timestamp": time.time(),
+            }
+        )
         self.mission_status_pub.publish(completion_msg)
 
     def cleanup_timers(self):
         """Clean up all active timers."""
-        timers = [self.search_timer, self.navigation_timer,
-                 self.positioning_timer, self.typing_timer]
+        timers = [
+            self.search_timer,
+            self.navigation_timer,
+            self.positioning_timer,
+            self.typing_timer,
+        ]
 
         for timer in timers:
             if timer:
@@ -426,17 +472,17 @@ class AutonomousKeyboardMission(Node):
     def publish_status(self):
         """Publish current mission status."""
         status_data = {
-            'mission': 'autonomous_keyboard',
-            'state': self.state.value,
-            'keyboard_detected': self.keyboard_detected,
-            'at_keyboard': self.at_keyboard,
-            'typing_completed': self.typing_completed,
-            'target_sequence': self.target_sequence,
-            'timestamp': time.time()
+            "mission": "autonomous_keyboard",
+            "state": self.state.value,
+            "keyboard_detected": self.keyboard_detected,
+            "at_keyboard": self.at_keyboard,
+            "typing_completed": self.typing_completed,
+            "target_sequence": self.target_sequence,
+            "timestamp": time.time(),
         }
 
         if self.start_time:
-            status_data['elapsed_time'] = time.time() - self.start_time
+            status_data["elapsed_time"] = time.time() - self.start_time
 
         status_msg = String()
         status_msg.data = json.dumps(status_data)
@@ -464,5 +510,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

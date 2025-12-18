@@ -5,4 +5,3 @@
 bool real_time_check        # Check real-time performance
 float64 time_window         # Time window to analyze (seconds)
 string[] monitored_components # Specific components to check timing for
-

@@ -8,14 +8,14 @@ Supports configuration versioning, rollback, and validation.
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import threading
-import json
 import copy
-from typing import Dict, List, Any, Optional, Callable, Set
+import hashlib
+import json
+import threading
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import hashlib
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from bridges.constants import CONFIG_UPDATE_TIMEOUT
 
@@ -449,9 +449,7 @@ class DynamicConfigManager:
                 # Ensure rate parameters are reasonable relative to each other
                 rates = [c.new_value for c in rate_params]
                 if max(rates) / min(rates) > 10:  # No parameter should be 10x another
-                    self.logger.info(
-                        f"Rate parameter ratio too extreme in {node_name}"
-                    )
+                    self.logger.info(f"Rate parameter ratio too extreme in {node_name}")
                     return False
 
         return True
@@ -480,9 +478,9 @@ class DynamicConfigManager:
                 for node_name, changes in node_changes.items():
                     node_config = self.nodes[node_name]
                     for change in changes:
-                        node_config.current_parameters[change.parameter_name] = (
-                            change.new_value
-                        )
+                        node_config.current_parameters[
+                            change.parameter_name
+                        ] = change.new_value
                         change.applied = True
                     node_config.last_update = time.time()
                     node_config.config_version = snapshot.version
@@ -507,7 +505,6 @@ class DynamicConfigManager:
                     pass  # Placeholder for debug logging
 
             # Optimized: Remove artificial delay - real ROS2 parameter updates are near-instantaneous
-
 
             return True
 
@@ -573,5 +570,3 @@ def get_dynamic_config_manager() -> DynamicConfigManager:
 
 
 # Example usage:
-
-

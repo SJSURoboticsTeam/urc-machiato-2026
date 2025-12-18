@@ -7,28 +7,27 @@ intelligently to changing conditions like battery levels, obstacles, and
 communication status.
 """
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
-from typing import Dict, Any, Optional, List, Tuple
 import time
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from .states import RoverState
+import rclpy
+from autonomy_interfaces.msg import AdaptiveAction as AdaptiveActionMsg
+from autonomy_interfaces.msg import ContextState, ContextUpdate, SystemState
+from autonomy_interfaces.srv import ChangeState, GetAdaptationHistory, GetContext
+from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from .adaptive_policy_engine import (
+    AdaptiveAction,
+    AdaptiveActionType,
+    AdaptivePolicyEngine,
+)
+from .config import QoSConfig, Timing
 from .context_evaluator import ContextEvaluator
-from .adaptive_policy_engine import AdaptivePolicyEngine, AdaptiveAction, AdaptiveActionType
+from .error_handling import error_boundary, handle_service_error
+from .states import RoverState
 from .transition_manager import TransitionManager
-from .error_handling import handle_service_error, error_boundary
-from .config import Timing, QoSConfig
-
-from autonomy_interfaces.msg import (
-    ContextState, AdaptiveAction as AdaptiveActionMsg, ContextUpdate,
-    SystemState
-)
-from autonomy_interfaces.srv import (
-    ChangeState, GetContext, GetAdaptationHistory
-)
-from autonomy_interfaces.srv import GetContext, GetAdaptationHistory
 
 
 class AdaptiveStateMachine(Node):
@@ -41,7 +40,7 @@ class AdaptiveStateMachine(Node):
 
     def __init__(self):
         """Initialize the adaptive state machine."""
-        super().__init__('adaptive_state_machine')
+        super().__init__("adaptive_state_machine")
 
         # Core state machine components
         self.current_state = RoverState.BOOT
@@ -60,20 +59,20 @@ class AdaptiveStateMachine(Node):
 
         # Configuration
         self.declare_parameters(
-            namespace='',
+            namespace="",
             parameters=[
-                ('context_update_rate', 1.0),      # Hz
-                ('adaptation_check_rate', 0.5),    # Hz
-                ('enable_adaptive_transitions', True),
-                ('max_transition_history', 100),
-                ('adaptive_action_timeout', 300.0), # seconds
-            ]
+                ("context_update_rate", 1.0),  # Hz
+                ("adaptation_check_rate", 0.5),  # Hz
+                ("enable_adaptive_transitions", True),
+                ("max_transition_history", 100),
+                ("adaptive_action_timeout", 300.0),  # seconds
+            ],
         )
 
         # Get parameters
-        self.context_update_rate = self.get_parameter('context_update_rate').value
-        self.adaptation_check_rate = self.get_parameter('adaptation_check_rate').value
-        self.enable_adaptive = self.get_parameter('enable_adaptive_transitions').value
+        self.context_update_rate = self.get_parameter("context_update_rate").value
+        self.adaptation_check_rate = self.get_parameter("adaptation_check_rate").value
+        self.enable_adaptive = self.get_parameter("enable_adaptive_transitions").value
 
         # ROS2 interfaces
         self._setup_publishers()
@@ -86,87 +85,87 @@ class AdaptiveStateMachine(Node):
         if self.enable_adaptive:
             self.get_logger().info("Adaptive transitions: ENABLED")
         else:
-            self.get_logger().info("Adaptive transitions: DISABLED (using basic transitions only)")
+            self.get_logger().info(
+                "Adaptive transitions: DISABLED (using basic transitions only)"
+            )
 
     def _setup_publishers(self):
         """Set up ROS2 publishers."""
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=10
+            depth=10,
         )
 
         # Core state information
         self.state_pub = self.create_publisher(
-            SystemState, '/state_machine/current_state', qos_profile)
+            SystemState, "/state_machine/current_state", qos_profile
+        )
 
         # Context and adaptation information
         self.context_pub = self.create_publisher(
-            ContextState, '/state_machine/context', qos_profile)
+            ContextState, "/state_machine/context", qos_profile
+        )
 
         self.adaptation_pub = self.create_publisher(
-            AdaptiveActionMsg, '/state_machine/adaptation', qos_profile)
+            AdaptiveActionMsg, "/state_machine/adaptation", qos_profile
+        )
 
         self.dashboard_pub = self.create_publisher(
-            ContextUpdate, '/dashboard/context_update', qos_profile)
+            ContextUpdate, "/dashboard/context_update", qos_profile
+        )
 
     def _setup_subscribers(self):
         """Set up ROS2 subscribers."""
         # Mission control commands
         self.mission_cmd_sub = self.create_subscription(
-            SystemState, '/mission/commands',
-            self._mission_command_callback, 10)
+            SystemState, "/mission/commands", self._mission_command_callback, 10
+        )
 
         # Emergency stop commands
         self.estop_sub = self.create_subscription(
-            SystemState, '/emergency_stop',
-            self._emergency_stop_callback, 10)
+            SystemState, "/emergency_stop", self._emergency_stop_callback, 10
+        )
 
     def _setup_services(self):
         """Set up ROS2 services."""
         # State transition service
         self.transition_srv = self.create_service(
-            ChangeState,
-            '/state_machine/change_state',
-            self._change_state_callback
+            ChangeState, "/state_machine/change_state", self._change_state_callback
         )
 
         # Context query service
         self.context_srv = self.create_service(
-            GetContext,
-            '/state_machine/get_context',
-            self._get_context_callback
+            GetContext, "/state_machine/get_context", self._get_context_callback
         )
 
         # Adaptation history service
         self.history_srv = self.create_service(
             GetAdaptationHistory,
-            '/state_machine/get_adaptation_history',
-            self._get_adaptation_history_callback
+            "/state_machine/get_adaptation_history",
+            self._get_adaptation_history_callback,
         )
 
     def _setup_timers(self):
         """Set up periodic timers."""
         # Context monitoring timer
         self.context_timer = self.create_timer(
-            1.0 / self.context_update_rate,
-            self._context_monitoring_callback
+            1.0 / self.context_update_rate, self._context_monitoring_callback
         )
 
         # Adaptation checking timer
         self.adaptation_timer = self.create_timer(
-            1.0 / self.adaptation_check_rate,
-            self._adaptation_check_callback
+            1.0 / self.adaptation_check_rate, self._adaptation_check_callback
         )
 
         # State publishing timer
         self.state_publish_timer = self.create_timer(
-            0.1,  # 10 Hz
-            self._publish_state_callback
+            0.1, self._publish_state_callback  # 10 Hz
         )
 
-    def transition_to_state(self, target_state: RoverState, reason: str = "",
-                          force: bool = False) -> Tuple[bool, str]:
+    def transition_to_state(
+        self, target_state: RoverState, reason: str = "", force: bool = False
+    ) -> Tuple[bool, str]:
         """
         Attempt a state transition with adaptive intelligence.
 
@@ -178,7 +177,11 @@ class AdaptiveStateMachine(Node):
         Returns:
             Tuple of (success: bool, message: str)
         """
-        with error_boundary(self.get_logger(), "AdaptiveStateMachine", f"transition to {target_state.value}"):
+        with error_boundary(
+            self.get_logger(),
+            "AdaptiveStateMachine",
+            f"transition to {target_state.value}",
+        ):
             # Register any active adaptive actions with the transition manager
             for action in self.active_adaptations.values():
                 self.transition_manager.register_adaptive_action(action)
@@ -194,13 +197,13 @@ class AdaptiveStateMachine(Node):
             # Execute pre-transition actions (context evaluation, etc.)
             pre_actions = [
                 lambda: self._update_transition_history(target_state, reason),
-                lambda: self._evaluate_adaptive_actions(target_state)
+                lambda: self._evaluate_adaptive_actions(target_state),
             ]
 
             # Execute post-transition actions
             post_actions = [
                 lambda: self._publish_state_update(),
-                lambda: self._log_transition_complete(target_state, reason)
+                lambda: self._log_transition_complete(target_state, reason),
             ]
 
             success, exec_message = self.transition_manager.execute_transition(
@@ -214,26 +217,25 @@ class AdaptiveStateMachine(Node):
 
             return success, exec_message
 
-
     def _update_transition_history(self, target_state: RoverState, reason: str) -> None:
         """Update transition history with new transition."""
         transition_record = {
-            'from_state': self.current_state.value,
-            'to_state': target_state.value,
-            'reason': reason,
-            'timestamp': self.get_clock().now().to_msg(),
-            'adaptive': getattr(self, 'enable_adaptive', True)
+            "from_state": self.current_state.value,
+            "to_state": target_state.value,
+            "reason": reason,
+            "timestamp": self.get_clock().now().to_msg(),
+            "adaptive": getattr(self, "enable_adaptive", True),
         }
 
         self.transition_history.append(transition_record)
         # Keep history size reasonable
-        max_history = getattr(self, 'max_transition_history', 100)
+        max_history = getattr(self, "max_transition_history", 100)
         if len(self.transition_history) > max_history:
             self.transition_history.pop(0)
 
     def _evaluate_adaptive_actions(self, target_state: RoverState) -> None:
         """Evaluate adaptive actions for the transition."""
-        if hasattr(self, 'enable_adaptive') and self.enable_adaptive:
+        if hasattr(self, "enable_adaptive") and self.enable_adaptive:
             context = self.context_evaluator.evaluate_system_context()
             adaptive_actions = self.policy_engine.evaluate_policies(context)
 
@@ -242,7 +244,7 @@ class AdaptiveStateMachine(Node):
 
     def _publish_state_update(self) -> None:
         """Publish state update after transition."""
-        if hasattr(self, '_publish_current_state'):
+        if hasattr(self, "_publish_current_state"):
             self._publish_current_state()
 
     def _log_transition_complete(self, target_state: RoverState, reason: str) -> None:
@@ -267,7 +269,7 @@ class AdaptiveStateMachine(Node):
         )
 
         # Schedule action completion check
-        timeout = self.get_parameter('adaptive_action_timeout').value
+        timeout = self.get_parameter("adaptive_action_timeout").value
         self.create_timer(timeout, lambda: self._check_action_completion(action_id))
 
     def _check_action_completion(self, action_id: str):
@@ -279,7 +281,9 @@ class AdaptiveStateMachine(Node):
             self.policy_engine.record_action_result(action, success=True)
             del self.active_adaptations[action_id]
 
-            self.get_logger().info(f"Adaptive action completed: {action.action_type.value}")
+            self.get_logger().info(
+                f"Adaptive action completed: {action.action_type.value}"
+            )
 
     # Timer Callbacks
     def _context_monitoring_callback(self):
@@ -358,8 +362,11 @@ class AdaptiveStateMachine(Node):
         # Alert level
         if context.safety_active or context.battery_critical:
             update.alert_level = "CRITICAL"
-        elif (context.battery_warning or not context.communication_active or
-              context.obstacle_detected):
+        elif (
+            context.battery_warning
+            or not context.communication_active
+            or context.obstacle_detected
+        ):
             update.alert_level = "WARNING"
         else:
             update.alert_level = "NONE"
@@ -406,12 +413,14 @@ class AdaptiveStateMachine(Node):
             success = self.transition_to_state(
                 target_state,
                 reason=request.reason,
-                initiator=request.operator_id or "service_call"
+                initiator=request.operator_id or "service_call",
             )
 
             response.success = success
             response.current_state = self.current_state.value
-            response.message = "Transition successful" if success else "Transition failed"
+            response.message = (
+                "Transition successful" if success else "Transition failed"
+            )
 
         except Exception as e:
             self.get_logger().error(f"State change failed: {e}")
@@ -436,13 +445,15 @@ class AdaptiveStateMachine(Node):
         """Handle adaptation history requests."""
         try:
             # Get recent actions
-            recent_actions = list(self.active_adaptations.values())[-request.limit:]
+            recent_actions = list(self.active_adaptations.values())[-request.limit :]
 
             response.actions = [action.to_msg() for action in recent_actions]
 
             if request.include_context:
                 # Include context for each action
-                response.contexts = [action.trigger_context for action in recent_actions]
+                response.contexts = [
+                    action.trigger_context for action in recent_actions
+                ]
 
         except Exception as e:
             self.get_logger().error(f"Adaptation history query failed: {e}")
@@ -455,18 +466,26 @@ class AdaptiveStateMachine(Node):
         try:
             command = msg.data.lower()
             if command == "start":
-                self.transition_to_state(RoverState.AUTO, "Mission start command", "mission_control")
+                self.transition_to_state(
+                    RoverState.AUTO, "Mission start command", "mission_control"
+                )
             elif command == "stop":
-                self.transition_to_state(RoverState.READY, "Mission stop command", "mission_control")
+                self.transition_to_state(
+                    RoverState.READY, "Mission stop command", "mission_control"
+                )
             elif command == "pause":
-                self.transition_to_state(RoverState.PAUSED, "Mission pause command", "mission_control")
+                self.transition_to_state(
+                    RoverState.PAUSED, "Mission pause command", "mission_control"
+                )
         except Exception as e:
             self.get_logger().error(f"Mission command failed: {e}")
 
     def _emergency_stop_callback(self, msg):
         """Handle emergency stop commands."""
         self.get_logger().warning("Emergency stop triggered")
-        self.transition_to_state(RoverState.ESTOP, "Emergency stop command", "emergency_system")
+        self.transition_to_state(
+            RoverState.ESTOP, "Emergency stop command", "emergency_system"
+        )
 
     # Utility Methods
     def get_current_state(self) -> RoverState:
@@ -482,12 +501,12 @@ class AdaptiveStateMachine(Node):
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status."""
         return {
-            'current_state': self.current_state.value,
-            'state_duration': self.get_state_duration(),
-            'adaptive_enabled': self.enable_adaptive,
-            'active_adaptations': len(self.active_adaptations),
-            'transition_count': len(self.transition_history),
-            'context_evaluations': len(self.context_history)
+            "current_state": self.current_state.value,
+            "state_duration": self.get_state_duration(),
+            "adaptive_enabled": self.enable_adaptive,
+            "active_adaptations": len(self.active_adaptations),
+            "transition_count": len(self.transition_history),
+            "context_evaluations": len(self.context_history),
         }
 
 

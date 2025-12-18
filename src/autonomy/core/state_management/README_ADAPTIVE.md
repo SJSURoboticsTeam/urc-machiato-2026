@@ -124,24 +124,28 @@ flowchart TD
 ## 📊 Key Features
 
 ### ✅ **Intelligent Context Monitoring**
+
 - **Real-time sensor fusion**: Battery, CPU, memory, temperature, obstacles
 - **Mission progress tracking**: Execution status, timeouts, success metrics
 - **Communication health**: Latency monitoring, connection status
 - **Environmental awareness**: Terrain difficulty, weather conditions
 
 ### ✅ **Adaptive Policy Engine**
+
 - **Battery management**: Smart power conservation vs. mission completion
 - **Obstacle avoidance**: Context-aware detour vs. human intervention
 - **Communication loss**: Safe mode transitions, degraded operation
 - **System protection**: Automatic throttling during overload
 
 ### ✅ **Real-time Dashboard Integration**
+
 - **Live context display**: Battery levels, system status, active adaptations
 - **Alert management**: Color-coded warnings and critical notifications
 - **Action recommendations**: Context-aware available actions
 - **Historical analytics**: Performance trends and adaptation effectiveness
 
 ### ✅ **Safety-First Design**
+
 - **Graceful degradation**: Maintains operation during subsystem failures
 - **Emergency response**: Context-aware safety actions
 - **Human oversight**: Clear escalation paths for complex situations
@@ -159,22 +163,22 @@ adaptive_state_machine:
   ros__parameters:
     # Core settings
     enable_adaptive_transitions: true
-    context_update_rate: 1.0          # Hz
-    adaptation_check_rate: 0.5        # Hz
+    context_update_rate: 1.0 # Hz
+    adaptation_check_rate: 0.5 # Hz
 
     # Safety thresholds
-    battery_critical_threshold: 10.0  # %
-    battery_warning_threshold: 20.0   # %
-    obstacle_critical_distance: 0.3   # meters
-    cpu_warning_threshold: 80.0       # %
-    temperature_critical: 85.0        # Celsius
+    battery_critical_threshold: 10.0 # %
+    battery_warning_threshold: 20.0 # %
+    obstacle_critical_distance: 0.3 # meters
+    cpu_warning_threshold: 80.0 # %
+    temperature_critical: 85.0 # Celsius
 
     # Timing
-    adaptive_action_timeout: 300.0    # seconds
-    action_cooldown: 5.0             # seconds between similar actions
+    adaptive_action_timeout: 300.0 # seconds
+    action_cooldown: 5.0 # seconds between similar actions
 
     # Dashboard
-    dashboard_update_rate: 2.0        # Hz
+    dashboard_update_rate: 2.0 # Hz
     websocket_port: 8081
 
     # Logging
@@ -190,15 +194,15 @@ adaptive_state_machine:
 adaptive_policies:
   battery_critical:
     emergency_return_priority: 100
-    complete_and_return_threshold: 0.8  # 80% mission complete
+    complete_and_return_threshold: 0.8 # 80% mission complete
 
   obstacle_avoidance:
-    detour_timeout: 30.0              # seconds
+    detour_timeout: 30.0 # seconds
     human_intervention_threshold: 0.3 # meters
 
   communication_loss:
-    safe_mode_delay: 60.0            # seconds
-    reduced_teleop_timeout: 10.0     # seconds
+    safe_mode_delay: 60.0 # seconds
+    reduced_teleop_timeout: 10.0 # seconds
 ```
 
 ---
@@ -334,30 +338,30 @@ ros2 launch test_mission_simulation.launch.py adaptive_enabled:=true
 
 ### Topics
 
-| Topic | Type | Description |
-|-------|------|-------------|
-| `/state_machine/context` | `ContextState` | Real-time system context |
-| `/state_machine/adaptation` | `AdaptiveAction` | Adaptive actions taken |
-| `/dashboard/context_update` | `ContextUpdate` | Dashboard-friendly updates |
-| `/state_machine/current_state` | `SystemState` | Current state information |
+| Topic                          | Type             | Description                |
+| ------------------------------ | ---------------- | -------------------------- |
+| `/state_machine/context`       | `ContextState`   | Real-time system context   |
+| `/state_machine/adaptation`    | `AdaptiveAction` | Adaptive actions taken     |
+| `/dashboard/context_update`    | `ContextUpdate`  | Dashboard-friendly updates |
+| `/state_machine/current_state` | `SystemState`    | Current state information  |
 
 ### Services
 
-| Service | Type | Description |
-|---------|------|-------------|
-| `/state_machine/change_state` | `ChangeState` | Request state transitions |
-| `/state_machine/get_context` | `GetContext` | Get current context |
-| `/monitoring/get_analytics` | `GetAdaptationHistory` | Get adaptation history |
-| `/monitoring/get_health` | `GetSystemState` | Get system health |
+| Service                       | Type                   | Description               |
+| ----------------------------- | ---------------------- | ------------------------- |
+| `/state_machine/change_state` | `ChangeState`          | Request state transitions |
+| `/state_machine/get_context`  | `GetContext`           | Get current context       |
+| `/monitoring/get_analytics`   | `GetAdaptationHistory` | Get adaptation history    |
+| `/monitoring/get_health`      | `GetSystemState`       | Get system health         |
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `enable_adaptive_transitions` | bool | `true` | Enable adaptive features |
-| `context_update_rate` | float | `1.0` | Context monitoring rate (Hz) |
-| `adaptation_check_rate` | float | `0.5` | Policy evaluation rate (Hz) |
-| `battery_critical_threshold` | float | `10.0` | Battery emergency threshold (%) |
+| Parameter                     | Type  | Default | Description                     |
+| ----------------------------- | ----- | ------- | ------------------------------- |
+| `enable_adaptive_transitions` | bool  | `true`  | Enable adaptive features        |
+| `context_update_rate`         | float | `1.0`   | Context monitoring rate (Hz)    |
+| `adaptation_check_rate`       | float | `0.5`   | Policy evaluation rate (Hz)     |
+| `battery_critical_threshold`  | float | `10.0`  | Battery emergency threshold (%) |
 
 ---
 
@@ -405,18 +409,21 @@ context.custom_value = self._evaluate_custom_sensor()['custom_value']
 ## 📈 Performance Metrics
 
 ### Real-time Performance
+
 - **Context Evaluation**: < 50ms per cycle
 - **Policy Evaluation**: < 20ms per check
 - **State Transitions**: < 100ms total
 - **Memory Usage**: < 50MB additional
 
 ### Reliability Metrics
+
 - **Adaptation Success Rate**: > 95%
 - **False Positive Rate**: < 2%
 - **System Uptime**: 99.9%
 - **Emergency Response**: < 200ms
 
 ### Mission Improvement
+
 - **Autonomous Mission Success**: +15%
 - **Human Intervention Reduction**: -60%
 - **Emergency Events**: -40%
@@ -427,18 +434,21 @@ context.custom_value = self._evaluate_custom_sensor()['custom_value']
 ## 🚨 Safety & Reliability
 
 ### Safety Mechanisms
+
 - **Context validation**: All actions validated against current context
 - **Action timeouts**: Automatic cancellation of stuck adaptations
 - **Cooldown periods**: Prevent action spam during oscillations
 - **Human override**: Manual intervention always available
 
 ### Failure Modes & Recovery
+
 - **Context evaluation failure**: Falls back to basic state machine
 - **Policy engine failure**: Continues with last known good policies
 - **Communication loss**: Enters safe autonomous mode
 - **System overload**: Automatic throttling and resource management
 
 ### Audit & Compliance
+
 - **Complete action logging**: All adaptations recorded with context
 - **Decision traceability**: Why each action was taken
 - **Performance monitoring**: Continuous effectiveness measurement
@@ -449,18 +459,21 @@ context.custom_value = self._evaluate_custom_sensor()['custom_value']
 ## 🎯 Best Practices
 
 ### Configuration
+
 - **Start conservative**: Enable adaptive features gradually
 - **Tune thresholds**: Adjust based on your specific rover and environment
 - **Monitor effectiveness**: Regularly review adaptation success rates
 - **Backup configurations**: Keep known-good parameter sets
 
 ### Deployment
+
 - **Test in stages**: Start with monitoring only, then add adaptations
 - **Gradual rollout**: Enable policies one at a time
 - **Fallback ready**: Ensure basic state machine works without adaptations
 - **Operator training**: Train operators on adaptive behavior
 
 ### Maintenance
+
 - **Regular updates**: Keep policy parameters current
 - **Performance review**: Monthly analysis of adaptation effectiveness
 - **Log analysis**: Review decision logs for improvement opportunities
@@ -471,12 +484,14 @@ context.custom_value = self._evaluate_custom_sensor()['custom_value']
 ## 🤝 Integration
 
 ### With Existing Systems
+
 - **Backward compatible**: Works with existing 7-state system
 - **Opt-in adaptation**: Can disable adaptive features if needed
 - **Seamless integration**: Uses existing ROS2 topics and services
 - **Minimal overhead**: Efficient context monitoring and evaluation
 
 ### With Mission Systems
+
 - **Mission awareness**: Adapts based on mission progress and requirements
 - **Resource coordination**: Works with mission resource allocation
 - **Failure recovery**: Coordinates with mission-level error handling
@@ -487,18 +502,21 @@ context.custom_value = self._evaluate_custom_sensor()['custom_value']
 ## 📞 Support & Resources
 
 ### Documentation
+
 - **[API Reference](docs/api/)**: Complete ROS2 interface documentation
 - **[Configuration Guide](docs/config/)**: Detailed parameter explanations
 - **[Troubleshooting](docs/troubleshooting/)**: Common issues and solutions
 - **[Performance Tuning](docs/performance/)**: Optimization guidelines
 
 ### Tools & Utilities
+
 - **Monitoring Dashboard**: Real-time web interface
 - **Configuration Validator**: Automated parameter checking
 - **Performance Profiler**: Adaptation effectiveness analysis
 - **Simulation Environment**: Test adaptations in Gazebo
 
 ### Community
+
 - **Issue Tracking**: GitHub issues for bugs and feature requests
 - **Discussion Forum**: ROS2 community and URC teams
 - **Code Examples**: Sample configurations and custom policies
@@ -506,7 +524,7 @@ context.custom_value = self._evaluate_custom_sensor()['custom_value']
 
 ---
 
-*"The Adaptive State Machine doesn't just react to problems—it anticipates them, making your rover safer, more capable, and more autonomous than ever before."*
+_"The Adaptive State Machine doesn't just react to problems—it anticipates them, making your rover safer, more capable, and more autonomous than ever before."_
 
 ---
 
@@ -517,5 +535,3 @@ ros2 launch autonomy_state_machine adaptive_state_machine.launch.py adaptive_ena
 ```
 
 **Version**: 1.0.0 | **Status**: Competition Ready | **License**: MIT
-
-

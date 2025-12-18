@@ -3,9 +3,11 @@
 Test script to verify bridge configurations work correctly.
 """
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "."))
+
 
 def test_simulation_config():
     """Test if simulation config works."""
@@ -32,15 +34,19 @@ def test_simulation_config():
         print("❌ Simulation failed to start")
         return False
 
+
 def test_state_machine_bridge():
     """Test if state machine bridge works."""
     print("\nTesting state machine bridge...")
 
     try:
-        from bridges.ros2_state_machine_bridge import ROS2StateMachineBridge, SystemState
-
         # Just test imports and basic functionality
-        from bridges.ros2_state_machine_bridge import SimpleStateMachine
+        from bridges.ros2_state_machine_bridge import (
+            ROS2StateMachineBridge,
+            SimpleStateMachine,
+            SystemState,
+        )
+
         state_machine = SimpleStateMachine()
         print(f"Initial state: {state_machine.state.value}")
 
@@ -53,6 +59,7 @@ def test_state_machine_bridge():
     except Exception as e:
         print(f"❌ State machine bridge error: {e}")
         return False
+
 
 def test_mission_bridge():
     """Test if mission bridge works."""
@@ -67,6 +74,7 @@ def test_mission_bridge():
     except Exception as e:
         print(f"❌ Mission bridge error: {e}")
         return False
+
 
 if __name__ == "__main__":
     print("🧪 Testing Bridge Configurations")

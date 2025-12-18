@@ -26,12 +26,15 @@ diagrams/
 ## Diagram Standards
 
 ### File Naming Convention
+
 - `NN_descriptive_name.puml`
 - NN = priority number (01-99)
 - Use snake_case for descriptive names
 
 ### Metadata Requirements
+
 Each diagram must include:
+
 ```plantuml
 note as N#
   **Created:** $(date)
@@ -41,6 +44,7 @@ end note
 ```
 
 ### Color Coding Standards
+
 - 🔵 Light Blue: User Interface Layer
 - 🟢 Light Green: Autonomy/Core Systems
 - 🟡 Yellow: Processing/Perception
@@ -52,6 +56,7 @@ end note
 ## Maintenance Workflow
 
 ### When Code Changes
+
 1. Identify affected diagrams
 2. Update PlantUML source files
 3. Regenerate documentation
@@ -59,6 +64,7 @@ end note
 5. Commit with related code changes
 
 ### Adding New Diagrams
+
 1. Determine priority level (critical/high/medium/low)
 2. Follow naming convention
 3. Add to appropriate directory
@@ -68,6 +74,7 @@ end note
 ## Generation
 
 ### Prerequisites
+
 ```bash
 # Install PlantUML (Ubuntu/Debian)
 sudo apt-get install plantuml
@@ -76,12 +83,14 @@ sudo apt-get install plantuml
 ```
 
 ### Build Documentation
+
 ```bash
 cd docs
 make html
 ```
 
 ### View Diagrams
+
 ```bash
 # Open generated HTML
 xdg-open _build/html/architecture/diagrams.html
@@ -90,17 +99,20 @@ xdg-open _build/html/architecture/diagrams.html
 ## Tools
 
 ### Recommended Editors
+
 - **VS Code** with PlantUML extension
 - **IntelliJ IDEA** with PlantUML plugin
 - **PlantUML Web Server** for quick previews
 
 ### Online Tools
+
 - **PlantUML Web Server**: https://www.plantuml.com/plantuml
 - **Live Preview**: Real-time diagram editing
 
 ## Quality Assurance
 
 ### Review Checklist
+
 - [ ] Diagram matches current codebase
 - [ ] All major components included
 - [ ] Relationships accurately represented
@@ -110,6 +122,7 @@ xdg-open _build/html/architecture/diagrams.html
 - [ ] Stakeholders identified
 
 ### Performance
+
 - Keep diagram complexity manageable
 - Use subgraphs for large diagrams
 - Consider splitting very large diagrams
@@ -118,12 +131,14 @@ xdg-open _build/html/architecture/diagrams.html
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Syntax Errors**: Use PlantUML validator
 2. **Missing Dependencies**: Check Sphinx PlantUML extension
 3. **Large Diagrams**: Split into multiple diagrams
 4. **Color Issues**: Use standard color palette
 
 ### Getting Help
+
 - PlantUML Guide: https://plantuml.com/guide
 - Sphinx PlantUML: https://sphinxcontrib-plantuml.readthedocs.io/
 - Team Documentation Lead
@@ -133,5 +148,3 @@ xdg-open _build/html/architecture/diagrams.html
 **Maintainers**: Architecture Team, Documentation Team
 **Last Updated**: $(date)
 **Version**: 1.0
-
-

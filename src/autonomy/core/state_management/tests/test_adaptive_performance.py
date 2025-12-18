@@ -6,23 +6,23 @@ Tests performance characteristics, scalability, and resource usage
 of the adaptive state machine components under various loads.
 """
 
+import os
+import threading
+import time
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import psutil
 import pytest
 import rclpy
-from rclpy.node import Node
-import time
-import threading
-import psutil
-import os
-from unittest.mock import patch, MagicMock
-from typing import List, Dict, Any
-import numpy as np
-
-from autonomy_state_machine.context_evaluator import ContextEvaluator
+from autonomy_interfaces.msg import AdaptiveAction as AdaptiveActionMsg
+from autonomy_interfaces.msg import ContextState
 from autonomy_state_machine.adaptive_policy_engine import AdaptivePolicyEngine
 from autonomy_state_machine.adaptive_state_machine import AdaptiveStateMachine
+from autonomy_state_machine.context_evaluator import ContextEvaluator
 from autonomy_state_machine.monitoring_service import MonitoringService
-
-from autonomy_interfaces.msg import ContextState, AdaptiveAction as AdaptiveActionMsg
+from rclpy.node import Node
 
 
 class TestAdaptivePerformance:
@@ -38,7 +38,7 @@ class TestAdaptivePerformance:
     @pytest.fixture
     def node(self, ros2_context):
         """Create a test ROS2 node with proper isolation."""
-        node = Node('perf_test_node')
+        node = Node("perf_test_node")
         yield node
         node.destroy_node()
 
@@ -60,16 +60,22 @@ class TestAdaptivePerformance:
         # Verify performance meets requirements for real-time operation
         # Context evaluation should complete within 100ms for real-time operation
         max_acceptable_time = 0.1  # 100ms
-        assert benchmark.stats.mean < max_acceptable_time, \
-            f"Context evaluation too slow: {benchmark.stats.mean:.3f}s (max: {max_acceptable_time}s)"
+        assert (
+            benchmark.stats.mean < max_acceptable_time
+        ), f"Context evaluation too slow: {benchmark.stats.mean:.3f}s (max: {max_acceptable_time}s)"
 
         # Performance should be consistent (low standard deviation)
-        performance_variability = benchmark.stats.stddev / benchmark.stats.mean if benchmark.stats.mean > 0 else 0
-        assert performance_variability < 0.5, \
-            f"Performance too variable: {performance_variability:.2f} (coefficient of variation)"
+        performance_variability = (
+            benchmark.stats.stddev / benchmark.stats.mean
+            if benchmark.stats.mean > 0
+            else 0
+        )
+        assert (
+            performance_variability < 0.5
+        ), f"Performance too variable: {performance_variability:.2f} (coefficient of variation)"
 
         # Verify context data quality
-        assert hasattr(result, 'timestamp'), "Context should have timestamp"
+        assert hasattr(result, "timestamp"), "Context should have timestamp"
         assert result.battery_level <= 100.0, "Battery level should not exceed 100%"
 
     def test_policy_engine_performance(self, node, benchmark):
@@ -97,22 +103,28 @@ class TestAdaptivePerformance:
 
         # Verify actions have expected properties and are valid
         for action in result:
-            assert hasattr(action, 'action_type'), "Action must have action_type"
-            assert hasattr(action, 'priority'), "Action must have priority"
-            assert hasattr(action, 'action_type', 'value'), "Action type must have value"
+            assert hasattr(action, "action_type"), "Action must have action_type"
+            assert hasattr(action, "priority"), "Action must have priority"
+            assert hasattr(
+                action, "action_type", "value"
+            ), "Action type must have value"
 
         # Performance requirements for safety-critical decision making
         # Policy evaluation should complete within 50ms for emergency response
         emergency_response_time = 0.05  # 50ms
-        assert benchmark.stats.mean < emergency_response_time, \
-            f"Policy evaluation too slow for emergency response: {benchmark.stats.mean:.3f}s (max: {emergency_response_time}s)"
+        assert (
+            benchmark.stats.mean < emergency_response_time
+        ), f"Policy evaluation too slow for emergency response: {benchmark.stats.mean:.3f}s (max: {emergency_response_time}s)"
 
         # Verify policy quality - emergency policies should have high priority
-        emergency_policies = [p for p in result if 'emergency' in str(p.action_type).lower()]
+        emergency_policies = [
+            p for p in result if "emergency" in str(p.action_type).lower()
+        ]
         if emergency_policies:
             for policy in emergency_policies:
-                assert policy.priority >= 0.8, \
-                    f"Emergency policy priority too low: {policy.priority} (should be >= 0.8)"
+                assert (
+                    policy.priority >= 0.8
+                ), f"Emergency policy priority too low: {policy.priority} (should be >= 0.8)"
 
     def test_concurrent_context_evaluation(self, node):
         """Test concurrent context evaluation performance."""
@@ -127,11 +139,13 @@ class TestAdaptivePerformance:
                 context = context_evaluator.evaluate_system_context()
                 end_time = time.time()
 
-                results.append({
-                    'worker_id': worker_id,
-                    'duration': end_time - start_time,
-                    'context': context
-                })
+                results.append(
+                    {
+                        "worker_id": worker_id,
+                        "duration": end_time - start_time,
+                        "context": context,
+                    }
+                )
             except Exception as e:
                 errors.append(f"Worker {worker_id}: {e}")
 
@@ -165,12 +179,14 @@ class TestAdaptivePerformance:
 
         # Verify all results are valid
         for result in results:
-            assert result['duration'] < 0.1  # Each should complete quickly
-            assert isinstance(result['context'], ContextState)
+            assert result["duration"] < 0.1  # Each should complete quickly
+            assert isinstance(result["context"], ContextState)
 
     def test_memory_usage_under_load(self, node):
         """Test memory usage during sustained load."""
-        initial_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024  # MB
+        initial_memory = (
+            psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        )  # MB
 
         context_evaluator = ContextEvaluator(node)
         policy_engine = AdaptivePolicyEngine(node)
@@ -181,7 +197,7 @@ class TestAdaptivePerformance:
             # Create varied contexts to test different code paths
             context = ContextState()
             context.battery_level = float(10 + (i % 90))  # Vary battery level
-            context.cpu_usage = 20 + (i % 60)      # Vary CPU usage
+            context.cpu_usage = 20 + (i % 60)  # Vary CPU usage
             context.obstacle_detected = (i % 10) == 0  # Some obstacles
             context.mission_progress = (i % 100) / 100.0
 
@@ -205,10 +221,11 @@ class TestAdaptivePerformance:
 
     def test_adaptive_state_machine_throughput(self, node):
         """Test adaptive state machine throughput under load."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
 
             adaptive_sm = AdaptiveStateMachine()
 
@@ -221,10 +238,12 @@ class TestAdaptivePerformance:
                 # Alternate between states
                 if i % 2 == 0:
                     success = adaptive_sm.transition_to_state(
-                        adaptive_sm.current_state, f"Test transition {i}")
+                        adaptive_sm.current_state, f"Test transition {i}"
+                    )
                 else:
                     success = adaptive_sm.transition_to_state(
-                        adaptive_sm.current_state, f"Test transition {i}")
+                        adaptive_sm.current_state, f"Test transition {i}"
+                    )
 
                 transitions.append(success)
 
@@ -240,10 +259,11 @@ class TestAdaptivePerformance:
 
     def test_monitoring_service_scalability(self, node):
         """Test monitoring service scalability with large data sets."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
 
             monitoring_service = MonitoringService()
 
@@ -253,21 +273,23 @@ class TestAdaptivePerformance:
             # Add many context readings
             for i in range(5000):
                 context_entry = {
-                    'context': ContextState(),
-                    'timestamp': time.time() - i * 0.01
+                    "context": ContextState(),
+                    "timestamp": time.time() - i * 0.01,
                 }
-                context_entry['context'].battery_level = float(50.0 + 20 * np.sin(i * 0.1))
-                context_entry['context'].cpu_usage = 30.0 + 15 * np.cos(i * 0.1)
+                context_entry["context"].battery_level = float(
+                    50.0 + 20 * np.sin(i * 0.1)
+                )
+                context_entry["context"].cpu_usage = 30.0 + 15 * np.cos(i * 0.1)
                 monitoring_service.context_history.append(context_entry)
 
             # Add adaptation actions
             for i in range(1000):
                 action_entry = {
-                    'action': AdaptiveActionMsg(),
-                    'timestamp': time.time() - i * 0.1
+                    "action": AdaptiveActionMsg(),
+                    "timestamp": time.time() - i * 0.1,
                 }
-                action_entry['action'].action_type = "TEST_ACTION"
-                action_entry['action'].priority = 50 + (i % 50)
+                action_entry["action"].action_type = "TEST_ACTION"
+                action_entry["action"].priority = 50 + (i % 50)
                 monitoring_service.adaptation_history.append(action_entry)
 
             data_generation_time = time.time() - start_time
@@ -280,11 +302,11 @@ class TestAdaptivePerformance:
 
             # Verify reasonable performance
             assert data_generation_time < 2.0  # Should generate data quickly
-            assert analytics_time < 1.0       # Analytics should complete in < 1 second
+            assert analytics_time < 1.0  # Analytics should complete in < 1 second
 
             # Verify results are valid
             assert len(monitoring_service.performance_metrics) > 0
-            assert 'battery_trend' in monitoring_service.performance_metrics
+            assert "battery_trend" in monitoring_service.performance_metrics
 
     def test_resource_cleanup_under_stress(self, node):
         """Test resource cleanup during stress conditions."""
@@ -298,7 +320,9 @@ class TestAdaptivePerformance:
         initial_history_length = len(context_evaluator.context_history)
 
         # Force cleanup by setting short max age and calling cleanup
-        context_evaluator.context_history[0]['timestamp'] = time.time() - 3601  # Make old
+        context_evaluator.context_history[0]["timestamp"] = (
+            time.time() - 3601
+        )  # Make old
         # Note: In real implementation, cleanup would be periodic
 
         # Verify history doesn't grow unbounded
@@ -340,7 +364,9 @@ class TestAdaptivePerformance:
 
         # Verify reasonable scaling (time shouldn't increase linearly with load_factor)
         base_time_per_item = 0.01  # Estimated base time
-        expected_max_time = len(contexts) * base_time_per_item * (load_factor ** 0.5)  # Square root scaling
+        expected_max_time = (
+            len(contexts) * base_time_per_item * (load_factor**0.5)
+        )  # Square root scaling
 
         assert total_time < expected_max_time * 2  # Allow some margin
 
@@ -358,7 +384,7 @@ class TestAdaptiveReliability:
     @pytest.fixture
     def node(self, ros2_context):
         """Create a test ROS2 node with proper isolation."""
-        node = Node('reliability_test')
+        node = Node("reliability_test")
         yield node
         node.destroy_node()
 
@@ -367,7 +393,7 @@ class TestAdaptiveReliability:
         context_evaluator = ContextEvaluator(node)
 
         # Simulate system monitoring failure
-        with patch('psutil.cpu_percent', side_effect=Exception("Hardware failure")):
+        with patch("psutil.cpu_percent", side_effect=Exception("Hardware failure")):
             context = context_evaluator.evaluate_system_context()
 
             # Should still return valid context with safe defaults
@@ -391,23 +417,24 @@ class TestAdaptiveReliability:
 
     def test_monitoring_service_data_integrity(self, node):
         """Test monitoring service maintains data integrity under failures."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
 
             monitoring_service = MonitoringService()
 
             # Add valid data
-            valid_entry = {
-                'context': ContextState(),
-                'timestamp': time.time()
-            }
+            valid_entry = {"context": ContextState(), "timestamp": time.time()}
             monitoring_service.context_history.append(valid_entry)
 
             # Simulate processing failures
-            with patch.object(monitoring_service, '_compute_performance_metrics',
-                            side_effect=Exception("Computation failed")):
+            with patch.object(
+                monitoring_service,
+                "_compute_performance_metrics",
+                side_effect=Exception("Computation failed"),
+            ):
                 # Should not crash the service
                 monitoring_service._analytics_computation_callback()
 
@@ -416,20 +443,25 @@ class TestAdaptiveReliability:
 
     def test_adaptive_state_machine_recovery(self, node):
         """Test adaptive state machine recovery from component failures."""
-        with patch('rclpy.node.Node.create_timer'), \
-             patch('rclpy.node.Node.create_publisher'), \
-             patch('rclpy.node.Node.create_subscription'), \
-             patch('rclpy.node.Node.create_service'):
+        with patch("rclpy.node.Node.create_timer"), patch(
+            "rclpy.node.Node.create_publisher"
+        ), patch("rclpy.node.Node.create_subscription"), patch(
+            "rclpy.node.Node.create_service"
+        ):
 
             adaptive_sm = AdaptiveStateMachine()
 
             # Simulate context evaluator failure
-            with patch.object(adaptive_sm.context_evaluator, 'evaluate_system_context',
-                            side_effect=Exception("Context failure")):
+            with patch.object(
+                adaptive_sm.context_evaluator,
+                "evaluate_system_context",
+                side_effect=Exception("Context failure"),
+            ):
 
                 # Should still allow basic transitions
                 success = adaptive_sm.transition_to_state(
-                    adaptive_sm.current_state, "Test during failure")
+                    adaptive_sm.current_state, "Test during failure"
+                )
 
                 # Should succeed with basic validation (adaptive features disabled)
                 assert success is True  # Basic transition should work
@@ -438,10 +470,12 @@ class TestAdaptiveReliability:
         """Test memory usage stays bounded even with repeated failures."""
         context_evaluator = ContextEvaluator(node)
 
-        initial_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024  # MB
+        initial_memory = (
+            psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        )  # MB
 
         # Simulate repeated failures
-        with patch('psutil.cpu_percent', side_effect=Exception("Repeated failure")):
+        with patch("psutil.cpu_percent", side_effect=Exception("Repeated failure")):
             for i in range(100):
                 try:
                     context_evaluator.evaluate_system_context()
@@ -455,5 +489,5 @@ class TestAdaptiveReliability:
         assert memory_increase < 20  # Less than 20MB increase
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -21,5 +21,3 @@ string success_criteria
 
 # Timestamp
 builtin_interfaces/Time timestamp
-
-

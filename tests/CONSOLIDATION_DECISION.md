@@ -7,6 +7,7 @@
 **Status**: ✅ **KEEP** - Still actively used and provides unique value
 
 **Tests Covered** (8 tests):
+
 1. `test_can_bus_mock_basic_functionality` - CAN bus mock operations
 2. `test_can_bus_stress_conditions` - CAN bus stress testing
 3. `test_priority_message_routing` - Message priority handling
@@ -17,6 +18,7 @@
 8. `test_state_transitions_with_network_loss` - State machine with network issues
 
 **Why Keep**:
+
 - Unified suite that runs all tests together (used by `run_comprehensive_integration.sh`)
 - Provides consolidated reporting
 - Tests CAN bus and message routing which aren't fully covered elsewhere
@@ -24,6 +26,7 @@
 - Individual test files focus on specific subsystems, this provides cross-cutting tests
 
 **Coverage Overlap**:
+
 - Some overlap with `test_mission_system.py` (mission execution)
 - Some overlap with `test_state_machine_comprehensive.py` (state transitions)
 - But comprehensive suite tests different aspects (CAN bus, message routing, WebSocket)
@@ -37,11 +40,13 @@
 **Status**: ⚠️ **CONSOLIDATE/REMOVE** - Legacy test, mostly superseded
 
 **Tests Covered** (3 tests):
+
 1. `test_state_management_node_startup` - Basic node startup
 2. `test_navigation_node_startup` - Basic node startup
 3. `test_state_navigation_integration` - Multi-subsystem integration
 
 **Why Remove/Consolidate**:
+
 - Very basic tests (just check if nodes start)
 - Superseded by more comprehensive tests:
   - `tests/integration/test_state_machine_integration.py` - Better state machine tests

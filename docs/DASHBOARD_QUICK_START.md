@@ -16,17 +16,20 @@ Then open **http://localhost:5173** → Click **Testing** tab → Click **Integr
 ### ✅ **PRIMARY GOAL: Communication & State Verification**
 
 **Visual Communication Flow Dashboard** showing real-time data flowing between:
+
 - **WebSocket** (Frontend ↔ Backend)
 - **ROS2** (Topic system)
 - **CAN Bus** (Mock hardware data)
 
 With live metrics:
+
 - Message counts & rates
 - Latency measurements
 - Error rates
 - Connection status
 
 **State Machine Monitor** showing:
+
 - Current system state (large display)
 - State history (last 10 transitions)
 - Transition durations
@@ -35,6 +38,7 @@ With live metrics:
 ### ✅ **SECONDARY GOAL: Mock Data Streaming**
 
 **CAN Bus Data Stream** with real-time updates:
+
 - IMU accelerometer values
 - GPS coordinates
 - Battery voltage/current
@@ -45,6 +49,7 @@ All clearly labeled as **MOCK DATA** with warning badges.
 ### ✅ **TERTIARY GOAL: Simulation Monitoring**
 
 **Test Controls** for simulations:
+
 - Drive system simulation
 - Robotic arm simulation
 - Science payload simulation
@@ -76,22 +81,26 @@ All clearly labeled as **MOCK DATA** with warning badges.
 ## 🎯 **12 AVAILABLE TESTS**
 
 ### Communication (HIGH Priority)
+
 - WebSocket ↔ ROS2
 - ROS2 ↔ CAN
 - Bidirectional Flow
 - Latency Check
 
 ### State Machine (HIGH Priority)
+
 - State Transitions
 - Error Recovery
 - Transition Timing
 
 ### Mock Data (MEDIUM Priority)
+
 - CAN Bus Stream
 - Sensor Data
 - Fault Injection
 
 ### Simulation (LOW Priority)
+
 - Drive System
 - Arm System
 - Science Payload
@@ -135,6 +144,7 @@ All clearly labeled as **MOCK DATA** with warning badges.
 ## 🔧 **TECHNICAL DETAILS**
 
 ### Architecture
+
 ```
 React Frontend (Port 5173)
     ↕ WebSocket
@@ -146,6 +156,7 @@ CAN Simulator
 ```
 
 ### Data Flow
+
 1. **Frontend** sends test commands via WebSocket
 2. **Backend** executes tests & collects metrics
 3. **Backend** streams updates every 1 second
@@ -180,6 +191,7 @@ CAN Simulator
 ## 🐛 **TROUBLESHOOTING**
 
 ### Backend won't start
+
 ```bash
 # Check if port is in use
 lsof -i :8766
@@ -188,6 +200,7 @@ lsof -i :8766
 ```
 
 ### Frontend can't connect
+
 ```bash
 # Check backend is running
 ps aux | grep test_dashboard_backend
@@ -196,6 +209,7 @@ tail -f /tmp/test_backend.log
 ```
 
 ### No tests running
+
 - Verify backend connection (green dot in UI)
 - Check browser console for errors (F12)
 - Ensure tests are enabled (checkboxes)
@@ -205,6 +219,7 @@ tail -f /tmp/test_backend.log
 ## 🎓 **NEXT STEPS**
 
 ### To Test Now:
+
 1. Launch: `./scripts/testing/start_dashboard.sh`
 2. Open browser to http://localhost:5173
 3. Navigate to **Testing** tab
@@ -213,6 +228,7 @@ tail -f /tmp/test_backend.log
 6. Watch the magic! ✨
 
 ### Future Enhancements:
+
 - Add historical charts (recharts)
 - Integrate real pytest infrastructure
 - Connect to actual ROS2 topics
@@ -239,6 +255,3 @@ tail -f /tmp/test_backend.log
 
 **Last Updated**: December 14, 2025
 **Status**: ✅ **COMPLETE & READY**
-
-
-

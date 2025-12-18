@@ -20,19 +20,27 @@ import math
 import threading
 import time
 from collections import deque
-from typing import Any, Dict, List, Optional, Tuple, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 import rclpy
 import websocket
+
 try:
     import websockets
     from websockets.server import WebSocketServerProtocol
+
     WEBSOCKET_AVAILABLE = True
 except ImportError:
     WEBSOCKET_AVAILABLE = False
     WebSocketServerProtocol = Any  # type: ignore
 from autonomy_interfaces.action import NavigateToPose, PerformTyping
 from autonomy_interfaces.msg import LedCommand, VisionDetection
+from constants import (
+    DEFAULT_COMPETITION_LOG_FILE,
+    DEFAULT_DDS_DOMAIN_ID,
+    DEFAULT_TELEMETRY_RATE_HZ,
+    DEFAULT_WEBSOCKET_PORT,
+)
 from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion, TwistStamped
 from nav_msgs.msg import Odometry
 from rclpy.action import ActionClient
@@ -42,20 +50,14 @@ from sensor_msgs.msg import BatteryState, Imu, NavSatFix
 from std_msgs.msg import Bool, Float32, Float32MultiArray, Header, String
 from std_srvs.srv import Trigger
 
-from constants import (
-    DEFAULT_COMPETITION_LOG_FILE,
-    DEFAULT_DDS_DOMAIN_ID,
-    DEFAULT_TELEMETRY_RATE_HZ,
-    DEFAULT_WEBSOCKET_PORT,
-)
+from .emergency_communicator import EmergencyCommunicator
+from .mission_orchestrator import MissionOrchestrator
+from .parameter_manager import ParameterManager
+from .spectrum_monitor import SpectrumMonitor
 
 # Import extracted manager classes
 from .telemetry_manager import TelemetryManager
 from .websocket_manager import WebSocketManager
-from .mission_orchestrator import MissionOrchestrator
-from .parameter_manager import ParameterManager
-from .emergency_communicator import EmergencyCommunicator
-from .spectrum_monitor import SpectrumMonitor
 
 
 class CompetitionBridge(Node):
@@ -107,26 +109,56 @@ class CompetitionBridge(Node):
         )  # Seconds for averaging
 
         # Get parameters using safe helper
-        self.websocket_port = self._get_parameter_value("websocket_port", DEFAULT_WEBSOCKET_PORT)
-        self.telemetry_rate = self._get_parameter_value("telemetry_rate_hz", DEFAULT_TELEMETRY_RATE_HZ)
-        self.max_clients = self._get_parameter_value("max_websocket_clients", DEFAULT_MAX_WEBSOCKET_CLIENTS)
+        self.websocket_port = self._get_parameter_value(
+            "websocket_port", DEFAULT_WEBSOCKET_PORT
+        )
+        self.telemetry_rate = self._get_parameter_value(
+            "telemetry_rate_hz", DEFAULT_TELEMETRY_RATE_HZ
+        )
+        self.max_clients = self._get_parameter_value(
+            "max_websocket_clients", DEFAULT_MAX_WEBSOCKET_CLIENTS
+        )
         self.redundancy_role = self._get_parameter_value("redundancy_role", "primary")
         self.state_sync_enabled = self._get_parameter_value("enable_state_sync", True)
-        self.dds_redundancy_enabled = self._get_parameter_value("enable_dds_redundancy", True)
-        self.dynamic_config_enabled = self._get_parameter_value("enable_dynamic_config", True)
-        self.recovery_enabled = self._get_parameter_value("enable_recovery_coordinator", True)
-        self.primary_domain_id = self._get_parameter_value("primary_domain_id", DEFAULT_DDS_DOMAIN_ID)
-        self.log_file = self._get_parameter_value("competition_log_file", DEFAULT_COMPETITION_LOG_FILE)
+        self.dds_redundancy_enabled = self._get_parameter_value(
+            "enable_dds_redundancy", True
+        )
+        self.dynamic_config_enabled = self._get_parameter_value(
+            "enable_dynamic_config", True
+        )
+        self.recovery_enabled = self._get_parameter_value(
+            "enable_recovery_coordinator", True
+        )
+        self.primary_domain_id = self._get_parameter_value(
+            "primary_domain_id", DEFAULT_DDS_DOMAIN_ID
+        )
+        self.log_file = self._get_parameter_value(
+            "competition_log_file", DEFAULT_COMPETITION_LOG_FILE
+        )
         self.enable_logging = self._get_parameter_value("enable_data_logging", True)
 
         # Adaptive telemetry parameters
-        self.adaptive_enabled = self._get_parameter_value("adaptive_telemetry_enabled", True)
-        self.min_telemetry_rate = self._get_parameter_value("min_telemetry_rate", MIN_TELEMETRY_RATE_HZ)
-        self.max_telemetry_rate = self._get_parameter_value("max_telemetry_rate", MAX_TELEMETRY_RATE_HZ)
-        self.bandwidth_target = self._get_parameter_value("bandwidth_target_utilization", BANDWIDTH_TARGET_UTILIZATION)
-        self.latency_target = self._get_parameter_value("latency_target_ms", LATENCY_TARGET_MS)
-        self.adaptation_rate = self._get_parameter_value("adaptation_rate", ADAPTATION_RATE)
-        self.bandwidth_window = self._get_parameter_value("bandwidth_measurement_window", BANDWIDTH_MEASUREMENT_WINDOW_SEC)
+        self.adaptive_enabled = self._get_parameter_value(
+            "adaptive_telemetry_enabled", True
+        )
+        self.min_telemetry_rate = self._get_parameter_value(
+            "min_telemetry_rate", MIN_TELEMETRY_RATE_HZ
+        )
+        self.max_telemetry_rate = self._get_parameter_value(
+            "max_telemetry_rate", MAX_TELEMETRY_RATE_HZ
+        )
+        self.bandwidth_target = self._get_parameter_value(
+            "bandwidth_target_utilization", BANDWIDTH_TARGET_UTILIZATION
+        )
+        self.latency_target = self._get_parameter_value(
+            "latency_target_ms", LATENCY_TARGET_MS
+        )
+        self.adaptation_rate = self._get_parameter_value(
+            "adaptation_rate", ADAPTATION_RATE
+        )
+        self.bandwidth_window = self._get_parameter_value(
+            "bandwidth_measurement_window", BANDWIDTH_MEASUREMENT_WINDOW_SEC
+        )
 
         # WebSocket server components
         self.websocket_server = None
@@ -134,14 +166,15 @@ class CompetitionBridge(Node):
         self.websocket_thread = None
 
         # Advanced System Managers
-        from core.dds_domain_redundancy_manager import get_dds_redundancy_manager
-        from core.dynamic_config_manager import get_dynamic_config_manager
-        from core.state_synchronization_manager import get_state_manager
         from websocket_redundancy_manager import (
             EndpointPriority,
             WebSocketEndpoint,
             get_redundancy_manager,
         )
+
+        from core.dds_domain_redundancy_manager import get_dds_redundancy_manager
+        from core.dynamic_config_manager import get_dynamic_config_manager
+        from core.state_synchronization_manager import get_state_manager
 
         # WebSocket Redundancy
         self.redundancy_manager = get_redundancy_manager()
@@ -171,7 +204,9 @@ class CompetitionBridge(Node):
         # Safe telemetry update helper
         self._telemetry_update_errors = 0
 
-    def _get_parameter_value(self, param_name: str, default_value: Optional[Any] = None) -> Any:
+    def _get_parameter_value(
+        self, param_name: str, default_value: Optional[Any] = None
+    ) -> Any:
         """
         Safely get a ROS2 parameter value with optional default.
 
@@ -194,7 +229,9 @@ class CompetitionBridge(Node):
                 self.get_logger().error(f"Failed to get parameter '{param_name}': {e}")
                 raise
 
-    async def _send_websocket_message(self, websocket, message: Dict[str, Any], description: str = "") -> None:
+    async def _send_websocket_message(
+        self, websocket, message: Dict[str, Any], description: str = ""
+    ) -> None:
         """
         Safely send a message via WebSocket with error handling.
 
@@ -208,9 +245,13 @@ class CompetitionBridge(Node):
             if description:
                 self.get_logger().debug(f"Sent WebSocket message: {description}")
         except Exception as e:
-            self.get_logger().warning(f"Failed to send WebSocket message ({description}): {e}")
+            self.get_logger().warning(
+                f"Failed to send WebSocket message ({description}): {e}"
+            )
 
-    def _safe_json_parse(self, json_str: str, description: str = "") -> Optional[Dict[str, Any]]:
+    def _safe_json_parse(
+        self, json_str: str, description: str = ""
+    ) -> Optional[Dict[str, Any]]:
         """
         Safely parse JSON string with error handling.
 
@@ -700,7 +741,9 @@ class CompetitionBridge(Node):
 
                     try:
                         # Send initial telemetry
-                        await self._send_websocket_message(websocket, self.telemetry_data, "initial telemetry")
+                        await self._send_websocket_message(
+                            websocket, self.telemetry_data, "initial telemetry"
+                        )
 
                         # Handle incoming messages
                         async for message in websocket:
@@ -765,7 +808,9 @@ class CompetitionBridge(Node):
 
             elif command_type == "request_telemetry":
                 # Send current telemetry
-                await self._send_websocket_message(websocket, self.telemetry_data, "current telemetry")
+                await self._send_websocket_message(
+                    websocket, self.telemetry_data, "current telemetry"
+                )
 
             elif command_type == "system_command":
                 # Handle system-level commands
@@ -2312,9 +2357,13 @@ class CompetitionBridge(Node):
     def _on_recovery_complete(self, success, error_message):
         """Handle recovery completion."""
         if success:
-            self.get_logger().info("[SUCCESS] Coordinated recovery completed successfully")
+            self.get_logger().info(
+                "[SUCCESS] Coordinated recovery completed successfully"
+            )
         else:
-            self.get_logger().error(f"[ERROR] Coordinated recovery failed: {error_message}")
+            self.get_logger().error(
+                f"[ERROR] Coordinated recovery failed: {error_message}"
+            )
 
             # Trigger emergency protocols if recovery fails
             self._handle_emergency_recovery_failure()

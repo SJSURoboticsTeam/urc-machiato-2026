@@ -9,6 +9,7 @@
 ## 🎯 Quick Start
 
 ### Launch Complete State Management System (3 commands)
+
 ```bash
 cd autonomy/code/state_management
 
@@ -23,6 +24,7 @@ ros2 service call /state_machine/change_state autonomy_interfaces/srv/ChangeStat
 ```
 
 ### State Transition Demo (5 minutes)
+
 ```bash
 # Watch state changes in real-time
 ros2 topic hz /state_machine/system_state
@@ -39,6 +41,7 @@ ros2 topic echo /state_machine/led_info
 ## 📊 System Architecture
 
 ### Hierarchical State Design
+
 ```mermaid
 graph TD
     subgraph "Top-Level States"
@@ -91,6 +94,7 @@ graph TD
 ```
 
 ### Component Communication Flow
+
 ```mermaid
 graph TB
     subgraph "🎮 User Interface"
@@ -191,6 +195,7 @@ state_management/
 ## 🎬 Workflow Overview
 
 ### Mission Execution Flow
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -225,6 +230,7 @@ sequenceDiagram
 ```
 
 ### Safety Escalation Flow
+
 ```mermaid
 sequenceDiagram
     participant Sensor
@@ -257,27 +263,30 @@ sequenceDiagram
 ### State Hierarchy Details
 
 #### Top-Level States
-| State | LED Color | Duration | Transitions |
-|-------|-----------|----------|-------------|
-| **BOOT** | 🟡 Yellow Blink | 30-60s | → IDLE |
-| **CALIBRATION** | 🟡 Yellow Solid | 2-5 min | → IDLE |
-| **IDLE** | 🟢 Green Solid | Indefinite | → TELEOP/AUTONOMOUS |
-| **TELEOPERATION** | 🔵 Blue Solid | Mission | → IDLE/AUTONOMOUS |
-| **AUTONOMOUS** | 🔴 Red Solid | Mission | → IDLE/TELEOP/SAFETY |
-| **SAFETY** | 🔴 Red Fast Blink | Until resolved | → IDLE/TELEOP |
-| **SHUTDOWN** | 🔴 Red Fade | 10-30s | → Exit |
+
+| State             | LED Color         | Duration       | Transitions          |
+| ----------------- | ----------------- | -------------- | -------------------- |
+| **BOOT**          | 🟡 Yellow Blink   | 30-60s         | → IDLE               |
+| **CALIBRATION**   | 🟡 Yellow Solid   | 2-5 min        | → IDLE               |
+| **IDLE**          | 🟢 Green Solid    | Indefinite     | → TELEOP/AUTONOMOUS  |
+| **TELEOPERATION** | 🔵 Blue Solid     | Mission        | → IDLE/AUTONOMOUS    |
+| **AUTONOMOUS**    | 🔴 Red Solid      | Mission        | → IDLE/TELEOP/SAFETY |
+| **SAFETY**        | 🔴 Red Fast Blink | Until resolved | → IDLE/TELEOP        |
+| **SHUTDOWN**      | 🔴 Red Fade       | 10-30s         | → Exit               |
 
 #### Autonomous Mission Substates
-| Substate | LED Pattern | Purpose | Duration |
-|----------|-------------|---------|----------|
-| **SCIENCE** | 🔴 Red Solid | Sample collection | 5-15 min |
-| **DELIVERY** | 🔴 Red Solid | Payload transport | 3-10 min |
-| **EQUIPMENT_SERVICING** | 🔴 Red Solid | Panel operations | 10-30 min |
-| **AUTONOMOUS_NAVIGATION** | 🔴 Red Solid | Waypoint following | 2-20 min |
+
+| Substate                  | LED Pattern  | Purpose            | Duration  |
+| ------------------------- | ------------ | ------------------ | --------- |
+| **SCIENCE**               | 🔴 Red Solid | Sample collection  | 5-15 min  |
+| **DELIVERY**              | 🔴 Red Solid | Payload transport  | 3-10 min  |
+| **EQUIPMENT_SERVICING**   | 🔴 Red Solid | Panel operations   | 10-30 min |
+| **AUTONOMOUS_NAVIGATION** | 🔴 Red Solid | Waypoint following | 2-20 min  |
 
 ### Performance Metrics
 
 #### Real-Time Performance
+
 ```
 State Transition Latency: < 50ms
 Event Processing Rate: 100 Hz
@@ -288,6 +297,7 @@ CPU Usage: < 5%
 ```
 
 #### Reliability Metrics
+
 ```
 Uptime: 99.95%
 State Transition Success: 99.9%
@@ -301,30 +311,35 @@ False Safety Triggers: < 0.1%
 ## 🎯 Key Features
 
 ### ✅ Hierarchical State Management
+
 - **Top-level states**: BOOT, CALIBRATION, IDLE, TELEOPERATION, AUTONOMOUS, SAFETY, SHUTDOWN
 - **Mission substates**: SCIENCE, DELIVERY, EQUIPMENT_SERVICING, AUTONOMOUS_NAVIGATION
 - **Task sub-substates**: TRAVELING, SAMPLE_DELIVERY, PANEL_OPERATIONS, etc.
 - **Dynamic transitions**: Context-aware state changes with validation
 
 ### ✅ Context-Aware Safety
+
 - **Adaptive responses**: Safety behavior changes based on current state
 - **Emergency classification**: Different handling for various emergency types
 - **Recovery procedures**: State-specific recovery workflows
 - **Failure isolation**: Contain subsystem failures without full system shutdown
 
 ### ✅ Subsystem Coordination
+
 - **Lifecycle management**: Automatic activation/deactivation of subsystems
 - **Readiness validation**: Ensure subsystems are ready before state transitions
 - **Status monitoring**: Real-time health checking of all components
 - **Resource management**: Efficient allocation based on operational needs
 
 ### ✅ Frontend Integration
+
 - **Clean API**: Simple service interfaces for UI control
 - **Real-time feedback**: Live state updates and status information
 - **Acknowledgment system**: Confirm receipt of commands
 - **Error reporting**: Detailed error information for debugging
 
 ### ✅ URC Competition Compliance
+
 - **LED status indicators**: Proper color coding per URC 2026 rules
 - **Safety protocols**: Competition-required emergency handling
 - **Operational transparency**: Clear state indication for judges
@@ -335,6 +350,7 @@ False Safety Triggers: < 0.1%
 ## 🚀 Advanced Usage
 
 ### Custom State Definitions
+
 ```python
 # Adding custom mission states
 from autonomy_state_machine.states import SystemState, AutonomousSubstate
@@ -354,6 +370,7 @@ class CustomMissionState(AutonomousSubstate):
 ```
 
 ### Advanced Safety Configuration
+
 ```python
 # Configure safety thresholds
 safety_config = {
@@ -371,6 +388,7 @@ safety_config = {
 ```
 
 ### Integration with Custom Subsystems
+
 ```python
 # Register custom subsystem
 from autonomy_state_machine.subsystem_coordinator import SubsystemCoordinator
@@ -389,6 +407,7 @@ coordinator.register_subsystem(
 ## 🔗 Integration Points
 
 ### Navigation Subsystem
+
 ```python
 # State machine commands navigation goals
 nav_goal = NavigateToPose.Goal()
@@ -399,6 +418,7 @@ self.nav_action_client.send_goal_async(nav_goal)
 ```
 
 ### Computer Vision Subsystem
+
 ```python
 # State machine controls vision processing modes
 if current_state == "AUTONOMOUS_SCIENCE":
@@ -408,6 +428,7 @@ elif current_state == "TELEOPERATION":
 ```
 
 ### LED Status Integration
+
 ```python
 # Automatic LED state mapping
 state_led_mapping = {
@@ -426,6 +447,7 @@ self.led_publisher.publish(String(data=state_led_mapping[new_state]))
 ## 📞 Support & Resources
 
 ### Documentation Links
+
 - **[Quick Start Guide](QUICKSTART.md)** - Fast-track setup
 - **[State Machine Procedures](state_machine_procedures.md)** - Step-by-step guides
 - **[Troubleshooting Guide](state_machine_troubleshooting.md)** - Issue resolution
@@ -433,6 +455,7 @@ self.led_publisher.publish(String(data=state_led_mapping[new_state]))
 - **[Visual Guides](state_machine_visuals.md)** - Diagrams & screenshots
 
 ### Development Resources
+
 - **Source Code**: All Python modules with comprehensive docstrings
 - **Test Suite**: Integration and unit tests with coverage reports
 - **Configuration Files**: YAML examples for different deployments
@@ -441,6 +464,7 @@ self.led_publisher.publish(String(data=state_led_mapping[new_state]))
 ### State Machine Commands Reference
 
 #### Common Service Calls
+
 ```bash
 # Check current state
 ros2 service call /state_machine/get_system_state autonomy_interfaces/srv/GetSystemState
@@ -456,6 +480,7 @@ ros2 service call /state_machine/get_transition_history autonomy_interfaces/srv/
 ```
 
 #### Topic Monitoring
+
 ```bash
 # Monitor state changes
 ros2 topic echo /state_machine/system_state
@@ -475,18 +500,21 @@ ros2 topic echo /state_machine/safety_events
 ## 🎉 Success Metrics
 
 ### Operational Excellence
+
 - [x] **State Transition Reliability**: 99.9% success rate
 - [x] **Emergency Response Time**: < 100ms detection to action
 - [x] **Subsystem Coordination**: < 200ms startup time
 - [x] **Real-time Performance**: 100Hz event processing
 
 ### Safety & Reliability
+
 - [x] **False Emergency Rate**: < 0.1% (extremely low false positives)
 - [x] **Recovery Success Rate**: 98% automatic recovery
 - [x] **System Uptime**: 99.95% during missions
 - [x] **Data Integrity**: 100% state consistency
 
 ### URC Competition Compliance
+
 - [x] **LED Status Compliance**: Meets all URC 2026 requirements
 - [x] **Safety Protocols**: Competition-grade emergency handling
 - [x] **Operational Transparency**: Clear state indication
@@ -497,6 +525,7 @@ ros2 topic echo /state_machine/safety_events
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 - **🤖 AI-Assisted State Management**: Machine learning for optimal transitions
 - **🌐 Distributed State Machines**: Multi-robot coordination
 - **📊 Advanced Analytics**: State transition pattern analysis
@@ -504,6 +533,7 @@ ros2 topic echo /state_machine/safety_events
 - **📱 Mobile Interface**: Smartphone/tablet control interface
 
 ### Research Areas
+
 - **🎯 Adaptive State Machines**: Self-modifying state logic
 - **🌟 Multi-Modal States**: Handle complex multi-objective missions
 - **⚡ Real-Time Adaptation**: Dynamic state machine reconfiguration
@@ -518,4 +548,4 @@ ros2 topic echo /state_machine/safety_events
 
 ---
 
-*"The state machine is the nervous system of the rover - coordinating every action with precision and safety."*
+_"The state machine is the nervous system of the rover - coordinating every action with precision and safety."_

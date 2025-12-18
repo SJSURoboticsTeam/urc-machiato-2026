@@ -5,6 +5,7 @@
 The **Centralized Simulation Framework** provides a unified, comprehensive simulation environment for URC 2026 rover development. All simulation components (sensors, networks, rover physics, environments) are consolidated into a single, consistent framework that ensures **simulation-based testing** before hardware validation.
 
 **Key Features:**
+
 - ✅ **Three-Tier Environment Testing** (PERFECT → REAL_LIFE → EXTREME)
 - ✅ **Network Emulation** (WiFi, cellular, satellite, extreme conditions)
 - ✅ **Comprehensive Sensor Simulation** (GPS, IMU, camera, LiDAR)
@@ -13,6 +14,7 @@ The **Centralized Simulation Framework** provides a unified, comprehensive simul
 - ✅ **Hardware Validation Preparation**
 
 **Enhanced Features v2.0:**
+
 - 🔍 **Structured Logging**: JSON-formatted logs with context and correlation IDs
 - 📊 **Real-time Monitoring**: Performance metrics, system resources, alerts
 - 🕵️ **Comprehensive Tracing**: Operation profiling, debugging, performance analysis
@@ -129,6 +131,7 @@ for i in range(1000):
 ## Three-Tier Environment Testing
 
 ### PERFECT Environment
+
 **Purpose:** Establish baseline performance with no environmental effects.
 
 ```python
@@ -139,6 +142,7 @@ config = {
 ```
 
 **Characteristics:**
+
 - ✅ Zero sensor noise/bias
 - ✅ Perfect network (0ms latency)
 - ✅ Ideal terrain (flat, perfect traction)
@@ -146,6 +150,7 @@ config = {
 - ✅ Expected: 100% success rate
 
 ### REAL_LIFE Environment
+
 **Purpose:** Test typical URC field conditions.
 
 ```python
@@ -156,6 +161,7 @@ config = {
 ```
 
 **Characteristics:**
+
 - 🟡 Moderate sensor degradation (20% accuracy loss)
 - 🟡 Rural WiFi network (85ms latency, 2% packet loss)
 - 🟡 Desert terrain (35°C, moderate dust, variable traction)
@@ -163,6 +169,7 @@ config = {
 - 🟡 Expected: 90% success rate
 
 ### EXTREME Environment
+
 **Purpose:** Test worst-case survival conditions.
 
 ```python
@@ -173,6 +180,7 @@ config = {
 ```
 
 **Characteristics:**
+
 - 🔴 Severe sensor degradation (70% accuracy loss)
 - 🔴 Extreme network (1500ms latency, 15% packet loss)
 - 🔴 Severe terrain (50°C, dust storm, poor traction)
@@ -185,13 +193,13 @@ config = {
 
 ### Available Profiles
 
-| Profile | Latency | Packet Loss | Bandwidth | Use Case |
-|---------|---------|-------------|-----------|----------|
-| `perfect` | 0ms | 0% | Unlimited | Baseline |
-| `rural_wifi` | 85ms | 2% | 25 Mbps | Typical field |
-| `cellular_4g` | 125ms | 3% | 15 Mbps | Backup |
-| `satellite` | 900ms | 1% | 5 Mbps | Remote |
-| `extreme` | 1500ms | 15% | 1 Mbps | Worst-case |
+| Profile       | Latency | Packet Loss | Bandwidth | Use Case      |
+| ------------- | ------- | ----------- | --------- | ------------- |
+| `perfect`     | 0ms     | 0%          | Unlimited | Baseline      |
+| `rural_wifi`  | 85ms    | 2%          | 25 Mbps   | Typical field |
+| `cellular_4g` | 125ms   | 3%          | 15 Mbps   | Backup        |
+| `satellite`   | 900ms   | 1%          | 5 Mbps    | Remote        |
+| `extreme`     | 1500ms  | 15%         | 1 Mbps    | Worst-case    |
 
 ### Usage
 
@@ -419,14 +427,14 @@ for rover in rovers:
 
 ### Typical Performance
 
-| Component | Update Rate | Memory Usage | CPU Usage |
-|-----------|-------------|--------------|-----------|
-| Environment | 100Hz | ~1MB | <1% |
-| GPS Sensor | 10Hz | ~500KB | <0.5% |
-| IMU Sensor | 100Hz | ~1MB | <1% |
-| Network | 1000Hz | ~2MB | <2% |
-| Rover Physics | 100Hz | ~1MB | <1% |
-| Data Recording | 10Hz | ~5MB/hour | <0.5% |
+| Component      | Update Rate | Memory Usage | CPU Usage |
+| -------------- | ----------- | ------------ | --------- |
+| Environment    | 100Hz       | ~1MB         | <1%       |
+| GPS Sensor     | 10Hz        | ~500KB       | <0.5%     |
+| IMU Sensor     | 100Hz       | ~1MB         | <1%       |
+| Network        | 1000Hz      | ~2MB         | <2%       |
+| Rover Physics  | 100Hz       | ~1MB         | <1%       |
+| Data Recording | 10Hz        | ~5MB/hour    | <0.5%     |
 
 ### Scaling
 
@@ -545,6 +553,7 @@ extreme:
 ### Common Issues
 
 **High CPU Usage**
+
 ```python
 # Reduce update rates
 config["sensors"][0]["update_rate"] = 5.0  # Instead of 10.0
@@ -554,6 +563,7 @@ config["time"]["step_size"] = 0.02  # Instead of 0.01
 ```
 
 **Memory Issues**
+
 ```python
 # Reduce recording
 config["recording"]["max_records"] = 1000  # Instead of 10000
@@ -561,12 +571,14 @@ config["recording"]["record_interval"] = 0.5  # Instead of 0.1
 ```
 
 **Network Delays**
+
 ```python
 # Use perfect network for debugging
 config["network"]["profile"] = "perfect"
 ```
 
 **Sensor Failures**
+
 ```python
 # Disable failures for testing
 sensor_config["failure_rate"] = 0.0
@@ -628,6 +640,7 @@ pr.print_stats(sort='time')
 ## Migration from Scattered Components
 
 ### Before (Scattered)
+
 ```
 autonomy/simulation/     # Gazebo worlds
 tests/                   # Consolidated test framework
@@ -636,6 +649,7 @@ bridges/                # Network simulation
 ```
 
 ### After (Centralized)
+
 ```
 simulation/             # Single unified framework
 ├── core/              # Central engine
@@ -675,6 +689,7 @@ simulation/             # Single unified framework
 ### Performance Issues
 
 If you encounter performance issues:
+
 1. Reduce update rates and recording frequency
 2. Use perfect environment for debugging
 3. Profile with `cProfile` to identify bottlenecks
@@ -711,6 +726,7 @@ The **Centralized Simulation Framework** provides:
 ## Enhanced Features v2.0
 
 ### Structured Logging System
+
 ```python
 from simulation import setup_simulation_logging, get_simulation_logger
 
@@ -728,6 +744,7 @@ logger.info("Sensor data updated", sensor_id="gps_1", accuracy=2.5)
 ```
 
 ### Real-time Monitoring Dashboard
+
 ```python
 from simulation import SimulationMonitor
 
@@ -744,6 +761,7 @@ monitor.export_metrics("monitoring_data.json")
 ```
 
 ### Comprehensive Tracing
+
 ```python
 from simulation import SimulationTracer
 
@@ -762,6 +780,7 @@ print(f"Slowest operation: {report['slowest_operations'][0]}")
 ```
 
 ### RL Training Support
+
 ```python
 from simulation import RLDataRecorder
 
@@ -790,6 +809,7 @@ rl_recorder.save_rl_dataset("rl_training_data.json")
 ### Configuration Examples
 
 #### Basic Monitoring Setup
+
 ```python
 config = {
     "logging": {"enabled": True, "structured": True},
@@ -800,6 +820,7 @@ config = {
 ```
 
 #### RL Training Configuration
+
 ```python
 rl_config = {
     "recording": {
@@ -819,6 +840,7 @@ rl_config = {
 ### Example Scripts
 
 Run the enhanced examples:
+
 ```bash
 # RL training with monitoring
 python3 simulation/examples/rl_training_example.py

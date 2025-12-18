@@ -19,5 +19,3 @@ string[] available_actions
 
 # Timestamp
 builtin_interfaces/Time timestamp
-
-

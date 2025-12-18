@@ -11,11 +11,12 @@ Author: URC 2026 Autonomy Team
 
 import os
 import sys
-import time
 import threading
-import numpy as np
-from typing import Dict, List, Optional, Any, Callable
+import time
+from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import Mock
+
+import numpy as np
 
 # Add project paths
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -25,12 +26,17 @@ sys.path.insert(0, SIMULATION_ROOT)
 
 try:
     # Import simulation components
-    from simulation.can.can_bus_mock_simulator import CANBusMockSimulator, CANMessage, CANMessageType
+    from simulation.can.can_bus_mock_simulator import (
+        CANBusMockSimulator,
+        CANMessage,
+        CANMessageType,
+    )
+    from simulation.drive.drive_system_simulator import DriveSystemSimulator
+    from simulation.power.power_system_simulator import PowerSystemSimulator
     from simulation.rover.urc_rover import URCRover
     from simulation.sensors.gps_simulator import GPSSimulator
     from simulation.sensors.imu_simulator import IMUSimulator
-    from simulation.power.power_system_simulator import PowerSystemSimulator
-    from simulation.drive.drive_system_simulator import DriveSystemSimulator
+
     SIMULATION_AVAILABLE = True
 except ImportError:
     SIMULATION_AVAILABLE = False
@@ -52,7 +58,9 @@ class HardwareInterfaceSimulator:
         self.thread = None
 
         if not SIMULATION_AVAILABLE:
-            raise ImportError("Simulation framework not available. Cannot run hardware simulator.")
+            raise ImportError(
+                "Simulation framework not available. Cannot run hardware simulator."
+            )
 
         # Initialize simulation components
         self._init_simulation_components()
@@ -62,12 +70,12 @@ class HardwareInterfaceSimulator:
 
         # Sensor data buffers
         self.sensor_buffers = {
-            'imu': [],
-            'gps': [],
-            'odometry': [],
-            'battery': [],
-            'temperature': [],
-            'joint_states': []
+            "imu": [],
+            "gps": [],
+            "odometry": [],
+            "battery": [],
+            "temperature": [],
+            "joint_states": [],
         }
 
         # Control command buffers
@@ -75,53 +83,42 @@ class HardwareInterfaceSimulator:
 
         # Callbacks for hardware interface
         self.callbacks = {
-            'emergency_stop': None,
-            'velocity_command': None,
-            'led_command': None
+            "emergency_stop": None,
+            "velocity_command": None,
+            "led_command": None,
         }
 
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default simulator configuration."""
         return {
-            'update_rate_hz': 50.0,  # 50Hz control loop
-            'sensor_rate_hz': 20.0,  # 20Hz sensor updates
-            'can_port': '/dev/ttyACM0',
-            'rover_config': {
-                'mass': 75.0,
-                'wheel_count': 6,
-                'max_velocity': 1.5,
-                'max_angular_velocity': 0.8
+            "update_rate_hz": 50.0,  # 50Hz control loop
+            "sensor_rate_hz": 20.0,  # 20Hz sensor updates
+            "can_port": "/dev/ttyACM0",
+            "rover_config": {
+                "mass": 75.0,
+                "wheel_count": 6,
+                "max_velocity": 1.5,
+                "max_angular_velocity": 0.8,
             },
-            'gps_config': {
-                'update_rate_hz': 5.0,
-                'accuracy_m': 2.0
-            },
-            'imu_config': {
-                'update_rate_hz': 100.0,
-                'noise_sigma': 0.01
-            },
-            'power_config': {
-                'battery_capacity_ah': 10.0,
-                'nominal_voltage': 24.0
-            }
+            "gps_config": {"update_rate_hz": 5.0, "accuracy_m": 2.0},
+            "imu_config": {"update_rate_hz": 100.0, "noise_sigma": 0.01},
+            "power_config": {"battery_capacity_ah": 10.0, "nominal_voltage": 24.0},
         }
 
     def _init_simulation_components(self):
         """Initialize simulation components."""
         # CAN bus simulator
         self.can_sim = CANBusMockSimulator(
-            port=self.config['can_port'],
-            baudrate=115200,
-            simulate_delays=True
+            port=self.config["can_port"], baudrate=115200, simulate_delays=True
         )
 
         # Rover physics simulator
-        self.rover_sim = URCRover(self.config['rover_config'])
+        self.rover_sim = URCRover(self.config["rover_config"])
 
         # Sensor simulators
-        self.gps_sim = GPSSimulator(self.config['gps_config'])
-        self.imu_sim = IMUSimulator(self.config['imu_config'])
-        self.power_sim = PowerSystemSimulator(self.config['power_config'])
+        self.gps_sim = GPSSimulator(self.config["gps_config"])
+        self.imu_sim = IMUSimulator(self.config["imu_config"])
+        self.power_sim = PowerSystemSimulator(self.config["power_config"])
 
         # Drive system simulator
         self.drive_sim = DriveSystemSimulator()
@@ -150,8 +147,8 @@ class HardwareInterfaceSimulator:
 
     def _simulation_loop(self):
         """Main simulation loop."""
-        control_interval = 1.0 / self.config['update_rate_hz']
-        sensor_interval = 1.0 / self.config['sensor_rate_hz']
+        control_interval = 1.0 / self.config["update_rate_hz"]
+        sensor_interval = 1.0 / self.config["sensor_rate_hz"]
 
         last_control_time = time.time()
         last_sensor_time = time.time()
@@ -190,67 +187,69 @@ class HardwareInterfaceSimulator:
         """Update sensor simulation."""
         # Update GPS
         gps_data = self.gps_sim.get_reading()
-        self.sensor_buffers['gps'].append(gps_data)
+        self.sensor_buffers["gps"].append(gps_data)
 
         # Update IMU
         imu_data = self.imu_sim.get_reading()
-        self.sensor_buffers['imu'].append(imu_data)
+        self.sensor_buffers["imu"].append(imu_data)
 
         # Update power system
         battery_data = self.power_sim.get_battery_status()
-        self.sensor_buffers['battery'].append(battery_data)
+        self.sensor_buffers["battery"].append(battery_data)
 
         # Generate odometry from rover state
         odom_data = self._generate_odometry_data()
-        self.sensor_buffers['odometry'].append(odom_data)
+        self.sensor_buffers["odometry"].append(odom_data)
 
         # Generate joint states from drive system
         joint_data = self._generate_joint_states()
-        self.sensor_buffers['joint_states'].append(joint_data)
+        self.sensor_buffers["joint_states"].append(joint_data)
 
         # Keep buffers at reasonable size
         for buffer_name in self.sensor_buffers:
             if len(self.sensor_buffers[buffer_name]) > 10:
-                self.sensor_buffers[buffer_name] = self.sensor_buffers[buffer_name][-10:]
+                self.sensor_buffers[buffer_name] = self.sensor_buffers[buffer_name][
+                    -10:
+                ]
 
     def _process_control_command(self, cmd: Dict[str, Any]):
         """Process a control command."""
-        cmd_type = cmd.get('type')
+        cmd_type = cmd.get("type")
 
-        if cmd_type == 'velocity':
+        if cmd_type == "velocity":
             # Send velocity command to CAN bus
-            linear_x = cmd.get('linear_x', 0.0)
-            angular_z = cmd.get('angular_z', 0.0)
+            linear_x = cmd.get("linear_x", 0.0)
+            angular_z = cmd.get("angular_z", 0.0)
 
             can_msg = CANMessage(
                 message_id=0x100,  # Velocity command ID
                 data=f"{linear_x:.3f},{angular_z:.3f}".encode(),
                 priority=CANMessageType.MOTOR_COMMAND,
-                timestamp=time.time()
+                timestamp=time.time(),
             )
             self.can_sim.send_message(can_msg)
 
-        elif cmd_type == 'emergency_stop':
+        elif cmd_type == "emergency_stop":
             # Send emergency stop command
             can_msg = CANMessage(
                 message_id=0x000,  # Emergency stop ID
                 data=b"EMERGENCY_STOP",
                 priority=CANMessageType.EMERGENCY_STOP,
-                timestamp=time.time()
+                timestamp=time.time(),
             )
             self.can_sim.send_message(can_msg)
 
             # Trigger callback if registered
-            if self.callbacks['emergency_stop']:
-                self.callbacks['emergency_stop']()
+            if self.callbacks["emergency_stop"]:
+                self.callbacks["emergency_stop"]()
 
     def _get_current_control_inputs(self) -> Dict[str, Any]:
         """Get current control inputs for rover simulation."""
         # In a real implementation, this would read from CAN bus
         # For simulation, we maintain state
         return {
-            'linear_velocity_cmd': getattr(self, 'last_linear_cmd', 0.0),
-            'angular_velocity_cmd': getattr(self, 'last_angular_cmd', 0.0)
+            "linear_velocity_cmd": getattr(self, "last_linear_cmd", 0.0),
+            "angular_velocity_cmd": getattr(self, "last_angular_cmd", 0.0),
         }
 
     def _generate_odometry_data(self) -> Dict[str, Any]:
@@ -258,28 +257,24 @@ class HardwareInterfaceSimulator:
         rover_state = self.rover_sim.get_state()
 
         return {
-            'timestamp': time.time(),
-            'position': {
-                'x': rover_state['position'][0],
-                'y': rover_state['position'][1],
-                'z': 0.0
+            "timestamp": time.time(),
+            "position": {
+                "x": rover_state["position"][0],
+                "y": rover_state["position"][1],
+                "z": 0.0,
             },
-            'orientation': {
-                'x': 0.0,
-                'y': 0.0,
-                'z': rover_state['heading'],
-                'w': 1.0  # Simplified, no roll/pitch
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": rover_state["heading"],
+                "w": 1.0,  # Simplified, no roll/pitch
             },
-            'linear_velocity': {
-                'x': rover_state['velocity'][0],
-                'y': 0.0,
-                'z': 0.0
+            "linear_velocity": {"x": rover_state["velocity"][0], "y": 0.0, "z": 0.0},
+            "angular_velocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": rover_state["angular_velocity"],
             },
-            'angular_velocity': {
-                'x': 0.0,
-                'y': 0.0,
-                'z': rover_state['angular_velocity']
-            }
         }
 
     def _generate_joint_states(self) -> Dict[str, Any]:
@@ -290,11 +285,11 @@ class HardwareInterfaceSimulator:
         efforts = self.drive_sim.get_wheel_torques()
 
         return {
-            'timestamp': time.time(),
-            'names': joint_names,
-            'positions': positions,
-            'velocities': velocities,
-            'efforts': efforts
+            "timestamp": time.time(),
+            "names": joint_names,
+            "positions": positions,
+            "velocities": velocities,
+            "efforts": efforts,
         }
 
     # Hardware interface methods (called by tests)
@@ -302,10 +297,10 @@ class HardwareInterfaceSimulator:
     def send_velocity_command(self, linear_x: float, angular_z: float):
         """Send velocity command to simulated hardware."""
         cmd = {
-            'type': 'velocity',
-            'linear_x': linear_x,
-            'angular_z': angular_z,
-            'timestamp': time.time()
+            "type": "velocity",
+            "linear_x": linear_x,
+            "angular_z": angular_z,
+            "timestamp": time.time(),
         }
         self.control_commands.append(cmd)
 
@@ -315,10 +310,7 @@ class HardwareInterfaceSimulator:
 
     def emergency_stop(self):
         """Trigger emergency stop on simulated hardware."""
-        cmd = {
-            'type': 'emergency_stop',
-            'timestamp': time.time()
-        }
+        cmd = {"type": "emergency_stop", "timestamp": time.time()}
         self.control_commands.append(cmd)
 
     def get_latest_sensor_data(self, sensor_type: str) -> Optional[Dict[str, Any]]:
@@ -328,35 +320,35 @@ class HardwareInterfaceSimulator:
 
     def get_odometry(self) -> Optional[Dict[str, Any]]:
         """Get latest odometry data."""
-        return self.get_latest_sensor_data('odometry')
+        return self.get_latest_sensor_data("odometry")
 
     def get_gps_data(self) -> Optional[Dict[str, Any]]:
         """Get latest GPS data."""
-        return self.get_latest_sensor_data('gps')
+        return self.get_latest_sensor_data("gps")
 
     def get_imu_data(self) -> Optional[Dict[str, Any]]:
         """Get latest IMU data."""
-        return self.get_latest_sensor_data('imu')
+        return self.get_latest_sensor_data("imu")
 
     def get_battery_status(self) -> Optional[Dict[str, Any]]:
         """Get latest battery status."""
-        return self.get_latest_sensor_data('battery')
+        return self.get_latest_sensor_data("battery")
 
     def get_joint_states(self) -> Optional[Dict[str, Any]]:
         """Get latest joint states."""
-        return self.get_latest_sensor_data('joint_states')
+        return self.get_latest_sensor_data("joint_states")
 
     def set_emergency_callback(self, callback: Callable):
         """Set emergency stop callback."""
-        self.callbacks['emergency_stop'] = callback
+        self.callbacks["emergency_stop"] = callback
 
     def set_velocity_callback(self, callback: Callable):
         """Set velocity command callback."""
-        self.callbacks['velocity_command'] = callback
+        self.callbacks["velocity_command"] = callback
 
     def set_led_callback(self, callback: Callable):
         """Set LED command callback."""
-        self.callbacks['led_command'] = callback
+        self.callbacks["led_command"] = callback
 
     # Test utility methods
 
@@ -372,20 +364,20 @@ class HardwareInterfaceSimulator:
 
     def simulate_sensor_noise(self, sensor_type: str, noise_level: float = 0.01):
         """Add noise to sensor simulation for testing."""
-        if sensor_type == 'gps':
+        if sensor_type == "gps":
             self.gps_sim.set_noise_level(noise_level)
-        elif sensor_type == 'imu':
+        elif sensor_type == "imu":
             self.imu_sim.set_noise_level(noise_level)
 
     def simulate_hardware_failure(self, component: str):
         """Simulate hardware failure for testing."""
-        if component == 'can_bus':
+        if component == "can_bus":
             self.can_sim.simulate_failure()
-        elif component == 'gps':
+        elif component == "gps":
             self.gps_sim.simulate_failure()
-        elif component == 'imu':
+        elif component == "imu":
             self.imu_sim.simulate_failure()
-        elif component == 'drive':
+        elif component == "drive":
             self.drive_sim.simulate_failure()
 
     def reset_simulations(self):
@@ -434,6 +426,7 @@ class HardwareInterfaceTestFixture:
 
 # Convenience functions for tests
 
+
 def create_simulated_hardware_interface(config: Optional[Dict[str, Any]] = None):
     """Create a simulated hardware interface for testing."""
     return HardwareInterfaceSimulator(config)
@@ -441,13 +434,16 @@ def create_simulated_hardware_interface(config: Optional[Dict[str, Any]] = None)
 
 def with_hardware_simulator(config: Optional[Dict[str, Any]] = None):
     """Decorator to run test with hardware simulator."""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             with HardwareInterfaceTestFixture(config) as sim:
                 # Add simulator to test arguments
-                kwargs['hardware_simulator'] = sim
+                kwargs["hardware_simulator"] = sim
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -483,6 +479,3 @@ def test_emergency_stop():
         time.sleep(0.1)
         assert emergency_triggered
 """
-
-
-

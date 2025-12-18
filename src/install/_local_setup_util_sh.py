@@ -2,11 +2,10 @@
 # Licensed under the Apache License, Version 2.0
 
 import argparse
-from collections import OrderedDict
 import os
-from pathlib import Path
 import sys
-
+from collections import OrderedDict
+from pathlib import Path
 
 FORMAT_STR_COMMENT_LINE = '# {comment}'
 FORMAT_STR_SET_ENV_VAR = 'export {name}="{value}"'

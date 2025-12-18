@@ -5,6 +5,7 @@ This directory contains the universal Docker configuration for the URC 2026 Robo
 ## 🚀 Quick Start
 
 ### Development Environment
+
 ```bash
 # Start all services for development
 docker-compose -f docker-compose.universal.yml up
@@ -14,6 +15,7 @@ docker-compose -f docker-compose.universal.yml up safety-service navigation-serv
 ```
 
 ### Production Environment
+
 ```bash
 # Start production deployment
 docker-compose -f docker-compose.prod.yml up
@@ -25,6 +27,7 @@ COMPOSE_PROFILES=mock docker-compose -f docker-compose.prod.yml up
 ## 📦 Available Services
 
 ### Core Autonomy Services
+
 - **`state-management-service`** - ROS2 State Machine Director
 - **`safety-service`** - Safety monitoring and emergency systems
 - **`navigation-service`** - GPS navigation and path planning
@@ -32,6 +35,7 @@ COMPOSE_PROFILES=mock docker-compose -f docker-compose.prod.yml up
 - **`mission-service`** - Mission execution and coordination
 
 ### Supporting Services
+
 - **`websocket-bridge-service`** - WebSocket to ROS2 bridge
 - **`can-mock-service`** - CAN bus mock simulator (⚠️ MOCK DATA)
 - **`sensor-bridge-service`** - Hardware sensor interface
@@ -39,16 +43,19 @@ COMPOSE_PROFILES=mock docker-compose -f docker-compose.prod.yml up
 - **`led-service`** - Status LED control
 
 ### User Interface
+
 - **`frontend-service`** - React development server
 - **`frontend-prod`** - Nginx production server
 
 ### Development Tools
+
 - **`development`** - Full development environment with all tools
 - **`help`** - Shows available Docker targets
 
 ## 🏗️ Building Images
 
 ### Build All Services
+
 ```bash
 # Build all services in parallel (recommended)
 ./scripts/build_universal_docker.sh --all
@@ -58,6 +65,7 @@ COMPOSE_PROFILES=mock docker-compose -f docker-compose.prod.yml up
 ```
 
 ### Build Options
+
 ```bash
 # Debug build for development
 ./scripts/build_universal_docker.sh --debug --all
@@ -70,6 +78,7 @@ COMPOSE_PROFILES=mock docker-compose -f docker-compose.prod.yml up
 ```
 
 ### Manual Docker Build
+
 ```bash
 # Build specific service
 docker build --target safety-service -t urc2026:safety-service .
@@ -88,6 +97,7 @@ docker build \
 ### Environment Variables
 
 #### Production Environment (`.env` file)
+
 ```bash
 # ROS2 Configuration
 ROS_DOMAIN_ID=42
@@ -103,7 +113,9 @@ REGISTRY_PREFIX=myregistry.com/urc2026
 ```
 
 #### Development Environment
+
 All services use default development settings:
+
 - `URC_ENV=development`
 - `ROS_DOMAIN_ID=42`
 - Mock systems enabled by default
@@ -111,23 +123,28 @@ All services use default development settings:
 ### Volume Mounts
 
 #### Configuration
+
 - `./config:/home/urc/config:ro` - Read-only configuration files
 
 #### Logs (Production)
+
 - `ros2_prod_logs:/home/urc/.ros/log` - ROS2 logging persistence
 
 #### Development
+
 - `./frontend/src:/app/src` - Frontend source code hot-reload
 - `./frontend/public:/app/public` - Frontend assets
 
 ## 🌐 Networking
 
 ### Development Network
+
 - **Network**: `urc-network`
 - **Subnet**: `172.20.0.0/16`
 - **Services**: All ports exposed for development
 
 ### Production Network
+
 - **Network**: `urc-prod-network`
 - **Subnet**: `172.21.0.0/16`
 - **Security**: Most ports bound to localhost only
@@ -135,24 +152,26 @@ All services use default development settings:
 
 ### Service Ports
 
-| Service | Port | Development | Production |
-|---------|------|-------------|------------|
-| Frontend | 3000/80 | Exposed | Configurable |
-| WebSocket Bridge | 8765 | Exposed | Localhost only |
-| CAN Mock | 8766 | Exposed | Localhost only |
-| Monitoring | 9090 | N/A | Localhost only |
+| Service          | Port    | Development | Production     |
+| ---------------- | ------- | ----------- | -------------- |
+| Frontend         | 3000/80 | Exposed     | Configurable   |
+| WebSocket Bridge | 8765    | Exposed     | Localhost only |
+| CAN Mock         | 8766    | Exposed     | Localhost only |
+| Monitoring       | 9090    | N/A         | Localhost only |
 
 ## 🔍 Health Checks
 
 All services include health checks for reliability:
 
 ### Timing
+
 - **Interval**: 10-60 seconds (service-dependent)
 - **Timeout**: 3-15 seconds
 - **Retries**: 3-5 attempts
 - **Start Period**: 10-30 seconds
 
 ### Health Check Commands
+
 ```bash
 # ROS2 Services
 ros2 node list | grep -q <service_name>
@@ -169,6 +188,7 @@ curl -f http://localhost:<port>
 ### Common Issues
 
 #### Build Failures
+
 ```bash
 # Check build logs
 docker build --progress=plain --target <service> .
@@ -178,6 +198,7 @@ docker builder prune -f
 ```
 
 #### Service Won't Start
+
 ```bash
 # Check service logs
 docker-compose logs <service_name>
@@ -190,6 +211,7 @@ docker exec <container_name> <health_check_command>
 ```
 
 #### Network Issues
+
 ```bash
 # Check network connectivity
 docker network ls
@@ -201,6 +223,7 @@ docker-compose up --scale <service>=0 --scale <service>=1
 ```
 
 #### Resource Issues
+
 ```bash
 # Check resource usage
 docker stats
@@ -229,6 +252,7 @@ docker-compose --verbose up <service>
 ## 📊 Monitoring
 
 ### Production Monitoring
+
 Enable the monitoring profile for health dashboards:
 
 ```bash
@@ -238,6 +262,7 @@ COMPOSE_PROFILES=monitoring docker-compose -f docker-compose.prod.yml up
 Access monitoring at `http://localhost:9090`
 
 ### Log Aggregation
+
 ```bash
 # View all service logs
 docker-compose logs -f
@@ -252,6 +277,7 @@ docker-compose logs > system_logs.txt
 ## 🔒 Security Considerations
 
 ### Production Security
+
 - Services run as non-root user (`urc`)
 - Most ports bound to localhost only
 - Mock systems clearly labeled and not enabled by default
@@ -259,6 +285,7 @@ docker-compose logs > system_logs.txt
 - Health checks prevent silent failures
 
 ### Development Security
+
 - All services accessible for debugging
 - Mock data clearly identified
 - No sensitive data in containers
@@ -266,6 +293,7 @@ docker-compose logs > system_logs.txt
 ## 📚 Advanced Usage
 
 ### Custom Build Arguments
+
 ```dockerfile
 # In Dockerfile.universal
 ARG BUILD_TYPE=release
@@ -280,6 +308,7 @@ docker build \
 ```
 
 ### Multi-Stage Build Optimization
+
 ```dockerfile
 # Base stage with common dependencies
 FROM ros:humble-ros-base AS base
@@ -291,6 +320,7 @@ RUN apt-get install -y safety-specific-deps
 ```
 
 ### Registry Management
+
 ```bash
 # Login to registry
 docker login myregistry.com
@@ -314,6 +344,7 @@ When adding new services:
 5. Update this README
 
 ### Service Template
+
 ```dockerfile
 FROM base AS new-service
 COPY --chown=urc path/to/service ./service/
@@ -325,6 +356,7 @@ CMD ["python3", "-m", "service.main"]
 ## 📞 Support
 
 For Docker-related issues:
+
 1. Check service logs: `docker-compose logs <service>`
 2. Verify configuration: `docker-compose config`
 3. Test individual builds: `./scripts/build_universal_docker.sh <service>`

@@ -10,23 +10,26 @@ Validates sensor and actuator health through multiple validation approaches:
 - Real-time health dashboard
 """
 
+import statistics
+import threading
+import time
+from collections import deque
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
-import time
-import statistics
-from typing import Dict, List, Any, Optional, Tuple
-from collections import deque
-import numpy as np
-import threading
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import Imu, NavSatFix
+from std_msgs.msg import Bool, Float32
 
-from sensor_msgs.msg import NavSatFix, Imu
-from std_msgs.msg import Float32, Bool
+
 # Mock classes for testing without full ROS2 interfaces
 class HealthStatus:
     def __init__(self):
         self.header = None
         self.values = []
+
 
 class KeyValue:
     def __init__(self):
@@ -41,11 +44,11 @@ class SensorHealthValidator:
         self.node = node
         self.topic_monitors = {}
         self.health_checks = {
-            '/gps/fix': self._validate_gps_health,
-            '/imu/data': self._validate_imu_health,
-            '/camera/image_raw': self._validate_camera_health,
-            '/lidar/scan': self._validate_lidar_health,
-            '/battery/status': self._validate_battery_health
+            "/gps/fix": self._validate_gps_health,
+            "/imu/data": self._validate_imu_health,
+            "/camera/image_raw": self._validate_camera_health,
+            "/lidar/scan": self._validate_lidar_health,
+            "/battery/status": self._validate_battery_health,
         }
 
         # Initialize topic subscriptions
@@ -56,77 +59,83 @@ class SensorHealthValidator:
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
-            depth=10
+            depth=10,
         )
 
         # GPS monitoring
-        if '/gps/fix' in self.health_checks:
-            self.topic_monitors['/gps/fix'] = {
-                'subscriber': self.node.create_subscription(
-                    NavSatFix, '/gps/fix', self._gps_callback, qos
+        if "/gps/fix" in self.health_checks:
+            self.topic_monitors["/gps/fix"] = {
+                "subscriber": self.node.create_subscription(
+                    NavSatFix, "/gps/fix", self._gps_callback, qos
                 ),
-                'messages': deque(maxlen=100),
-                'last_message_time': 0
+                "messages": deque(maxlen=100),
+                "last_message_time": 0,
             }
 
         # IMU monitoring
-        if '/imu/data' in self.health_checks:
-            self.topic_monitors['/imu/data'] = {
-                'subscriber': self.node.create_subscription(
-                    Imu, '/imu/data', self._imu_callback, qos
+        if "/imu/data" in self.health_checks:
+            self.topic_monitors["/imu/data"] = {
+                "subscriber": self.node.create_subscription(
+                    Imu, "/imu/data", self._imu_callback, qos
                 ),
-                'messages': deque(maxlen=100),
-                'last_message_time': 0
+                "messages": deque(maxlen=100),
+                "last_message_time": 0,
             }
 
         # Battery monitoring
-        if '/battery/status' in self.health_checks:
-            self.topic_monitors['/battery/status'] = {
-                'subscriber': self.node.create_subscription(
-                    Float32, '/battery/status', self._battery_callback, qos
+        if "/battery/status" in self.health_checks:
+            self.topic_monitors["/battery/status"] = {
+                "subscriber": self.node.create_subscription(
+                    Float32, "/battery/status", self._battery_callback, qos
                 ),
-                'messages': deque(maxlen=100),
-                'last_message_time': 0
+                "messages": deque(maxlen=100),
+                "last_message_time": 0,
             }
 
     def _gps_callback(self, msg: NavSatFix):
         """Handle GPS messages."""
-        if '/gps/fix' in self.topic_monitors:
-            self.topic_monitors['/gps/fix']['messages'].append({
-                'timestamp': self.node.get_clock().now().nanoseconds / 1e9,
-                'latitude': msg.latitude,
-                'longitude': msg.longitude,
-                'altitude': msg.altitude,
-                'status': msg.status.status
-            })
-            self.topic_monitors['/gps/fix']['last_message_time'] = time.time()
+        if "/gps/fix" in self.topic_monitors:
+            self.topic_monitors["/gps/fix"]["messages"].append(
+                {
+                    "timestamp": self.node.get_clock().now().nanoseconds / 1e9,
+                    "latitude": msg.latitude,
+                    "longitude": msg.longitude,
+                    "altitude": msg.altitude,
+                    "status": msg.status.status,
+                }
+            )
+            self.topic_monitors["/gps/fix"]["last_message_time"] = time.time()
 
     def _imu_callback(self, msg: Imu):
         """Handle IMU messages."""
-        if '/imu/data' in self.topic_monitors:
-            self.topic_monitors['/imu/data']['messages'].append({
-                'timestamp': self.node.get_clock().now().nanoseconds / 1e9,
-                'linear_acceleration': {
-                    'x': msg.linear_acceleration.x,
-                    'y': msg.linear_acceleration.y,
-                    'z': msg.linear_acceleration.z
-                },
-                'angular_velocity': {
-                    'x': msg.angular_velocity.x,
-                    'y': msg.angular_velocity.y,
-                    'z': msg.angular_velocity.z
+        if "/imu/data" in self.topic_monitors:
+            self.topic_monitors["/imu/data"]["messages"].append(
+                {
+                    "timestamp": self.node.get_clock().now().nanoseconds / 1e9,
+                    "linear_acceleration": {
+                        "x": msg.linear_acceleration.x,
+                        "y": msg.linear_acceleration.y,
+                        "z": msg.linear_acceleration.z,
+                    },
+                    "angular_velocity": {
+                        "x": msg.angular_velocity.x,
+                        "y": msg.angular_velocity.y,
+                        "z": msg.angular_velocity.z,
+                    },
                 }
-            })
-            self.topic_monitors['/imu/data']['last_message_time'] = time.time()
+            )
+            self.topic_monitors["/imu/data"]["last_message_time"] = time.time()
 
     def _battery_callback(self, msg: Float32):
         """Handle battery messages."""
-        if '/battery/status' in self.topic_monitors:
-            self.topic_monitors['/battery/status']['messages'].append({
-                'timestamp': self.node.get_clock().now().nanoseconds / 1e9,
-                'voltage': msg.data
-            })
-            self.topic_monitors['/battery/status']['last_message_time'] = time.time()
+        if "/battery/status" in self.topic_monitors:
+            self.topic_monitors["/battery/status"]["messages"].append(
+                {
+                    "timestamp": self.node.get_clock().now().nanoseconds / 1e9,
+                    "voltage": msg.data,
+                }
+            )
+            self.topic_monitors["/battery/status"]["last_message_time"] = time.time()
 
     def validate_sensor_health(self, topic_name: str) -> Dict[str, Any]:
         """Validate sensor health through topic analysis."""
@@ -139,33 +148,32 @@ class SensorHealthValidator:
             if not monitor:
                 return {"status": "error", "message": "Topic not monitored"}
 
-            messages = list(monitor['messages'])
-            last_message_age = time.time() - monitor['last_message_time']
+            messages = list(monitor["messages"])
+            last_message_age = time.time() - monitor["last_message_time"]
 
             if not messages:
                 return {
                     "status": "critical",
                     "message": f"No messages received on {topic_name}",
-                    "last_message_age": last_message_age
+                    "last_message_age": last_message_age,
                 }
 
             # Run health check
             return health_check(messages, last_message_age)
 
         except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Health check failed: {e}"
-            }
+            return {"status": "error", "message": f"Health check failed: {e}"}
 
-    def _validate_gps_health(self, messages: List[Dict], last_message_age: float) -> Dict[str, Any]:
+    def _validate_gps_health(
+        self, messages: List[Dict], last_message_age: float
+    ) -> Dict[str, Any]:
         """Validate GPS sensor health."""
         if len(messages) < 5:
             return {"status": "warning", "message": "Insufficient GPS messages"}
 
         # Check coordinate reasonableness
-        latitudes = [msg['latitude'] for msg in messages]
-        longitudes = [msg['longitude'] for msg in messages]
+        latitudes = [msg["latitude"] for msg in messages]
+        longitudes = [msg["longitude"] for msg in messages]
 
         # Competition site bounds (adjust for your location)
         lat_min, lat_max = 35.0, 45.0  # Example: Northern US
@@ -177,60 +185,83 @@ class SensorHealthValidator:
                 valid_coords += 1
 
         if valid_coords / len(messages) < 0.8:
-            return {"status": "error", "message": "GPS coordinates out of expected range"}
+            return {
+                "status": "error",
+                "message": "GPS coordinates out of expected range",
+            }
 
         # Check update frequency
-        timestamps = [msg['timestamp'] for msg in messages]
+        timestamps = [msg["timestamp"] for msg in messages]
         if len(timestamps) > 1:
             intervals = [t2 - t1 for t1, t2 in zip(timestamps[:-1], timestamps[1:])]
             avg_interval = sum(intervals) / len(intervals)
 
             if avg_interval > 1.0:  # Less than 1Hz
-                return {"status": "warning", "message": f"GPS update rate too low: {1/avg_interval:.1f}Hz"}
+                return {
+                    "status": "warning",
+                    "message": f"GPS update rate too low: {1/avg_interval:.1f}Hz",
+                }
 
         return {"status": "healthy", "message": "GPS functioning normally"}
 
-    def _validate_imu_health(self, messages: List[Dict], last_message_age: float) -> Dict[str, Any]:
+    def _validate_imu_health(
+        self, messages: List[Dict], last_message_age: float
+    ) -> Dict[str, Any]:
         """Validate IMU sensor health."""
         if len(messages) < 5:
             return {"status": "warning", "message": "Insufficient IMU messages"}
 
         # Check gravity calibration
-        z_accelerations = [msg['linear_acceleration']['z'] for msg in messages]
+        z_accelerations = [msg["linear_acceleration"]["z"] for msg in messages]
         avg_z_accel = sum(z_accelerations) / len(z_accelerations)
         expected_gravity = 9.81  # m/s²
 
         if abs(avg_z_accel - expected_gravity) > expected_gravity * 0.5:
-            return {"status": "error", "message": f"IMU Z-acceleration unreasonable: {avg_z_accel:.2f} m/s²"}
+            return {
+                "status": "error",
+                "message": f"IMU Z-acceleration unreasonable: {avg_z_accel:.2f} m/s²",
+            }
 
         return {"status": "healthy", "message": "IMU functioning normally"}
 
-    def _validate_camera_health(self, messages: List[Dict], last_message_age: float) -> Dict[str, Any]:
+    def _validate_camera_health(
+        self, messages: List[Dict], last_message_age: float
+    ) -> Dict[str, Any]:
         """Validate camera health."""
         # Cameras might not publish to standard topics, check topic activity
         if last_message_age > 5.0:  # No messages in 5 seconds
             return {"status": "error", "message": "Camera not publishing"}
         return {"status": "healthy", "message": "Camera active"}
 
-    def _validate_lidar_health(self, messages: List[Dict], last_message_age: float) -> Dict[str, Any]:
+    def _validate_lidar_health(
+        self, messages: List[Dict], last_message_age: float
+    ) -> Dict[str, Any]:
         """Validate LiDAR health."""
         if last_message_age > 2.0:  # LiDAR should be faster
             return {"status": "error", "message": "LiDAR not publishing"}
         return {"status": "healthy", "message": "LiDAR active"}
 
-    def _validate_battery_health(self, messages: List[Dict], last_message_age: float) -> Dict[str, Any]:
+    def _validate_battery_health(
+        self, messages: List[Dict], last_message_age: float
+    ) -> Dict[str, Any]:
         """Validate battery sensor health."""
         if len(messages) < 3:
             return {"status": "warning", "message": "Insufficient battery messages"}
 
-        voltages = [msg['voltage'] for msg in messages]
+        voltages = [msg["voltage"] for msg in messages]
         avg_voltage = sum(voltages) / len(voltages)
 
         # Check voltage ranges (adjust for your battery specs)
         if avg_voltage < 10.0:  # Very low voltage
-            return {"status": "critical", "message": f"Battery voltage critically low: {avg_voltage:.1f}V"}
+            return {
+                "status": "critical",
+                "message": f"Battery voltage critically low: {avg_voltage:.1f}V",
+            }
         elif avg_voltage < 11.5:  # Low voltage
-            return {"status": "warning", "message": f"Battery voltage low: {avg_voltage:.1f}V"}
+            return {
+                "status": "warning",
+                "message": f"Battery voltage low: {avg_voltage:.1f}V",
+            }
 
         return {"status": "healthy", "message": "Battery functioning normally"}
 
@@ -241,8 +272,8 @@ class CrossTopicValidator:
     def __init__(self, node: Node):
         self.node = node
         self.correlation_checks = {
-            'imu_gps_consistency': self._check_imu_gps_consistency,
-            'battery_power_consumption': self._check_battery_consumption
+            "imu_gps_consistency": self._check_imu_gps_consistency,
+            "battery_power_consumption": self._check_battery_consumption,
         }
 
     def check_all_correlations(self) -> Dict[str, Dict[str, Any]]:
@@ -263,7 +294,7 @@ class CrossTopicValidator:
             "status": "consistent",
             "message": "IMU and GPS data timestamps aligned",
             "time_overlap": "25.5s",
-            "confidence": "high"
+            "confidence": "high",
         }
 
     def _check_battery_consumption(self) -> Dict[str, Any]:
@@ -273,7 +304,7 @@ class CrossTopicValidator:
             "status": "normal",
             "message": "Battery consumption within normal parameters",
             "drain_rate": "0.02V/min",
-            "estimated_runtime": "8.5h"
+            "estimated_runtime": "8.5h",
         }
 
 
@@ -282,10 +313,10 @@ class HardwareInterfaceProber:
 
     def __init__(self):
         self.interface_checks = {
-            'i2c': self._probe_i2c_devices,
-            'spi': self._probe_spi_devices,
-            'usb': self._probe_usb_devices,
-            'serial': self._probe_serial_ports
+            "i2c": self._probe_i2c_devices,
+            "spi": self._probe_spi_devices,
+            "usb": self._probe_usb_devices,
+            "serial": self._probe_serial_ports,
         }
 
     def probe_hardware_interfaces(self) -> Dict[str, List[Dict[str, Any]]]:
@@ -306,6 +337,7 @@ class HardwareInterfaceProber:
         devices = []
         try:
             import smbus2
+
             bus = smbus2.SMBus(1)  # I2C bus 1
 
             # Common sensor addresses
@@ -314,17 +346,19 @@ class HardwareInterfaceProber:
                 0x69: "MPU6050/IMU",
                 0x76: "BMP280/Barometer",
                 0x77: "BMP280/Barometer",
-                0x1E: "HMC5883L/Magnetometer"
+                0x1E: "HMC5883L/Magnetometer",
             }
 
             for address, device_name in sensor_addresses.items():
                 try:
                     bus.read_byte(address)
-                    devices.append({
-                        "address": hex(address),
-                        "device": device_name,
-                        "status": "responsive"
-                    })
+                    devices.append(
+                        {
+                            "address": hex(address),
+                            "device": device_name,
+                            "status": "responsive",
+                        }
+                    )
                 except:
                     continue
 
@@ -345,10 +379,13 @@ class HardwareInterfaceProber:
         devices = []
         try:
             import subprocess
-            result = subprocess.run(['lsusb'], capture_output=True, text=True, timeout=5)
+
+            result = subprocess.run(
+                ["lsusb"], capture_output=True, text=True, timeout=5
+            )
             if result.returncode == 0:
                 # Parse lsusb output (simplified)
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 for line in lines:
                     if line.strip():
                         devices.append({"device": line.strip(), "status": "connected"})
@@ -362,14 +399,17 @@ class HardwareInterfaceProber:
         devices = []
         try:
             import serial.tools.list_ports
+
             ports = list(serial.tools.list_ports.comports())
             for port in ports:
-                devices.append({
-                    "port": port.device,
-                    "description": port.description,
-                    "manufacturer": port.manufacturer,
-                    "status": "available"
-                })
+                devices.append(
+                    {
+                        "port": port.device,
+                        "description": port.description,
+                        "manufacturer": port.manufacturer,
+                        "status": "available",
+                    }
+                )
         except ImportError:
             devices.append({"error": "pyserial not available"})
         except Exception as e:
@@ -383,10 +423,10 @@ class SensorDataQualityAnalyzer:
 
     def __init__(self):
         self.quality_metrics = {
-            'noise_level': self._analyze_noise,
-            'drift_rate': self._analyze_drift,
-            'calibration_accuracy': self._analyze_calibration,
-            'update_consistency': self._analyze_timing_consistency
+            "noise_level": self._analyze_noise,
+            "drift_rate": self._analyze_drift,
+            "calibration_accuracy": self._analyze_calibration,
+            "update_consistency": self._analyze_timing_consistency,
         }
 
     def analyze_all_sensors(self) -> Dict[str, Dict[str, Any]]:
@@ -394,10 +434,10 @@ class SensorDataQualityAnalyzer:
         # This would need access to actual sensor data
         # For now, return placeholder results
         return {
-            'gps': {'overall_quality': 85, 'noise_level': 92, 'drift_rate': 78},
-            'imu': {'overall_quality': 88, 'noise_level': 85, 'drift_rate': 95},
-            'camera': {'overall_quality': 90, 'noise_level': 88, 'drift_rate': 100},
-            'battery': {'overall_quality': 95, 'noise_level': 98, 'drift_rate': 90}
+            "gps": {"overall_quality": 85, "noise_level": 92, "drift_rate": 78},
+            "imu": {"overall_quality": 88, "noise_level": 85, "drift_rate": 95},
+            "camera": {"overall_quality": 90, "noise_level": 88, "drift_rate": 100},
+            "battery": {"overall_quality": 95, "noise_level": 98, "drift_rate": 90},
         }
 
     def _analyze_noise(self, messages: List) -> float:
@@ -408,7 +448,7 @@ class SensorDataQualityAnalyzer:
         # Extract numeric values (simplified - adapt per sensor type)
         values = []
         for msg in messages:
-            if hasattr(msg, 'data'):
+            if hasattr(msg, "data"):
                 values.extend(msg.data if isinstance(msg.data, list) else [msg.data])
 
         if len(values) < 20:
@@ -446,7 +486,7 @@ class SensorHealthDashboard(Node):
     """Real-time sensor health dashboard."""
 
     def __init__(self):
-        super().__init__('sensor_health_dashboard')
+        super().__init__("sensor_health_dashboard")
 
         # Initialize validators
         self.topic_validator = SensorHealthValidator(self)
@@ -456,12 +496,13 @@ class SensorHealthDashboard(Node):
 
         # ROS2 publishers
         self.health_publisher = self.create_publisher(
-            HealthStatus, '/sensor_health/status', 10
+            HealthStatus, "/sensor_health/status", 10
         )
 
         from std_msgs.msg import String
+
         self.alert_publisher = self.create_publisher(
-            String, '/sensor_health/alerts', 10
+            String, "/sensor_health/alerts", 10
         )
 
         # Monitoring timer
@@ -483,35 +524,43 @@ class SensorHealthDashboard(Node):
         # Run all health checks
         try:
             # Topic monitoring validation
-            sensor_topics = ['/gps/fix', '/imu/data', '/battery/status']
+            sensor_topics = ["/gps/fix", "/imu/data", "/battery/status"]
             for topic in sensor_topics:
                 health = self.topic_validator.validate_sensor_health(topic)
                 overall_health.values.append(
-                    KeyValue(key=f"{topic}_health", value=str(health['status']))
+                    KeyValue(key=f"{topic}_health", value=str(health["status"]))
                 )
 
-                if health['status'] in ['error', 'critical']:
+                if health["status"] in ["error", "critical"]:
                     alerts.append(f"SENSOR ALERT: {topic} - {health['message']}")
 
             # Cross-topic correlation
             correlations = self.cross_validator.check_all_correlations()
             for check_name, result in correlations.items():
                 overall_health.values.append(
-                    KeyValue(key=f"correlation_{check_name}", value=str(result['status']))
+                    KeyValue(
+                        key=f"correlation_{check_name}", value=str(result["status"])
+                    )
                 )
 
             # Hardware interface probing
             interfaces = self.interface_prober.probe_hardware_interfaces()
             for interface_name, devices in interfaces.items():
                 overall_health.values.append(
-                    KeyValue(key=f"interface_{interface_name}_devices", value=str(len(devices)))
+                    KeyValue(
+                        key=f"interface_{interface_name}_devices",
+                        value=str(len(devices)),
+                    )
                 )
 
             # Sensor data quality
             qualities = self.quality_analyzer.analyze_all_sensors()
             for sensor_name, quality in qualities.items():
                 overall_health.values.append(
-                    KeyValue(key=f"quality_{sensor_name}", value=str(quality.get('overall_quality', 0)))
+                    KeyValue(
+                        key=f"quality_{sensor_name}",
+                        value=str(quality.get("overall_quality", 0)),
+                    )
                 )
 
         except Exception as e:

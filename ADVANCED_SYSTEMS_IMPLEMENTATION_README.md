@@ -45,9 +45,11 @@ These systems work together to provide **ultra-high availability** and **fault t
 ## 🔄 State Synchronization System
 
 ### Purpose
+
 Ensures consistent state across all ROS2 bridges using master-slave replication with automatic failover.
 
 ### Key Features
+
 - **Master-Slave Replication**: One master node, multiple slave nodes
 - **Automatic Failover**: Election-based master selection
 - **Conflict Resolution**: Timestamp and version-based conflict resolution
@@ -56,6 +58,7 @@ Ensures consistent state across all ROS2 bridges using master-slave replication 
 ### Implementation Details
 
 #### Core Classes
+
 ```python
 class DistributedStateManager:
     def update_state(self, key: str, value: Any) -> bool
@@ -65,6 +68,7 @@ class DistributedStateManager:
 ```
 
 #### State Entry Structure
+
 ```python
 @dataclass
 class StateEntry:
@@ -78,11 +82,13 @@ class StateEntry:
 ```
 
 #### Integration Points
+
 - **Competition Bridge**: Publishes telemetry state (battery, system_health, emergency_stop)
 - **Secondary/Tertiary Bridges**: Receive and apply state updates
 - **Automatic Sync**: State changes propagate immediately to all nodes
 
 ### Testing Results
+
 ```
 🔍 STATE SYNC Results:
    • State Updates: ✅ Working
@@ -94,9 +100,11 @@ class StateEntry:
 ## 🔗 DDS Domain Redundancy System
 
 ### Purpose
+
 Provides ROS2 DDS domain failover capability to survive DDS middleware failures and network partitioning.
 
 ### Key Features
+
 - **Multi-Domain Setup**: Primary (42), Backup (43), Emergency (44) domains
 - **Automatic Failover**: Health monitoring with automatic domain switching
 - **Node Lifecycle Management**: Automatic restart of nodes in new domains
@@ -105,6 +113,7 @@ Provides ROS2 DDS domain failover capability to survive DDS middleware failures 
 ### Implementation Details
 
 #### Core Classes
+
 ```python
 class DDSDomainRedundancyManager:
     def register_node(self, node_name: str, restart_command: str)
@@ -114,6 +123,7 @@ class DDSDomainRedundancyManager:
 ```
 
 #### Domain Configuration
+
 ```python
 @dataclass
 class DDSDomain:
@@ -126,11 +136,13 @@ class DDSDomain:
 ```
 
 #### Integration Points
+
 - **ROS_DOMAIN_ID Environment**: Automatically managed during failover
 - **Node Restart Logic**: Graceful shutdown and restart in new domain
 - **Health Monitoring**: Tests DDS accessibility every 5 seconds
 
 ### Testing Results
+
 ```
 🔍 DDS DOMAIN Results:
    • Domains Configured: ✅ 3 domains (42, 43, 44)
@@ -141,9 +153,11 @@ class DDSDomain:
 ## ⚙️ Dynamic Configuration System
 
 ### Purpose
+
 Enables runtime parameter updates for ROS2 nodes without requiring restarts.
 
 ### Key Features
+
 - **Runtime Updates**: Change parameters while system is running
 - **Configuration Versioning**: Track all configuration changes
 - **Rollback Capability**: Instantly revert to previous configurations
@@ -152,6 +166,7 @@ Enables runtime parameter updates for ROS2 nodes without requiring restarts.
 ### Implementation Details
 
 #### Core Classes
+
 ```python
 class DynamicConfigManager:
     def update_node_config(self, node_name: str, param_name: str, value: Any)
@@ -161,6 +176,7 @@ class DynamicConfigManager:
 ```
 
 #### Configuration Snapshot
+
 ```python
 @dataclass
 class ConfigSnapshot:
@@ -172,12 +188,14 @@ class ConfigSnapshot:
 ```
 
 #### Integration Points
+
 - **Competition Bridge**: telemetry_rate_hz, websocket_port, max_clients
 - **Secondary Bridge**: update_rate_hz, max_clients
 - **Tertiary Bridge**: update_rate_hz, max_clients
 - **Validation**: Type checking, range validation, dependency checking
 
 ### Testing Results
+
 ```
 🔍 DYNAMIC CONFIG Results:
    • Single Updates: ✅ Working
@@ -191,11 +209,13 @@ class ConfigSnapshot:
 The existing WebSocket redundancy system has been enhanced to work with the new advanced systems:
 
 ### Enhanced Features
+
 - **State-Aware Failover**: WebSocket clients maintain state during failover
 - **Configuration Persistence**: Dynamic config changes survive failovers
 - **Domain Awareness**: WebSocket endpoints adapt to DDS domain changes
 
 ### Bridge Hierarchy
+
 ```
 Primary Bridge (Port 8080):
   - Full telemetry scope
@@ -216,6 +236,7 @@ Tertiary Bridge (Port 8082):
 ## 🧪 Testing & Validation
 
 ### Logic Testing Results
+
 ```
 📊 Test Summary:
    • Tests Run: 4 system categories
@@ -227,12 +248,14 @@ Tertiary Bridge (Port 8082):
 ```
 
 ### Test Coverage
+
 - ✅ **State Synchronization**: Master-slave replication, failover, conflict resolution
 - ✅ **DDS Domain Redundancy**: Multi-domain setup, health monitoring, failover
 - ✅ **Dynamic Configuration**: Runtime updates, versioning, rollback
 - ✅ **System Integration**: Cross-system compatibility, no conflicts
 
 ### Performance Characteristics
+
 - **State Sync Latency**: < 100ms for state propagation
 - **Config Update Time**: < 50ms for parameter changes
 - **Domain Failover Time**: < 5 seconds for complete transition
@@ -241,6 +264,7 @@ Tertiary Bridge (Port 8082):
 ## 🚀 Deployment & Usage
 
 ### ROS2 Launch Integration
+
 ```xml
 <!-- Advanced systems enabled by default -->
 <arg name="enable_state_sync" default="true"/>
@@ -257,6 +281,7 @@ Tertiary Bridge (Port 8082):
 ```
 
 ### Runtime Monitoring
+
 ```bash
 # Check system status
 ros2 service call /state_sync/status std_srvs/srv/Trigger
@@ -265,6 +290,7 @@ ros2 service call /dynamic_config/status std_srvs/srv/Trigger
 ```
 
 ### Configuration Updates
+
 ```bash
 # Update telemetry rate dynamically
 ros2 param set /competition_bridge telemetry_rate_hz 15.0
@@ -276,6 +302,7 @@ ros2 param set /competition_bridge telemetry_rate_hz 15.0
 ## 🔧 Configuration Parameters
 
 ### Competition Bridge
+
 ```yaml
 competition_bridge:
   # WebSocket settings
@@ -293,38 +320,52 @@ competition_bridge:
 ```
 
 ### Secondary Bridge
+
 ```yaml
 secondary_bridge:
   websocket_port: 8081
   max_clients: 25
   update_rate_hz: 2.0
-  telemetry_scope: [timestamp, battery_level, system_health, position, velocity, emergency_stop]
+  telemetry_scope:
+    [
+      timestamp,
+      battery_level,
+      system_health,
+      position,
+      velocity,
+      emergency_stop,
+    ]
 ```
 
 ### Tertiary Bridge
+
 ```yaml
 tertiary_bridge:
   websocket_port: 8082
   max_clients: 10
   update_rate_hz: 1.0
-  telemetry_scope: [timestamp, battery_level, emergency_stop, system_health, critical_errors]
+  telemetry_scope:
+    [timestamp, battery_level, emergency_stop, system_health, critical_errors]
 ```
 
 ## 📈 Benefits Achieved
 
 ### Fault Tolerance
+
 - **WebSocket Redundancy**: 3-tier redundancy (Primary/Secondary/Tertiary)
 - **State Synchronization**: No state loss during failovers
 - **DDS Domain Redundancy**: Survives network partitioning
 - **Dynamic Configuration**: Runtime adaptation without downtime
 
 ### Performance
+
 - **Zero Downtime Updates**: Configuration changes without restarts
 - **Sub-100ms State Sync**: Real-time state consistency
 - **Automatic Failover**: < 5 second recovery time
 - **Minimal Overhead**: < 2% CPU and memory impact
 
 ### Maintainability
+
 - **Modular Design**: Each system can be enabled/disabled independently
 - **Comprehensive Testing**: 100% logic test coverage
 - **Clear APIs**: Well-documented interfaces for integration
@@ -333,12 +374,14 @@ tertiary_bridge:
 ## 🔮 Future Enhancements
 
 ### Potential Improvements
+
 1. **Blockchain-Style Consensus**: Byzantine fault tolerance for state
 2. **AI-Driven Anomaly Detection**: Predictive failure detection
 3. **Multi-Rover Coordination**: Geographic distribution across teams
 4. **Hardware-Level Redundancy**: CAN bus, power supply, compute unit failover
 
 ### Research Areas
+
 - **Quantum-Resistant Security**: Post-quantum cryptography for comms
 - **Edge Computing**: AI inference at the network edge
 - **Self-Healing Systems**: Automatic system repair and optimization
@@ -347,16 +390,19 @@ tertiary_bridge:
 ## 📚 Files Created/Modified
 
 ### New Core Systems
+
 - `src/core/state_synchronization_manager.py` - Distributed state management
 - `src/core/dds_domain_redundancy_manager.py` - DDS domain failover
 - `src/core/dynamic_config_manager.py` - Runtime configuration
 
 ### Bridge Enhancements
+
 - `src/bridges/competition_bridge.py` - Integrated all advanced systems
 - `src/bridges/secondary_websocket_bridge.py` - Secondary endpoint
 - `src/bridges/tertiary_websocket_bridge.py` - Tertiary/emergency endpoint
 
 ### Testing & Validation
+
 - `test_advanced_systems_logic_only.py` - Comprehensive logic testing
 - `test_advanced_systems_integration.py` - Full integration testing
 - `ADVANCED_SYSTEMS_IMPLEMENTATION_README.md` - This documentation

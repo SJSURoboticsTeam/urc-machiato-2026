@@ -12,18 +12,19 @@ Tests real ROS2 services under simulated network conditions:
 Author: URC 2026 Autonomy Team
 """
 
-import unittest
 import asyncio
-import time
 import json
 import threading
-from typing import Dict, List, Any, Optional
+import time
+import unittest
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-from std_msgs.msg import String
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import BatteryState, NavSatFix
-import numpy as np
+from std_msgs.msg import String
 
 # Import simulation components
 from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
@@ -38,16 +39,16 @@ class NetworkIntegrationTest(unittest.TestCase):
         """Set up ROS2 environment and test infrastructure."""
         if not rclpy.ok():
             rclpy.init(args=[])
-        cls.node = Node('network_integration_test')
+        cls.node = Node("network_integration_test")
 
         # Test configuration
         cls.test_duration = 30  # seconds
-        cls.message_rate = 50   # Hz
+        cls.message_rate = 50  # Hz
         cls.network_profiles = [
             NetworkProfile.PERFECT,
             NetworkProfile.RURAL_WIFI,
             NetworkProfile.CELLULAR_4G,
-            NetworkProfile.SATELLITE
+            NetworkProfile.SATELLITE,
         ]
 
     @classmethod
@@ -88,7 +89,11 @@ class NetworkIntegrationTest(unittest.TestCase):
 
         results = {}
 
-        for profile in [NetworkProfile.RURAL_WIFI, NetworkProfile.CELLULAR_4G, NetworkProfile.SATELLITE]:
+        for profile in [
+            NetworkProfile.RURAL_WIFI,
+            NetworkProfile.CELLULAR_4G,
+            NetworkProfile.SATELLITE,
+        ]:
             print(f"  Testing emergency stops under {profile.value}...")
             result = self._test_emergency_stop_under_network_conditions(profile)
             results[profile.value] = result
@@ -123,10 +128,12 @@ class NetworkIntegrationTest(unittest.TestCase):
 
         self._analyze_telemetry_network_efficiency(results)
 
-    def _test_bridge_under_network_conditions(self, network_profile: NetworkProfile) -> Dict[str, Any]:
+    def _test_bridge_under_network_conditions(
+        self, network_profile: NetworkProfile
+    ) -> Dict[str, Any]:
         """Test competition bridge under specific network conditions."""
         # Initialize network emulator
-        network_config = {'profile': network_profile.value}
+        network_config = {"profile": network_profile.value}
         self.network_emulator = NetworkFactory.create(network_config)
         self.network_emulator.start()
 
@@ -161,28 +168,32 @@ class NetworkIntegrationTest(unittest.TestCase):
         network_stats = self.network_emulator.get_statistics()
 
         return {
-            'network_profile': network_profile.value,
-            'duration_seconds': duration,
-            'messages_sent': messages_sent,
-            'messages_received': messages_received,
-            'packet_loss_percent': network_stats['packet_loss_percent'],
-            'average_latency_ms': network_stats['average_latency_ms'],
-            'bridge_latency_ms': np.mean(latencies) if latencies else 0,
-            'throughput_msg_per_sec': messages_received / duration if duration > 0 else 0
+            "network_profile": network_profile.value,
+            "duration_seconds": duration,
+            "messages_sent": messages_sent,
+            "messages_received": messages_received,
+            "packet_loss_percent": network_stats["packet_loss_percent"],
+            "average_latency_ms": network_stats["average_latency_ms"],
+            "bridge_latency_ms": np.mean(latencies) if latencies else 0,
+            "throughput_msg_per_sec": messages_received / duration
+            if duration > 0
+            else 0,
         }
 
-    def _test_emergency_stop_under_network_conditions(self, network_profile: NetworkProfile) -> Dict[str, Any]:
+    def _test_emergency_stop_under_network_conditions(
+        self, network_profile: NetworkProfile
+    ) -> Dict[str, Any]:
         """Test emergency stop system under network conditions."""
         # Setup network emulation
-        network_config = {'profile': network_profile.value}
+        network_config = {"profile": network_profile.value}
         self.network_emulator = NetworkFactory.create(network_config)
         self.network_emulator.start()
 
         # Test emergency stop triggers
         emergency_triggers = [
-            {'level': 'soft_stop', 'reason': 'test_soft'},
-            {'level': 'hard_stop', 'reason': 'test_hard'},
-            {'level': 'emergency_shutdown', 'reason': 'test_emergency'}
+            {"level": "soft_stop", "reason": "test_soft"},
+            {"level": "hard_stop", "reason": "test_hard"},
+            {"level": "emergency_shutdown", "reason": "test_emergency"},
         ]
 
         results = []
@@ -201,39 +212,42 @@ class NetworkIntegrationTest(unittest.TestCase):
                 end_time = time.time()
                 latency = (end_time - start_time) * 1000
 
-                results.append({
-                    'trigger_level': trigger['level'],
-                    'success': True,
-                    'latency_ms': latency,
-                    'processing_delay_ms': processing_delay * 1000
-                })
+                results.append(
+                    {
+                        "trigger_level": trigger["level"],
+                        "success": True,
+                        "latency_ms": latency,
+                        "processing_delay_ms": processing_delay * 1000,
+                    }
+                )
             else:
-                results.append({
-                    'trigger_level': trigger['level'],
-                    'success': False,
-                    'latency_ms': 0,
-                    'processing_delay_ms': 0
-                })
+                results.append(
+                    {
+                        "trigger_level": trigger["level"],
+                        "success": False,
+                        "latency_ms": 0,
+                        "processing_delay_ms": 0,
+                    }
+                )
 
         return {
-            'network_profile': network_profile.value,
-            'emergency_triggers': results,
-            'success_rate': sum(1 for r in results if r['success']) / len(results),
-            'average_latency_ms': np.mean([r['latency_ms'] for r in results if r['success']])
+            "network_profile": network_profile.value,
+            "emergency_triggers": results,
+            "success_rate": sum(1 for r in results if r["success"]) / len(results),
+            "average_latency_ms": np.mean(
+                [r["latency_ms"] for r in results if r["success"]]
+            ),
         }
 
     def _test_redundancy_under_failure_conditions(self) -> Dict[str, Any]:
         """Test communication redundancy during network failures."""
         # Start with WebSocket primary
-        initial_channel = 'websocket'
+        initial_channel = "websocket"
 
         # Setup network with connection drops
         network_config = {
-            'profile': NetworkProfile.RURAL_WIFI.value,
-            'custom_latency': {
-                'base_ms': 100,
-                'jitter_ms': 50
-            }
+            "profile": NetworkProfile.RURAL_WIFI.value,
+            "custom_latency": {"base_ms": 100, "jitter_ms": 50},
         }
         self.network_emulator = NetworkFactory.create(network_config)
         self.network_emulator.start()
@@ -262,19 +276,19 @@ class NetworkIntegrationTest(unittest.TestCase):
             time.sleep(0.1)  # 10Hz message rate
 
         return {
-            'initial_channel': initial_channel,
-            'final_channel': 'ros2_direct' if failover_triggered else 'websocket',
-            'failover_triggered': failover_triggered,
-            'failover_time_seconds': failover_time,
-            'messages_sent': messages_sent,
-            'messages_failed': messages_failed,
-            'failure_rate': messages_failed / (messages_sent + messages_failed)
+            "initial_channel": initial_channel,
+            "final_channel": "ros2_direct" if failover_triggered else "websocket",
+            "failover_triggered": failover_triggered,
+            "failover_time_seconds": failover_time,
+            "messages_sent": messages_sent,
+            "messages_failed": messages_failed,
+            "failure_rate": messages_failed / (messages_sent + messages_failed),
         }
 
     def _test_health_monitoring_under_network_conditions(self) -> Dict[str, Any]:
         """Test service health monitoring under network stress."""
         # Setup network with latency and packet loss
-        network_config = {'profile': NetworkProfile.CELLULAR_4G.value}
+        network_config = {"profile": NetworkProfile.CELLULAR_4G.value}
         self.network_emulator = NetworkFactory.create(network_config)
         self.network_emulator.start()
 
@@ -298,33 +312,41 @@ class NetworkIntegrationTest(unittest.TestCase):
                 if success:
                     successful_checks += 1
 
-                health_checks.append({
-                    'check_id': i,
-                    'success': success,
-                    'latency_ms': (time.time() - start_time) * 1000,
-                    'response_delay_ms': response_delay * 1000
-                })
+                health_checks.append(
+                    {
+                        "check_id": i,
+                        "success": success,
+                        "latency_ms": (time.time() - start_time) * 1000,
+                        "response_delay_ms": response_delay * 1000,
+                    }
+                )
             else:
-                health_checks.append({
-                    'check_id': i,
-                    'success': False,
-                    'latency_ms': 0,
-                    'response_delay_ms': 0
-                })
+                health_checks.append(
+                    {
+                        "check_id": i,
+                        "success": False,
+                        "latency_ms": 0,
+                        "response_delay_ms": 0,
+                    }
+                )
 
         return {
-            'network_profile': NetworkProfile.CELLULAR_4G.value,
-            'total_checks': len(health_checks),
-            'successful_checks': successful_checks,
-            'success_rate': successful_checks / len(health_checks),
-            'average_latency_ms': np.mean([h['latency_ms'] for h in health_checks if h['success']]),
-            'health_checks': health_checks
+            "network_profile": NetworkProfile.CELLULAR_4G.value,
+            "total_checks": len(health_checks),
+            "successful_checks": successful_checks,
+            "success_rate": successful_checks / len(health_checks),
+            "average_latency_ms": np.mean(
+                [h["latency_ms"] for h in health_checks if h["success"]]
+            ),
+            "health_checks": health_checks,
         }
 
-    def _test_telemetry_under_bandwidth_constraints(self, network_profile: NetworkProfile) -> Dict[str, Any]:
+    def _test_telemetry_under_bandwidth_constraints(
+        self, network_profile: NetworkProfile
+    ) -> Dict[str, Any]:
         """Test telemetry streaming under bandwidth constraints."""
         # Setup network with bandwidth limits
-        network_config = {'profile': network_profile.value}
+        network_config = {"profile": network_profile.value}
         self.network_emulator = NetworkFactory.create(network_config)
         self.network_emulator.start()
 
@@ -336,7 +358,7 @@ class NetworkIntegrationTest(unittest.TestCase):
         total_data_bytes = 0
 
         for message in telemetry_messages:
-            message_size = len(json.dumps(message).encode('utf-8'))
+            message_size = len(json.dumps(message).encode("utf-8"))
             total_data_bytes += message_size
 
             if self.network_emulator.send_message(message):
@@ -348,12 +370,12 @@ class NetworkIntegrationTest(unittest.TestCase):
         data_rate_mbps = (total_data_bytes * 8) / (1024 * 1024 * duration)
 
         return {
-            'network_profile': network_profile.value,
-            'duration_seconds': duration,
-            'messages_sent': messages_sent,
-            'total_data_bytes': total_data_bytes,
-            'data_rate_mbps': data_rate_mbps,
-            'message_success_rate': messages_sent / len(telemetry_messages)
+            "network_profile": network_profile.value,
+            "duration_seconds": duration,
+            "messages_sent": messages_sent,
+            "total_data_bytes": total_data_bytes,
+            "data_rate_mbps": data_rate_mbps,
+            "message_success_rate": messages_sent / len(telemetry_messages),
         }
 
     def _generate_competition_bridge_messages(self, count: int) -> List[Dict[str, Any]]:
@@ -362,21 +384,21 @@ class NetworkIntegrationTest(unittest.TestCase):
 
         for i in range(count):
             message = {
-                'type': 'competition_data',
-                'sequence': i,
-                'timestamp': time.time(),
-                'data': {
-                    'battery_level': 80 + np.random.random() * 20,
-                    'gps': {
-                        'lat': 35.0 + np.random.normal(0, 0.001),
-                        'lon': -120.0 + np.random.normal(0, 0.001),
-                        'alt': 100 + np.random.normal(0, 10)
+                "type": "competition_data",
+                "sequence": i,
+                "timestamp": time.time(),
+                "data": {
+                    "battery_level": 80 + np.random.random() * 20,
+                    "gps": {
+                        "lat": 35.0 + np.random.normal(0, 0.001),
+                        "lon": -120.0 + np.random.normal(0, 0.001),
+                        "alt": 100 + np.random.normal(0, 10),
                     },
-                    'imu': {
-                        'accel': [np.random.normal(0, 0.1) for _ in range(3)],
-                        'gyro': [np.random.normal(0, 0.1) for _ in range(3)]
-                    }
-                }
+                    "imu": {
+                        "accel": [np.random.normal(0, 0.1) for _ in range(3)],
+                        "gyro": [np.random.normal(0, 0.1) for _ in range(3)],
+                    },
+                },
             }
             messages.append(message)
 
@@ -388,23 +410,23 @@ class NetworkIntegrationTest(unittest.TestCase):
 
         for i in range(count):
             message = {
-                'type': 'telemetry',
-                'sequence': i,
-                'timestamp': time.time(),
-                'system': {
-                    'cpu_usage': np.random.random() * 100,
-                    'memory_usage': np.random.random() * 100,
-                    'temperature': 40 + np.random.random() * 20
+                "type": "telemetry",
+                "sequence": i,
+                "timestamp": time.time(),
+                "system": {
+                    "cpu_usage": np.random.random() * 100,
+                    "memory_usage": np.random.random() * 100,
+                    "temperature": 40 + np.random.random() * 20,
                 },
-                'sensors': {
-                    'imu_ok': np.random.choice([True, False], p=[0.95, 0.05]),
-                    'gps_ok': np.random.choice([True, False], p=[0.98, 0.02]),
-                    'camera_ok': np.random.choice([True, False], p=[0.90, 0.10])
+                "sensors": {
+                    "imu_ok": np.random.choice([True, False], p=[0.95, 0.05]),
+                    "gps_ok": np.random.choice([True, False], p=[0.98, 0.02]),
+                    "camera_ok": np.random.choice([True, False], p=[0.90, 0.10]),
                 },
-                'mission': {
-                    'progress': np.random.random() * 100,
-                    'waypoints_completed': np.random.randint(0, 10)
-                }
+                "mission": {
+                    "progress": np.random.random() * 100,
+                    "waypoints_completed": np.random.randint(0, 10),
+                },
             }
             messages.append(message)
 
@@ -416,20 +438,26 @@ class NetworkIntegrationTest(unittest.TestCase):
         print("-" * 60)
 
         for profile, result in results.items():
-            success_rate = result['messages_received'] / result['messages_sent'] if result['messages_sent'] > 0 else 0
+            success_rate = (
+                result["messages_received"] / result["messages_sent"]
+                if result["messages_sent"] > 0
+                else 0
+            )
             print(f"{profile}:")
             print(".1f")
             print(".1f")
             print(".1f")
 
         # Verify minimum performance standards
-        rural_result = results.get('rural_wifi', {})
-        if rural_result.get('bridge_latency_ms', float('inf')) > 500:
+        rural_result = results.get("rural_wifi", {})
+        if rural_result.get("bridge_latency_ms", float("inf")) > 500:
             self.fail("Competition bridge latency too high under rural WiFi conditions")
 
-        cellular_result = results.get('cellular_4g', {})
-        if cellular_result.get('packet_loss_percent', 100) > 10:
-            self.fail("Competition bridge packet loss too high under cellular conditions")
+        cellular_result = results.get("cellular_4g", {})
+        if cellular_result.get("packet_loss_percent", 100) > 10:
+            self.fail(
+                "Competition bridge packet loss too high under cellular conditions"
+            )
 
     def _verify_emergency_stop_reliability(self, results: Dict[str, Any]):
         """Verify emergency stop system reliability."""
@@ -442,10 +470,12 @@ class NetworkIntegrationTest(unittest.TestCase):
             print(".1f")
 
             # Critical: Emergency stops must work even under poor network conditions
-            if result['success_rate'] < 0.95:  # 95% success rate required
-                self.fail(f"Emergency stop reliability too low under {profile} conditions")
+            if result["success_rate"] < 0.95:  # 95% success rate required
+                self.fail(
+                    f"Emergency stop reliability too low under {profile} conditions"
+                )
 
-            if result['average_latency_ms'] > 1000:  # 1 second max latency
+            if result["average_latency_ms"] > 1000:  # 1 second max latency
                 self.fail(f"Emergency stop latency too high under {profile} conditions")
 
     def _verify_redundancy_failover_performance(self, result: Dict[str, Any]):
@@ -457,8 +487,8 @@ class NetworkIntegrationTest(unittest.TestCase):
         print(".1f")
 
         # Verify failover works within acceptable time
-        if result['failover_triggered']:
-            if result['failover_time_seconds'] > 30:  # 30 seconds max failover time
+        if result["failover_triggered"]:
+            if result["failover_time_seconds"] > 30:  # 30 seconds max failover time
                 self.fail("Communication failover too slow")
         else:
             self.fail("Communication failover not triggered under failure conditions")
@@ -472,7 +502,7 @@ class NetworkIntegrationTest(unittest.TestCase):
         print(".1f")
 
         # Health monitoring should be reliable even under poor network
-        if result['success_rate'] < 0.8:  # 80% success rate minimum
+        if result["success_rate"] < 0.8:  # 80% success rate minimum
             self.fail("Health monitoring too unreliable under network stress")
 
     def _analyze_telemetry_network_efficiency(self, results: Dict[str, Any]):
@@ -487,15 +517,14 @@ class NetworkIntegrationTest(unittest.TestCase):
             print(".1f")
 
         # Verify telemetry works within bandwidth constraints
-        rural_result = results.get('rural_wifi', {})
-        if rural_result.get('data_rate_mbps', float('inf')) > 20:  # Rural WiFi limit
+        rural_result = results.get("rural_wifi", {})
+        if rural_result.get("data_rate_mbps", float("inf")) > 20:  # Rural WiFi limit
             self.fail("Telemetry exceeds rural WiFi bandwidth limits")
 
-        cellular_result = results.get('cellular_4g', {})
-        if cellular_result.get('data_rate_mbps', float('inf')) > 10:  # 4G limit
+        cellular_result = results.get("cellular_4g", {})
+        if cellular_result.get("data_rate_mbps", float("inf")) > 10:  # 4G limit
             self.fail("Telemetry exceeds cellular bandwidth limits")
 
 
 if __name__ == "__main__":
     unittest.main()
-

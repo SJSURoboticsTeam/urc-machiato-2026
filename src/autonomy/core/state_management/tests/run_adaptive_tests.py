@@ -12,16 +12,16 @@ Features:
 - CI/CD integration with JUnit XML output
 """
 
+import argparse
+import json
+import os
+import shutil
 import subprocess
 import sys
-import os
-import argparse
 import time
-import json
-from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-import shutil
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class AdaptiveTestRunner:
@@ -363,14 +363,14 @@ exec {" ".join(cmd)}
         for test_name, passed in test_results:
             status = "[SUCCESS] PASSED" if passed else "[ERROR] FAILED"
         self.get_logger().info("25")
-            all_passed = all_passed and passed
+        all_passed = all_passed and passed
 
         overall_status = "[SUCCESS] ALL TESTS PASSED" if all_passed else "[ERROR] SOME TESTS FAILED"
         self.get_logger().info(f"\n[TARGET] Overall Result: {overall_status}")
         # Show report location
         report_path = self.reports_dir / "test_summary.html"
         if report_path.exists():
-        self.get_logger().info(f"📄 Detailed report: {report_path}")
+            self.get_logger().info(f"📄 Detailed report: {report_path}")
         return all_passed
 
     def _generate_comprehensive_report(self, test_results: List[tuple]):
@@ -406,6 +406,7 @@ exec {" ".join(cmd)}
         """Get system information for reporting."""
         try:
             import platform
+
             import psutil
 
             return {

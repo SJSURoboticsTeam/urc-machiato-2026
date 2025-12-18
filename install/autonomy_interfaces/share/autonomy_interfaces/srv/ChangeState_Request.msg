@@ -8,4 +8,3 @@ string reason                    # Human-readable reason for state change
 string operator_id               # ID of operator/system requesting change
 bool force                       # If true, skip some validation checks (use with caution)
 string[] metadata                # Additional key=value metadata pairs
-

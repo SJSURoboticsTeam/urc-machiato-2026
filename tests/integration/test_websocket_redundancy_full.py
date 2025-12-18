@@ -11,13 +11,13 @@ Usage:
 Author: URC 2026 Autonomy Team
 """
 
-import subprocess
-import time
-import threading
-import signal
-import sys
 import os
-from typing import List, Dict, Any
+import signal
+import subprocess
+import sys
+import threading
+import time
+from typing import Any, Dict, List
 
 
 class RedundancyTestSuite:
@@ -211,8 +211,9 @@ class RedundancyTestSuite:
     def test_bridge_connectivity(self, ws_url: str) -> bool:
         """Test if a WebSocket endpoint is responding."""
         try:
-            import websockets
             import asyncio
+
+            import websockets
 
             async def test_connection():
                 try:
@@ -286,8 +287,8 @@ class RedundancyTestSuite:
 
         if 'performance' in self.test_results:
             perf = self.test_results['performance']
-            print("
-📊 Performance Impact:"            print(".1f"            print(".1f"            print(".1f"
+            print("Test completed successfully")
+Performance Impact:
         print("\n🎯 Reliability Improvements:")
         print("   • Zero-downtime failover (<1 second detection)")
         print("   • Progressive data degradation (full → state → safety → emergency)")

@@ -7,6 +7,7 @@ This document describes the complete competition-ready software system for URC 2
 The system now includes all critical URC competition components:
 
 ### **Hardware Integration Layer**
+
 - **Hardware Interface Node** (`src/autonomy/control/hardware_interface/`)
   - ROS2 ↔ STM32 CAN bus communication
   - Real-time motor control and telemetry
@@ -14,6 +15,7 @@ The system now includes all critical URC competition components:
   - Based on teleoperation system CAN protocols
 
 ### **Terrain Intelligence**
+
 - **Terrain Analyzer** (`src/autonomy/core/terrain_intelligence/`)
   - Real-time terrain classification (sand, rock, slope, hazard)
   - Traversability cost mapping for navigation
@@ -21,6 +23,7 @@ The system now includes all critical URC competition components:
   - Computer vision and point cloud processing
 
 ### **Competition Safety**
+
 - **Geofencing System** (`src/autonomy/core/safety_system/competition_safety/`)
   - GPS-based boundary enforcement
   - Competition area monitoring
@@ -28,6 +31,7 @@ The system now includes all critical URC competition components:
   - RViz visualization
 
 ### **Autonomous Missions**
+
 - **Keyboard Typing Mission** (`missions/autonomous_keyboard_mission.py`)
   - Computer vision keyboard detection
   - Autonomous navigation and positioning
@@ -41,6 +45,7 @@ The system now includes all critical URC competition components:
   - Science data integration
 
 ### **Competition Communication**
+
 - **Competition Bridge** (`src/bridges/competition_bridge.py`)
   - WebSocket telemetry streaming for judges
   - Real-time mission status and health monitoring
@@ -50,6 +55,7 @@ The system now includes all critical URC competition components:
 ## 🏁 Quick Start
 
 ### **1. Launch Competition System**
+
 ```bash
 # From project root
 cd /home/ubuntu/urc-machiato-2026
@@ -62,6 +68,7 @@ ros2 launch autonomy competition_system.launch.py
 ```
 
 ### **2. Start Dashboard**
+
 ```bash
 # In another terminal
 cd frontend
@@ -69,6 +76,7 @@ npm start
 ```
 
 ### **3. Connect Hardware**
+
 ```bash
 # Connect STM32 via CAN serial
 # The hardware interface will automatically detect and connect
@@ -80,6 +88,7 @@ npm start
 ### **ROS2 Topics**
 
 #### **Hardware Interface**
+
 ```
 /hardware/joint_states          # Motor positions/velocities
 /hardware/chassis_velocity      # Measured velocity
@@ -93,12 +102,14 @@ npm start
 ```
 
 #### **Terrain Intelligence**
+
 ```
 /terrain/traversability         # OccupancyGrid cost map
 /terrain/classification         # Classified terrain image
 ```
 
 #### **Competition Safety**
+
 ```
 /safety/boundary_violation      # Boundary violation alerts
 /safety/alert                   # Safety alerts
@@ -106,6 +117,7 @@ npm start
 ```
 
 #### **Mission Control**
+
 ```
 /mission/commands               # Mission commands
 /mission/status                 # General mission status
@@ -114,12 +126,14 @@ npm start
 ```
 
 #### **Competition Bridge**
+
 ```
 /competition/telemetry          # WebSocket telemetry data
 /competition/commands           # Operator commands
 ```
 
 ### **WebSocket Interface**
+
 - **Port:** 8080
 - **Protocol:** JSON messages
 - **Endpoints:**
@@ -131,6 +145,7 @@ npm start
 ## 🎯 Mission Execution
 
 ### **Autonomous Keyboard Typing**
+
 ```bash
 # Start keyboard mission
 ros2 topic pub /mission/keyboard_command std_msgs/String "data: 'start'"
@@ -143,6 +158,7 @@ ros2 topic pub /mission/keyboard_command std_msgs/String "data: 'start'"
 ```
 
 ### **Sample Collection**
+
 ```bash
 # Start sample collection
 ros2 topic pub /mission/sample_collection_command std_msgs/String "data: 'start'"
@@ -152,6 +168,7 @@ ros2 topic pub /mission/sample_collection_command std_msgs/String "data: 'collec
 ```
 
 ### **Emergency Controls**
+
 ```bash
 # Emergency stop
 ros2 topic pub /emergency_stop std_msgs/Bool "data: true"
@@ -165,7 +182,9 @@ ros2 topic pub /emergency_stop std_msgs/Bool "data: true"
 ## 🔧 Configuration
 
 ### **Competition Boundaries**
+
 Create `config/competition_boundary.json`:
+
 ```json
 {
   "competition_boundary": [
@@ -190,6 +209,7 @@ Create `config/competition_boundary.json`:
 ```
 
 ### **Hardware Interface**
+
 ```yaml
 hardware_interface:
   can_port: "/dev/ttyACM0"
@@ -199,6 +219,7 @@ hardware_interface:
 ```
 
 ### **Competition Bridge**
+
 ```yaml
 competition_bridge:
   websocket_port: 8080
@@ -211,13 +232,16 @@ competition_bridge:
 ## 📊 Monitoring & Telemetry
 
 ### **Web Dashboard**
+
 - Real-time system status
 - Mission progress tracking
 - Sensor data visualization
 - Emergency controls
 
 ### **WebSocket Telemetry**
+
 Connect to `ws://localhost:8080` for real-time data:
+
 ```json
 {
   "timestamp": 1640995200.0,
@@ -225,13 +249,14 @@ Connect to `ws://localhost:8080` for real-time data:
   "current_mission": "sample_collection",
   "samples_collected": 3,
   "battery_level": 85.0,
-  "gps_position": {"lat": 33.05, "lon": -117.05},
+  "gps_position": { "lat": 33.05, "lon": -117.05 },
   "emergency_stop": false,
   "boundary_violation": false
 }
 ```
 
 ### **ROS2 Monitoring**
+
 ```bash
 # System status
 ros2 topic echo /hardware/system_status
@@ -246,6 +271,7 @@ ros2 topic echo /safety/alert
 ## 🧪 Testing
 
 ### **Hardware-in-the-Loop Testing**
+
 ```bash
 # Start simulation with hardware interface mock
 ros2 launch autonomy competition_system.launch.py use_mock_hardware:=true
@@ -255,6 +281,7 @@ python3 tests/competition/test_competition_scenario.py
 ```
 
 ### **Integration Testing**
+
 ```bash
 # Test full mission execution
 python3 test_end_to_end_integration.py
@@ -264,6 +291,7 @@ python3 tests/competition/test_emergency_stop_system.py
 ```
 
 ### **Performance Testing**
+
 ```bash
 # Competition load testing
 python3 tests/performance/competition_performance_profiler.py
@@ -275,6 +303,7 @@ python3 tests/performance/test_latency_measurement.py
 ## 🔒 Safety Features
 
 ### **Multi-Layer Safety**
+
 1. **Hardware E-stop** - Physical emergency stop buttons
 2. **Software E-stop** - ROS2 topic-based emergency stop
 3. **Geofencing** - GPS boundary enforcement
@@ -282,6 +311,7 @@ python3 tests/performance/test_latency_measurement.py
 5. **Mission Safety** - Automatic mission abort on anomalies
 
 ### **Safety Monitoring**
+
 - Real-time health monitoring
 - Automatic fault detection
 - Redundant safety systems
@@ -290,6 +320,7 @@ python3 tests/performance/test_latency_measurement.py
 ## 📋 Competition Checklist
 
 ### **Pre-Competition Validation**
+
 - [ ] Hardware interface connected and tested
 - [ ] CAN communication verified
 - [ ] GPS boundaries configured
@@ -300,6 +331,7 @@ python3 tests/performance/test_latency_measurement.py
 - [ ] Sample collection system ready
 
 ### **During Competition**
+
 - [ ] Telemetry streaming to judges
 - [ ] Real-time mission monitoring
 - [ ] Safety systems active
@@ -309,6 +341,7 @@ python3 tests/performance/test_latency_measurement.py
 ## 🚨 Troubleshooting
 
 ### **Hardware Connection Issues**
+
 ```bash
 # Check CAN serial connection
 dmesg | grep ttyACM
@@ -318,6 +351,7 @@ ros2 topic echo /hardware/system_status
 ```
 
 ### **WebSocket Connection**
+
 ```bash
 # Check WebSocket server
 netstat -tlnp | grep 8080
@@ -327,6 +361,7 @@ websocat ws://localhost:8080
 ```
 
 ### **Mission Execution**
+
 ```bash
 # Check mission status
 ros2 topic echo /mission/status
@@ -347,6 +382,7 @@ ros2 node info /autonomous_keyboard_mission
 ## 🤝 Integration with Vendor Systems
 
 The system integrates with:
+
 - **Control Systems:** STM32 motor controllers via CAN
 - **Teleoperation:** WebSocket command interface
 - **Science Payload:** Excavation and caching systems

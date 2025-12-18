@@ -10,4 +10,3 @@ string operator_id              # ID of operator triggering software ESTOP
 string reason                   # Reason for triggering software ESTOP
 bool acknowledge_criticality    # Operator acknowledges this is critical action
 bool force_immediate            # Force immediate shutdown (no coordination)
-

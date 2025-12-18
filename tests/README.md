@@ -16,11 +16,13 @@ This project follows a **three-layer testing pyramid** - the industry standard f
 ## 🚀 Quick Commands
 
 ### Run Complete Testing Pyramid
+
 ```bash
 python3 test_everything.py
 ```
 
 ### Run Individual Test Suites
+
 ```bash
 python3 tests/run_tests.py --unit        # Unit tests (~5 minutes)
 python3 tests/run_tests.py --integration # Integration tests (~20 minutes)
@@ -30,11 +32,11 @@ python3 tests/run_tests.py --performance # Performance tests (~10 minutes)
 
 ## 📊 What Each Layer Tests
 
-| Layer | Purpose | Duration | Files | Tests |
-|-------|---------|----------|-------|-------|
-| **Unit** | Individual components with mocks | 2-5 min | 11 | ~400 |
-| **Integration** | Component interactions | 10-30 min | 28 | ~200 |
-| **Simulation** | System under real conditions | 15-60 min | 1 | 18 |
+| Layer           | Purpose                          | Duration  | Files | Tests |
+| --------------- | -------------------------------- | --------- | ----- | ----- |
+| **Unit**        | Individual components with mocks | 2-5 min   | 11    | ~400  |
+| **Integration** | Component interactions           | 10-30 min | 28    | ~200  |
+| **Simulation**  | System under real conditions     | 15-60 min | 1     | 18    |
 
 ## 🎯 When to Run Each Layer
 

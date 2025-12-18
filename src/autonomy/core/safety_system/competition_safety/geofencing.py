@@ -12,22 +12,24 @@ Features:
 - Competition area definitions and restrictions
 """
 
+import json
+import math
+import os
+import sys
+from typing import List, Optional, Tuple
+
 import rclpy
+from geometry_msgs.msg import Point, Point32, PolygonStamped
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
-from geometry_msgs.msg import Point, PolygonStamped, Point32
 from std_msgs.msg import Bool, String
 from visualization_msgs.msg import Marker
-import math
-import json
-import sys
-import os
-from typing import List, Tuple, Optional
 
 # Import direct CAN safety
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 try:
     from direct_can_safety import DirectCANSafety
+
     DIRECT_CAN_AVAILABLE = True
 except ImportError:
     DIRECT_CAN_AVAILABLE = False
@@ -43,29 +45,37 @@ class CompetitionGeofencing(Node):
     """
 
     def __init__(self):
-        super().__init__('competition_geofencing')
+        super().__init__("competition_geofencing")
 
         # Declare parameters
-        self.declare_parameter('competition_boundary_file', 'config/competition_boundary.json')
-        self.declare_parameter('geofence_check_rate', 1.0)  # Hz
-        self.declare_parameter('boundary_violation_timeout', 5.0)  # seconds
-        self.declare_parameter('emergency_stop_on_violation', True)
-        self.declare_parameter('can_port', '/dev/ttyACM0')
+        self.declare_parameter(
+            "competition_boundary_file", "config/competition_boundary.json"
+        )
+        self.declare_parameter("geofence_check_rate", 1.0)  # Hz
+        self.declare_parameter("boundary_violation_timeout", 5.0)  # seconds
+        self.declare_parameter("emergency_stop_on_violation", True)
+        self.declare_parameter("can_port", "/dev/ttyACM0")
 
         # Get parameters
-        self.boundary_file = self.get_parameter('competition_boundary_file').value
-        self.check_rate = self.get_parameter('geofence_check_rate').value
-        self.violation_timeout = self.get_parameter('boundary_violation_timeout').value
-        self.emergency_stop_enabled = self.get_parameter('emergency_stop_on_violation').value
-        can_port = self.get_parameter('can_port').value
+        self.boundary_file = self.get_parameter("competition_boundary_file").value
+        self.check_rate = self.get_parameter("geofence_check_rate").value
+        self.violation_timeout = self.get_parameter("boundary_violation_timeout").value
+        self.emergency_stop_enabled = self.get_parameter(
+            "emergency_stop_on_violation"
+        ).value
+        can_port = self.get_parameter("can_port").value
 
         # Initialize direct CAN safety for immediate hardware response
         try:
             self.direct_can_safety = DirectCANSafety(can_port=can_port)
             if self.direct_can_safety.is_connected():
-                self.get_logger().info("Direct CAN safety connected for emergency stops")
+                self.get_logger().info(
+                    "Direct CAN safety connected for emergency stops"
+                )
             else:
-                self.get_logger().warn("Direct CAN safety not connected - using ROS2 only")
+                self.get_logger().warn(
+                    "Direct CAN safety not connected - using ROS2 only"
+                )
                 self.direct_can_safety = None
         except Exception as e:
             self.get_logger().warn(f"Failed to initialize direct CAN safety: {e}")
@@ -73,25 +83,26 @@ class CompetitionGeofencing(Node):
 
         # GPS subscriber
         self.gps_sub = self.create_subscription(
-            NavSatFix, '/gps/fix', self.gps_callback, 10)
+            NavSatFix, "/gps/fix", self.gps_callback, 10
+        )
 
         # Publishers
         self.violation_pub = self.create_publisher(
-            Bool, '/safety/boundary_violation', 10)
+            Bool, "/safety/boundary_violation", 10
+        )
 
-        self.alert_pub = self.create_publisher(
-            String, '/safety/alert', 10)
+        self.alert_pub = self.create_publisher(String, "/safety/alert", 10)
 
         self.boundary_viz_pub = self.create_publisher(
-            Marker, '/safety/boundary_visualization', 10)
+            Marker, "/safety/boundary_visualization", 10
+        )
 
         # Emergency stop publisher
-        self.emergency_stop_pub = self.create_publisher(
-            Bool, '/emergency_stop', 10)
+        self.emergency_stop_pub = self.create_publisher(Bool, "/emergency_stop", 10)
 
         # Boundary data
         self.competition_boundary = []  # List of (lat, lon) tuples
-        self.geofenced_zones = []       # List of restricted areas
+        self.geofenced_zones = []  # List of restricted areas
         self.current_position = None
         self.boundary_violation = False
         self.violation_start_time = None
@@ -106,26 +117,30 @@ class CompetitionGeofencing(Node):
         self.create_timer(5.0, self.publish_boundary_visualization)
 
         self.get_logger().info("Competition Geofencing initialized")
-        self.get_logger().info(f"Competition boundary loaded with {len(self.competition_boundary)} points")
+        self.get_logger().info(
+            f"Competition boundary loaded with {len(self.competition_boundary)} points"
+        )
 
     def load_competition_boundaries(self):
         """Load competition boundary and geofenced zones from configuration."""
         try:
             # Try to load from parameter file
-            with open(self.boundary_file, 'r') as f:
+            with open(self.boundary_file, "r") as f:
                 boundary_data = json.load(f)
 
             # Load competition boundary
-            if 'competition_boundary' in boundary_data:
-                self.competition_boundary = boundary_data['competition_boundary']
+            if "competition_boundary" in boundary_data:
+                self.competition_boundary = boundary_data["competition_boundary"]
 
             # Load geofenced zones
-            if 'geofenced_zones' in boundary_data:
-                self.geofenced_zones = boundary_data['geofenced_zones']
+            if "geofenced_zones" in boundary_data:
+                self.geofenced_zones = boundary_data["geofenced_zones"]
 
         except FileNotFoundError:
             # Use default URC-style boundaries if file not found
-            self.get_logger().warn(f"Boundary file {self.boundary_file} not found, using defaults")
+            self.get_logger().warn(
+                f"Boundary file {self.boundary_file} not found, using defaults"
+            )
             self.set_default_boundaries()
 
         except Exception as e:
@@ -136,23 +151,23 @@ class CompetitionGeofencing(Node):
         """Set default competition boundaries for testing."""
         # Default rectangular boundary (can be customized for actual URC site)
         self.competition_boundary = [
-            [33.0, -117.1],   # Southwest corner
-            [33.0, -117.0],   # Southeast corner
-            [33.1, -117.0],   # Northeast corner
-            [33.1, -117.1]    # Northwest corner
+            [33.0, -117.1],  # Southwest corner
+            [33.0, -117.0],  # Southeast corner
+            [33.1, -117.0],  # Northeast corner
+            [33.1, -117.1],  # Northwest corner
         ]
 
         # Default geofenced zones (lander area, spectator areas, etc.)
         self.geofenced_zones = [
             {
-                'name': 'lander_area',
-                'boundary': [
+                "name": "lander_area",
+                "boundary": [
                     [33.05, -117.05],
                     [33.05, -117.04],
                     [33.06, -117.04],
-                    [33.06, -117.05]
+                    [33.06, -117.05],
                 ],
-                'severity': 'critical'
+                "severity": "critical",
             }
         ]
 
@@ -178,9 +193,9 @@ class CompetitionGeofencing(Node):
         restricted_zone_name = None
 
         for zone in self.geofenced_zones:
-            if self.point_in_polygon(lat, lon, zone['boundary']):
+            if self.point_in_polygon(lat, lon, zone["boundary"]):
                 in_restricted_zone = True
-                restricted_zone_name = zone['name']
+                restricted_zone_name = zone["name"]
                 break
 
         # Determine violation status
@@ -196,7 +211,9 @@ class CompetitionGeofencing(Node):
             if not in_competition_area:
                 self.get_logger().error("Outside competition boundary")
             if in_restricted_zone:
-                self.get_logger().error(f"Entered restricted zone: {restricted_zone_name}")
+                self.get_logger().error(
+                    f"Entered restricted zone: {restricted_zone_name}"
+                )
 
             # Publish violation alert
             self.violation_pub.publish(Bool(data=True))
@@ -206,10 +223,13 @@ class CompetitionGeofencing(Node):
                 # Direct CAN bypass for immediate hardware response (<1ms latency)
                 if self.direct_can_safety:
                     self.direct_can_safety.boundary_violation_stop()
-                
+
                 # Also publish ROS2 message (for logging/monitoring)
                 self.emergency_stop_pub.publish(Bool(data=True))
-                self.send_alert("BOUNDARY_VIOLATION", f"Outside safe zone. Emergency stop activated.")
+                self.send_alert(
+                    "BOUNDARY_VIOLATION",
+                    f"Outside safe zone. Emergency stop activated.",
+                )
 
         elif not boundary_violation and self.boundary_violation:
             # Violation ended
@@ -221,12 +241,18 @@ class CompetitionGeofencing(Node):
 
         # Check for prolonged violations
         if self.boundary_violation and self.violation_start_time:
-            violation_duration = self.get_clock().now().nanoseconds / 1e9 - self.violation_start_time
+            violation_duration = (
+                self.get_clock().now().nanoseconds / 1e9 - self.violation_start_time
+            )
             if violation_duration > self.violation_timeout:
-                self.send_alert("PROLONGED_VIOLATION",
-                               f"Boundary violation for {violation_duration:.1f} seconds")
+                self.send_alert(
+                    "PROLONGED_VIOLATION",
+                    f"Boundary violation for {violation_duration:.1f} seconds",
+                )
 
-    def point_in_polygon(self, lat: float, lon: float, polygon: List[List[float]]) -> bool:
+    def point_in_polygon(
+        self, lat: float, lon: float, polygon: List[List[float]]
+    ) -> bool:
         """
         Check if a point is inside a polygon using ray casting algorithm.
 
@@ -249,9 +275,13 @@ class CompetitionGeofencing(Node):
         j = len(points) - 1
 
         for i in range(len(points)):
-            if ((points[i][1] > point[1]) != (points[j][1] > point[1]) and
-                (point[0] < (points[j][0] - points[i][0]) * (point[1] - points[i][1]) /
-                 (points[j][1] - points[i][1]) + points[i][0])):
+            if (points[i][1] > point[1]) != (points[j][1] > point[1]) and (
+                point[0]
+                < (points[j][0] - points[i][0])
+                * (point[1] - points[i][1])
+                / (points[j][1] - points[i][1])
+                + points[i][0]
+            ):
                 inside = not inside
             j = i
 
@@ -260,10 +290,10 @@ class CompetitionGeofencing(Node):
     def send_alert(self, alert_type: str, message: str):
         """Send safety alert."""
         alert_data = {
-            'type': alert_type,
-            'message': message,
-            'timestamp': self.get_clock().now().nanoseconds / 1e9,
-            'position': self.current_position
+            "type": alert_type,
+            "message": message,
+            "timestamp": self.get_clock().now().nanoseconds / 1e9,
+            "position": self.current_position,
         }
 
         alert_msg = String()
@@ -277,9 +307,9 @@ class CompetitionGeofencing(Node):
 
         # Create marker for competition boundary
         marker = Marker()
-        marker.header.frame_id = 'map'
+        marker.header.frame_id = "map"
         marker.header.stamp = self.get_clock().now().to_msg()
-        marker.ns = 'competition_boundary'
+        marker.ns = "competition_boundary"
         marker.id = 0
         marker.type = Marker.LINE_STRIP
         marker.action = Marker.ADD
@@ -314,11 +344,11 @@ class CompetitionGeofencing(Node):
     def get_boundary_status(self) -> dict:
         """Get current boundary status for monitoring."""
         return {
-            'boundary_violation': self.boundary_violation,
-            'current_position': self.current_position,
-            'competition_boundary_points': len(self.competition_boundary),
-            'geofenced_zones': len(self.geofenced_zones),
-            'emergency_stop_enabled': self.emergency_stop_enabled
+            "boundary_violation": self.boundary_violation,
+            "current_position": self.current_position,
+            "competition_boundary_points": len(self.competition_boundary),
+            "geofenced_zones": len(self.geofenced_zones),
+            "emergency_stop_enabled": self.emergency_stop_enabled,
         }
 
 
@@ -336,5 +366,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

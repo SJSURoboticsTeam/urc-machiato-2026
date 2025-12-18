@@ -9,4 +9,3 @@ float32 max_detection_distance  # Maximum detection distance in meters (0.0 = no
 bool calculate_alignment  # Whether to calculate alignment for multi-tag scenarios
 float32 target_depth  # Target depth for alignment (meters from tag plane)
 string mission_type  # Mission type: "TYPING", "USB", "FOLLOW_ME", "GENERAL"
-

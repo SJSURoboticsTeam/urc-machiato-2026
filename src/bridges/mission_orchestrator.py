@@ -7,14 +7,13 @@ including autonomous navigation and equipment servicing tasks.
 """
 
 import time
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 import rclpy
+from autonomy_interfaces.msg import LedCommand, VisionDetection
+from constants import DEFAULT_WEBSOCKET_PORT
 from rclpy.node import Node
 from rclpy.publisher import Publisher
-from autonomy_interfaces.msg import LedCommand, VisionDetection
-
-from constants import DEFAULT_WEBSOCKET_PORT
 
 
 class MissionOrchestrator:
@@ -43,11 +42,11 @@ class MissionOrchestrator:
                 "current_target_index": 0,
                 "targets": {
                     "gnss_locations": [],  # 2 precise GNSS points (<3m tolerance)
-                    "ar_tags": [],         # 2 AR-tagged posts (2-20m tolerance)
-                    "objects": [],         # 3 objects to detect and approach
+                    "ar_tags": [],  # 2 AR-tagged posts (2-20m tolerance)
+                    "objects": [],  # 3 objects to detect and approach
                 },
                 "completed_targets": [],  # Stack for abort/return functionality
-                "current_mode": "idle",   # idle, autonomous, teleoperation, arrived
+                "current_mode": "idle",  # idle, autonomous, teleoperation, arrived
                 "last_target_reached": False,
             },
             "equipment_servicing": {
@@ -95,7 +94,9 @@ class MissionOrchestrator:
         except Exception as e:
             self.logger.error(f"Failed to initialize mission publishers: {e}")
 
-    def start_autonomous_navigation(self, targets: Dict[str, List[Dict[str, Any]]]) -> None:
+    def start_autonomous_navigation(
+        self, targets: Dict[str, List[Dict[str, Any]]]
+    ) -> None:
         """
         Start autonomous navigation mission (URC requirement).
 
@@ -106,7 +107,9 @@ class MissionOrchestrator:
         self.mission_orchestrator["autonomous_navigation"]["targets"] = targets
         self.mission_orchestrator["autonomous_navigation"]["current_target_index"] = 0
         self.mission_orchestrator["autonomous_navigation"]["completed_targets"] = []
-        self.mission_orchestrator["autonomous_navigation"]["current_mode"] = "autonomous"
+        self.mission_orchestrator["autonomous_navigation"][
+            "current_mode"
+        ] = "autonomous"
 
         self.update_led_status("autonomous_navigation", "autonomous_mode")
         self.logger.info("Autonomous navigation mission started")
@@ -145,7 +148,9 @@ class MissionOrchestrator:
         Returns:
             Previous target info or None if no previous targets
         """
-        completed_targets = self.mission_orchestrator["autonomous_navigation"]["completed_targets"]
+        completed_targets = self.mission_orchestrator["autonomous_navigation"][
+            "completed_targets"
+        ]
 
         if not completed_targets:
             self.logger.warning("No previous targets to abort to")
@@ -155,13 +160,17 @@ class MissionOrchestrator:
         previous_target = completed_targets.pop()
 
         # Switch to teleoperation mode
-        self.mission_orchestrator["autonomous_navigation"]["current_mode"] = "teleoperation"
+        self.mission_orchestrator["autonomous_navigation"][
+            "current_mode"
+        ] = "teleoperation"
         self.update_led_status("autonomous_navigation", "teleoperation")
 
         self.logger.info(f"Aborted to previous target: {previous_target}")
         return previous_target
 
-    def highlight_object(self, object_name: str, confidence: float, bounding_box: List[float]) -> None:
+    def highlight_object(
+        self, object_name: str, confidence: float, bounding_box: List[float]
+    ) -> None:
         """
         Highlight detected object on C2 display (URC autonomous navigation requirement).
 
@@ -191,8 +200,13 @@ class MissionOrchestrator:
         Args:
             task_name: Name of the completed task
         """
-        if task_name in self.mission_orchestrator["equipment_servicing"]["tasks_completed"]:
-            self.mission_orchestrator["equipment_servicing"]["tasks_completed"][task_name] = True
+        if (
+            task_name
+            in self.mission_orchestrator["equipment_servicing"]["tasks_completed"]
+        ):
+            self.mission_orchestrator["equipment_servicing"]["tasks_completed"][
+                task_name
+            ] = True
             self.update_led_status("equipment_servicing", "task_completed")
             self.logger.info(f"Equipment task completed: {task_name}")
         else:
@@ -295,15 +309,31 @@ class MissionOrchestrator:
         return {
             "autonomous_navigation": {
                 "active": self.mission_orchestrator["autonomous_navigation"]["active"],
-                "current_target_index": self.mission_orchestrator["autonomous_navigation"]["current_target_index"],
-                "current_mode": self.mission_orchestrator["autonomous_navigation"]["current_mode"],
-                "targets_completed": len(self.mission_orchestrator["autonomous_navigation"]["completed_targets"]),
+                "current_target_index": self.mission_orchestrator[
+                    "autonomous_navigation"
+                ]["current_target_index"],
+                "current_mode": self.mission_orchestrator["autonomous_navigation"][
+                    "current_mode"
+                ],
+                "targets_completed": len(
+                    self.mission_orchestrator["autonomous_navigation"][
+                        "completed_targets"
+                    ]
+                ),
             },
             "equipment_servicing": {
                 "active": self.mission_orchestrator["equipment_servicing"]["active"],
-                "tasks_completed": sum(self.mission_orchestrator["equipment_servicing"]["tasks_completed"].values()),
-                "total_tasks": len(self.mission_orchestrator["equipment_servicing"]["tasks_completed"]),
-                "current_task": self.mission_orchestrator["equipment_servicing"]["current_task"],
+                "tasks_completed": sum(
+                    self.mission_orchestrator["equipment_servicing"][
+                        "tasks_completed"
+                    ].values()
+                ),
+                "total_tasks": len(
+                    self.mission_orchestrator["equipment_servicing"]["tasks_completed"]
+                ),
+                "current_task": self.mission_orchestrator["equipment_servicing"][
+                    "current_task"
+                ],
             },
             "gnss_compliance": {
                 "wgs84_verified": self.gnss_compliance["wgs84_verified"],

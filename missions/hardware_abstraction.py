@@ -5,9 +5,9 @@ Hardware Abstraction Layer for Mission System
 Provides mock interfaces for testing mission functionality without physical hardware.
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
 import time
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 
 class HardwareInterface(ABC):
@@ -40,7 +40,7 @@ class MockSensorInterface(HardwareInterface):
             "name": self.sensor_name,
             "connected": self.connected,
             "last_reading": self.last_reading,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
     def get_reading(self) -> Optional[float]:
@@ -67,7 +67,7 @@ class MockActuatorInterface(HardwareInterface):
             "name": self.actuator_name,
             "connected": self.connected,
             "last_command": self.last_command,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
     def send_command(self, command: Any) -> bool:
@@ -95,7 +95,7 @@ class MockGPSInterface(MockSensorInterface):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "altitude": self.altitude,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         return self.last_reading
 
@@ -117,7 +117,7 @@ class MockIMUInterface(MockSensorInterface):
             "orientation": self.orientation,
             "linear_acceleration": self.linear_acceleration,
             "angular_velocity": self.angular_velocity,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         return self.last_reading
 
@@ -187,14 +187,23 @@ class HardwareAbstractionLayer:
 
     def check_hardware_status(self) -> Dict[str, Any]:
         """Check status of all hardware."""
-        sensor_status = {name: sensor.get_status() for name, sensor in self.sensors.items()}
-        actuator_status = {name: actuator.get_status() for name, actuator in self.actuators.items()}
+        sensor_status = {
+            name: sensor.get_status() for name, sensor in self.sensors.items()
+        }
+        actuator_status = {
+            name: actuator.get_status() for name, actuator in self.actuators.items()
+        }
 
         return {
             "sensors": sensor_status,
             "actuators": actuator_status,
-            "overall_healthy": all(sensor.get_status()["connected"] for sensor in self.sensors.values()) and
-                              all(actuator.get_status()["connected"] for actuator in self.actuators.values())
+            "overall_healthy": all(
+                sensor.get_status()["connected"] for sensor in self.sensors.values()
+            )
+            and all(
+                actuator.get_status()["connected"]
+                for actuator in self.actuators.values()
+            ),
         }
 
 

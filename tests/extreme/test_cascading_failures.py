@@ -11,20 +11,24 @@ Tests system behavior during cascading failure scenarios:
 Author: URC 2026 Autonomy Team
 """
 
+import os
+import sys
+import threading
 import time
 import unittest
-import threading
 from unittest.mock import Mock, patch
-import sys
-import os
 
 # Add src to path - go up two levels from tests/extreme/
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+from pathlib import Path
 
 from ros2_environment_manager import (
-    ROS2EnvironmentManager, ROSEnvironmentConfig, ResourceLimits, get_environment_manager
+    ResourceLimits,
+    ROS2EnvironmentManager,
+    ROSEnvironmentConfig,
+    get_environment_manager,
 )
-from pathlib import Path
 
 
 class ExtremeCascadingFailureTest(unittest.TestCase):
@@ -39,13 +43,11 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
         self.ros_config = ROSEnvironmentConfig(
             domain_id=400,  # Isolated domain for cascade testing
             use_sim_time=True,
-            discovery_timeout_sec=45.0
+            discovery_timeout_sec=45.0,
         )
 
         self.resource_limits = ResourceLimits(
-            cpu_percent=30.0,
-            memory_mb=100,
-            max_processes=8
+            cpu_percent=30.0, memory_mb=100, max_processes=8
         )
 
     def test_primary_secondary_cascade(self):
@@ -56,18 +58,28 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             name="websocket_cascade_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
-            from bridges.websocket_redundancy_manager import WebSocketRedundancyManager, WebSocketEndpoint, EndpointPriority
+            from bridges.websocket_redundancy_manager import (
+                EndpointPriority,
+                WebSocketEndpoint,
+                WebSocketRedundancyManager,
+            )
 
             # Create WebSocket manager with three endpoints
             ws_mgr = WebSocketRedundancyManager()
 
             # Create endpoints
-            primary = WebSocketEndpoint("primary", 8080, EndpointPriority.PRIMARY, max_clients=50)
-            secondary = WebSocketEndpoint("secondary", 8081, EndpointPriority.SECONDARY, max_clients=25)
-            tertiary = WebSocketEndpoint("tertiary", 8082, EndpointPriority.TERTIARY, max_clients=10)
+            primary = WebSocketEndpoint(
+                "primary", 8080, EndpointPriority.PRIMARY, max_clients=50
+            )
+            secondary = WebSocketEndpoint(
+                "secondary", 8081, EndpointPriority.SECONDARY, max_clients=25
+            )
+            tertiary = WebSocketEndpoint(
+                "tertiary", 8082, EndpointPriority.TERTIARY, max_clients=10
+            )
 
             # All start healthy
             primary.is_running = True
@@ -82,8 +94,10 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
             # Phase 1: Normal operation
             status = ws_mgr.get_system_status()
-            primary_status = status['endpoints']['primary']
-            self.assertEqual(primary_status['health'], 'HEALTHY', "Primary should start healthy")
+            primary_status = status["endpoints"]["primary"]
+            self.assertEqual(
+                primary_status["health"], "HEALTHY", "Primary should start healthy"
+            )
 
             # Phase 2: Primary fails
             print("  💥 Phase 1: Primary endpoint fails...")
@@ -91,8 +105,12 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             ws_mgr._check_endpoint_health()
 
             status_after_primary_fail = ws_mgr.get_system_status()
-            primary_after_fail = status_after_primary_fail['endpoints']['primary']
-            self.assertEqual(primary_after_fail['health'], 'DOWN', "Primary should be down after failure")
+            primary_after_fail = status_after_primary_fail["endpoints"]["primary"]
+            self.assertEqual(
+                primary_after_fail["health"],
+                "DOWN",
+                "Primary should be down after failure",
+            )
 
             # Phase 3: Secondary becomes overloaded
             print("  🔥 Phase 2: Secondary becomes overloaded...")
@@ -100,8 +118,12 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             ws_mgr._check_endpoint_health()
 
             status_after_overload = ws_mgr.get_system_status()
-            secondary_after_overload = status_after_overload['endpoints']['secondary']
-            self.assertEqual(secondary_after_overload['health'], 'UNHEALTHY', "Secondary should be unhealthy when overloaded")
+            secondary_after_overload = status_after_overload["endpoints"]["secondary"]
+            self.assertEqual(
+                secondary_after_overload["health"],
+                "UNHEALTHY",
+                "Secondary should be unhealthy when overloaded",
+            )
 
             # Phase 4: Secondary also fails
             print("  💥 Phase 3: Secondary endpoint fails...")
@@ -109,17 +131,28 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             ws_mgr._check_endpoint_health()
 
             status_after_secondary_fail = ws_mgr.get_system_status()
-            secondary_after_fail = status_after_secondary_fail['endpoints']['secondary']
-            self.assertEqual(secondary_after_fail['health'], 'DOWN', "Secondary should be down")
+            secondary_after_fail = status_after_secondary_fail["endpoints"]["secondary"]
+            self.assertEqual(
+                secondary_after_fail["health"], "DOWN", "Secondary should be down"
+            )
 
             # Phase 5: Tertiary should still be available
-            tertiary_status = status_after_secondary_fail['endpoints']['tertiary']
-            self.assertEqual(tertiary_status['health'], 'HEALTHY', "Tertiary should remain healthy")
+            tertiary_status = status_after_secondary_fail["endpoints"]["tertiary"]
+            self.assertEqual(
+                tertiary_status["health"], "HEALTHY", "Tertiary should remain healthy"
+            )
 
             # Verify system has at least one healthy endpoint
-            healthy_endpoints = sum(1 for ep in status_after_secondary_fail['endpoints'].values()
-                                  if ep['is_healthy'])
-            self.assertGreater(healthy_endpoints, 0, "System should have at least one healthy endpoint after cascade")
+            healthy_endpoints = sum(
+                1
+                for ep in status_after_secondary_fail["endpoints"].values()
+                if ep["is_healthy"]
+            )
+            self.assertGreater(
+                healthy_endpoints,
+                0,
+                "System should have at least one healthy endpoint after cascade",
+            )
 
             ws_mgr.stop_redundancy_system()
 
@@ -133,7 +166,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             name="dds_cascade_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
@@ -148,7 +181,9 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
             # Phase 1: Start with primary domain
             status = dds_mgr.get_system_status()
-            self.assertEqual(status['current_domain'], 400, "Should start with primary domain")
+            self.assertEqual(
+                status["current_domain"], 400, "Should start with primary domain"
+            )
 
             # Phase 2: Primary domain fails
             print("  💥 Phase 1: Primary DDS domain fails...")
@@ -157,21 +192,33 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             original_measure = dds_mgr._measure_domain_health
             dds_mgr._measure_domain_health = lambda x: 0.0 if x == 400 else 0.9
 
-            success1 = dds_mgr.trigger_domain_failover(target_domain_id=401)  # Backup domain
+            success1 = dds_mgr.trigger_domain_failover(
+                target_domain_id=401
+            )  # Backup domain
             self.assertTrue(success1, "Should failover from primary to backup")
 
             status_after_primary_fail = dds_mgr.get_system_status()
-            self.assertEqual(status_after_primary_fail['current_domain'], 401, "Should be on backup domain")
+            self.assertEqual(
+                status_after_primary_fail["current_domain"],
+                401,
+                "Should be on backup domain",
+            )
 
             # Phase 3: Backup domain also fails
             print("  💥 Phase 2: Backup DDS domain fails...")
             dds_mgr._measure_domain_health = lambda x: 0.0 if x in [400, 401] else 0.9
 
-            success2 = dds_mgr.trigger_domain_failover(target_domain_id=402)  # Emergency domain
+            success2 = dds_mgr.trigger_domain_failover(
+                target_domain_id=402
+            )  # Emergency domain
             self.assertTrue(success2, "Should failover from backup to emergency")
 
             status_after_backup_fail = dds_mgr.get_system_status()
-            self.assertEqual(status_after_backup_fail['current_domain'], 402, "Should be on emergency domain")
+            self.assertEqual(
+                status_after_backup_fail["current_domain"],
+                402,
+                "Should be on emergency domain",
+            )
 
             # Phase 4: Emergency domain fails (total failure)
             print("  💥 Phase 3: Emergency DDS domain fails...")
@@ -195,7 +242,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             name="state_cascade_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -233,14 +280,19 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             time.sleep(0.1)
 
             # Verify we have a master
-            masters = sum(1 for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == 'MASTER')
+            masters = sum(1 for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER")
             self.assertEqual(masters, 1, "Should have exactly one master initially")
 
             # Phase 2: Master fails
             print("  💥 Phase 1: Master node fails...")
-            master_mgr = next(mgr for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == 'MASTER')
-            master_node_id = next(node_id for node_id, node in master_mgr.nodes.items()
-                                if master_mgr.nodes[node_id].is_healthy)
+            master_mgr = next(
+                mgr for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER"
+            )
+            master_node_id = next(
+                node_id
+                for node_id, node in master_mgr.nodes.items()
+                if master_mgr.nodes[node_id].is_healthy
+            )
 
             # Simulate master node failure
             for mgr in [mgr1, mgr2, mgr3]:
@@ -253,14 +305,23 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             time.sleep(0.1)
 
             # Verify new master elected
-            new_masters = sum(1 for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == 'MASTER')
-            self.assertEqual(new_masters, 1, "Should elect new master after original master fails")
+            new_masters = sum(
+                1 for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER"
+            )
+            self.assertEqual(
+                new_masters, 1, "Should elect new master after original master fails"
+            )
 
             # Phase 3: New master fails (cascade)
             print("  💥 Phase 2: New master fails (cascade)...")
-            new_master_mgr = next(mgr for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == 'MASTER')
-            new_master_node_id = next(node_id for node_id, node in new_master_mgr.nodes.items()
-                                    if new_master_mgr.nodes[node_id].is_healthy)
+            new_master_mgr = next(
+                mgr for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER"
+            )
+            new_master_node_id = next(
+                node_id
+                for node_id, node in new_master_mgr.nodes.items()
+                if new_master_mgr.nodes[node_id].is_healthy
+            )
 
             # Simulate new master failure
             for mgr in [mgr1, mgr2, mgr3]:
@@ -268,14 +329,21 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
                     mgr.nodes[new_master_node_id].is_healthy = False
 
             # Trigger final election
-            final_mgr = next(mgr for mgr in [mgr1, mgr2, mgr3]
-                           if mgr.nodes[list(mgr.nodes.keys())[0]].is_healthy)
+            final_mgr = next(
+                mgr
+                for mgr in [mgr1, mgr2, mgr3]
+                if mgr.nodes[list(mgr.nodes.keys())[0]].is_healthy
+            )
             final_mgr._trigger_election()
             time.sleep(0.1)
 
             # Verify final master elected
-            final_masters = sum(1 for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == 'MASTER')
-            self.assertEqual(final_masters, 1, "Should elect final master after cascade")
+            final_masters = sum(
+                1 for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER"
+            )
+            self.assertEqual(
+                final_masters, 1, "Should elect final master after cascade"
+            )
 
             # Cleanup
             mgr1.stop()
@@ -292,13 +360,13 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             name="multi_system_failure_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
-            from core.state_synchronization_manager import DistributedStateManager
-            from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
             from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
+            from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
             from core.recovery_coordinator import RecoveryCoordinator
+            from core.state_synchronization_manager import DistributedStateManager
 
             # Create all system managers
             state_mgr = DistributedStateManager("multi_fail_test")
@@ -315,8 +383,14 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             state_mgr.register_node("multi_fail_test")
             dds_mgr.register_node("multi_fail_test", "echo test")
 
-            from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
-            ws_endpoint = WebSocketEndpoint("multi_test", 8080, EndpointPriority.PRIMARY)
+            from bridges.websocket_redundancy_manager import (
+                EndpointPriority,
+                WebSocketEndpoint,
+            )
+
+            ws_endpoint = WebSocketEndpoint(
+                "multi_test", 8080, EndpointPriority.PRIMARY
+            )
             ws_endpoint.is_running = True
             ws_mgr.add_endpoint(ws_endpoint)
 
@@ -332,7 +406,9 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
             self.assertIsNotNone(state_status, "State system should be healthy")
             self.assertIsNotNone(dds_status, "DDS system should be healthy")
-            self.assertGreater(len(ws_status['endpoints']), 0, "WebSocket system should have endpoints")
+            self.assertGreater(
+                len(ws_status["endpoints"]), 0, "WebSocket system should have endpoints"
+            )
 
             # Phase 2: Simultaneous multi-system failure
             print("  💥 Phase 1: Simultaneous multi-system failure...")
@@ -350,12 +426,16 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             ws_mgr._check_endpoint_health()
 
             # Initiate coordinated recovery
-            recovery_success = recovery_coord.initiate_recovery("Multi-system simultaneous failure")
+            recovery_success = recovery_coord.initiate_recovery(
+                "Multi-system simultaneous failure"
+            )
 
             # Wait for recovery completion
             timeout = 20
             start_time = time.time()
-            while recovery_coord.recovery_active and (time.time() - start_time) < timeout:
+            while (
+                recovery_coord.recovery_active and (time.time() - start_time) < timeout
+            ):
                 time.sleep(0.1)
 
             # Assess recovery results
@@ -366,7 +446,9 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
                 recovery_success = True
 
             # Even if recovery doesn't fully succeed, system should not crash
-            self.assertIsInstance(recovery_success, bool, "Recovery should complete (success or failure)")
+            self.assertIsInstance(
+                recovery_success, bool, "Recovery should complete (success or failure)"
+            )
 
             # Cleanup
             dds_mgr._measure_domain_health = original_measure

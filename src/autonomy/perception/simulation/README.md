@@ -12,12 +12,14 @@ This code lives in the **development workspace** (`autonomy/code/simulation/`) f
 ## 🎯 **Components**
 
 ### **Core Simulation**
+
 - **Sensor Simulator**: Mock GPS, IMU, and camera data for testing
 - **Robot Models**: Enhanced URDF with ROS2 control interfaces
 - **Mars Environment**: Custom worlds with competition course elements
 - **Launch Files**: Easy startup configurations for different scenarios
 
 ### **Digital Twin System** ⚠️ **PLACEHOLDER VALUES**
+
 - **Twin Manager**: Real-time synchronization between physical and virtual rover
 - **Prediction Engine**: PLACEHOLDER motion and behavior prediction
 - **Health Monitoring**: PLACEHOLDER system health assessment
@@ -84,6 +86,7 @@ simulation/
 Following the project's two-workspace architecture:
 
 ### **1. Edit Code Here** (Development Workspace)
+
 ```bash
 cd autonomy/code/simulation
 # Edit files in your IDE
@@ -91,6 +94,7 @@ code autonomy_simulation/sensor_simulator.py
 ```
 
 ### **2. Build & Test There** (ROS2 Workspace)
+
 ```bash
 cd autonomy/ros2_ws
 colcon build --packages-select autonomy_simulation
@@ -103,6 +107,7 @@ ros2 run autonomy_simulation sensor_simulator
 **The digital twin implementation currently uses PLACEHOLDER values and simplified logic.** Key areas requiring real implementation:
 
 ### **Critical PLACEHOLDER Items**
+
 - **Physical Parameters**: Mass (50kg), inertia, dimensions
 - **Sensor Models**: GPS accuracy (3m), IMU noise, camera specs
 - **Actuator Limits**: Motor torque (50Nm), wheel speeds
@@ -110,6 +115,7 @@ ros2 run autonomy_simulation sensor_simulator
 - **Algorithms**: Synchronization, prediction, health monitoring
 
 ### **Development Status**
+
 - ✅ **Basic Structure**: ROS2 package with proper architecture
 - ✅ **Sensor Simulation**: Functional mock sensors for testing
 - ✅ **Launch Integration**: Works with autonomy system
@@ -120,16 +126,19 @@ ros2 run autonomy_simulation sensor_simulator
 ## 🎯 **Usage Scenarios**
 
 ### **Algorithm Development**
+
 - Test navigation algorithms with realistic sensor data
 - Validate computer vision pipelines with simulated cameras
 - Develop SLAM algorithms with controlled environments
 
 ### **Integration Testing**
+
 - Test subsystem interactions in simulation
 - Validate ROS2 communication patterns
 - Debug multi-node autonomy systems
 
 ### **Digital Twin Applications** (Future)
+
 - Real-time synchronization with physical rover
 - Predictive maintenance and failure detection
 - Performance optimization suggestions
@@ -138,12 +147,14 @@ ros2 run autonomy_simulation sensor_simulator
 ## 🔗 **Integration Points**
 
 ### **Autonomy Subsystems**
+
 - **Navigation**: GPS/IMU data for localization
 - **SLAM**: Odometry and sensor data for mapping
 - **Computer Vision**: Camera feeds for object detection
 - **State Management**: System health and status monitoring
 
 ### **External Systems**
+
 - **Competition Infrastructure**: GNSS targets, AR tags
 - **Development Tools**: RViz visualization, testing frameworks
 - **Hardware**: Real rover for digital twin synchronization

@@ -8,20 +8,21 @@ when physical hardware is not available.
 Author: URC 2026 Autonomy Team
 """
 
-import unittest
-import time
-import pytest
-
 # Add test utilities
 import os
 import sys
+import time
+import unittest
+
+import pytest
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
 from tests.hardware.hardware_interface_simulator import (
     HardwareInterfaceTestFixture,
     create_simulated_hardware_interface,
-    with_hardware_simulator
+    with_hardware_simulator,
 )
 
 
@@ -51,9 +52,9 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
             self.assertIsNotNone(sim.imu_sim)
 
             # Verify sensor buffers are ready
-            self.assertIn('imu', sim.sensor_buffers)
-            self.assertIn('gps', sim.sensor_buffers)
-            self.assertIn('odometry', sim.sensor_buffers)
+            self.assertIn("imu", sim.sensor_buffers)
+            self.assertIn("gps", sim.sensor_buffers)
+            self.assertIn("odometry", sim.sensor_buffers)
 
     def test_velocity_command_simulation(self):
         """Test velocity command processing with simulator."""
@@ -70,8 +71,8 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
             # Check odometry was updated
             odom = sim.get_odometry()
             self.assertIsNotNone(odom)
-            self.assertIn('linear_velocity', odom)
-            self.assertIn('angular_velocity', odom)
+            self.assertIn("linear_velocity", odom)
+            self.assertIn("angular_velocity", odom)
 
     def test_emergency_stop_simulation(self):
         """Test emergency stop with simulator."""
@@ -103,27 +104,27 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
             # Check GPS data
             gps_data = sim.get_gps_data()
             self.assertIsNotNone(gps_data)
-            self.assertIn('latitude', gps_data)
-            self.assertIn('longitude', gps_data)
+            self.assertIn("latitude", gps_data)
+            self.assertIn("longitude", gps_data)
 
             # Check IMU data
             imu_data = sim.get_imu_data()
             self.assertIsNotNone(imu_data)
-            self.assertIn('angular_velocity', imu_data)
-            self.assertIn('linear_acceleration', imu_data)
+            self.assertIn("angular_velocity", imu_data)
+            self.assertIn("linear_acceleration", imu_data)
 
             # Check battery data
             battery_data = sim.get_battery_status()
             self.assertIsNotNone(battery_data)
-            self.assertIn('voltage', battery_data)
-            self.assertIn('percentage', battery_data)
+            self.assertIn("voltage", battery_data)
+            self.assertIn("percentage", battery_data)
 
             # Check joint states
             joint_data = sim.get_joint_states()
             self.assertIsNotNone(joint_data)
-            self.assertIn('names', joint_data)
-            self.assertIn('positions', joint_data)
-            self.assertEqual(len(joint_data['names']), 6)  # 6 wheels
+            self.assertIn("names", joint_data)
+            self.assertIn("positions", joint_data)
+            self.assertEqual(len(joint_data["names"]), 6)  # 6 wheels
 
     def test_rover_physics_simulation(self):
         """Test rover physics simulation."""
@@ -141,11 +142,11 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
             self.assertIsNotNone(final_odom)
 
             # Position should have changed
-            initial_pos = initial_odom['position']
-            final_pos = final_odom['position']
+            initial_pos = initial_odom["position"]
+            final_pos = final_odom["position"]
 
             # Should have moved forward (positive X)
-            self.assertGreater(final_pos['x'], initial_pos['x'])
+            self.assertGreater(final_pos["x"], initial_pos["x"])
 
     def test_simulator_reset(self):
         """Test simulator reset functionality."""
@@ -165,17 +166,17 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
 
             # Position should be back to initial state
             if odom_after_reset:
-                initial_pos = odom_after_reset['position']
-                moved_pos = odom_after_move['position']
+                initial_pos = odom_after_reset["position"]
+                moved_pos = odom_after_move["position"]
 
                 # Should be different (reset worked)
-                self.assertNotEqual(initial_pos['x'], moved_pos['x'])
+                self.assertNotEqual(initial_pos["x"], moved_pos["x"])
 
     def test_sensor_failure_simulation(self):
         """Test sensor failure simulation."""
         with HardwareInterfaceTestFixture() as sim:
             # Simulate GPS failure
-            sim.simulate_hardware_failure('gps')
+            sim.simulate_hardware_failure("gps")
 
             # Wait for update
             time.sleep(0.2)
@@ -184,8 +185,10 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
             gps_data = sim.get_gps_data()
             if gps_data:
                 # Should have error flags or invalid data
-                self.assertTrue(gps_data.get('has_error', False) or
-                              gps_data.get('fix_quality', 0) == 0)
+                self.assertTrue(
+                    gps_data.get("has_error", False)
+                    or gps_data.get("fix_quality", 0) == 0
+                )
 
     def test_can_bus_simulation(self):
         """Test CAN bus simulation."""
@@ -219,7 +222,7 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
             self.assertIsNotNone(final_odom)
 
             # Should have moved significantly
-            self.assertGreater(final_odom['position']['x'], 0.5)
+            self.assertGreater(final_odom["position"]["x"], 0.5)
 
     def test_multiple_simultaneous_commands(self):
         """Test handling multiple simultaneous commands."""
@@ -241,6 +244,7 @@ class TestHardwareInterfaceWithSimulator(unittest.TestCase):
 
 # Test using decorator approach
 
+
 @with_hardware_simulator()
 def test_decorator_based_simulation(hardware_simulator):
     """Test using decorator-based simulator setup."""
@@ -256,15 +260,17 @@ def test_decorator_based_simulation(hardware_simulator):
     assert odom is not None
 
 
-@with_hardware_simulator({
-    'update_rate_hz': 100.0,  # Higher rate for precision testing
-    'rover_config': {'max_velocity': 2.0}
-})
+@with_hardware_simulator(
+    {
+        "update_rate_hz": 100.0,  # Higher rate for precision testing
+        "rover_config": {"max_velocity": 2.0},
+    }
+)
 def test_custom_config_simulation(hardware_simulator):
     """Test simulation with custom configuration."""
     # Verify custom config was applied
-    assert hardware_simulator.config['update_rate_hz'] == 100.0
-    assert hardware_simulator.config['rover_config']['max_velocity'] == 2.0
+    assert hardware_simulator.config["update_rate_hz"] == 100.0
+    assert hardware_simulator.config["rover_config"]["max_velocity"] == 2.0
 
     # Test with higher velocity
     hardware_simulator.send_velocity_command(1.5, 0.0)
@@ -274,8 +280,5 @@ def test_custom_config_simulation(hardware_simulator):
     assert odom is not None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

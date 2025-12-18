@@ -17,7 +17,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from rclpy.node import Node
 
-
 # ===== ERROR HANDLING =====
 
 Result = Tuple[Optional[Any], Optional[str]]

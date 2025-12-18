@@ -15,6 +15,7 @@ All test runs now automatically generate reports via `pytest.ini`:
 ### What This Means
 
 ✅ **Every `pytest` run** automatically generates:
+
 - JUnit XML report (`tests/reports/junit.xml`) - For CI/CD integration
 - Coverage XML report (`tests/reports/coverage.xml`) - For coverage tracking
 - Coverage HTML report (`tests/reports/coverage_html/`) - For visual inspection
@@ -33,6 +34,7 @@ Test reports in `tests/reports/` are **explicitly allowed** in `.gitignore`:
 ```
 
 This means:
+
 - ✅ Reports can be committed to git
 - ✅ Historical test results are tracked
 - ✅ CI/CD can store artifacts
@@ -41,11 +43,13 @@ This means:
 ## Report Files
 
 ### Automatic Reports (pytest)
+
 - `tests/reports/junit.xml` - JUnit XML format
 - `tests/reports/coverage.xml` - Coverage XML
 - `tests/reports/coverage_html/index.html` - Coverage HTML
 
 ### Custom Reports
+
 - `tests/reports/comprehensive_integration_report.json` - From comprehensive suite
 - `tests/reports/simulation_test_report.json` - From simulation framework
 - `tests/reports/simulation_test_report.html` - HTML version
@@ -54,6 +58,7 @@ This means:
 ## Usage
 
 ### Run Tests (Reports Auto-Generated)
+
 ```bash
 # Run any tests - reports are automatically generated
 pytest tests/unit/
@@ -64,6 +69,7 @@ pytest tests/system/
 ```
 
 ### View Reports
+
 ```bash
 # Coverage HTML
 open tests/reports/coverage_html/index.html
@@ -78,6 +84,7 @@ cat tests/reports/comprehensive_integration_report.json | python3 -m json.tool
 ### CI/CD Integration
 
 The JUnit XML report works with:
+
 - GitHub Actions
 - Jenkins
 - GitLab CI
@@ -85,6 +92,7 @@ The JUnit XML report works with:
 - Most CI/CD platforms
 
 Example GitHub Actions:
+
 ```yaml
 - name: Run tests
   run: pytest tests/

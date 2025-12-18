@@ -6,14 +6,15 @@ These tests validate core autonomy logic using pure Python mocks and simulations
 Addresses the gap where most tests require hardware/ROS2 but we need basic validation.
 """
 
-import unittest
-import time
 import json
-from typing import Dict, List, Any, Optional
+import time
+import unittest
+from typing import Any, Dict, List, Optional
 
 
 class MockSensor:
     """Mock sensor for testing."""
+
     def __init__(self, sensor_type: str, healthy: bool = True):
         self.sensor_type = sensor_type
         self.healthy = healthy
@@ -64,7 +65,9 @@ class MockMissionExecutor:
         self.mission_state = "idle"
         self.waypoints: List[Dict[str, float]] = []
 
-    def start_mission(self, mission_type: str, waypoints: List[Dict[str, float]]) -> bool:
+    def start_mission(
+        self, mission_type: str, waypoints: List[Dict[str, float]]
+    ) -> bool:
         """Start a mission."""
         if mission_type not in ["navigation", "delivery", "inspection"]:
             return False
@@ -80,7 +83,7 @@ class MockMissionExecutor:
             "mission": self.current_mission,
             "state": self.mission_state,
             "waypoints_completed": len(self.waypoints) // 2 if self.waypoints else 0,
-            "total_waypoints": len(self.waypoints)
+            "total_waypoints": len(self.waypoints),
         }
 
 
@@ -93,7 +96,7 @@ class MockStateMachine:
             "idle": ["autonomous", "manual"],
             "autonomous": ["idle", "manual", "emergency"],
             "manual": ["idle", "autonomous"],
-            "emergency": ["idle"]
+            "emergency": ["idle"],
         }
 
     def transition_to(self, new_state: str) -> bool:
@@ -150,7 +153,7 @@ class TestMockSimulationValidation(unittest.TestCase):
         """Test mission executor with navigation mission."""
         waypoints = [
             {"lat": 37.7749, "lon": -122.4194},
-            {"lat": 37.7849, "lon": -122.4094}
+            {"lat": 37.7849, "lon": -122.4094},
         ]
 
         success = self.mission_executor.start_mission("navigation", waypoints)
@@ -179,7 +182,7 @@ class TestMockSimulationValidation(unittest.TestCase):
             "mission": "navigation",
             "state": "active",
             "waypoints_completed": 1,  # len(waypoints) // 2 = 1
-            "total_waypoints": 3
+            "total_waypoints": 3,
         }
 
         self.assertEqual(status, expected)
@@ -224,7 +227,7 @@ class TestMockSimulationValidation(unittest.TestCase):
             "max_speed": 2.5,
             "safety_distance": 1.0,
             "mission_timeout": 300,
-            "enable_autonomy": True
+            "enable_autonomy": True,
         }
 
         # Valid configuration checks

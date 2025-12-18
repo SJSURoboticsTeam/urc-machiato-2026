@@ -6,24 +6,29 @@ This script demonstrates how to monitor the complete URC 2026 ROS2 system
 including state machine, mission control, hardware sensors, and services.
 """
 
-import subprocess
-import time
 import os
+import subprocess
 import sys
+import time
+
 
 def run_cmd(cmd, description=""):
     """Run a command and return the result."""
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, timeout=5
+        )
         return result.returncode == 0, result.stdout.strip(), result.stderr.strip()
     except Exception as e:
         return False, "", str(e)
+
 
 def print_section(title):
     """Print a section header."""
     print(f"\n{'='*60}")
     print(f"🚀 {title}")
     print(f"{'='*60}")
+
 
 def main():
     """Main demonstration."""
@@ -44,7 +49,7 @@ def main():
     print("🔗 Active ROS2 Nodes:")
     success, output, error = run_cmd(ros_setup + "ros2 node list")
     if success:
-        nodes = output.split('\n')
+        nodes = output.split("\n")
         for node in nodes:
             if node.strip():
                 print(f"   ✅ {node}")
@@ -57,15 +62,25 @@ def main():
     # Get all topics
     success, output, error = run_cmd(ros_setup + "ros2 topic list")
     if success:
-        topics = [t.strip() for t in output.split('\n') if t.strip()]
+        topics = [t.strip() for t in output.split("\n") if t.strip()]
         print(f"📡 Found {len(topics)} active ROS2 topics:")
 
         # Categorize topics
-        state_machine_topics = [t for t in topics if 'state_machine' in t]
-        hardware_topics = [t for t in topics if 'hardware' in t or t in ['/odom', '/imu', '/gps/fix']]
-        mission_topics = [t for t in topics if 'mission' in t]
-        safety_topics = [t for t in topics if 'safety' in t or 'emergency' in t]
-        other_topics = [t for t in topics if t not in state_machine_topics + hardware_topics + mission_topics + safety_topics]
+        state_machine_topics = [t for t in topics if "state_machine" in t]
+        hardware_topics = [
+            t for t in topics if "hardware" in t or t in ["/odom", "/imu", "/gps/fix"]
+        ]
+        mission_topics = [t for t in topics if "mission" in t]
+        safety_topics = [t for t in topics if "safety" in t or "emergency" in t]
+        other_topics = [
+            t
+            for t in topics
+            if t
+            not in state_machine_topics
+            + hardware_topics
+            + mission_topics
+            + safety_topics
+        ]
 
         print(f"\n🤖 State Machine Topics ({len(state_machine_topics)}):")
         for topic in state_machine_topics:
@@ -93,11 +108,18 @@ def main():
     # Get all services
     success, output, error = run_cmd(ros_setup + "ros2 service list")
     if success:
-        services = [s.strip() for s in output.split('\n') if s.strip()]
+        services = [s.strip() for s in output.split("\n") if s.strip()]
         print(f"🔧 Found {len(services)} active ROS2 services:")
 
         # Filter out parameter services for cleaner display
-        param_services = [s for s in services if 'describe_parameters' in s or 'get_parameter' in s or 'list_parameters' in s or 'set_parameters' in s]
+        param_services = [
+            s
+            for s in services
+            if "describe_parameters" in s
+            or "get_parameter" in s
+            or "list_parameters" in s
+            or "set_parameters" in s
+        ]
         real_services = [s for s in services if s not in param_services]
 
         print(f"\n🎯 Key Services ({len(real_services)}):")
@@ -115,25 +137,28 @@ def main():
 
     # Monitor key topics
     key_topics = [
-        '/state_machine/current_state',
-        '/hardware/battery_state',
-        '/hardware/gps',
-        '/hardware/imu',
-        '/mission/status',
-        '/emergency_stop'
+        "/state_machine/current_state",
+        "/hardware/battery_state",
+        "/hardware/gps",
+        "/hardware/imu",
+        "/mission/status",
+        "/emergency_stop",
     ]
 
     for topic in key_topics:
         print(f"🔍 Monitoring {topic}:")
-        success, output, error = run_cmd(ros_setup + f"timeout 2 ros2 topic echo --once {topic} 2>/dev/null || echo 'No recent data'")
+        success, output, error = run_cmd(
+            ros_setup
+            + f"timeout 2 ros2 topic echo --once {topic} 2>/dev/null || echo 'No recent data'"
+        )
 
-        if success and output and 'No recent data' not in output:
+        if success and output and "No recent data" not in output:
             # Truncate long outputs
-            lines = output.split('\n')[:5]  # First 5 lines
+            lines = output.split("\n")[:5]  # First 5 lines
             for line in lines:
                 if line.strip():
                     print(f"   📨 {line}")
-            if len(output.split('\n')) > 5:
+            if len(output.split("\n")) > 5:
                 print("   ... (truncated)")
         else:
             print("   💤 No data available (topic may be inactive)")
@@ -187,7 +212,7 @@ def main():
     print("🏥 System Health Status:")
 
     # Check if key nodes are running
-    key_nodes = ['competition_bridge', 'ros2_state_machine_bridge']
+    key_nodes = ["competition_bridge", "ros2_state_machine_bridge"]
     for node in key_nodes:
         success, output, error = run_cmd(ros_setup + f"ros2 node list | grep {node}")
         if success and output.strip():
@@ -196,9 +221,12 @@ def main():
             print(f"   ❌ {node}: Not found")
 
     # Check key topics have publishers
-    key_topics_check = ['/state_machine/current_state', '/hardware/battery_state']
+    key_topics_check = ["/state_machine/current_state", "/hardware/battery_state"]
     for topic in key_topics_check:
-        success, output, error = run_cmd(ros_setup + f"ros2 topic info {topic} | grep 'Publisher count:' | awk '{{print $3}}'")
+        success, output, error = run_cmd(
+            ros_setup
+            + f"ros2 topic info {topic} | grep 'Publisher count:' | awk '{{print $3}}'"
+        )
         if success and output.strip():
             count = output.strip()
             status = "✅ Active" if count != "0" else "⚠️ No publishers"
@@ -211,6 +239,6 @@ def main():
     print("All ROS topics and services are active and streaming data.")
     print("Use the dashboard at http://localhost:3000 to view real-time telemetry!")
 
+
 if __name__ == "__main__":
     main()
-

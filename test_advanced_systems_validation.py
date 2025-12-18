@@ -10,13 +10,13 @@ Validates the key improvements made to the advanced systems:
 Author: URC 2026 Autonomy Team
 """
 
-import time
-import sys
 import os
-from typing import Dict, List, Any
+import sys
+import time
+from typing import Any, Dict, List
 
 # Add src to path - go up one level from test directory
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 def test_enhanced_state_sync_election():
@@ -46,19 +46,19 @@ def test_enhanced_state_sync_election():
     mgr3.register_slave_manager(mgr2)
 
     # Set up different state versions
-    mgr1.update_state('test', 'value1')  # Version 1
-    mgr2.update_state('test', 'value2')  # Version 2
-    mgr2.update_state('test2', 'value2b')  # Version 3
-    mgr3.update_state('test', 'value3')  # Version 4
-    mgr3.update_state('test2', 'value3b')  # Version 5
-    mgr3.update_state('test3', 'value3c')  # Version 6 (highest)
+    mgr1.update_state("test", "value1")  # Version 1
+    mgr2.update_state("test", "value2")  # Version 2
+    mgr2.update_state("test2", "value2b")  # Version 3
+    mgr3.update_state("test", "value3")  # Version 4
+    mgr3.update_state("test2", "value3b")  # Version 5
+    mgr3.update_state("test3", "value3c")  # Version 6 (highest)
 
     # In a real distributed system, all nodes would participate in election
     # Since each manager is a separate instance, we need to simulate the distributed behavior
     # by having all managers know about all nodes and coordinate the election
 
     # First, ensure all managers know about all nodes
-    from core.state_synchronization_manager import NodeStatus, NodeRole
+    from core.state_synchronization_manager import NodeRole, NodeStatus
 
     all_nodes = ["node_a", "node_b", "node_c"]
     for mgr in [mgr1, mgr2, mgr3]:
@@ -70,7 +70,7 @@ def test_enhanced_state_sync_election():
                     role=NodeRole.SLAVE,
                     is_healthy=True,
                     state_version=0,
-                    last_heartbeat=time.time()
+                    last_heartbeat=time.time(),
                 )
 
     # Update state versions to match the test setup
@@ -100,13 +100,15 @@ def test_enhanced_state_sync_election():
     status2 = mgr2.get_system_status()
     status3 = mgr3.get_system_status()
 
-    master_count = sum(1 for s in [status1, status2, status3] if s['role'] == 'master')
-    winner_status = next((s for s in [status1, status2, status3] if s['role'] == 'master'), None)
-    winner_node_id = winner_status['node_id'] if winner_status else None
+    master_count = sum(1 for s in [status1, status2, status3] if s["role"] == "master")
+    winner_status = next(
+        (s for s in [status1, status2, status3] if s["role"] == "master"), None
+    )
+    winner_node_id = winner_status["node_id"] if winner_status else None
 
     print(f"  Election result: {master_count} masters, winner: {winner_node_id}")
 
-    success = (master_count == 1 and winner_node_id == 'node_c')
+    success = master_count == 1 and winner_node_id == "node_c"
 
     # Cleanup
     mgr1.stop()
@@ -125,7 +127,11 @@ def test_enhanced_websocket_health():
     """Test the enhanced WebSocket health monitoring."""
     print("🌐 Testing Enhanced WebSocket Health Monitoring...")
 
-    from bridges.websocket_redundancy_manager import WebSocketRedundancyManager, WebSocketEndpoint, EndpointPriority
+    from bridges.websocket_redundancy_manager import (
+        EndpointPriority,
+        WebSocketEndpoint,
+        WebSocketRedundancyManager,
+    )
 
     mgr = WebSocketRedundancyManager()
 
@@ -134,7 +140,7 @@ def test_enhanced_websocket_health():
         name="test_endpoint",
         port=8080,
         priority=EndpointPriority.PRIMARY,
-        max_clients=50
+        max_clients=50,
     )
     endpoint.is_running = True
     mgr.add_endpoint(endpoint)
@@ -147,29 +153,31 @@ def test_enhanced_websocket_health():
 
     # Initial health should be healthy (endpoint is running)
     status = mgr.get_system_status()
-    initial_health = status['endpoints']['test_endpoint']['health']
+    initial_health = status["endpoints"]["test_endpoint"]["health"]
 
     # Simulate high load - use enough clients to definitely trigger DEGRADED
     endpoint.clients = [object() for _ in range(48)]  # 96% capacity
     mgr._check_endpoint_health()
 
     status_after_load = mgr.get_system_status()
-    load_health = status_after_load['endpoints']['test_endpoint']['health']
+    load_health = status_after_load["endpoints"]["test_endpoint"]["health"]
 
     # Simulate failure
     endpoint.is_running = False
     mgr._check_endpoint_health()
 
     status_after_failure = mgr.get_system_status()
-    failure_health = status_after_failure['endpoints']['test_endpoint']['health']
+    failure_health = status_after_failure["endpoints"]["test_endpoint"]["health"]
 
     print(f"  Initial health: {initial_health}")
     print(f"  High load health: {load_health}")
     print(f"  Failure health: {failure_health}")
 
-    success = (initial_health == 'healthy' and
-               load_health == 'degraded' and
-               failure_health == 'down')
+    success = (
+        initial_health == "healthy"
+        and load_health == "degraded"
+        and failure_health == "down"
+    )
 
     mgr.stop_redundancy_system()
 
@@ -185,10 +193,10 @@ def test_coordinated_recovery():
     """Test the coordinated recovery system."""
     print("🔧 Testing Coordinated Recovery System...")
 
+    from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
+    from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
     from core.recovery_coordinator import RecoveryCoordinator
     from core.state_synchronization_manager import DistributedStateManager
-    from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
-    from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
 
     # Create systems
     recovery_coord = RecoveryCoordinator()
@@ -209,7 +217,8 @@ def test_coordinated_recovery():
     dds_mgr.register_node("test_node", "echo test")
 
     # Add a healthy WebSocket endpoint
-    from bridges.websocket_redundancy_manager import WebSocketEndpoint, EndpointPriority
+    from bridges.websocket_redundancy_manager import EndpointPriority, WebSocketEndpoint
+
     ws_endpoint = WebSocketEndpoint("test_recovery", 8080, EndpointPriority.PRIMARY)
     ws_endpoint.is_running = True
     ws_endpoint.response_time = 0.05  # Set reasonable response time (50ms)
@@ -246,7 +255,10 @@ def test_coordinated_recovery():
 
     # Check results
     final_status = recovery_coord.get_recovery_status()
-    recovery_success = not recovery_coord.recovery_active and final_status['current_phase'] == 'complete'
+    recovery_success = (
+        not recovery_coord.recovery_active
+        and final_status["current_phase"] == "complete"
+    )
 
     print(f"  Recovery completed: {recovery_success}")
     print(f"  Progress events: {len(progress_events)}")
@@ -269,8 +281,8 @@ def test_performance_improvements():
     """Test that performance improvements are maintained."""
     print("📈 Testing Performance Improvements...")
 
-    from core.state_synchronization_manager import DistributedStateManager
     from core.dynamic_config_manager import DynamicConfigManager
+    from core.state_synchronization_manager import DistributedStateManager
 
     # Test state sync performance
     state_mgr = DistributedStateManager("perf_test")
@@ -282,18 +294,18 @@ def test_performance_improvements():
     start_time = time.time()
     operations = 100
     for i in range(operations):
-        state_mgr.update_state(f'perf_{i}', f'value_{i}')
+        state_mgr.update_state(f"perf_{i}", f"value_{i}")
     state_time = time.time() - start_time
     state_ops_per_sec = operations / state_time
 
     # Test config performance
     config_mgr = DynamicConfigManager()
-    config_mgr.register_node("perf_test", {'param': 0})
+    config_mgr.register_node("perf_test", {"param": 0})
 
     start_time = time.time()
     operations = 50
     for i in range(operations):
-        config_mgr.update_node_config("perf_test", 'param', i)
+        config_mgr.update_node_config("perf_test", "param", i)
     config_time = time.time() - start_time
     config_ops_per_sec = operations / config_time
 
@@ -324,7 +336,7 @@ def run_validation_tests():
         ("Enhanced State Sync Election", test_enhanced_state_sync_election),
         ("Enhanced WebSocket Health", test_enhanced_websocket_health),
         ("Coordinated Recovery", test_coordinated_recovery),
-        ("Performance Improvements", test_performance_improvements)
+        ("Performance Improvements", test_performance_improvements),
     ]
 
     results = []

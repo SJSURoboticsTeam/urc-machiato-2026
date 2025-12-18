@@ -14,12 +14,13 @@ Usage:
 Author: URC 2026 Autonomy Team
 """
 
-import time
 import threading
+import time
+
 from src.bridges.websocket_redundancy_manager import (
-    get_redundancy_manager,
+    EndpointPriority,
     WebSocketEndpoint,
-    EndpointPriority
+    get_redundancy_manager,
 )
 
 
@@ -36,32 +37,41 @@ def demonstrate_endpoint_registration():
             name="competition_bridge",
             port=8080,
             priority=EndpointPriority.PRIMARY,
-            telemetry_scope=["full_telemetry", "commands", "state", "mission", "safety", "sensors"]
+            telemetry_scope=[
+                "full_telemetry",
+                "commands",
+                "state",
+                "mission",
+                "safety",
+                "sensors",
+            ],
         ),
         WebSocketEndpoint(
             name="state_machine_bridge",
             port=8081,
             priority=EndpointPriority.SECONDARY,
-            telemetry_scope=["state", "mission", "emergency", "commands"]
+            telemetry_scope=["state", "mission", "emergency", "commands"],
         ),
         WebSocketEndpoint(
             name="safety_bridge",
             port=8082,
             priority=EndpointPriority.TERTIARY,
-            telemetry_scope=["safety", "emergency", "location", "health", "battery"]
+            telemetry_scope=["safety", "emergency", "location", "health", "battery"],
         ),
         WebSocketEndpoint(
             name="emergency_backup",
             port=8083,
             priority=EndpointPriority.EMERGENCY,
-            telemetry_scope=["emergency", "location", "health", "battery"]
-        )
+            telemetry_scope=["emergency", "location", "health", "battery"],
+        ),
     ]
 
     # Register endpoints
     for endpoint in endpoints:
         manager.add_endpoint(endpoint)
-        print(f"✅ Registered {endpoint.name} on port {endpoint.port} (priority {endpoint.priority.value})")
+        print(
+            f"✅ Registered {endpoint.name} on port {endpoint.port} (priority {endpoint.priority.value})"
+        )
 
     return manager, endpoints
 
@@ -86,8 +96,10 @@ def demonstrate_redundancy_system(manager):
     for i in range(10):
         time.sleep(1)
         status = manager.get_system_status()
-        health = status['system_health']
-        print(f"   {i+1}s: Health {health['score']:.1f}% ({health['status']}) - {len(status['endpoints'])} endpoints")
+        health = status["system_health"]
+        print(
+            f"   {i+1}s: Health {health['score']:.1f}% ({health['status']}) - {len(status['endpoints'])} endpoints"
+        )
 
     return True
 
@@ -98,7 +110,9 @@ def demonstrate_failover_logic(manager, endpoints):
     print("-" * 40)
 
     # Simulate endpoint failure by marking one as unhealthy
-    primary_endpoint = next(ep for ep in endpoints if ep.priority == EndpointPriority.PRIMARY)
+    primary_endpoint = next(
+        ep for ep in endpoints if ep.priority == EndpointPriority.PRIMARY
+    )
     print(f"Simulating failure of {primary_endpoint.name}...")
 
     # In a real scenario, this would be detected by health monitoring
@@ -134,10 +148,12 @@ def demonstrate_performance_metrics(manager):
     print(f"   • Total Endpoints: {len(status['endpoints'])}")
     print(f"   • Active Clients: {len(status['clients'])}")
     print(f"   • System Health: {status['system_health']['score']:.1f}%")
-    print(f"   • Load Balance Score: {status['load_distribution']['balance_score']:.1f}%")
+    print(
+        f"   • Load Balance Score: {status['load_distribution']['balance_score']:.1f}%"
+    )
 
     print("\nEndpoint Status:")
-    for ep_name, ep_data in status['endpoints'].items():
+    for ep_name, ep_data in status["endpoints"].items():
         print(f"   • {ep_name}:")
         print(f"     - Health: {ep_data['health']}")
         print(f"     - Load: {ep_data['load_percentage']:.1f}%")
@@ -228,11 +244,12 @@ def run_complete_demonstration():
     except Exception as e:
         print(f"❌ Demonstration failed with error: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
         # Cleanup
-        if 'manager' in locals():
+        if "manager" in locals():
             print("\n🧹 Cleaning up...")
             manager.stop_redundancy_system()
             print("✅ Cleanup complete")

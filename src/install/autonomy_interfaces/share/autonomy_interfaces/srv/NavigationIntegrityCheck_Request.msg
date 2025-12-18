@@ -4,4 +4,3 @@
 # Request
 bool detailed_check         # Request detailed integrity analysis
 string[] check_components   # Specific components to check (empty = all)
-

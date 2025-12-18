@@ -10,4 +10,3 @@ float32 target_depth  # Target depth for arm positioning (meters from tag plane)
 float32 max_detection_distance  # Maximum detection distance in meters
 bool require_all_tags  # Whether all required tags must be detected
 float32 min_alignment_quality  # Minimum alignment quality threshold (0.0-1.0)
-

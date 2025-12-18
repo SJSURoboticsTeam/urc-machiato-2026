@@ -11,21 +11,25 @@ Tests system behavior under extreme network conditions:
 Author: URC 2026 Autonomy Team
 """
 
+import os
+import subprocess
+import sys
+import threading
 import time
 import unittest
-import threading
-import subprocess
-from unittest.mock import Mock, patch, MagicMock
-import sys
-import os
+from unittest.mock import MagicMock, Mock, patch
 
 # Add src to path - go up two levels from tests/extreme/
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+from pathlib import Path
 
 from ros2_environment_manager import (
-    ROS2EnvironmentManager, ROSEnvironmentConfig, ResourceLimits, get_environment_manager
+    ResourceLimits,
+    ROS2EnvironmentManager,
+    ROSEnvironmentConfig,
+    get_environment_manager,
 )
-from pathlib import Path
 
 
 class ExtremeNetworkChaosTest(unittest.TestCase):
@@ -40,13 +44,13 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         self.ros_config = ROSEnvironmentConfig(
             domain_id=200,  # Isolated domain for chaos testing
             use_sim_time=False,  # Real time for network testing
-            discovery_timeout_sec=30.0  # Longer timeout for chaos
+            discovery_timeout_sec=30.0,  # Longer timeout for chaos
         )
 
         self.resource_limits = ResourceLimits(
             cpu_percent=50.0,  # Moderate CPU limits
-            memory_mb=200,     # Moderate memory limits
-            max_processes=10
+            memory_mb=200,  # Moderate memory limits
+            max_processes=10,
         )
 
     def test_complete_network_partition(self):
@@ -54,8 +58,8 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         print("🌐 Testing Complete Network Partition...")
 
         # Test network partition resilience without ROS2 environment
-        from core.state_synchronization_manager import DistributedStateManager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
+        from core.state_synchronization_manager import DistributedStateManager
 
         # Create managers
         state_mgr = DistributedStateManager("chaos_primary")
@@ -76,7 +80,9 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         time.sleep(0.1)
 
         baseline_state = state_mgr.get_state("baseline")
-        self.assertEqual(baseline_state, "connected", "Baseline communication should work")
+        self.assertEqual(
+            baseline_state, "connected", "Baseline communication should work"
+        )
 
         # Simulate complete network partition
         print("  🚫 Simulating complete network partition...")
@@ -92,7 +98,11 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
 
         # Verify state updates still work locally (expected behavior)
         partition_state = state_mgr.get_state("during_partition")
-        self.assertEqual(partition_state, "partition_test", "Local state updates should work during partition")
+        self.assertEqual(
+            partition_state,
+            "partition_test",
+            "Local state updates should work during partition",
+        )
 
         # Test recovery after partition
         print("  🔄 Simulating network restoration...")
@@ -110,11 +120,16 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         time.sleep(0.1)
 
         recovery_state = state_mgr.get_state("after_recovery")
-        self.assertEqual(recovery_state, "restored", "System should recover after partition")
+        self.assertEqual(
+            recovery_state, "restored", "System should recover after partition"
+        )
 
         # Verify DDS domain manager handles partition
         dds_status = dds_mgr.get_system_status()
-        self.assertIsNotNone(dds_status.get('current_domain'), "DDS manager should maintain domain awareness")
+        self.assertIsNotNone(
+            dds_status.get("current_domain"),
+            "DDS manager should maintain domain awareness",
+        )
 
         # Cleanup
         state_mgr.stop()
@@ -130,7 +145,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             name="asymmetric_partition_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -188,21 +203,21 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
         extreme_config = ROSEnvironmentConfig(
             domain_id=201,
             use_sim_time=True,  # Use sim time for controlled testing
-            discovery_timeout_sec=60.0  # Very long timeout for slow networks
+            discovery_timeout_sec=60.0,  # Very long timeout for slow networks
         )
 
         extreme_limits = ResourceLimits(
             cpu_percent=20.0,  # Limited CPU
-            memory_mb=100,     # Limited memory
+            memory_mb=100,  # Limited memory
             network_bandwidth_mbps=0.01,  # 10Kbps - extremely slow
-            max_processes=5
+            max_processes=5,
         )
 
         with self.env_manager.create_environment(
             name="extreme_throttling_test",
             ros_config=extreme_config,
             resource_limits=extreme_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -229,15 +244,27 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             print(".2f")
 
             # Under extreme throttling, throughput should be reduced but system should still work
-            self.assertGreater(throughput, 1, "Should handle at least 1 update per second even when throttled")
-            self.assertLess(throughput, 1000, "Throughput should be reasonable even without throttling")
+            self.assertGreater(
+                throughput,
+                1,
+                "Should handle at least 1 update per second even when throttled",
+            )
+            self.assertLess(
+                throughput,
+                1000,
+                "Throughput should be reasonable even without throttling",
+            )
 
             # Test large data transmission under throttling
             large_data = "x" * 10000  # 10KB of data
             mgr.update_state("large_payload", large_data)
 
             retrieved_data = mgr.get_state("large_payload")
-            self.assertEqual(len(retrieved_data), len(large_data), "Large data should be handled correctly")
+            self.assertEqual(
+                len(retrieved_data),
+                len(large_data),
+                "Large data should be handled correctly",
+            )
 
             # Cleanup
             mgr.stop()
@@ -252,7 +279,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             name="dns_failure_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
@@ -270,8 +297,12 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             health_score = dds_mgr._measure_domain_health(200)
 
             # Even with DNS failures, basic domain health should be measurable
-            self.assertIsInstance(health_score, float, "Health score should be calculable")
-            self.assertGreaterEqual(health_score, 0.0, "Health score should be non-negative")
+            self.assertIsInstance(
+                health_score, float, "Health score should be calculable"
+            )
+            self.assertGreaterEqual(
+                health_score, 0.0, "Health score should be non-negative"
+            )
             self.assertLessEqual(health_score, 1.0, "Health score should be <= 1.0")
 
             # Test domain failover under DNS failure conditions
@@ -287,7 +318,9 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             if success:
                 # Verify domain changed
                 status = dds_mgr.get_system_status()
-                self.assertEqual(status['current_domain'], 201, "Should failover to backup domain")
+                self.assertEqual(
+                    status["current_domain"], 201, "Should failover to backup domain"
+                )
 
             # Restore original method
             dds_mgr._measure_domain_health = original_measure
@@ -305,7 +338,7 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
             name="reconnection_storm_test",
             ros_config=self.ros_config,
             resource_limits=self.resource_limits,
-            workspace_path=self.workspace_path
+            workspace_path=self.workspace_path,
         ) as env:
 
             from core.state_synchronization_manager import DistributedStateManager
@@ -338,12 +371,18 @@ class ExtremeNetworkChaosTest(unittest.TestCase):
 
             # Verify system stability after storm
             final_state = mgr.get_state(f"reconnected_update_{reconnection_count-1}")
-            self.assertIsNotNone(final_state, "System should maintain state after reconnection storm")
+            self.assertIsNotNone(
+                final_state, "System should maintain state after reconnection storm"
+            )
 
             # Check for state consistency
             status = mgr.get_system_status()
-            self.assertEqual(status['role'], 'MASTER', "Node should maintain master status")
-            self.assertGreater(status['state_version'], 0, "State version should be incremented")
+            self.assertEqual(
+                status["role"], "MASTER", "Node should maintain master status"
+            )
+            self.assertGreater(
+                status["state_version"], 0, "State version should be incremented"
+            )
 
             # Cleanup
             mgr.stop()

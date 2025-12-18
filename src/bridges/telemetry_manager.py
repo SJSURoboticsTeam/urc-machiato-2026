@@ -7,31 +7,30 @@ for the URC competition bridge. Provides centralized telemetry management
 with proper error handling and data validation.
 """
 
-import time
 import json
-from typing import Dict, Any, Optional, List
+import time
 from collections import deque
+from typing import Any, Dict, List, Optional
 
 import rclpy
-from rclpy.node import Node
-from rclpy.publisher import Publisher
-from std_msgs.msg import String
-from sensor_msgs.msg import BatteryState, NavSatFix, Imu
+from constants import (
+    ADAPTATION_RATE,
+    BANDWIDTH_MEASUREMENT_WINDOW_SEC,
+    BANDWIDTH_TARGET_UTILIZATION,
+    DEFAULT_TELEMETRY_RATE_HZ,
+    HEALTH_HISTORY_SIZE,
+    LATENCY_HISTORY_SIZE,
+    LATENCY_TARGET_MS,
+    MAX_TELEMETRY_RATE_HZ,
+    MIN_TELEMETRY_RATE_HZ,
+    PACKET_LOSS_HISTORY_SIZE,
+)
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
-
-from constants import (
-    LATENCY_HISTORY_SIZE,
-    PACKET_LOSS_HISTORY_SIZE,
-    HEALTH_HISTORY_SIZE,
-    ADAPTATION_RATE,
-    BANDWIDTH_TARGET_UTILIZATION,
-    LATENCY_TARGET_MS,
-    BANDWIDTH_MEASUREMENT_WINDOW_SEC,
-    DEFAULT_TELEMETRY_RATE_HZ,
-    MIN_TELEMETRY_RATE_HZ,
-    MAX_TELEMETRY_RATE_HZ,
-)
+from rclpy.node import Node
+from rclpy.publisher import Publisher
+from sensor_msgs.msg import BatteryState, Imu, NavSatFix
+from std_msgs.msg import String
 
 
 class TelemetryManager:
@@ -85,7 +84,9 @@ class TelemetryManager:
         self.adaptive_data = {
             "current_rate": DEFAULT_TELEMETRY_RATE_HZ,
             "target_rate": DEFAULT_TELEMETRY_RATE_HZ,
-            "bandwidth_history": deque(maxlen=int(BANDWIDTH_MEASUREMENT_WINDOW_SEC * 10)),
+            "bandwidth_history": deque(
+                maxlen=int(BANDWIDTH_MEASUREMENT_WINDOW_SEC * 10)
+            ),
             "latency_history": deque(maxlen=LATENCY_HISTORY_SIZE),
             "packet_loss_history": deque(maxlen=PACKET_LOSS_HISTORY_SIZE),
             "last_adaptation": time.time(),
@@ -113,7 +114,9 @@ class TelemetryManager:
         except Exception as e:
             self.logger.error(f"Failed to initialize telemetry publishers: {e}")
 
-    def _safe_telemetry_update(self, key: str, value: Any, description: str = "") -> None:
+    def _safe_telemetry_update(
+        self, key: str, value: Any, description: str = ""
+    ) -> None:
         """
         Safely update telemetry data with proper error handling.
 
@@ -131,7 +134,9 @@ class TelemetryManager:
                 f"Errors this session: {self._telemetry_update_errors}"
             )
 
-    def _safe_json_parse(self, json_str: str, description: str = "") -> Optional[Dict[str, Any]]:
+    def _safe_json_parse(
+        self, json_str: str, description: str = ""
+    ) -> Optional[Dict[str, Any]]:
         """
         Safely parse JSON string with error handling.
 
@@ -165,8 +170,16 @@ class TelemetryManager:
     def update_imu_data(self, msg: Imu) -> None:
         """Update IMU telemetry data."""
         imu_data = {
-            "accel": [msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z],
-            "gyro": [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z],
+            "accel": [
+                msg.linear_acceleration.x,
+                msg.linear_acceleration.y,
+                msg.linear_acceleration.z,
+            ],
+            "gyro": [
+                msg.angular_velocity.x,
+                msg.angular_velocity.y,
+                msg.angular_velocity.z,
+            ],
         }
         self._safe_telemetry_update("imu_data", imu_data, "IMU data")
 
@@ -188,20 +201,28 @@ class TelemetryManager:
         self._safe_telemetry_update("current_mission", mission, "current mission")
         self._safe_telemetry_update("mission_status", status, "mission status")
 
-    def update_system_health(self, health: str, errors: Optional[List[str]] = None) -> None:
+    def update_system_health(
+        self, health: str, errors: Optional[List[str]] = None
+    ) -> None:
         """Update system health information."""
         self._safe_telemetry_update("system_health", health, "system health")
         if errors is not None:
             self._safe_telemetry_update("system_errors", errors, "system errors")
 
-    def update_emergency_status(self, emergency_stop: bool, boundary_violation: bool = False) -> None:
+    def update_emergency_status(
+        self, emergency_stop: bool, boundary_violation: bool = False
+    ) -> None:
         """Update emergency status information."""
         self._safe_telemetry_update("emergency_stop", emergency_stop, "emergency stop")
-        self._safe_telemetry_update("boundary_violation", boundary_violation, "boundary violation")
+        self._safe_telemetry_update(
+            "boundary_violation", boundary_violation, "boundary violation"
+        )
 
     def update_sample_data(self, samples_collected: int, cache_used: int) -> None:
         """Update sample collection data."""
-        self._safe_telemetry_update("samples_collected", samples_collected, "samples collected")
+        self._safe_telemetry_update(
+            "samples_collected", samples_collected, "samples collected"
+        )
         self._safe_telemetry_update("cache_used", cache_used, "cache used")
 
     def publish_telemetry(self) -> None:
@@ -236,8 +257,13 @@ class TelemetryManager:
         except Exception as e:
             self.logger.error(f"Failed to publish telemetry: {e}")
 
-    def update_adaptive_telemetry(self, bandwidth_mbps: float, latency_ms: float,
-                                packet_loss: float, signal_strength: float = 0.0) -> None:
+    def update_adaptive_telemetry(
+        self,
+        bandwidth_mbps: float,
+        latency_ms: float,
+        packet_loss: float,
+        signal_strength: float = 0.0,
+    ) -> None:
         """
         Update adaptive telemetry with current network conditions.
 
@@ -260,15 +286,25 @@ class TelemetryManager:
 
         # Check if enough time has passed for adaptation
         current_time = time.time()
-        if current_time - self.adaptive_data["last_adaptation"] < self.adaptive_data["adaptation_cooldown"]:
+        if (
+            current_time - self.adaptive_data["last_adaptation"]
+            < self.adaptive_data["adaptation_cooldown"]
+        ):
             return
 
         # Apply adaptive rate adjustment
-        self._adapt_telemetry_rate(bandwidth_mbps, latency_ms, packet_loss, quality_score)
+        self._adapt_telemetry_rate(
+            bandwidth_mbps, latency_ms, packet_loss, quality_score
+        )
         self.adaptive_data["last_adaptation"] = current_time
 
-    def _calculate_network_quality(self, bandwidth: float, latency: float,
-                                 packet_loss: float, signal_strength: float) -> float:
+    def _calculate_network_quality(
+        self,
+        bandwidth: float,
+        latency: float,
+        packet_loss: float,
+        signal_strength: float,
+    ) -> float:
         """Calculate overall network quality score (0.0-1.0)."""
         # Bandwidth quality (relative to URC limits)
         bandwidth_score = min(1.0, bandwidth / 10.0)  # Assume 10 Mbps is excellent
@@ -285,20 +321,23 @@ class TelemetryManager:
         packet_loss_score = max(0.0, 1.0 - packet_loss * 5)  # 20% loss = 0.0 score
 
         # Signal strength quality
-        signal_score = min(1.0, max(0.0, (signal_strength + 50) / 50))  # -50 to 0 dBm range
+        signal_score = min(
+            1.0, max(0.0, (signal_strength + 50) / 50)
+        )  # -50 to 0 dBm range
 
         # Weighted average
         quality_score = (
-            bandwidth_score * 0.4 +
-            latency_score * 0.3 +
-            packet_loss_score * 0.2 +
-            signal_score * 0.1
+            bandwidth_score * 0.4
+            + latency_score * 0.3
+            + packet_loss_score * 0.2
+            + signal_score * 0.1
         )
 
         return max(0.0, min(1.0, quality_score))
 
-    def _adapt_telemetry_rate(self, bandwidth: float, latency: float,
-                             packet_loss: float, quality_score: float) -> None:
+    def _adapt_telemetry_rate(
+        self, bandwidth: float, latency: float, packet_loss: float, quality_score: float
+    ) -> None:
         """Apply adaptive telemetry rate adjustment."""
         # Calculate optimal rate based on network conditions
         base_rate = DEFAULT_TELEMETRY_RATE_HZ
@@ -314,8 +353,7 @@ class TelemetryManager:
         # Apply smoothing
         current_rate = self.adaptive_data["current_rate"]
         smoothed_rate = (
-            current_rate * (1 - ADAPTATION_RATE) +
-            optimal_rate * ADAPTATION_RATE
+            current_rate * (1 - ADAPTATION_RATE) + optimal_rate * ADAPTATION_RATE
         )
 
         # Only adapt if change is significant (>10% difference)

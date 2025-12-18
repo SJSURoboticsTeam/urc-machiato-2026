@@ -4,12 +4,13 @@ Automated Deployment System
 Handles deployment, validation, and rollback for competition systems.
 """
 
-import time
 import subprocess
-import yaml
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 import threading
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 
 class AutomatedDeployment:
@@ -25,7 +26,9 @@ class AutomatedDeployment:
     """
 
     def __init__(self, project_root: Optional[str] = None):
-        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent.parent
+        self.project_root = (
+            Path(project_root) if project_root else Path(__file__).parent.parent.parent
+        )
         self.deployment_active = False
         self.deployment_start_time = None
         self.services_deployed = []
@@ -41,11 +44,14 @@ class AutomatedDeployment:
     def _setup_logger(self):
         """Set up logging for deployment operations."""
         import logging
-        logger = logging.getLogger('AutomatedDeployment')
+
+        logger = logging.getLogger("AutomatedDeployment")
         logger.setLevel(logging.INFO)
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
         return logger
@@ -57,7 +63,7 @@ class AutomatedDeployment:
             config_files = [
                 self.project_root / "config" / "competition.yaml",
                 self.project_root / "config" / "network.yaml",
-                self.project_root / "config" / "safety.yaml"
+                self.project_root / "config" / "safety.yaml",
             ]
 
             for config_file in config_files:
@@ -67,10 +73,10 @@ class AutomatedDeployment:
 
             # Validate service configurations
             for service_name, config in self.service_configs.items():
-                if 'command' not in config:
+                if "command" not in config:
                     self.logger.error(f"Service {service_name} missing command")
                     return False
-                if 'health_check' not in config:
+                if "health_check" not in config:
                     self.logger.error(f"Service {service_name} missing health_check")
                     return False
 
@@ -83,21 +89,21 @@ class AutomatedDeployment:
     def _load_service_configs(self):
         """Load service configurations for deployment."""
         self.service_configs = {
-            'ros2_state_machine': {
-                'command': 'ros2 launch urc_bringup state_machine.launch.py',
-                'health_check': self._check_state_machine_health,
-                'timeout': 30
+            "ros2_state_machine": {
+                "command": "ros2 launch urc_bringup state_machine.launch.py",
+                "health_check": self._check_state_machine_health,
+                "timeout": 30,
             },
-            'vision_processing': {
-                'command': 'ros2 launch urc_vision vision_processing.launch.py',
-                'health_check': self._check_vision_health,
-                'timeout': 45
+            "vision_processing": {
+                "command": "ros2 launch urc_vision vision_processing.launch.py",
+                "health_check": self._check_vision_health,
+                "timeout": 45,
             },
-            'communication_bridge': {
-                'command': 'ros2 launch urc_bridges communication_bridge.launch.py',
-                'health_check': self._check_bridge_health,
-                'timeout': 20
-            }
+            "communication_bridge": {
+                "command": "ros2 launch urc_bridges communication_bridge.launch.py",
+                "health_check": self._check_bridge_health,
+                "timeout": 20,
+            },
         }
 
     def validate_configuration(self, config_path: str) -> tuple[bool, str]:
@@ -106,11 +112,11 @@ class AutomatedDeployment:
             return False, f"Configuration file not found: {config_path}"
 
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = yaml.safe_load(f)
 
             # Validate required sections
-            required_sections = ['simulation', 'mission', 'safety', 'network']
+            required_sections = ["simulation", "mission", "safety", "network"]
             for section in required_sections:
                 if section not in config:
                     return False, f"Missing required configuration section: {section}"
@@ -119,7 +125,7 @@ class AutomatedDeployment:
         except Exception as e:
             return False, f"Configuration validation failed: {e}"
 
-    def start_deployment(self, environment: str = 'competition') -> tuple[bool, str]:
+    def start_deployment(self, environment: str = "competition") -> tuple[bool, str]:
         """Start automated deployment process."""
         if self.deployment_active:
             return False, "Deployment already in progress"
@@ -140,7 +146,10 @@ class AutomatedDeployment:
                 if not success:
                     # Attempt rollback
                     self._rollback_deployment()
-                    return False, f"Service deployment failed for {service_name}: {message}"
+                    return (
+                        False,
+                        f"Service deployment failed for {service_name}: {message}",
+                    )
 
                 self.services_deployed.append(service_name)
 
@@ -150,7 +159,10 @@ class AutomatedDeployment:
                 self._rollback_deployment()
                 return False, f"Post-deployment validation failed: {message}"
 
-            return True, f"Deployment completed successfully. Services deployed: {len(self.services_deployed)}"
+            return (
+                True,
+                f"Deployment completed successfully. Services deployed: {len(self.services_deployed)}",
+            )
 
         except Exception as e:
             self._rollback_deployment()
@@ -163,7 +175,7 @@ class AutomatedDeployment:
         checks = [
             self._check_system_resources,
             self._check_network_connectivity,
-            self._check_existing_services
+            self._check_existing_services,
         ]
 
         for check in checks:
@@ -173,14 +185,16 @@ class AutomatedDeployment:
 
         return True, "All pre-deployment checks passed"
 
-    def _deploy_service(self, service_name: str, config: Dict[str, Any]) -> tuple[bool, str]:
+    def _deploy_service(
+        self, service_name: str, config: Dict[str, Any]
+    ) -> tuple[bool, str]:
         """Deploy a single service."""
         try:
             # Start service process
             process = subprocess.Popen(
-                config['command'].split(),
+                config["command"].split(),
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
             )
 
             # Wait for service to start
@@ -189,10 +203,13 @@ class AutomatedDeployment:
             # Check if process is still running
             if process.poll() is not None:
                 stdout, stderr = process.communicate()
-                return False, f"Service {service_name} failed to start: {stderr.decode()}"
+                return (
+                    False,
+                    f"Service {service_name} failed to start: {stderr.decode()}",
+                )
 
             # Run health check
-            success, message = config['health_check']()
+            success, message = config["health_check"]()
             if not success:
                 process.terminate()
                 return False, f"Health check failed for {service_name}: {message}"
@@ -228,7 +245,7 @@ class AutomatedDeployment:
         for service_name in reversed(self.services_deployed):
             try:
                 # Kill service process (simplified - would need process tracking)
-                subprocess.run(['pkill', '-f', service_name], check=False)
+                subprocess.run(["pkill", "-f", service_name], check=False)
                 rolled_back.append(service_name)
             except Exception:
                 pass
@@ -293,10 +310,12 @@ class AutomatedDeployment:
     def generate_deployment_report(self) -> Dict[str, Any]:
         """Generate comprehensive deployment report."""
         return {
-            'deployment_status': 'completed' if not self.deployment_active else 'in_progress',
-            'services_deployed': self.services_deployed,
-            'deployment_duration': time.time() - (self.deployment_start_time or time.time()),
-            'health_checks': len(self.health_checks),
-            'rollback_available': self.rollback_available
+            "deployment_status": "completed"
+            if not self.deployment_active
+            else "in_progress",
+            "services_deployed": self.services_deployed,
+            "deployment_duration": time.time()
+            - (self.deployment_start_time or time.time()),
+            "health_checks": len(self.health_checks),
+            "rollback_available": self.rollback_available,
         }
-

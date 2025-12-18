@@ -5,19 +5,23 @@ Scripts for system maintenance, environment setup, and repository management.
 ## Scripts
 
 ### Environment Setup
+
 - **`setup_ros2_env.sh`** - Setup ROS2 development environment
 
 ### Repository Management
+
 - **`manage_submodules.sh`** - Git submodule management and synchronization
 
 ## Usage
 
 ### Setup ROS2 Environment
+
 ```bash
 ./scripts/maintenance/setup_ros2_env.sh
 ```
 
 ### Manage Submodules
+
 ```bash
 ./scripts/maintenance/manage_submodules.sh
 ```

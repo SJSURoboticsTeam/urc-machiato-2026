@@ -18,13 +18,13 @@ import sys
 import time
 import unittest
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Add necessary paths for imports
 test_dir = Path(__file__).parent
-src_dir = test_dir.parent / 'src'
+src_dir = test_dir.parent / "src"
 sys.path.insert(0, str(test_dir))  # For test utilities
-sys.path.insert(0, str(src_dir))   # For core modules
+sys.path.insert(0, str(src_dir))  # For core modules
 
 
 class ExtremeTestRunner:
@@ -33,12 +33,12 @@ class ExtremeTestRunner:
     def __init__(self):
         self.test_results = {}
         self.scenarios = {
-            'network_chaos': self.run_network_chaos_tests,
-            'resource_exhaustion': self.run_resource_exhaustion_tests,
-            'cascading_failures': self.run_cascading_failure_tests,
-            'competition_extremes': self.run_competition_extreme_tests,
-            'ros2_integration': self.run_ros2_integration_tests,
-            'all': self.run_all_tests
+            "network_chaos": self.run_network_chaos_tests,
+            "resource_exhaustion": self.run_resource_exhaustion_tests,
+            "cascading_failures": self.run_cascading_failure_tests,
+            "competition_extremes": self.run_competition_extreme_tests,
+            "ros2_integration": self.run_ros2_integration_tests,
+            "all": self.run_all_tests,
         }
 
     def run_scenario(self, scenario: str, **kwargs) -> bool:
@@ -84,7 +84,9 @@ class ExtremeTestRunner:
 
         from extreme.test_resource_exhaustion import ExtremeResourceExhaustionTest
 
-        suite = unittest.TestLoader().loadTestsFromTestCase(ExtremeResourceExhaustionTest)
+        suite = unittest.TestLoader().loadTestsFromTestCase(
+            ExtremeResourceExhaustionTest
+        )
         runner = unittest.TextTestRunner(verbosity=2, stream=sys.stdout)
         result = runner.run(suite)
 
@@ -131,9 +133,13 @@ class ExtremeTestRunner:
         print("- Dynamic configuration in ROS2 environment")
 
         try:
-            from ros2_integration.test_advanced_systems_ros2 import AdvancedSystemsROS2IntegrationTest
+            from ros2_integration.test_advanced_systems_ros2 import (
+                AdvancedSystemsROS2IntegrationTest,
+            )
 
-            suite = unittest.TestLoader().loadTestsFromTestCase(AdvancedSystemsROS2IntegrationTest)
+            suite = unittest.TestLoader().loadTestsFromTestCase(
+                AdvancedSystemsROS2IntegrationTest
+            )
             runner = unittest.TextTestRunner(verbosity=2, stream=sys.stdout)
             result = runner.run(suite)
 
@@ -149,8 +155,13 @@ class ExtremeTestRunner:
         print("🎯 Running ALL Extreme Scenario Tests")
         print("=" * 60)
 
-        scenarios = ['network_chaos', 'resource_exhaustion', 'cascading_failures',
-                    'competition_extremes', 'ros2_integration']
+        scenarios = [
+            "network_chaos",
+            "resource_exhaustion",
+            "cascading_failures",
+            "competition_extremes",
+            "ros2_integration",
+        ]
 
         overall_success = True
         results = {}
@@ -164,14 +175,13 @@ class ExtremeTestRunner:
             success = self.run_scenario(scenario, **kwargs)
             end_time = time.time()
 
-            results[scenario] = {
-                'success': success,
-                'duration': end_time - start_time
-            }
+            results[scenario] = {"success": success, "duration": end_time - start_time}
 
             overall_success = overall_success and success
 
-            print(f"\n📊 {scenario.upper()} Result: {'✅ PASSED' if success else '❌ FAILED'}")
+            print(
+                f"\n📊 {scenario.upper()} Result: {'✅ PASSED' if success else '❌ FAILED'}"
+            )
             print(".1f")
 
         # Final report
@@ -189,10 +199,10 @@ class ExtremeTestRunner:
 
         print(f"\n📈 Test Summary:")
         for scenario, result in results.items():
-            status = "✅" if result['success'] else "❌"
+            status = "✅" if result["success"] else "❌"
             print("20")
 
-        total_duration = sum(r['duration'] for r in results.values())
+        total_duration = sum(r["duration"] for r in results.values())
         print(f"\n⏱️ Total Test Duration: {total_duration:.1f} seconds")
 
         return overall_success
@@ -202,34 +212,28 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Extreme Scenario Test Runner")
     parser.add_argument(
-        '--scenario',
-        choices=['network_chaos', 'resource_exhaustion', 'cascading_failures',
-                'competition_extremes', 'ros2_integration', 'all'],
-        default='all',
-        help='Test scenario to run'
+        "--scenario",
+        choices=[
+            "network_chaos",
+            "resource_exhaustion",
+            "cascading_failures",
+            "competition_extremes",
+            "ros2_integration",
+            "all",
+        ],
+        default="all",
+        help="Test scenario to run",
     )
     parser.add_argument(
-        '--ros2-domain',
-        type=int,
-        default=100,
-        help='ROS2 domain ID for tests'
+        "--ros2-domain", type=int, default=100, help="ROS2 domain ID for tests"
     )
     parser.add_argument(
-        '--duration',
-        type=int,
-        default=300,
-        help='Maximum test duration in seconds'
+        "--duration", type=int, default=300, help="Maximum test duration in seconds"
     )
     parser.add_argument(
-        '--cleanup-only',
-        action='store_true',
-        help='Only perform cleanup (no testing)'
+        "--cleanup-only", action="store_true", help="Only perform cleanup (no testing)"
     )
-    parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Verbose output'
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -242,7 +246,9 @@ def main():
 
     # Run tests
     start_time = time.time()
-    success = runner.run_scenario(args.scenario, ros2_domain=args.ros2_domain, duration=args.duration)
+    success = runner.run_scenario(
+        args.scenario, ros2_domain=args.ros2_domain, duration=args.duration
+    )
     end_time = time.time()
 
     print(f"\n⏱️ Total Execution Time: {end_time - start_time:.1f} seconds")

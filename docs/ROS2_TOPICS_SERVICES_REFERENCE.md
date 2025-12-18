@@ -9,6 +9,7 @@ This document provides a comprehensive reference for all ROS2 topics, services, 
 ROS2 supports two communication modes that significantly impact performance and system architecture:
 
 ### **🔗 Intra-Process Communication (Coupled)**
+
 - **What it is**: Direct shared memory communication between publishers and subscribers within the same process
 - **Performance**: 50-70% lower latency, reduced CPU usage, no serialization overhead
 - **Use case**: High-frequency topics (>10Hz), real-time control loops, safety-critical data
@@ -17,6 +18,7 @@ ROS2 supports two communication modes that significantly impact performance and 
 - **Table indicator**: ✅ **COUPLED**
 
 ### **🌐 Inter-Process Communication (Decoupled)**
+
 - **What it is**: DDS-based network communication between different processes/nodes
 - **Performance**: Higher latency, network overhead, serialization required
 - **Use case**: Cross-node communication, distributed systems, fault isolation
@@ -25,6 +27,7 @@ ROS2 supports two communication modes that significantly impact performance and 
 - **Table indicator**: ❌ **DECOUPLED**
 
 ### **Decision Criteria for Coupling**
+
 - ✅ **Couple** (Intra-process): High-frequency sensors, control commands, safety topics
 - ❌ **Decouple** (Inter-process): Cross-node communication, monitoring, status updates
 
@@ -45,30 +48,30 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers
 
-| Topic | Message Type | QoS Profile | Communication Type | Description | Frequency |
-|-------|-------------|-------------|-------------------|-------------|-----------|
-| `/state_machine/current_state` | `autonomy_interfaces/SystemState` | RELIABLE + TRANSIENT_LOCAL | ✅ **COUPLED** | Current rover state (BOOT, IDLE, NAVIGATION, etc.) | State changes |
-| `/state_machine/transitions` | `autonomy_interfaces/StateTransition` | RELIABLE | ❌ **DECOUPLED** | State transition notifications | Transitions |
-| `/state_machine/safety_status` | `autonomy_interfaces/SafetyStatus` | RELIABLE + TRANSIENT_LOCAL | ✅ **COUPLED** | Current safety status from state machine perspective | 1 Hz |
+| Topic                          | Message Type                          | QoS Profile                | Communication Type | Description                                          | Frequency     |
+| ------------------------------ | ------------------------------------- | -------------------------- | ------------------ | ---------------------------------------------------- | ------------- |
+| `/state_machine/current_state` | `autonomy_interfaces/SystemState`     | RELIABLE + TRANSIENT_LOCAL | ✅ **COUPLED**     | Current rover state (BOOT, IDLE, NAVIGATION, etc.)   | State changes |
+| `/state_machine/transitions`   | `autonomy_interfaces/StateTransition` | RELIABLE                   | ❌ **DECOUPLED**   | State transition notifications                       | Transitions   |
+| `/state_machine/safety_status` | `autonomy_interfaces/SafetyStatus`    | RELIABLE + TRANSIENT_LOCAL | ✅ **COUPLED**     | Current safety status from state machine perspective | 1 Hz          |
 
 ### Services
 
-| Service | Service Type | Description |
-|---------|-------------|-------------|
-| `/state_machine/change_state` | `autonomy_interfaces/ChangeState` | Request state change with validation |
-| `/state_machine/get_system_state` | `autonomy_interfaces/GetSystemState` | Get current system state details |
-| `/state_machine/recover_from_safety` | `autonomy_interfaces/RecoverFromSafety` | Recover from safety violation |
-| `/state_machine/safestop_control` | `autonomy_interfaces/SafestopControl` | Engage/disengage safestop |
-| `/state_machine/software_estop` | `autonomy_interfaces/SoftwareEstop` | Trigger software emergency stop |
+| Service                              | Service Type                            | Description                          |
+| ------------------------------------ | --------------------------------------- | ------------------------------------ |
+| `/state_machine/change_state`        | `autonomy_interfaces/ChangeState`       | Request state change with validation |
+| `/state_machine/get_system_state`    | `autonomy_interfaces/GetSystemState`    | Get current system state details     |
+| `/state_machine/recover_from_safety` | `autonomy_interfaces/RecoverFromSafety` | Recover from safety violation        |
+| `/state_machine/safestop_control`    | `autonomy_interfaces/SafestopControl`   | Engage/disengage safestop            |
+| `/state_machine/software_estop`      | `autonomy_interfaces/SoftwareEstop`     | Trigger software emergency stop      |
 
 ### Subscribers
 
-| Topic | Message Type | Communication Type | Description |
-|-------|-------------|-------------------|-------------|
-| `/safety/emergency_stop` | `std_msgs/Bool` | ✅ **COUPLED** | Emergency stop signals |
-| `/safety/violations` | `autonomy_interfaces/SafetyStatus` | ✅ **COUPLED** | Safety violations |
-| `/imu` | `sensor_msgs/Imu` | ✅ **COUPLED** | IMU data for state decisions |
-| `/battery/status` | `sensor_msgs/BatteryState` | ❌ **DECOUPLED** | Battery status monitoring |
+| Topic                    | Message Type                       | Communication Type | Description                  |
+| ------------------------ | ---------------------------------- | ------------------ | ---------------------------- |
+| `/safety/emergency_stop` | `std_msgs/Bool`                    | ✅ **COUPLED**     | Emergency stop signals       |
+| `/safety/violations`     | `autonomy_interfaces/SafetyStatus` | ✅ **COUPLED**     | Safety violations            |
+| `/imu`                   | `sensor_msgs/Imu`                  | ✅ **COUPLED**     | IMU data for state decisions |
+| `/battery/status`        | `sensor_msgs/BatteryState`         | ❌ **DECOUPLED**   | Battery status monitoring    |
 
 ---
 
@@ -76,22 +79,22 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers
 
-| Topic | Message Type | QoS Profile | Communication Type | Description | Frequency |
-|-------|-------------|-------------|-------------------|-------------|-----------|
-| `/safety/emergency_stop` | `std_msgs/Bool` | RELIABLE | ✅ **COUPLED** | Emergency stop signal broadcast | Event-driven |
-| `/safety/violations` | `autonomy_interfaces/SafetyStatus` | RELIABLE | ✅ **COUPLED** | Current safety violations | Event-driven |
-| `/safety/watchdog_status` | `std_msgs/String` | RELIABLE | ❌ **DECOUPLED** | Watchdog operational status | 1 Hz |
-| `/safety/diagnostics` | `diagnostic_msgs/DiagnosticArray` | RELIABLE | ❌ **DECOUPLED** | Detailed diagnostic information | 1 Hz |
+| Topic                     | Message Type                       | QoS Profile | Communication Type | Description                     | Frequency    |
+| ------------------------- | ---------------------------------- | ----------- | ------------------ | ------------------------------- | ------------ |
+| `/safety/emergency_stop`  | `std_msgs/Bool`                    | RELIABLE    | ✅ **COUPLED**     | Emergency stop signal broadcast | Event-driven |
+| `/safety/violations`      | `autonomy_interfaces/SafetyStatus` | RELIABLE    | ✅ **COUPLED**     | Current safety violations       | Event-driven |
+| `/safety/watchdog_status` | `std_msgs/String`                  | RELIABLE    | ❌ **DECOUPLED**   | Watchdog operational status     | 1 Hz         |
+| `/safety/diagnostics`     | `diagnostic_msgs/DiagnosticArray`  | RELIABLE    | ❌ **DECOUPLED**   | Detailed diagnostic information | 1 Hz         |
 
 ### Subscribers
 
-| Topic | Message Type | Communication Type | Description |
-|-------|-------------|-------------------|-------------|
-| `/state_machine/heartbeat` | `std_msgs/String` | ❌ **DECOUPLED** | State machine heartbeat |
-| `/state_machine/current_state` | `autonomy_interfaces/SystemState` | ✅ **COUPLED** | Current system state |
-| `/state_machine/subsystem_status` | `std_msgs/String` | ❌ **DECOUPLED** | Subsystem health status |
-| `/battery/status` | `sensor_msgs/BatteryState` | ❌ **DECOUPLED** | Battery status |
-| `/temperature/data` | `sensor_msgs/Temperature` | ❌ **DECOUPLED** | Temperature monitoring |
+| Topic                             | Message Type                      | Communication Type | Description             |
+| --------------------------------- | --------------------------------- | ------------------ | ----------------------- |
+| `/state_machine/heartbeat`        | `std_msgs/String`                 | ❌ **DECOUPLED**   | State machine heartbeat |
+| `/state_machine/current_state`    | `autonomy_interfaces/SystemState` | ✅ **COUPLED**     | Current system state    |
+| `/state_machine/subsystem_status` | `std_msgs/String`                 | ❌ **DECOUPLED**   | Subsystem health status |
+| `/battery/status`                 | `sensor_msgs/BatteryState`        | ❌ **DECOUPLED**   | Battery status          |
+| `/temperature/data`               | `sensor_msgs/Temperature`         | ❌ **DECOUPLED**   | Temperature monitoring  |
 
 ---
 
@@ -99,22 +102,22 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers
 
-| Topic | Message Type | QoS Profile | Communication Type | Description | Frequency |
-|-------|-------------|-------------|-------------------|-------------|-----------|
-| `vision/detections` | `autonomy_interfaces/VisionDetection` | BEST_EFFORT | ✅ **COUPLED** | ArUco marker and object detections | 30 Hz |
-| `vision/debug_image` | `sensor_msgs/Image` | BEST_EFFORT | ❌ **DECOUPLED** | Debug visualization image | 30 Hz |
-| `computer_vision/status` | `std_msgs/String` | RELIABLE | ✅ **COUPLED** | Computer vision operational status | 1 Hz |
-| `camera/image_raw` | `sensor_msgs/Image` | BEST_EFFORT | 🤔 **CONDITIONAL** | Republished camera image | Camera FPS |
-| `camera/depth/image_raw` | `sensor_msgs/Image` | BEST_EFFORT | 🤔 **CONDITIONAL** | Republished depth image | Camera FPS |
-| `camera/camera_info` | `sensor_msgs/CameraInfo` | RELIABLE + TRANSIENT_LOCAL | ❌ **DECOUPLED** | Camera calibration info | Static |
+| Topic                    | Message Type                          | QoS Profile                | Communication Type | Description                        | Frequency  |
+| ------------------------ | ------------------------------------- | -------------------------- | ------------------ | ---------------------------------- | ---------- |
+| `vision/detections`      | `autonomy_interfaces/VisionDetection` | BEST_EFFORT                | ✅ **COUPLED**     | ArUco marker and object detections | 30 Hz      |
+| `vision/debug_image`     | `sensor_msgs/Image`                   | BEST_EFFORT                | ❌ **DECOUPLED**   | Debug visualization image          | 30 Hz      |
+| `computer_vision/status` | `std_msgs/String`                     | RELIABLE                   | ✅ **COUPLED**     | Computer vision operational status | 1 Hz       |
+| `camera/image_raw`       | `sensor_msgs/Image`                   | BEST_EFFORT                | 🤔 **CONDITIONAL** | Republished camera image           | Camera FPS |
+| `camera/depth/image_raw` | `sensor_msgs/Image`                   | BEST_EFFORT                | 🤔 **CONDITIONAL** | Republished depth image            | Camera FPS |
+| `camera/camera_info`     | `sensor_msgs/CameraInfo`              | RELIABLE + TRANSIENT_LOCAL | ❌ **DECOUPLED**   | Camera calibration info            | Static     |
 
 ### Subscribers
 
-| Topic | Message Type | Communication Type | Description |
-|-------|-------------|-------------------|-------------|
-| `camera/image_raw` | `sensor_msgs/Image` | 🤔 **CONDITIONAL** | Raw camera image |
-| `camera/depth/image_raw` | `sensor_msgs/Image` | 🤔 **CONDITIONAL** | Raw depth image |
-| `camera/camera_info` | `sensor_msgs/CameraInfo` | ❌ **DECOUPLED** | Camera calibration |
+| Topic                    | Message Type             | Communication Type | Description        |
+| ------------------------ | ------------------------ | ------------------ | ------------------ |
+| `camera/image_raw`       | `sensor_msgs/Image`      | 🤔 **CONDITIONAL** | Raw camera image   |
+| `camera/depth/image_raw` | `sensor_msgs/Image`      | 🤔 **CONDITIONAL** | Raw depth image    |
+| `camera/camera_info`     | `sensor_msgs/CameraInfo` | ❌ **DECOUPLED**   | Camera calibration |
 
 ---
 
@@ -122,19 +125,19 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers
 
-| Topic | Message Type | QoS Profile | Communication Type | Description | Frequency |
-|-------|-------------|-------------|-------------------|-------------|-----------|
-| `/cmd_vel` | `geometry_msgs/Twist` | RELIABLE | ✅ **COUPLED** | Velocity commands to rover | 50 Hz |
-| `/navigation/current_waypoint` | `geometry_msgs/PoseStamped` | RELIABLE | ✅ **COUPLED** | Current navigation target | State changes |
+| Topic                          | Message Type                | QoS Profile | Communication Type | Description                | Frequency     |
+| ------------------------------ | --------------------------- | ----------- | ------------------ | -------------------------- | ------------- |
+| `/cmd_vel`                     | `geometry_msgs/Twist`       | RELIABLE    | ✅ **COUPLED**     | Velocity commands to rover | 50 Hz         |
+| `/navigation/current_waypoint` | `geometry_msgs/PoseStamped` | RELIABLE    | ✅ **COUPLED**     | Current navigation target  | State changes |
 
 ### Subscribers
 
-| Topic | Message Type | Communication Type | Description |
-|-------|-------------|-------------------|-------------|
-| `/odom` | `nav_msgs/Odometry` | ✅ **COUPLED** | Odometry data |
-| `/imu` | `sensor_msgs/Imu` | ✅ **COUPLED** | IMU data |
-| `/gps/fix` | `sensor_msgs/NavSatFix` | ❌ **DECOUPLED** | GPS position |
-| `/state_machine/current_state` | `autonomy_interfaces/SystemState` | ✅ **COUPLED** | Navigation state control |
+| Topic                          | Message Type                      | Communication Type | Description              |
+| ------------------------------ | --------------------------------- | ------------------ | ------------------------ |
+| `/odom`                        | `nav_msgs/Odometry`               | ✅ **COUPLED**     | Odometry data            |
+| `/imu`                         | `sensor_msgs/Imu`                 | ✅ **COUPLED**     | IMU data                 |
+| `/gps/fix`                     | `sensor_msgs/NavSatFix`           | ❌ **DECOUPLED**   | GPS position             |
+| `/state_machine/current_state` | `autonomy_interfaces/SystemState` | ✅ **COUPLED**     | Navigation state control |
 
 ---
 
@@ -142,16 +145,16 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers
 
-| Topic | Message Type | QoS Profile | Communication Type | Description | Frequency |
-|-------|-------------|-------------|-------------------|-------------|-----------|
-| `/sensor_bridge/status` | `std_msgs/String` | RELIABLE | ✅ **COUPLED** | Bridge operational status | 1 Hz |
-| `/sensor_bridge/metrics` | `std_msgs/String` | RELIABLE | ❌ **DECOUPLED** | Performance metrics | 1 Hz |
-| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | RELIABLE | ❌ **DECOUPLED** | Diagnostic information | 1 Hz |
-| `/imu` | `sensor_msgs/Imu` | BEST_EFFORT | ✅ **COUPLED** | IMU sensor data | 100 Hz |
-| `/gps/fix` | `sensor_msgs/NavSatFix` | RELIABLE | ❌ **DECOUPLED** | GPS position data | 5 Hz |
-| `/battery/status` | `sensor_msgs/BatteryState` | RELIABLE | ❌ **DECOUPLED** | Battery status | 1 Hz |
-| `/odom` | `nav_msgs/Odometry` | RELIABLE | ✅ **COUPLED** | Odometry data | 50 Hz |
-| `/temperature/data` | `sensor_msgs/Temperature` | RELIABLE | ❌ **DECOUPLED** | Temperature data | 1 Hz |
+| Topic                    | Message Type                      | QoS Profile | Communication Type | Description               | Frequency |
+| ------------------------ | --------------------------------- | ----------- | ------------------ | ------------------------- | --------- |
+| `/sensor_bridge/status`  | `std_msgs/String`                 | RELIABLE    | ✅ **COUPLED**     | Bridge operational status | 1 Hz      |
+| `/sensor_bridge/metrics` | `std_msgs/String`                 | RELIABLE    | ❌ **DECOUPLED**   | Performance metrics       | 1 Hz      |
+| `/diagnostics`           | `diagnostic_msgs/DiagnosticArray` | RELIABLE    | ❌ **DECOUPLED**   | Diagnostic information    | 1 Hz      |
+| `/imu`                   | `sensor_msgs/Imu`                 | BEST_EFFORT | ✅ **COUPLED**     | IMU sensor data           | 100 Hz    |
+| `/gps/fix`               | `sensor_msgs/NavSatFix`           | RELIABLE    | ❌ **DECOUPLED**   | GPS position data         | 5 Hz      |
+| `/battery/status`        | `sensor_msgs/BatteryState`        | RELIABLE    | ❌ **DECOUPLED**   | Battery status            | 1 Hz      |
+| `/odom`                  | `nav_msgs/Odometry`               | RELIABLE    | ✅ **COUPLED**     | Odometry data             | 50 Hz     |
+| `/temperature/data`      | `sensor_msgs/Temperature`         | RELIABLE    | ❌ **DECOUPLED**   | Temperature data          | 1 Hz      |
 
 ---
 
@@ -159,18 +162,18 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers
 
-| Topic | Message Type | QoS Profile | Communication Type | Description | Frequency |
-|-------|-------------|-------------|-------------------|-------------|-----------|
-| `/led/status` | `std_msgs/String` | RELIABLE | ❌ **DECOUPLED** | Current LED status and pattern | State changes |
-| `/led/diagnostics` | `diagnostic_msgs/DiagnosticArray` | RELIABLE | ❌ **DECOUPLED** | LED system diagnostics | 1 Hz |
+| Topic              | Message Type                      | QoS Profile | Communication Type | Description                    | Frequency     |
+| ------------------ | --------------------------------- | ----------- | ------------------ | ------------------------------ | ------------- |
+| `/led/status`      | `std_msgs/String`                 | RELIABLE    | ❌ **DECOUPLED**   | Current LED status and pattern | State changes |
+| `/led/diagnostics` | `diagnostic_msgs/DiagnosticArray` | RELIABLE    | ❌ **DECOUPLED**   | LED system diagnostics         | 1 Hz          |
 
 ### Subscribers
 
-| Topic | Message Type | Communication Type | Description |
-|-------|-------------|-------------------|-------------|
-| `/state_machine/led_info` | `std_msgs/String` | ❌ **DECOUPLED** | LED control information |
-| `/state_machine/system_state` | `std_msgs/String` | ❌ **DECOUPLED** | System state for LED patterns |
-| `/mission_status` | `std_msgs/String` | ❌ **DECOUPLED** | Mission status for LED indicators |
+| Topic                         | Message Type      | Communication Type | Description                       |
+| ----------------------------- | ----------------- | ------------------ | --------------------------------- |
+| `/state_machine/led_info`     | `std_msgs/String` | ❌ **DECOUPLED**   | LED control information           |
+| `/state_machine/system_state` | `std_msgs/String` | ❌ **DECOUPLED**   | System state for LED patterns     |
+| `/mission_status`             | `std_msgs/String` | ❌ **DECOUPLED**   | Mission status for LED indicators |
 
 ---
 
@@ -178,17 +181,18 @@ The autonomy system consists of the following ROS2 nodes:
 
 ### Publishers/Subscribers (Frontend Integration)
 
-| Topic | Message Type | QoS Profile | Communication Type | Direction | Description |
-|-------|-------------|-------------|-------------------|-----------|-------------|
-| `/mission/commands` | `std_msgs/String` | RELIABLE | ❌ **DECOUPLED** | Frontend → State Machine | Mission commands |
-| `/mission/progress` | `autonomy_interfaces/MissionProgress` | RELIABLE | ❌ **DECOUPLED** | State Machine → Frontend | Mission progress updates |
-| `/mission/status` | `std_msgs/String` | RELIABLE | ❌ **DECOUPLED** | State Machine → Frontend | Mission status |
+| Topic               | Message Type                          | QoS Profile | Communication Type | Direction                | Description              |
+| ------------------- | ------------------------------------- | ----------- | ------------------ | ------------------------ | ------------------------ |
+| `/mission/commands` | `std_msgs/String`                     | RELIABLE    | ❌ **DECOUPLED**   | Frontend → State Machine | Mission commands         |
+| `/mission/progress` | `autonomy_interfaces/MissionProgress` | RELIABLE    | ❌ **DECOUPLED**   | State Machine → Frontend | Mission progress updates |
+| `/mission/status`   | `std_msgs/String`                     | RELIABLE    | ❌ **DECOUPLED**   | State Machine → Frontend | Mission status           |
 
 ---
 
 ## Message Type Reference
 
 ### autonomy_interfaces/SystemState
+
 ```ros2
 std_msgs/Header header
 string current_state              # BOOT, CALIBRATION, IDLE, NAVIGATION, EXECUTION, RECOVERY, SHUTDOWN
@@ -208,6 +212,7 @@ string state_reason              # State explanation
 ```
 
 ### autonomy_interfaces/SafetyStatus
+
 ```ros2
 std_msgs/Header header
 bool is_safe                     # Overall safety status
@@ -232,6 +237,7 @@ string[] degraded_capabilities   # Degraded capabilities
 ```
 
 ### autonomy_interfaces/VisionDetection
+
 ```ros2
 std_msgs/Header header
 builtin_interfaces/Time timestamp
@@ -248,13 +254,14 @@ string[] additional_data         # Extra detection metadata
 
 ## QoS Profile Standards
 
-| QoS Profile | Reliability | Durability | Communication Type | Use Case |
-|-------------|-------------|------------|-------------------|----------|
-| **RELIABLE** | RELIABLE | VOLATILE | ✅ Intra-process enabled | Safety-critical, state changes, control commands |
-| **BEST_EFFORT** | BEST_EFFORT | VOLATILE | ✅ Intra-process enabled | High-frequency sensor data (>10Hz) |
-| **TRANSIENT_LOCAL** | RELIABLE | TRANSIENT_LOCAL | ✅ Intra-process enabled | State info for new subscribers, persistent status |
+| QoS Profile         | Reliability | Durability      | Communication Type       | Use Case                                          |
+| ------------------- | ----------- | --------------- | ------------------------ | ------------------------------------------------- |
+| **RELIABLE**        | RELIABLE    | VOLATILE        | ✅ Intra-process enabled | Safety-critical, state changes, control commands  |
+| **BEST_EFFORT**     | BEST_EFFORT | VOLATILE        | ✅ Intra-process enabled | High-frequency sensor data (>10Hz)                |
+| **TRANSIENT_LOCAL** | RELIABLE    | TRANSIENT_LOCAL | ✅ Intra-process enabled | State info for new subscribers, persistent status |
 
 ### **QoS and Intra-Process Communication**
+
 - **VOLATILE durability**: Enables intra-process communication for real-time data
 - **TRANSIENT_LOCAL durability**: Enables intra-process with persistence for late-joining subscribers
 - **Automatic coupling**: ROS2 automatically uses intra-process when QoS profiles are compatible and publishers/subscribers are in the same process
@@ -264,7 +271,9 @@ string[] additional_data         # Extra detection metadata
 ## Service Interface Reference
 
 ### SoftwareEstop Service
+
 **Service:** `autonomy_interfaces/SoftwareEstop`
+
 ```ros2
 # Request
 string operator_id              # Operator triggering ESTOP
@@ -282,7 +291,9 @@ bool coordination_started       # Subsystem coordination started
 ```
 
 ### SafestopControl Service
+
 **Service:** `autonomy_interfaces/SafestopControl`
+
 ```ros2
 # Request
 string command                  # "ENGAGE", "DISENGAGE", "TOGGLE"
@@ -325,11 +336,13 @@ string operator_id              # Operator who executed
 ## Monitoring and Diagnostics
 
 ### Diagnostic Topics
+
 - `/diagnostics` - Aggregated diagnostic information
 - `/safety/diagnostics` - Safety-specific diagnostics
 - Component status topics (e.g., `computer_vision/status`)
 
 ### Health Monitoring
+
 - Heartbeat mechanisms between critical components
 - Timeout monitoring for safety-critical communications
 - Automatic fault detection and reporting
@@ -365,21 +378,25 @@ string operator_id              # Operator who executed
 ## Communication Coupling Summary
 
 ### **Coupled Topics (Intra-Process) - ✅ 13 topics**
+
 High-performance, low-latency communication for critical systems:
 
 **High-Frequency Sensors (4):**
+
 - `/imu` (100 Hz) - IMU sensor data
 - `/odom` (50 Hz) - Odometry data
 - `/cmd_vel` (50 Hz) - Velocity commands
 - `vision/detections` (30 Hz) - Computer vision detections
 
 **Safety & Control (4):**
+
 - `/safety/emergency_stop` - Emergency stop signals
 - `/safety/violations` - Safety violation status
 - `/state_machine/current_state` - System state
 - `/state_machine/safety_status` - Safety status
 
 **Status & Coordination (5):**
+
 - `/sensor_bridge/status` - Bridge operational status
 - `computer_vision/status` - Vision system status
 - `/navigation/current_waypoint` - Navigation targets
@@ -387,6 +404,7 @@ High-performance, low-latency communication for critical systems:
 - `/state_machine/safety_status` (subscriber) - Safety coordination
 
 ### **Decoupled Topics (Inter-Process) - ❌ 17 topics**
+
 Network-transparent communication for distributed systems:
 
 - Cross-node monitoring (diagnostics, battery, temperature)
@@ -396,6 +414,7 @@ Network-transparent communication for distributed systems:
 - Debug and visualization data
 
 ### **Conditional Topics (🤔) - 3 topics**
+
 Architecture-dependent coupling:
 
 - Camera image streams (depends on sensor placement)
@@ -405,4 +424,4 @@ Architecture-dependent coupling:
 
 ---
 
-*This document is maintained as part of the URC 2026 autonomy system documentation. Last updated: $(date)*
+_This document is maintained as part of the URC 2026 autonomy system documentation. Last updated: $(date)_

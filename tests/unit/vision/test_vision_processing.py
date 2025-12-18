@@ -7,18 +7,21 @@ image duplication by processing camera data once and distributing
 results to multiple consumers.
 """
 
-import unittest
-from unittest.mock import Mock, patch
-import numpy as np
-import cv2
-import time
-from typing import Optional, Dict, Any, List
-from concurrent.futures import ThreadPoolExecutor
-
 # Add vision processing to path
 import os
 import sys
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+import time
+import unittest
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional
+from unittest.mock import Mock, patch
+
+import cv2
+import numpy as np
+
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 VISION_ROOT = os.path.join(PROJECT_ROOT, "src", "vision_processing")
 sys.path.insert(0, VISION_ROOT)
 
@@ -34,7 +37,7 @@ class TestVisionProcessing(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        with patch('rclpy.node.Node.__init__', return_value=None):
+        with patch("rclpy.node.Node.__init__", return_value=None):
             self.vision_node = VisionProcessingNode()
 
             # Mock required attributes
@@ -63,7 +66,7 @@ class TestVisionProcessing(unittest.TestCase):
 
     def test_initialization(self):
         """Test VisionProcessingNode initialization."""
-        with patch('rclpy.node.Node.__init__', return_value=None):
+        with patch("rclpy.node.Node.__init__", return_value=None):
             node = VisionProcessingNode()
 
             # Verify basic initialization
@@ -82,10 +85,10 @@ class TestVisionProcessing(unittest.TestCase):
 
         # Mock keyboard detection result
         expected_result = {
-            'detected': True,
-            'confidence': 0.85,
-            'bbox': [100, 100, 340, 50],
-            'keys': ['Q', 'W', 'E']
+            "detected": True,
+            "confidence": 0.85,
+            "bbox": [100, 100, 340, 50],
+            "keys": ["Q", "W", "E"],
         }
 
         # Mock the detection method
@@ -94,34 +97,38 @@ class TestVisionProcessing(unittest.TestCase):
         result = self.vision_node.detect_keyboard(test_image)
 
         self.assertIsInstance(result, dict)
-        self.assertIn('detected', result)
-        self.assertTrue(result['detected'])
+        self.assertIn("detected", result)
+        self.assertTrue(result["detected"])
 
     def test_keyboard_detection_empty_image(self):
         """Test keyboard detection with empty image."""
         test_image = np.zeros((480, 640, 3), dtype=np.uint8)
 
-        self.vision_node.detect_keyboard = Mock(return_value={'detected': False, 'confidence': 0.0})
+        self.vision_node.detect_keyboard = Mock(
+            return_value={"detected": False, "confidence": 0.0}
+        )
 
         result = self.vision_node.detect_keyboard(test_image)
 
         self.assertIsInstance(result, dict)
-        self.assertIn('detected', result)
-        self.assertFalse(result['detected'])
+        self.assertIn("detected", result)
+        self.assertFalse(result["detected"])
 
     def test_terrain_analysis(self):
         """Test terrain analysis processing."""
         test_image = np.zeros((480, 640, 3), dtype=np.uint8)
 
         # Add terrain-like features (sand colored regions)
-        cv2.rectangle(test_image, (0, 200), (640, 480), (200, 180, 150), -1)  # Sand-like color
+        cv2.rectangle(
+            test_image, (0, 200), (640, 480), (200, 180, 150), -1
+        )  # Sand-like color
 
         # Mock terrain analysis result
         expected_result = {
-            'terrain_map': np.zeros((480, 640), dtype=np.uint8),
-            'terrain_types': ['sand', 'rock', 'slope'],
-            'traversability': 0.8,
-            'hazards': []
+            "terrain_map": np.zeros((480, 640), dtype=np.uint8),
+            "terrain_types": ["sand", "rock", "slope"],
+            "traversability": 0.8,
+            "hazards": [],
         }
 
         self.vision_node.analyze_terrain = Mock(return_value=expected_result)
@@ -129,8 +136,8 @@ class TestVisionProcessing(unittest.TestCase):
         result = self.vision_node.analyze_terrain(test_image)
 
         self.assertIsInstance(result, dict)
-        self.assertIn('terrain_map', result)
-        self.assertIn('terrain_types', result)
+        self.assertIn("terrain_map", result)
+        self.assertIn("terrain_types", result)
 
     def test_terrain_analysis_complex_scene(self):
         """Test terrain analysis with complex scene."""
@@ -145,10 +152,10 @@ class TestVisionProcessing(unittest.TestCase):
         cv2.rectangle(test_image, (320, 400), (640, 480), (150, 150, 150), -1)
 
         expected_result = {
-            'terrain_map': np.random.randint(0, 255, (480, 640), dtype=np.uint8),
-            'terrain_types': ['sand', 'rock', 'slope'],
-            'traversability': 0.6,
-            'hazards': [{'x': 400, 'y': 350, 'type': 'rock'}]
+            "terrain_map": np.random.randint(0, 255, (480, 640), dtype=np.uint8),
+            "terrain_types": ["sand", "rock", "slope"],
+            "traversability": 0.6,
+            "hazards": [{"x": 400, "y": 350, "type": "rock"}],
         }
 
         self.vision_node.analyze_terrain = Mock(return_value=expected_result)
@@ -156,8 +163,8 @@ class TestVisionProcessing(unittest.TestCase):
         result = self.vision_node.analyze_terrain(test_image)
 
         self.assertIsInstance(result, dict)
-        self.assertIn('hazards', result)
-        self.assertIsInstance(result['hazards'], list)
+        self.assertIn("hazards", result)
+        self.assertIsInstance(result["hazards"], list)
 
     def test_obstacle_detection(self):
         """Test obstacle detection processing."""
@@ -169,12 +176,12 @@ class TestVisionProcessing(unittest.TestCase):
         # Mock obstacle detection result
         expected_obstacles = [
             {
-                'x': 320,
-                'y': 240,
-                'width': 100,
-                'height': 100,
-                'confidence': 0.9,
-                'type': 'rock'
+                "x": 320,
+                "y": 240,
+                "width": 100,
+                "height": 100,
+                "confidence": 0.9,
+                "type": "rock",
             }
         ]
 
@@ -184,9 +191,9 @@ class TestVisionProcessing(unittest.TestCase):
 
         self.assertIsInstance(obstacles, list)
         self.assertEqual(len(obstacles), 1)
-        self.assertIn('x', obstacles[0])
-        self.assertIn('y', obstacles[0])
-        self.assertIn('confidence', obstacles[0])
+        self.assertIn("x", obstacles[0])
+        self.assertIn("y", obstacles[0])
+        self.assertIn("confidence", obstacles[0])
 
     def test_obstacle_detection_no_obstacles(self):
         """Test obstacle detection with clear scene."""
@@ -207,9 +214,9 @@ class TestVisionProcessing(unittest.TestCase):
         cv2.rectangle(test_image, (100, 100), (200, 200), (255, 255, 255), -1)
 
         expected_features = {
-            'keypoints': [Mock(), Mock(), Mock()],  # Mock keypoints
-            'descriptors': np.random.rand(3, 128).astype(np.uint8),
-            'count': 3
+            "keypoints": [Mock(), Mock(), Mock()],  # Mock keypoints
+            "descriptors": np.random.rand(3, 128).astype(np.uint8),
+            "count": 3,
         }
 
         self.vision_node.extract_features = Mock(return_value=expected_features)
@@ -217,9 +224,9 @@ class TestVisionProcessing(unittest.TestCase):
         features = self.vision_node.extract_features(test_image)
 
         self.assertIsInstance(features, dict)
-        self.assertIn('keypoints', features)
-        self.assertIn('descriptors', features)
-        self.assertIn('count', features)
+        self.assertIn("keypoints", features)
+        self.assertIn("descriptors", features)
+        self.assertIn("count", features)
 
     def test_parallel_processing(self):
         """Test parallel processing of multiple vision tasks."""
@@ -227,7 +234,9 @@ class TestVisionProcessing(unittest.TestCase):
 
         # Mock thread pool execution
         self.vision_node.executor.submit = Mock()
-        self.vision_node.executor.submit.return_value.result = Mock(return_value={'detected': True})
+        self.vision_node.executor.submit.return_value.result = Mock(
+            return_value={"detected": True}
+        )
 
         # Submit multiple tasks
         futures = []
@@ -246,7 +255,7 @@ class TestVisionProcessing(unittest.TestCase):
         mock_image_msg = Mock()
         mock_image_msg.header = Mock()
         mock_image_msg.header.stamp = Mock()
-        mock_image_msg.encoding = 'bgr8'
+        mock_image_msg.encoding = "bgr8"
         mock_image_msg.width = 640
         mock_image_msg.height = 480
 
@@ -255,15 +264,19 @@ class TestVisionProcessing(unittest.TestCase):
         self.vision_node.bridge.imgmsg_to_cv2 = Mock(return_value=test_cv_image)
 
         # Mock processing methods
-        self.vision_node.detect_keyboard = Mock(return_value={'detected': True})
-        self.vision_node.analyze_terrain = Mock(return_value={'terrain_map': np.zeros((480, 640))})
+        self.vision_node.detect_keyboard = Mock(return_value={"detected": True})
+        self.vision_node.analyze_terrain = Mock(
+            return_value={"terrain_map": np.zeros((480, 640))}
+        )
         self.vision_node.detect_obstacles = Mock(return_value=[])
 
         # Call image callback
         self.vision_node.image_callback(mock_image_msg)
 
         # Verify processing pipeline was executed
-        self.vision_node.bridge.imgmsg_to_cv2.assert_called_once_with(mock_image_msg, 'bgr8')
+        self.vision_node.bridge.imgmsg_to_cv2.assert_called_once_with(
+            mock_image_msg, "bgr8"
+        )
         self.vision_node.detect_keyboard.assert_called_once()
         self.vision_node.analyze_terrain.assert_called_once()
         self.vision_node.detect_obstacles.assert_called_once()
@@ -279,9 +292,13 @@ class TestVisionProcessing(unittest.TestCase):
 
         # Process should be allowed (enough time passed)
         current_time = time.time()
-        should_process = (current_time - self.vision_node.last_processing_time) >= (1.0 / self.vision_node.processing_rate)
+        should_process = (current_time - self.vision_node.last_processing_time) >= (
+            1.0 / self.vision_node.processing_rate
+        )
 
-        self.assertTrue(should_process, "Processing should be allowed after sufficient time")
+        self.assertTrue(
+            should_process, "Processing should be allowed after sufficient time"
+        )
 
     def test_shared_memory_optimization(self):
         """Test shared memory buffer usage."""
@@ -296,7 +313,7 @@ class TestVisionProcessing(unittest.TestCase):
         """Test result caching for repeated queries."""
         # Simulate caching behavior
         cache_key = "keyboard_detection_123"
-        cached_result = {'detected': True, 'confidence': 0.9}
+        cached_result = {"detected": True, "confidence": 0.9}
 
         self.vision_node.result_cache = {}
         self.vision_node.result_cache[cache_key] = cached_result
@@ -310,7 +327,9 @@ class TestVisionProcessing(unittest.TestCase):
         # Test with invalid image data
         corrupted_image = None  # Invalid image
 
-        self.vision_node.detect_keyboard = Mock(side_effect=Exception("Corrupted image"))
+        self.vision_node.detect_keyboard = Mock(
+            side_effect=Exception("Corrupted image")
+        )
 
         with self.assertRaises(Exception):
             self.vision_node.detect_keyboard(corrupted_image)
@@ -370,7 +389,7 @@ class TestVisionProcessingIntegration(unittest.TestCase):
 
     def test_end_to_end_processing_pipeline(self):
         """Test complete processing pipeline from image to results."""
-        with patch('rclpy.node.Node.__init__', return_value=None):
+        with patch("rclpy.node.Node.__init__", return_value=None):
             node = VisionProcessingNode()
 
             # Mock all required components
@@ -388,9 +407,9 @@ class TestVisionProcessingIntegration(unittest.TestCase):
             cv2.rectangle(test_image, (100, 100), (300, 200), (255, 255, 255), -1)
 
             # Mock processing results
-            keyboard_result = {'detected': True, 'bbox': [100, 100, 200, 100]}
-            terrain_result = {'terrain_map': np.zeros((480, 640), dtype=np.uint8)}
-            obstacle_result = [{'x': 200, 'y': 150, 'type': 'rock'}]
+            keyboard_result = {"detected": True, "bbox": [100, 100, 200, 100]}
+            terrain_result = {"terrain_map": np.zeros((480, 640), dtype=np.uint8)}
+            obstacle_result = [{"x": 200, "y": 150, "type": "rock"}]
 
             node.detect_keyboard = Mock(return_value=keyboard_result)
             node.analyze_terrain = Mock(return_value=terrain_result)
@@ -412,7 +431,7 @@ class TestVisionProcessingIntegration(unittest.TestCase):
     def test_competition_scenario_processing(self):
         """Test vision processing under competition conditions."""
         # Simulate high-load competition scenario
-        with patch('rclpy.node.Node.__init__', return_value=None):
+        with patch("rclpy.node.Node.__init__", return_value=None):
             node = VisionProcessingNode()
 
             # Configure for competition (higher rate, more workers)
@@ -427,8 +446,5 @@ class TestVisionProcessingIntegration(unittest.TestCase):
             self.assertLess(frame_interval, 0.1)  # Under 100ms per frame
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
-
-

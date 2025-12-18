@@ -7,9 +7,9 @@ across all state machine components.
 """
 
 import logging
-from typing import Any, Optional, Dict, Callable
-from contextlib import contextmanager
 import traceback
+from contextlib import contextmanager
+from typing import Any, Callable, Dict, Optional
 
 
 class StateMachineError(Exception):
@@ -23,21 +23,25 @@ class StateMachineError(Exception):
 
 class TransitionError(StateMachineError):
     """Raised when state transitions fail."""
+
     pass
 
 
 class ContextError(StateMachineError):
     """Raised when context evaluation fails."""
+
     pass
 
 
 class PolicyError(StateMachineError):
     """Raised when policy evaluation fails."""
+
     pass
 
 
 class MonitoringError(StateMachineError):
     """Raised when monitoring operations fail."""
+
     pass
 
 
@@ -46,7 +50,7 @@ def handle_service_error(
     error: Exception,
     context: str = "",
     component: str = "",
-    include_traceback: bool = False
+    include_traceback: bool = False,
 ) -> None:
     """
     Standardized error handling for service operations.
@@ -76,7 +80,7 @@ def error_boundary(
     component: str = "",
     context: str = "",
     reraise: bool = True,
-    error_type: type = Exception
+    error_type: type = Exception,
 ):
     """
     Context manager for standardized error handling.
@@ -93,7 +97,13 @@ def error_boundary(
         if reraise:
             raise
     except Exception as e:
-        handle_service_error(logger, e, f"Unexpected error in {context}", component, include_traceback=True)
+        handle_service_error(
+            logger,
+            e,
+            f"Unexpected error in {context}",
+            component,
+            include_traceback=True,
+        )
         if reraise:
             raise
 
@@ -104,7 +114,7 @@ def safe_execute(
     component: str = "",
     context: str = "",
     default_return: Any = None,
-    error_type: type = Exception
+    error_type: type = Exception,
 ) -> Any:
     """
     Execute a function safely with standardized error handling.
@@ -131,9 +141,7 @@ def safe_execute(
 
 
 def validate_transition_request(
-    current_state: Any,
-    target_state: Any,
-    reason: str = ""
+    current_state: Any, target_state: Any, reason: str = ""
 ) -> None:
     """
     Validate state transition request parameters.
@@ -157,10 +165,7 @@ def validate_transition_request(
 
 
 def log_operation_start(
-    logger: logging.Logger,
-    operation: str,
-    component: str = "",
-    **kwargs
+    logger: logging.Logger, operation: str, component: str = "", **kwargs
 ) -> None:
     """Log the start of an operation with structured context."""
     component_prefix = f"[{component}] " if component else ""
@@ -173,13 +178,15 @@ def log_operation_complete(
     operation: str,
     component: str = "",
     duration: Optional[float] = None,
-    **kwargs
+    **kwargs,
 ) -> None:
     """Log the completion of an operation with structured context."""
     component_prefix = f"[{component}] " if component else ""
     duration_str = f" ({duration:.3f}s)" if duration else ""
     context_str = " ".join(f"{k}={v}" for k, v in kwargs.items())
-    logger.info(f"{component_prefix}Completed {operation}{duration_str} {context_str}".strip())
+    logger.info(
+        f"{component_prefix}Completed {operation}{duration_str} {context_str}".strip()
+    )
 
 
 def create_error_summary(errors: list) -> Dict[str, Any]:
@@ -196,7 +203,7 @@ def create_error_summary(errors: list) -> Dict[str, Any]:
         "total_errors": len(errors),
         "error_types": {},
         "components": {},
-        "timestamps": []
+        "timestamps": [],
     }
 
     for error in errors:
@@ -206,15 +213,19 @@ def create_error_summary(errors: list) -> Dict[str, Any]:
             timestamp = error.get("timestamp")
         else:
             error_type = type(error).__name__
-            component = getattr(error, "component", "Unknown") if hasattr(error, "component") else "Unknown"
+            component = (
+                getattr(error, "component", "Unknown")
+                if hasattr(error, "component")
+                else "Unknown"
+            )
             timestamp = None
 
-        summary["error_types"][error_type] = summary["error_types"].get(error_type, 0) + 1
+        summary["error_types"][error_type] = (
+            summary["error_types"].get(error_type, 0) + 1
+        )
         summary["components"][component] = summary["components"].get(component, 0) + 1
 
         if timestamp:
             summary["timestamps"].append(timestamp)
 
     return summary
-
-

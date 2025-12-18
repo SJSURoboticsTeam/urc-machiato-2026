@@ -7,4 +7,4 @@ Connects autonomy stack to deployed control systems and teleoperation infrastruc
 
 from .hardware_interface_node import HardwareInterfaceNode
 
-__all__ = ['HardwareInterfaceNode']
+__all__ = ["HardwareInterfaceNode"]

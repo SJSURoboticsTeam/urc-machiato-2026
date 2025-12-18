@@ -35,5 +35,3 @@ string safety_reason
 
 # Timestamp
 builtin_interfaces/Time timestamp
-
-

@@ -5,25 +5,30 @@ Scripts for production deployment, validation, and system health checks.
 ## Scripts
 
 ### Core Validation
+
 - **`validate_config.py`** - Validates configuration files for production readiness and environment consistency
 - **`production_health_check.py`** - Comprehensive system health check for deployment validation
 
 ### GitHub Integration
+
 - **`extract-todos-to-issues.py`** - Automated TODO extraction from `*_TODO.md` files and GitHub issue creation
 
 ## Usage
 
 ### Configuration Validation
+
 ```bash
 python3 scripts/production/validate_config.py
 ```
 
 ### Production Health Check
+
 ```bash
 python3 scripts/production/production_health_check.py
 ```
 
 ### TODO Extraction
+
 ```bash
 python3 scripts/production/extract-todos-to-issues.py
 ```
