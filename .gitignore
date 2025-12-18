@@ -63,6 +63,9 @@ src/autonomy/*/log/
 src/autonomy/build/
 src/autonomy/install/
 src/autonomy/log/
+src/install/
+src/install/_local_setup_util_sh.py
+src/install/_local_setup_util_ps1.py
 .cursor/
 # ROS2 development artifacts
 *.log
