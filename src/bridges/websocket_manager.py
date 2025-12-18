@@ -45,7 +45,7 @@ class WebSocketManager:
         telemetry_data: Dict[str, Any],
         port: int = 8080,
         max_clients: int = 10,
-        redundancy_manager=None
+        redundancy_manager=None,
     ):
         """
         Initialize the WebSocket Manager.

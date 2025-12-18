@@ -111,8 +111,9 @@ class ConfigurationValidator:
                 for dependency in dependencies:
                     if dependency not in config or config[dependency] != "hardware":
                         errors.append(
-                            f"Component {component} requires {dependency} to be hardware, "
-                            f"but {dependency} is set to {config.get(dependency, 'missing')}"
+                            f"Component {component} requires {dependency} to be "
+                            f"hardware, but {dependency} is set to "
+                            f"{config.get(dependency, 'missing')}"
                         )
 
         # Check for incompatible combinations
@@ -436,7 +437,7 @@ def validate_all_configs(
             print(" To generate default configurations, run:")
             print(
                 '   python3 -c "from config.config_validator import '
-                "ConfigurationValidator; "
+                'ConfigurationValidator; '
                 'ConfigurationValidator().generate_default_configs()"'
             )
             return False
