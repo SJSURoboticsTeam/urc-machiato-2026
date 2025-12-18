@@ -268,7 +268,7 @@ def main():
             (inter_results["avg_latency_ms"] - intra_results["avg_latency_ms"])
             / inter_results["avg_latency_ms"]
         ) * 100
-        print(".1f")
+        print(f"   • Latency: {latency_improvement:.1f}% improvement")
 
     throughput_improvement = (
         (
@@ -282,13 +282,13 @@ def main():
         if inter_results["throughput_msg_per_sec"] > 0
         else 0
     )
-    print(".1f")
+    print(f"   • Throughput: {throughput_improvement:.1f}% improvement")
 
     cpu_savings = inter_results["final_cpu"] - intra_results["final_cpu"]
-    print(".1f")
+    print(f"   • CPU Usage: {cpu_savings:.1f}% reduction")
 
     memory_savings = inter_results["memory_delta_mb"] - intra_results["memory_delta_mb"]
-    print(".2f")
+    print(f"   • Memory Usage: {memory_savings:.2f} MB reduction")
 
     print("\n[OBJECTIVE] IMPACT ON URC 2026 AUTONOMY SYSTEM:")
     print("  [PASS] /imu (100 Hz): Reduced latency improves state estimation")
