@@ -18,7 +18,7 @@ from pathlib import Path
 
 def run_frontend_checks() -> bool:
     """Run frontend health checks."""
-    print("🌐 Running Frontend Health Checks...")
+    print("[NETWORK] Running Frontend Health Checks...")
     try:
         result = subprocess.run(
             [sys.executable, "scripts/health-checks/check_frontend.py"],
@@ -33,13 +33,13 @@ def run_frontend_checks() -> bool:
 
         return result.returncode == 0
     except Exception as e:
-        print(f"❌ Failed to run frontend checks: {e}")
+        print(f"[FAIL] Failed to run frontend checks: {e}")
         return False
 
 
 def run_backend_checks() -> bool:
     """Run backend health checks."""
-    print("🔧 Running Backend Health Checks...")
+    print("[TOOL] Running Backend Health Checks...")
     try:
         result = subprocess.run(
             [sys.executable, "scripts/health-checks/check_backend.py"],
@@ -54,13 +54,13 @@ def run_backend_checks() -> bool:
 
         return result.returncode == 0
     except Exception as e:
-        print(f"❌ Failed to run backend checks: {e}")
+        print(f"[FAIL] Failed to run backend checks: {e}")
         return False
 
 
 def ensure_services_running() -> bool:
     """Ensure that dashboard services are running."""
-    print("🚀 Ensuring Dashboard Services are Running...")
+    print("[IGNITE] Ensuring Dashboard Services are Running...")
 
     try:
         # Check if services are already running
@@ -87,10 +87,10 @@ def ensure_services_running() -> bool:
         backend_running = backend_check.returncode == 0
 
         if frontend_running and backend_running:
-            print("✅ Services already running")
+            print("[PASS] Services already running")
             return True
 
-        print("⚠️  Services not running, starting them...")
+        print("  Services not running, starting them...")
 
         # Start the dashboard
         result = subprocess.run(
@@ -100,7 +100,7 @@ def ensure_services_running() -> bool:
         )
 
         if result.returncode != 0:
-            print("❌ Failed to start dashboard services")
+            print("[FAIL] Failed to start dashboard services")
             return False
 
         # Wait for services to start
@@ -131,14 +131,14 @@ def ensure_services_running() -> bool:
         backend_running = backend_check.returncode == 0
 
         if frontend_running and backend_running:
-            print("✅ Services started successfully")
+            print("[PASS] Services started successfully")
             return True
         else:
-            print("❌ Services failed to start properly")
+            print("[FAIL] Services failed to start properly")
             return False
 
     except Exception as e:
-        print(f"❌ Error ensuring services: {e}")
+        print(f"[FAIL] Error ensuring services: {e}")
         return False
 
 
@@ -162,13 +162,13 @@ def main():
 
     args = parser.parse_args()
 
-    print("🏥 URC 2026 Health Check Suite")
+    print(" URC 2026 Health Check Suite")
     print("=" * 50)
 
     # Start services if requested or in CI mode
     if args.start_services or args.ci:
         if not ensure_services_running():
-            print("❌ Cannot proceed without running services")
+            print("[FAIL] Cannot proceed without running services")
             sys.exit(1)
 
     # Run checks
@@ -186,7 +186,7 @@ def main():
     # Summary
     print("=" * 50)
     if frontend_success and backend_success:
-        print("🎉 ALL HEALTH CHECKS PASSED!")
+        print("[PARTY] ALL HEALTH CHECKS PASSED!")
         print("Dashboard is ready for testing.")
         sys.exit(0)
     else:
@@ -196,7 +196,7 @@ def main():
         if not backend_success:
             failed_components.append("Backend")
 
-        print(f"❌ HEALTH CHECKS FAILED: {', '.join(failed_components)}")
+        print(f"[FAIL] HEALTH CHECKS FAILED: {', '.join(failed_components)}")
         print("Please fix the issues before proceeding.")
         sys.exit(1)
 

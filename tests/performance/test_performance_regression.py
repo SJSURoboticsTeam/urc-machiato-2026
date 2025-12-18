@@ -49,7 +49,7 @@ class PerformanceRegressionTest(unittest.TestCase):
 
     def test_state_sync_performance_regression(self):
         """Test state synchronization performance against baseline."""
-        print("🔄 Testing State Sync Performance Regression...")
+        print("[REFRESH] Testing State Sync Performance Regression...")
 
         from core.state_synchronization_manager import DistributedStateManager
 
@@ -100,11 +100,11 @@ class PerformanceRegressionTest(unittest.TestCase):
         )
 
         mgr.stop()
-        print("  ✅ State sync performance within acceptable range")
+        print("  [PASS] State sync performance within acceptable range")
 
     def test_dynamic_config_performance_regression(self):
         """Test dynamic configuration performance against baseline."""
-        print("⚙️ Testing Dynamic Config Performance Regression...")
+        print(" Testing Dynamic Config Performance Regression...")
 
         from core.dynamic_config_manager import DynamicConfigManager
 
@@ -152,11 +152,11 @@ class PerformanceRegressionTest(unittest.TestCase):
             f"Bulk config update time {bulk_time:.2f}ms exceeds regression threshold",
         )
 
-        print("  ✅ Dynamic config performance within acceptable range")
+        print("  [PASS] Dynamic config performance within acceptable range")
 
     def test_dds_domain_performance_regression(self):
         """Test DDS domain management performance against baseline."""
-        print("🌐 Testing DDS Domain Performance Regression...")
+        print("[NETWORK] Testing DDS Domain Performance Regression...")
 
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
 
@@ -199,11 +199,11 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         dds_mgr.stop()
-        print("  ✅ DDS domain performance within acceptable range")
+        print("  [PASS] DDS domain performance within acceptable range")
 
     def test_websocket_redundancy_performance_regression(self):
         """Test WebSocket redundancy performance against baseline."""
-        print("🌐 Testing WebSocket Redundancy Performance Regression...")
+        print("[NETWORK] Testing WebSocket Redundancy Performance Regression...")
 
         from bridges.websocket_redundancy_manager import (
             EndpointPriority,
@@ -268,11 +268,11 @@ class PerformanceRegressionTest(unittest.TestCase):
         print(".2f")
 
         ws_mgr.stop_redundancy_system()
-        print("  ✅ WebSocket redundancy performance within acceptable range")
+        print("  [PASS] WebSocket redundancy performance within acceptable range")
 
     def test_recovery_coordination_performance_regression(self):
         """Test recovery coordination performance against baseline."""
-        print("🔧 Testing Recovery Coordination Performance Regression...")
+        print("[TOOL] Testing Recovery Coordination Performance Regression...")
 
         from bridges.websocket_redundancy_manager import (
             EndpointPriority,
@@ -349,11 +349,11 @@ class PerformanceRegressionTest(unittest.TestCase):
         dds_mgr.stop()
         ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Recovery coordination performance within acceptable range")
+        print("  [PASS] Recovery coordination performance within acceptable range")
 
     def test_memory_usage_regression(self):
         """Test memory usage against baseline."""
-        print("🧠 Testing Memory Usage Regression...")
+        print(" Testing Memory Usage Regression...")
 
         # Get current memory usage
         current_memory = self.process.memory_info().rss / 1024 / 1024
@@ -395,11 +395,11 @@ class PerformanceRegressionTest(unittest.TestCase):
             if hasattr(system, "stop"):
                 system.stop()
 
-        print("  ✅ Memory usage within acceptable range")
+        print("  [PASS] Memory usage within acceptable range")
 
     def test_cpu_usage_regression(self):
         """Test CPU usage against baseline."""
-        print("⚡ Testing CPU Usage Regression...")
+        print("[LIGHTNING] Testing CPU Usage Regression...")
 
         # Test idle CPU
         time.sleep(1)
@@ -433,11 +433,11 @@ class PerformanceRegressionTest(unittest.TestCase):
             load_cpu, 50.0, f"Load CPU usage {load_cpu:.1f}% excessively high"
         )
 
-        print("  ✅ CPU usage within acceptable range")
+        print("  [PASS] CPU usage within acceptable range")
 
     def test_performance_trend_analysis(self):
         """Analyze performance trends across multiple runs."""
-        print("📈 Testing Performance Trend Analysis...")
+        print(" Testing Performance Trend Analysis...")
 
         # This would typically compare against historical data
         # For now, just ensure current performance is consistent
@@ -468,7 +468,7 @@ class PerformanceRegressionTest(unittest.TestCase):
         self.assertLess(cv, 0.5, f"Performance variation {cv:.2f} too high")
 
         mgr.stop()
-        print("  ✅ Performance consistency within acceptable range")
+        print("  [PASS] Performance consistency within acceptable range")
 
 
 if __name__ == "__main__":

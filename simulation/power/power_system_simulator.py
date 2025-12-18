@@ -92,7 +92,7 @@ class PowerSystemSimulator:
         self._load_configuration(config)
         self._initialize_state()
 
-        self.logger.info("🔋 MOCK Power System Simulator initialized")
+        self.logger.info(" MOCK Power System Simulator initialized")
 
     def _get_default_config(self) -> Dict:
         """Get default power system configuration."""
@@ -384,7 +384,7 @@ class PowerSystemSimulator:
 
     def emergency_shutdown_power(self) -> bool:
         """Execute emergency power shutdown."""
-        self.logger.warning("🚨 POWER SYSTEM EMERGENCY SHUTDOWN")
+        self.logger.warning(" POWER SYSTEM EMERGENCY SHUTDOWN")
         self.emergency_shutdown = True
         self.enabled = False
 
@@ -562,29 +562,29 @@ class PowerSystemSimulator:
         if self.bus_current > thresholds["overcurrent"]:
             if "overcurrent" not in self.faults:
                 self.faults.append("overcurrent")
-                self.logger.error("🚨 OVERCURRENT FAULT DETECTED")
+                self.logger.error(" OVERCURRENT FAULT DETECTED")
 
         # Over/under voltage protection
         if self.bus_voltage > thresholds["overvoltage"]:
             if "overvoltage" not in self.faults:
                 self.faults.append("overvoltage")
-                self.logger.error("🚨 OVERVOLTAGE FAULT DETECTED")
+                self.logger.error(" OVERVOLTAGE FAULT DETECTED")
 
         if self.bus_voltage < thresholds["undervoltage"]:
             if "undervoltage" not in self.faults:
                 self.faults.append("undervoltage")
-                self.logger.error("🚨 UNDERVOLTAGE FAULT DETECTED")
+                self.logger.error(" UNDERVOLTAGE FAULT DETECTED")
 
         # Low battery protection
         soc = self.get_state_of_charge()
         if soc < 0.1:
             if "low_battery" not in self.faults:
                 self.faults.append("low_battery")
-                self.logger.warning("⚠️ LOW BATTERY WARNING")
+                self.logger.warning(" LOW BATTERY WARNING")
 
         if soc < 0.05:
             self.emergency_shutdown_power()
-            self.logger.critical("🚨 BATTERY CRITICAL - EMERGENCY SHUTDOWN")
+            self.logger.critical(" BATTERY CRITICAL - EMERGENCY SHUTDOWN")
 
         # Cell imbalance detection
         cell_socs = [cell.state_of_charge for cell in self.cells]
@@ -593,7 +593,7 @@ class PowerSystemSimulator:
         if soc_spread > 0.1:  # 10% SOC difference
             if "cell_imbalance" not in self.faults:
                 self.faults.append("cell_imbalance")
-                self.logger.warning("⚠️ BATTERY CELL IMBALANCE DETECTED")
+                self.logger.warning(" BATTERY CELL IMBALANCE DETECTED")
 
         # Thermal protection
         max_cell_temp = max(cell.temperature for cell in self.cells)
@@ -601,4 +601,4 @@ class PowerSystemSimulator:
             if "thermal_runaway" not in self.faults:
                 self.faults.append("thermal_runaway")
                 self.emergency_shutdown_power()
-                self.logger.critical("🚨 THERMAL RUNAWAY DETECTED - EMERGENCY SHUTDOWN")
+                self.logger.critical(" THERMAL RUNAWAY DETECTED - EMERGENCY SHUTDOWN")

@@ -32,16 +32,16 @@ class BackendHealthChecker:
     def log_error(self, message: str):
         """Log an error."""
         self.errors.append(message)
-        print(f"❌ {message}")
+        print(f"[FAIL] {message}")
 
     def log_warning(self, message: str):
         """Log a warning."""
         self.warnings.append(message)
-        print(f"⚠️  {message}")
+        print(f"  {message}")
 
     def log_success(self, message: str):
         """Log a success."""
-        print(f"✅ {message}")
+        print(f"[PASS] {message}")
 
     def check_websocket_server(self) -> bool:
         """Check if WebSocket server is running and accepting connections."""
@@ -141,7 +141,7 @@ class BackendHealthChecker:
 
     def run_all_checks(self) -> Tuple[bool, Dict]:
         """Run all health checks."""
-        print("🔍 Running Backend Health Checks...")
+        print("[MAGNIFY] Running Backend Health Checks...")
         print("=" * 50)
 
         # Reset state
@@ -157,18 +157,18 @@ class BackendHealthChecker:
 
         # Summary
         print("\n" + "=" * 50)
-        print("🏁 Backend Health Check Results:")
+        print("[FLAG] Backend Health Check Results:")
 
         # WebSocket handshake can have warnings but basic connectivity is more important
         all_passed = websocket_ok and imports_ok and components_ok
 
         if all_passed:
-            print("✅ ALL CRITICAL CHECKS PASSED - Backend is healthy!")
+            print("[PASS] ALL CRITICAL CHECKS PASSED - Backend is healthy!")
             if self.warnings:
-                print(f"⚠️  {len(self.warnings)} warnings (non-critical)")
+                print(f"  {len(self.warnings)} warnings (non-critical)")
         else:
             print(
-                f"❌ ISSUES FOUND - {len(self.errors)} errors, {len(self.warnings)} warnings"
+                f"[FAIL] ISSUES FOUND - {len(self.errors)} errors, {len(self.warnings)} warnings"
             )
 
         return all_passed, {
@@ -193,12 +193,12 @@ def main():
 
     # Print detailed results
     if results["errors"]:
-        print("\n❌ Errors:")
+        print("\n[FAIL] Errors:")
         for error in results["errors"]:
             print(f"  • {error}")
 
     if results["warnings"]:
-        print("\n⚠️  Warnings:")
+        print("\n  Warnings:")
         for warning in results["warnings"]:
             print(f"  • {warning}")
 

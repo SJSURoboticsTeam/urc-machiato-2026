@@ -118,13 +118,15 @@ class CompetitionLoadScenariosTest(unittest.TestCase):
 
     def test_all_competition_scenarios(self):
         """Test system performance across all competition scenarios."""
-        print("\n🏁 Testing Competition Load Scenarios")
+        print("\n[FLAG] Testing Competition Load Scenarios")
         print("=" * 60)
 
         overall_success = True
 
         for scenario_name, scenario_config in self.competition_scenarios.items():
-            print(f"\n🎯 Testing Scenario: {scenario_name.replace('_', ' ').title()}")
+            print(
+                f"\n[OBJECTIVE] Testing Scenario: {scenario_name.replace('_', ' ').title()}"
+            )
             print(f"   {scenario_config['description']}")
 
             try:
@@ -132,24 +134,24 @@ class CompetitionLoadScenariosTest(unittest.TestCase):
                 if not success:
                     overall_success = False
 
-                status = "✅ PASSED" if success else "❌ FAILED"
+                status = "[PASS] PASSED" if success else "[FAIL] FAILED"
                 print(f"   Result: {status}")
 
             except Exception as e:
-                print(f"   ❌ ERROR: {e}")
+                print(f"   [FAIL] ERROR: {e}")
                 overall_success = False
 
         # Overall assessment
         print("\n" + "=" * 60)
-        print("🏆 COMPETITION READINESS ASSESSMENT")
+        print("[ACHIEVEMENT] COMPETITION READINESS ASSESSMENT")
         print("=" * 60)
 
         if overall_success:
-            print("✅ ALL COMPETITION SCENARIOS PASSED")
+            print("[PASS] ALL COMPETITION SCENARIOS PASSED")
             print("   System is ready for competition deployment")
             print("   Performance targets met under all expected loads")
         else:
-            print("❌ COMPETITION READINESS ISSUES DETECTED")
+            print("[FAIL] COMPETITION READINESS ISSUES DETECTED")
             print("   Address performance issues before competition")
 
         # Detailed results summary
@@ -160,7 +162,7 @@ class CompetitionLoadScenariosTest(unittest.TestCase):
         )
         total_scenarios = len(self.scenario_results)
 
-        print(f"\n📊 Results Summary:")
+        print(f"\n[GRAPH] Results Summary:")
         print(f"   Scenarios tested: {total_scenarios}")
         print(f"   Scenarios passed: {passed_scenarios}")
         print(".1f")
@@ -631,7 +633,7 @@ class CompetitionLoadScenariosTest(unittest.TestCase):
         results["violations"] = violations
 
         # Print detailed results
-        print(f"   📊 Performance Results:")
+        print(f"   [GRAPH] Performance Results:")
         if cpu_readings:
             cpu_stats = results["cpu_stats"]
             print(".1f")
@@ -643,7 +645,7 @@ class CompetitionLoadScenariosTest(unittest.TestCase):
             print(".1f")
 
         if violations:
-            print("   ❌ Violations:")
+            print("   [FAIL] Violations:")
             for violation in violations:
                 print(f"      - {violation}")
 

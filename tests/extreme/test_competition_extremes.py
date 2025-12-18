@@ -55,7 +55,7 @@ class CompetitionExtremeTest(unittest.TestCase):
 
     def test_emergency_stop_under_load(self):
         """Test emergency stop activation with 1000+ queued operations."""
-        print("🚨 Testing Emergency Stop Under Maximum Load...")
+        print(" Testing Emergency Stop Under Maximum Load...")
 
         with self.env_manager.create_environment(
             name="emergency_stop_load_test",
@@ -75,7 +75,7 @@ class CompetitionExtremeTest(unittest.TestCase):
                 mgr.nodes["emergency_test"].is_healthy = True
 
             # Phase 1: Build up maximum load (simulate competition scenario)
-            print("  📈 Phase 1: Building maximum operational load...")
+            print("   Phase 1: Building maximum operational load...")
 
             operation_count = 100  # Simulate heavy competition load
             threads = []
@@ -103,7 +103,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             time.sleep(0.5)
 
             # Phase 2: Emergency stop under load
-            print("  🚨 Phase 2: Emergency stop activation under load...")
+            print("   Phase 2: Emergency stop activation under load...")
 
             emergency_start = time.time()
 
@@ -131,7 +131,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             )
 
             # Phase 3: Verify system stabilization after emergency
-            print("  ✅ Phase 3: Verifying system stabilization...")
+            print("  [PASS] Phase 3: Verifying system stabilization...")
 
             # Stop load generators
             stop_load.set()
@@ -153,11 +153,11 @@ class CompetitionExtremeTest(unittest.TestCase):
 
             mgr.stop()
 
-        print("  ✅ Emergency stop under load test passed")
+        print("  [PASS] Emergency stop under load test passed")
 
     def test_critical_operation_timeout(self):
         """Test critical operation timeout during network partition."""
-        print("⏱️ Testing Critical Operation Timeout...")
+        print("[CLOCK] Testing Critical Operation Timeout...")
 
         # Create environment with network timing constraints
         timeout_config = ROSEnvironmentConfig(
@@ -184,13 +184,13 @@ class CompetitionExtremeTest(unittest.TestCase):
                 mgr.nodes["timeout_test"].is_healthy = True
 
             # Phase 1: Start critical operation
-            print("  🎯 Phase 1: Starting critical competition operation...")
+            print("  [OBJECTIVE] Phase 1: Starting critical competition operation...")
 
             mgr.update_state("operation_status", "critical_navigation_active")
             mgr.update_state("operation_start_time", time.time())
 
             # Phase 2: Simulate network partition during critical operation
-            print("  🌐 Phase 2: Network partition during critical operation...")
+            print("  [NETWORK] Phase 2: Network partition during critical operation...")
 
             # Simulate network partition by marking node unhealthy
             if "timeout_test" in mgr.nodes:
@@ -222,7 +222,7 @@ class CompetitionExtremeTest(unittest.TestCase):
                     "Operation should enter fallback mode on timeout",
                 )
 
-                print("  ✅ Critical operation timed out and entered fallback mode")
+                print("  [PASS] Critical operation timed out and entered fallback mode")
 
                 # Verify fallback operation
                 mgr.update_state("fallback_operation", "emergency_navigation")
@@ -239,11 +239,11 @@ class CompetitionExtremeTest(unittest.TestCase):
 
             mgr.stop()
 
-        print("  ✅ Critical operation timeout test passed")
+        print("  [PASS] Critical operation timeout test passed")
 
     def test_sensor_data_flood(self):
         """Test system handling of sensor data flood at maximum frequency."""
-        print("📡 Testing Sensor Data Flood...")
+        print("[ANTENNA] Testing Sensor Data Flood...")
 
         with self.env_manager.create_environment(
             name="sensor_flood_test",
@@ -263,7 +263,7 @@ class CompetitionExtremeTest(unittest.TestCase):
                 mgr.nodes["sensor_flood_test"].is_healthy = True
 
             # Phase 1: Normal sensor operation
-            print("  📊 Phase 1: Normal sensor data rate...")
+            print("  [GRAPH] Phase 1: Normal sensor data rate...")
 
             normal_sensor_count = 10
             for i in range(normal_sensor_count):
@@ -275,7 +275,7 @@ class CompetitionExtremeTest(unittest.TestCase):
                 mgr.update_state(f"sensor_normal_{i}", str(sensor_data))
 
             # Phase 2: Sensor data flood (competition scenario)
-            print("  🌊 Phase 2: Sensor data flood at maximum frequency...")
+            print("   Phase 2: Sensor data flood at maximum frequency...")
 
             flood_start = time.time()
             flood_duration = 2.0  # 2 seconds of flood
@@ -322,7 +322,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             actual_flood_duration = flood_end - flood_start
 
             # Phase 3: Verify system survived flood
-            print("  🏊 Phase 3: Verifying system survival after flood...")
+            print("   Phase 3: Verifying system survival after flood...")
 
             # System should still be responsive
             mgr.update_state("post_flood_test", "system_still_alive")
@@ -348,11 +348,11 @@ class CompetitionExtremeTest(unittest.TestCase):
 
             mgr.stop()
 
-        print("  ✅ Sensor data flood test passed")
+        print("  [PASS] Sensor data flood test passed")
 
     def test_navigation_failure_cascade(self):
         """Test navigation failure cascade: Navigation fails → Arm control fails → Mission abort."""
-        print("🧭 Testing Navigation Failure Cascade...")
+        print(" Testing Navigation Failure Cascade...")
 
         with self.env_manager.create_environment(
             name="navigation_cascade_test",
@@ -372,20 +372,20 @@ class CompetitionExtremeTest(unittest.TestCase):
                 mgr.nodes["navigation_cascade_test"].is_healthy = True
 
             # Phase 1: Normal navigation operation
-            print("  🧭 Phase 1: Normal navigation operation...")
+            print("   Phase 1: Normal navigation operation...")
 
             mgr.update_state("navigation_status", "active")
             mgr.update_state("arm_status", "idle")
             mgr.update_state("mission_status", "waypoint_navigation")
 
             # Phase 2: Navigation failure
-            print("  💥 Phase 2: Navigation system fails...")
+            print("   Phase 2: Navigation system fails...")
 
             mgr.update_state("navigation_status", "failed_gps_denied")
             mgr.update_state("navigation_error", "GPS signal lost")
 
             # Phase 3: Navigation failure impacts arm control
-            print("  🤖 Phase 3: Navigation failure cascades to arm control...")
+            print("   Phase 3: Navigation failure cascades to arm control...")
 
             # Simulate cascade: navigation failure prevents arm from reaching target
             time.sleep(0.1)  # Simulate processing delay
@@ -394,7 +394,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             mgr.update_state("arm_error", "Cannot reach target without navigation")
 
             # Phase 4: Complete mission abort
-            print("  🛑 Phase 4: Mission abort due to cascade...")
+            print("   Phase 4: Mission abort due to cascade...")
 
             mgr.update_state("mission_status", "aborted_cascade_failure")
             mgr.update_state(
@@ -402,7 +402,7 @@ class CompetitionExtremeTest(unittest.TestCase):
             )
 
             # Phase 5: Verify cascade handling
-            print("  🔍 Phase 5: Verifying cascade handling...")
+            print("  [MAGNIFY] Phase 5: Verifying cascade handling...")
 
             final_nav_status = mgr.get_state("navigation_status")
             final_arm_status = mgr.get_state("arm_status")
@@ -434,11 +434,11 @@ class CompetitionExtremeTest(unittest.TestCase):
             self.assertIsNotNone(arm_error, "Arm error should be reported")
             self.assertIsNotNone(mission_error, "Mission error should be reported")
 
-            print("  ✅ Navigation failure cascade properly handled")
+            print("  [PASS] Navigation failure cascade properly handled")
 
             mgr.stop()
 
-        print("  ✅ Navigation failure cascade test passed")
+        print("  [PASS] Navigation failure cascade test passed")
 
 
 if __name__ == "__main__":

@@ -65,11 +65,11 @@ def test_qoe_profiling_baselines():
             )
             status = "PASS" if quality >= 0.0 and quality <= 1.0 else "FAIL"
             print(".3f")
-        print("✓ QoS profiling baseline validation complete\n")
+        print(" QoS profiling baseline validation complete\n")
         return True
 
     except Exception as e:
-        print(f"✗ QoS profiling test failed: {e}")
+        print(f" QoS profiling test failed: {e}")
         return False
 
 
@@ -238,14 +238,14 @@ def test_safety_monitoring_baselines():
                 print(f"         Expected: {expected}, Got: {results}")
 
         if all_passed:
-            print("✓ Safety monitoring baseline validation complete\n")
+            print(" Safety monitoring baseline validation complete\n")
             return True
         else:
-            print("✗ Safety monitoring baseline validation failed\n")
+            print(" Safety monitoring baseline validation failed\n")
             return False
 
     except Exception as e:
-        print(f"✗ Safety monitoring test failed: {e}")
+        print(f" Safety monitoring test failed: {e}")
         return False
 
 
@@ -345,14 +345,14 @@ def test_adaptive_telemetry_baselines():
             print(".1f")
 
         if all_passed:
-            print("✓ Adaptive telemetry baseline validation complete\n")
+            print(" Adaptive telemetry baseline validation complete\n")
             return True
         else:
-            print("✗ Adaptive telemetry baseline validation failed\n")
+            print(" Adaptive telemetry baseline validation failed\n")
             return False
 
     except Exception as e:
-        print(f"✗ Adaptive telemetry test failed: {e}")
+        print(f" Adaptive telemetry test failed: {e}")
         return False
 
 
@@ -431,14 +431,14 @@ def test_urc_band_awareness():
         print(f"  {status}: 2.4GHz unlimited bandwidth - No FCC restriction")
 
         if all_passed:
-            print("✓ URC band awareness baseline validation complete\n")
+            print(" URC band awareness baseline validation complete\n")
             return True
         else:
-            print("✗ URC band awareness baseline validation failed\n")
+            print(" URC band awareness baseline validation failed\n")
             return False
 
     except Exception as e:
-        print(f"✗ URC band awareness test failed: {e}")
+        print(f" URC band awareness test failed: {e}")
         return False
 
 
@@ -460,7 +460,7 @@ def main():
             result = test()
             results.append(result)
         except Exception as e:
-            print(f"✗ Test {test.__name__} crashed: {e}")
+            print(f" Test {test.__name__} crashed: {e}")
             results.append(False)
 
     # Summary
@@ -474,7 +474,7 @@ def main():
     print(f"Tests Passed: {passed_tests}/{total_tests}")
 
     if passed_tests == total_tests:
-        print("🎉 ALL BASELINES ESTABLISHED SUCCESSFULLY!")
+        print("[PARTY] ALL BASELINES ESTABLISHED SUCCESSFULLY!")
         print("\nMonitoring systems are ready for:")
         print("• QoS profiling of ROS2 topics and WebSocket telemetry")
         print("• Runtime safety verification with formal properties")
@@ -482,7 +482,7 @@ def main():
         print("• Network resilience and performance optimization")
         return 0
     else:
-        print("❌ SOME BASELINES FAILED - Check implementation")
+        print("[FAIL] SOME BASELINES FAILED - Check implementation")
         return 1
 
 

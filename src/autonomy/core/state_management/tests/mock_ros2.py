@@ -339,4 +339,4 @@ if __name__ == "__main__":
         node.destroy_node()
         self.get_logger().info("[SUCCESS] Mock environment test completed successfully")
     else:
-        self.get_logger().info("ℹ️  ROS2 is available, using real implementation")
+        self.get_logger().info("ℹ  ROS2 is available, using real implementation")

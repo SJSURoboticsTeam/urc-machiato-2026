@@ -144,7 +144,7 @@ class MissionSystemIntegrationTest(unittest.TestCase):
 
     def test_delivery_mission_workflow(self):
         """Test complete delivery mission from start to finish."""
-        print("\n🧪 Testing Delivery Mission Workflow")
+        print("\n[EXPERIMENT] Testing Delivery Mission Workflow")
 
         # Initialize mission
         mission = MockDeliveryMission()
@@ -183,11 +183,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         mission.complete_delivery()
         self.assertEqual(mission.state, "completed")
 
-        print("✅ Delivery mission workflow test passed")
+        print("[PASS] Delivery mission workflow test passed")
 
     def test_science_mission_workflow(self):
         """Test complete science mission workflow."""
-        print("\n🧪 Testing Science Mission Workflow")
+        print("\n[EXPERIMENT] Testing Science Mission Workflow")
 
         mission = MockScienceMission()
 
@@ -236,11 +236,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         mission.complete_analysis()
         self.assertEqual(mission.state, "completed")
 
-        print("✅ Science mission workflow test passed")
+        print("[PASS] Science mission workflow test passed")
 
     def test_equipment_servicing_mission(self):
         """Test equipment servicing mission workflow."""
-        print("\n🧪 Testing Equipment Servicing Mission Workflow")
+        print("\n[EXPERIMENT] Testing Equipment Servicing Mission Workflow")
 
         mission = MockEquipmentServicingMission()
 
@@ -267,11 +267,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         mission.complete_servicing()
         self.assertEqual(mission.state, "completed")
 
-        print("✅ Equipment servicing mission workflow test passed")
+        print("[PASS] Equipment servicing mission workflow test passed")
 
     def test_mission_executor_integration(self):
         """Test mission executor with multiple missions."""
-        print("\n🧪 Testing Mission Executor Integration")
+        print("\n[EXPERIMENT] Testing Mission Executor Integration")
 
         executor = MissionExecutor()
 
@@ -297,11 +297,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         executor.complete_current_mission()
         self.assertEqual(len(executor.mission_queue), 2)
 
-        print("✅ Mission executor integration test passed")
+        print("[PASS] Mission executor integration test passed")
 
     def test_can_mock_integration(self):
         """Test CAN bus mock simulator integration."""
-        print("\n🧪 Testing CAN Mock Simulator Integration")
+        print("\n[EXPERIMENT] Testing CAN Mock Simulator Integration")
 
         # Test sensor data generation
         imu_data = self.mock_can.get_mock_reading("imu")
@@ -324,11 +324,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         motor_data = self.mock_can.get_mock_reading("motor_left")
         self.assertIn("velocity", motor_data["data"])
 
-        print("✅ CAN mock simulator integration test passed")
+        print("[PASS] CAN mock simulator integration test passed")
 
     def test_priority_message_routing(self):
         """Test priority-based message routing."""
-        print("\n🧪 Testing Priority Message Routing")
+        print("\n[EXPERIMENT] Testing Priority Message Routing")
 
         router = PriorityMessageRouter(max_queue_size=10)
 
@@ -361,11 +361,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         self.assertEqual(dequeued[2]["type"], "sensor_data")
         self.assertEqual(dequeued[3]["type"], "telemetry")
 
-        print("✅ Priority message routing test passed")
+        print("[PASS] Priority message routing test passed")
 
     def test_state_machine_integration(self):
         """Test state machine integration with mission system."""
-        print("\n🧪 Testing State Machine Integration")
+        print("\n[EXPERIMENT] Testing State Machine Integration")
 
         # This would test the full state machine with mission execution
         # For now, test basic state transitions
@@ -384,11 +384,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         self.assertEqual(states_during_delivery[0], "IDLE")
         self.assertEqual(states_during_delivery[-1], "IDLE")
 
-        print("✅ State machine integration test passed")
+        print("[PASS] State machine integration test passed")
 
     def test_performance_metrics(self):
         """Test performance metrics collection."""
-        print("\n🧪 Testing Performance Metrics Collection")
+        print("\n[EXPERIMENT] Testing Performance Metrics Collection")
 
         # Simulate mission execution with timing
         start_time = time.time()
@@ -416,11 +416,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         self.assertGreater(op_time, 0.02)
         self.assertGreater(return_time, 0.01)
 
-        print(f"✅ Performance metrics test passed (total: {total_time:.3f}s)")
+        print(f"[PASS] Performance metrics test passed (total: {total_time:.3f}s)")
 
     def test_failure_recovery(self):
         """Test system behavior under failure conditions."""
-        print("\n🧪 Testing Failure Recovery Scenarios")
+        print("\n[EXPERIMENT] Testing Failure Recovery Scenarios")
 
         # Test mission recovery from navigation failure
         mission = DeliveryMission()
@@ -446,11 +446,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
         mission.update_position([10.0, 5.0, 0.0])
         self.assertEqual(mission.state, "at_pickup")
 
-        print("✅ Failure recovery test passed")
+        print("[PASS] Failure recovery test passed")
 
     def test_concurrent_mission_handling(self):
         """Test handling multiple concurrent missions."""
-        print("\n🧪 Testing Concurrent Mission Handling")
+        print("\n[EXPERIMENT] Testing Concurrent Mission Handling")
 
         executor = MissionExecutor()
 
@@ -480,11 +480,11 @@ class MissionSystemIntegrationTest(unittest.TestCase):
             completed_missions, ["delivery_0", "science_1", "equipment_2", "delivery_3"]
         )
 
-        print("✅ Concurrent mission handling test passed")
+        print("[PASS] Concurrent mission handling test passed")
 
 
 if __name__ == "__main__":
-    print("🚀 URC 2026 Mission System Integration Tests")
+    print("[IGNITE] URC 2026 Mission System Integration Tests")
     print("=" * 50)
 
     # Run tests

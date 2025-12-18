@@ -113,7 +113,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
         cls.message_queue = []
 
         print("\n" + "=" * 70)
-        print("🚀 COMPREHENSIVE INTEGRATION TEST SUITE")
+        print("[IGNITE] COMPREHENSIVE INTEGRATION TEST SUITE")
         print("=" * 70)
         print("Testing:")
         print("  • CAN Bus Communication (mock + stress)")
@@ -159,7 +159,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.assertIn("longitude", gps_data["data"])
 
             result.metrics["sensors_tested"] = 3
-            result.warnings.append("⚠️ CAN SIMULATION - Hardware validation required")
+            result.warnings.append(" CAN SIMULATION - Hardware validation required")
             result.complete("PASSED")
 
         except Exception as e:
@@ -167,7 +167,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: {result.status}")
+        print(f"  [PASS] {result.test_name}: {result.status}")
 
     def test_can_bus_stress_conditions(self):
         """Test CAN bus under stress conditions."""
@@ -199,7 +199,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ STRESS TEST SIMULATION - Real CAN timing may differ"
+                " STRESS TEST SIMULATION - Real CAN timing may differ"
             )
             result.complete("PASSED")
 
@@ -208,7 +208,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: {success_rate*100:.1f}% success rate")
+        print(f"  [PASS] {result.test_name}: {success_rate*100:.1f}% success rate")
 
     # ==================== MESSAGE ROUTING TESTS ====================
 
@@ -246,7 +246,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.message_router.enqueue_message(estop_msg)
 
             result.metrics["messages_queued"] = 51
-            result.warnings.append("⚠️ SIMULATION - Priority handling validated")
+            result.warnings.append(" SIMULATION - Priority handling validated")
             result.complete("PASSED")
 
         except Exception as e:
@@ -254,7 +254,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: Priority routing validated")
+        print(f"  [PASS] {result.test_name}: Priority routing validated")
 
     # ==================== ROS + CAN INTEGRATION ====================
 
@@ -314,7 +314,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
                 )
 
                 result.warnings.append(
-                    f"⚠️ {tier.value.upper()} INTEGRATION SIMULATION - "
+                    f" {tier.value.upper()} INTEGRATION SIMULATION - "
                     f"Hardware CAN/WebSocket validation required"
                 )
                 result.complete("PASSED")
@@ -324,7 +324,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
                 result.complete("FAILED")
 
             self.test_results.append(result)
-            print(f"  ✅ {result.test_name}: {success_rate*100:.1f}% success")
+            print(f"  [PASS] {result.test_name}: {success_rate*100:.1f}% success")
 
     # ==================== PERFORMANCE TESTS ====================
 
@@ -377,7 +377,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
                     )
 
                     result.warnings.append(
-                        f"⚠️ {profile.value.upper()} LATENCY SIMULATION - "
+                        f" {profile.value.upper()} LATENCY SIMULATION - "
                         f"Actual hardware timing may vary"
                     )
                     result.complete("PASSED")
@@ -391,7 +391,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.test_results.append(result)
             if latencies:
                 print(
-                    f"  ✅ {result.test_name}: {avg_latency:.1f}ms avg, {max_latency:.1f}ms max"
+                    f"  [PASS] {result.test_name}: {avg_latency:.1f}ms avg, {max_latency:.1f}ms max"
                 )
 
     def test_message_throughput(self):
@@ -435,7 +435,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
             self.assertGreater(throughput, 100, "Should handle >100 msg/sec")
 
-            result.warnings.append("⚠️ THROUGHPUT SIMULATION - Real system may differ")
+            result.warnings.append(" THROUGHPUT SIMULATION - Real system may differ")
             result.complete("PASSED")
 
         except Exception as e:
@@ -443,7 +443,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             result.complete("FAILED")
 
         self.test_results.append(result)
-        print(f"  ✅ {result.test_name}: {throughput:.0f} msg/sec throughput")
+        print(f"  [PASS] {result.test_name}: {throughput:.0f} msg/sec throughput")
 
     # ==================== MISSION EXECUTION TESTS ====================
 
@@ -482,7 +482,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.assertEqual(success_rate, 1.0, "All mission phases should complete")
 
             result.warnings.append(
-                "⚠️ SIMULATED MISSION - Actual mission execution requires hardware"
+                " SIMULATED MISSION - Actual mission execution requires hardware"
             )
             result.complete("PASSED")
 
@@ -492,7 +492,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: {sum(phase_success)}/{len(mission_phases)} phases"
+            f"  [PASS] {result.test_name}: {sum(phase_success)}/{len(mission_phases)} phases"
         )
 
     # ==================== STATE MACHINE TESTS ====================
@@ -538,7 +538,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ STATE MACHINE SIMULATION - Hardware state persistence required"
+                " STATE MACHINE SIMULATION - Hardware state persistence required"
             )
             result.complete("PASSED")
 
@@ -548,7 +548,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: {transitions_successful}/{len(states)-1} transitions"
+            f"  [PASS] {result.test_name}: {transitions_successful}/{len(states)-1} transitions"
         )
 
     # ==================== FAILURE MODE TESTING ====================
@@ -595,7 +595,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ SENSOR FAILURE SIMULATION - Hardware watchdog required"
+                " SENSOR FAILURE SIMULATION - Hardware watchdog required"
             )
             result.complete("PASSED")
 
@@ -605,7 +605,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: failure_detected={failure_detected}, recovery_attempts={recovery_attempts}"
+            f"  [PASS] {result.test_name}: failure_detected={failure_detected}, recovery_attempts={recovery_attempts}"
         )
 
     def test_network_complete_loss_handling(self):
@@ -652,7 +652,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.assertIsNotNone(recovery_time, "Should track recovery time")
 
             result.warnings.append(
-                "⚠️ NETWORK LOSS SIMULATION - Hardware network monitoring required"
+                " NETWORK LOSS SIMULATION - Hardware network monitoring required"
             )
             result.complete("PASSED")
 
@@ -665,7 +665,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
                 f"{recovery_time:.1f}s" if recovery_time is not None else "N/A"
             )
             print(
-                f"  ✅ {result.test_name}: lost={messages_lost}, recovered={messages_sent}, recovery_time={recovery_str}"
+                f"  [PASS] {result.test_name}: lost={messages_lost}, recovered={messages_sent}, recovery_time={recovery_str}"
             )
 
     def test_power_brownout_recovery(self):
@@ -723,7 +723,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.assertGreater(recovery_events, 0, "Should handle power recovery")
 
             result.warnings.append(
-                "⚠️ POWER FAILURE SIMULATION - Hardware voltage monitoring required"
+                " POWER FAILURE SIMULATION - Hardware voltage monitoring required"
             )
             result.complete("PASSED")
 
@@ -733,7 +733,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: brownouts={brownout_events}, recoveries={recovery_events}, stops={emergency_stops}"
+            f"  [PASS] {result.test_name}: brownouts={brownout_events}, recoveries={recovery_events}, stops={emergency_stops}"
         )
 
     def test_memory_exhaustion_handling(self):
@@ -773,7 +773,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ MEMORY EXHAUSTION SIMULATION - Hardware memory monitoring required"
+                " MEMORY EXHAUSTION SIMULATION - Hardware memory monitoring required"
             )
             result.complete("PASSED")
 
@@ -783,7 +783,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: peak={max(memory_usage)/1024:.0f}KB, gc_events={gc_events}"
+            f"  [PASS] {result.test_name}: peak={max(memory_usage)/1024:.0f}KB, gc_events={gc_events}"
         )
 
     def test_thermal_shutdown_simulation(self):
@@ -834,7 +834,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             self.assertIsNotNone(recovery_temp, "Should track temperature recovery")
 
             result.warnings.append(
-                "⚠️ THERMAL SHUTDOWN SIMULATION - Hardware temperature monitoring required"
+                " THERMAL SHUTDOWN SIMULATION - Hardware temperature monitoring required"
             )
             result.complete("PASSED")
 
@@ -847,7 +847,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
                 f"{recovery_temp:.1f}°C" if recovery_temp is not None else "N/A"
             )
             print(
-                f"  ✅ {result.test_name}: shutdown={shutdown_triggered}, cooling={cooling_activated}, recovery={recovery_str}"
+                f"  [PASS] {result.test_name}: shutdown={shutdown_triggered}, cooling={cooling_activated}, recovery={recovery_str}"
             )
 
     # ==================== LONG-DURATION TESTING ====================
@@ -920,7 +920,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ ENDURANCE SIMULATION - Hardware long-duration testing required"
+                " ENDURANCE SIMULATION - Hardware long-duration testing required"
             )
             result.complete("PASSED")
 
@@ -930,7 +930,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: {simulation_duration}s, avg_cpu={result.metrics['avg_cpu_percent']:.1f}%, peak_mem={result.metrics['peak_memory_mb']:.1f}MB"
+            f"  [PASS] {result.test_name}: {simulation_duration}s, avg_cpu={result.metrics['avg_cpu_percent']:.1f}%, peak_mem={result.metrics['peak_memory_mb']:.1f}MB"
         )
 
     def test_performance_degradation_monitoring(self):
@@ -986,7 +986,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ PERFORMANCE DEGRADATION SIMULATION - Hardware monitoring required"
+                " PERFORMANCE DEGRADATION SIMULATION - Hardware monitoring required"
             )
             result.complete("PASSED")
 
@@ -996,7 +996,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: baseline={result.metrics['baseline_avg_ms']:.1f}ms, final={result.metrics['final_avg_ms']:.1f}ms ({result.metrics['degradation_percent']:.1f}% degradation)"
+            f"  [PASS] {result.test_name}: baseline={result.metrics['baseline_avg_ms']:.1f}ms, final={result.metrics['final_avg_ms']:.1f}ms ({result.metrics['degradation_percent']:.1f}% degradation)"
         )
 
     # ==================== VISION SYSTEM INTEGRATION ====================
@@ -1056,7 +1056,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ VISION DEGRADATION SIMULATION - Hardware camera testing required"
+                " VISION DEGRADATION SIMULATION - Hardware camera testing required"
             )
             result.complete("PASSED")
 
@@ -1066,7 +1066,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: perfect={result.metrics['perfect_detection_rate']:.2f}, real_life={result.metrics['real_life_detection_rate']:.2f}, extreme={result.metrics['extreme_detection_rate']:.2f}"
+            f"  [PASS] {result.test_name}: perfect={result.metrics['perfect_detection_rate']:.2f}, real_life={result.metrics['real_life_detection_rate']:.2f}, extreme={result.metrics['extreme_detection_rate']:.2f}"
         )
 
     # ==================== ARM CONTROL INTEGRATION ====================
@@ -1133,7 +1133,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ ARM CONTROL SIMULATION - Hardware arm testing required"
+                " ARM CONTROL SIMULATION - Hardware arm testing required"
             )
             result.complete("PASSED")
 
@@ -1143,7 +1143,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
         self.test_results.append(result)
         print(
-            f"  ✅ {result.test_name}: steps={result.metrics['sequence_steps']}, joints={result.metrics['total_joints_controlled']}, safety_stops={safety_stops}"
+            f"  [PASS] {result.test_name}: steps={result.metrics['sequence_steps']}, joints={result.metrics['total_joints_controlled']}, safety_stops={safety_stops}"
         )
 
     # ==================== MULTI-ROBOT COORDINATION ====================
@@ -1223,7 +1223,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             )
 
             result.warnings.append(
-                "⚠️ MULTI-ROBOT SIMULATION - Hardware multi-rover testing required"
+                " MULTI-ROBOT SIMULATION - Hardware multi-rover testing required"
             )
             result.complete("PASSED")
 
@@ -1233,7 +1233,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
 
             self.test_results.append(result)
             print(
-                f"  ✅ {result.test_name}: rovers={result.metrics.get('rovers_coordinated', 0)}, conflicts={result.metrics.get('conflicts_detected', 0)}, tasks={result.metrics.get('tasks_completed', 0)}"
+                f"  [PASS] {result.test_name}: rovers={result.metrics.get('rovers_coordinated', 0)}, conflicts={result.metrics.get('conflicts_detected', 0)}, tasks={result.metrics.get('tasks_completed', 0)}"
             )
 
     # ==================== REPORT GENERATION ====================
@@ -1252,11 +1252,11 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             "by_category": {},
             "test_results": [r.to_dict() for r in cls.test_results],
             "critical_warnings": [
-                "🚨 ALL TESTS ARE SIMULATION-BASED",
-                "🚨 CAN bus: Mocked - hardware validation required",
-                "🚨 WebSocket: Simulated - real network testing required",
-                "🚨 ROS topics: Simulated - ROS2 integration testing required",
-                "🚨 Mission execution: Simulated - field testing required",
+                " ALL TESTS ARE SIMULATION-BASED",
+                " CAN bus: Mocked - hardware validation required",
+                " WebSocket: Simulated - real network testing required",
+                " ROS topics: Simulated - ROS2 integration testing required",
+                " Mission execution: Simulated - field testing required",
             ],
             "coverage_gaps": cls._identify_coverage_gaps(),
         }
@@ -1284,7 +1284,7 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
             json.dump(report, f, indent=2)
 
         print("\n" + "=" * 70)
-        print("📊 COMPREHENSIVE INTEGRATION TEST RESULTS")
+        print("[GRAPH] COMPREHENSIVE INTEGRATION TEST RESULTS")
         print("=" * 70)
         print(f"Total Tests: {report['summary']['total_tests']}")
         print(f"Passed: {report['summary']['passed']}")
@@ -1295,10 +1295,10 @@ class ComprehensiveIntegrationSuite(unittest.TestCase):
         print("\nBy Category:")
         for cat, data in categories.items():
             print(f"  {cat:20} {data['passed']}/{data['total']} passed")
-        print("\n⚠️  SIMULATION WARNING:")
+        print("\n  SIMULATION WARNING:")
         for warning in report["critical_warnings"][:3]:
             print(f"  {warning}")
-        print(f"\n📄 Report saved: {output_file}")
+        print(f"\n Report saved: {output_file}")
         print("=" * 70)
 
     @classmethod

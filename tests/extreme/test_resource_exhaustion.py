@@ -58,7 +58,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
     def test_memory_pressure_extreme(self):
         """Test system behavior under extreme memory pressure (99% usage)."""
-        print("🧠 Testing Extreme Memory Pressure...")
+        print(" Testing Extreme Memory Pressure...")
 
         # Test memory pressure resilience without ROS2 environment
         from core.state_synchronization_manager import DistributedStateManager
@@ -70,7 +70,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
         memory_hog = []
         target_memory_mb = 15  # Leave only 5MB free in constrained environment
 
-        print(f"  📊 Allocating {target_memory_mb}MB to create memory pressure...")
+        print(f"  [GRAPH] Allocating {target_memory_mb}MB to create memory pressure...")
 
         # Allocate memory in chunks to reach target
         chunk_size = 1000000  # 1MB chunks
@@ -80,11 +80,11 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
             try:
                 memory_hog.append([0] * chunk_size)  # 1MB of integers
             except MemoryError:
-                print(f"  ⚠️ Memory allocation stopped at {i}MB")
+                print(f"   Memory allocation stopped at {i}MB")
                 break
 
         allocated_mb = len(memory_hog)
-        print(f"  📊 Allocated {allocated_mb}MB, creating extreme memory pressure")
+        print(f"  [GRAPH] Allocated {allocated_mb}MB, creating extreme memory pressure")
 
         # Start manager under memory pressure
         try:
@@ -143,11 +143,11 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
             mgr.stop()
 
-        print("  ✅ Extreme memory pressure test passed")
+        print("  [PASS] Extreme memory pressure test passed")
 
     def test_cpu_starvation_scenario(self):
         """Test system under extreme CPU starvation."""
-        print("⚡ Testing CPU Starvation Scenario...")
+        print("[LIGHTNING] Testing CPU Starvation Scenario...")
 
         # Create environment with single CPU core limit
         cpu_starved_config = ROSEnvironmentConfig(domain_id=301, use_sim_time=True)
@@ -190,7 +190,9 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
                 cpu_loaders.append(loader)
 
             try:
-                print("  ⚡ CPU loaders started, creating starvation conditions...")
+                print(
+                    "  [LIGHTNING] CPU loaders started, creating starvation conditions..."
+                )
 
                 # Test operations under CPU starvation
                 start_time = time.time()
@@ -227,11 +229,11 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
                 mgr.stop()
 
-        print("  ✅ CPU starvation scenario test passed")
+        print("  [PASS] CPU starvation scenario test passed")
 
     def test_disk_io_contention(self):
         """Test system under extreme disk I/O contention."""
-        print("💾 Testing Disk I/O Contention...")
+        print(" Testing Disk I/O Contention...")
 
         with self.env_manager.create_environment(
             name="disk_io_test",
@@ -275,7 +277,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
                 io_threads.append(thread)
 
             try:
-                print("  💾 I/O contenders started, creating disk contention...")
+                print("   I/O contenders started, creating disk contention...")
 
                 # Test state operations under I/O pressure
                 start_time = time.time()
@@ -316,11 +318,11 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
                 mgr.stop()
 
-        print("  ✅ Disk I/O contention test passed")
+        print("  [PASS] Disk I/O contention test passed")
 
     def test_network_bandwidth_saturation(self):
         """Test system under network bandwidth saturation."""
-        print("🌐 Testing Network Bandwidth Saturation...")
+        print("[NETWORK] Testing Network Bandwidth Saturation...")
 
         # Create environment with extreme network limits
         network_config = ROSEnvironmentConfig(domain_id=302, use_sim_time=True)
@@ -348,7 +350,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
             # Simulate network saturation by creating many rapid state updates
             # In a real network, this would saturate bandwidth
-            print("  📡 Simulating network bandwidth saturation...")
+            print("  [ANTENNA] Simulating network bandwidth saturation...")
 
             start_time = time.time()
 
@@ -393,11 +395,11 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
 
             mgr.stop()
 
-        print("  ✅ Network bandwidth saturation test passed")
+        print("  [PASS] Network bandwidth saturation test passed")
 
     def test_combined_resource_exhaustion(self):
         """Test system under combined resource exhaustion (CPU + Memory + I/O)."""
-        print("🔥 Testing Combined Resource Exhaustion...")
+        print(" Testing Combined Resource Exhaustion...")
 
         # Create environment with multiple resource constraints
         combined_config = ROSEnvironmentConfig(
@@ -432,7 +434,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
                 except MemoryError:
                     break
 
-            print("  🔥 Combined resource exhaustion: CPU + Memory + I/O limits")
+            print("   Combined resource exhaustion: CPU + Memory + I/O limits")
 
             try:
                 mgr.start()
@@ -474,7 +476,7 @@ class ExtremeResourceExhaustionTest(unittest.TestCase):
                 gc.collect()
                 mgr.stop()
 
-        print("  ✅ Combined resource exhaustion test passed")
+        print("  [PASS] Combined resource exhaustion test passed")
 
 
 if __name__ == "__main__":

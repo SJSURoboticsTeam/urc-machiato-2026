@@ -68,7 +68,7 @@ class CameraCalibrator:
         ) = self.detector.detectBoard(img)
 
         if charuco_corners is not None and len(charuco_corners) > 0:
-            print(f"  ✓ Detected {len(charuco_corners)} ChArUco corners")
+            print(f"   Detected {len(charuco_corners)} ChArUco corners")
 
             if show_corners:
                 # Draw detected corners and markers
@@ -87,7 +87,7 @@ class CameraCalibrator:
 
             return charuco_corners, charuco_ids, marker_corners
         else:
-            print(f"  ✗ No ChArUco board detected in {image_path}")
+            print(f"   No ChArUco board detected in {image_path}")
             return None
 
     def calibrate_camera_charuco(
@@ -142,7 +142,7 @@ class CameraCalibrator:
 
                 valid_images += 1
             else:
-                print("  ✗ No ChArUco board detected")
+                print("   No ChArUco board detected")
 
         print("\nCalibration Summary:")
         print(f"  Total images: {len(image_files)}")
@@ -330,9 +330,9 @@ class CameraCalibrator:
         # Focal length should be positive and reasonable for camera
         if 100 < fx < 2000 and 100 < fy < 2000:
             validation_results["focal_length_check"] = True
-            print("✓ Focal lengths are reasonable")
+            print(" Focal lengths are reasonable")
         else:
-            print("✗ Focal lengths seem incorrect")
+            print(" Focal lengths seem incorrect")
 
         # Principal point should be near image center
         img_width, img_height = results["image_width"], results["image_height"]
@@ -343,9 +343,9 @@ class CameraCalibrator:
             and abs(cy - cy_expected) < img_height * 0.1
         ):
             validation_results["principal_point_check"] = True
-            print("✓ Principal point is near image center")
+            print(" Principal point is near image center")
         else:
-            print("✗ Principal point seems incorrect")
+            print(" Principal point seems incorrect")
 
         # Test undistortion if test image provided
         if test_image_path and os.path.exists(test_image_path):
@@ -367,13 +367,13 @@ class CameraCalibrator:
                     cv2.imwrite(undistorted_path, undistorted)
 
                     validation_results["undistortion_test"] = True
-                    print(f"✓ Undistortion test passed - saved to {undistorted_path}")
+                    print(f" Undistortion test passed - saved to {undistorted_path}")
                 else:
-                    print("✗ Could not load test image")
+                    print(" Could not load test image")
             except Exception as e:
-                print(f"✗ Undistortion test failed: {e}")
+                print(f" Undistortion test failed: {e}")
         else:
-            print("⚠ No test image provided for undistortion validation")
+            print(" No test image provided for undistortion validation")
 
         return validation_results
 
@@ -492,7 +492,7 @@ def main():
 
         # Recommendations
         if results["quality_rating"] in ["poor", "acceptable"]:
-            print("\n⚠️  Recommendations for better calibration:")
+            print("\n  Recommendations for better calibration:")
             print("  - Capture more images (aim for 20-30 with ChArUco)")
             print("  - Ensure even lighting and no glare on markers")
             print("  - Vary camera angles and distances more widely")
@@ -500,13 +500,13 @@ def main():
             print("  - Ensure ChArUco board is flat and visible")
 
         if results["reprojection_error"] > 1.0:
-            print("\n❌ High reprojection error detected!")
+            print("\n[FAIL] High reprojection error detected!")
             print("  - Recalibrate with better image set")
             print("  - Check square/marker size measurements")
             print("  - Ensure ChArUco board is not damaged")
             print("  - Try different lighting conditions")
 
-        print("\n✅ ChArUco calibration advantages:")
+        print("\n[PASS] ChArUco calibration advantages:")
         print("  • Automatic marker identification")
         print("  • Better robustness to motion blur")
         print("  • Superior pose estimation accuracy")

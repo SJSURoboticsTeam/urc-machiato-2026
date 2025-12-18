@@ -368,7 +368,7 @@ class PerformanceRegressionFramework:
         with open(output_file, "w") as f:
             json.dump(export_data, f, indent=2, default=str)
 
-        print(f"📊 Exported {len(self.baselines)} baselines to {output_file}")
+        print(f"[GRAPH] Exported {len(self.baselines)} baselines to {output_file}")
 
     def _save_baseline(self, baseline: PerformanceBaseline):
         """Save baseline data to disk."""
@@ -397,7 +397,7 @@ class PerformanceRegressionTest:
 
     def run_baseline_establishment(self):
         """Run baseline establishment for all performance tests."""
-        print("📊 Establishing Performance Baselines")
+        print("[GRAPH] Establishing Performance Baselines")
         print("=" * 50)
 
         # Import and run performance tests to establish baselines
@@ -413,7 +413,7 @@ class PerformanceRegressionTest:
 
         for test_category, test_module in performance_tests:
             try:
-                print(f"\n🔄 Establishing baseline for {test_category}...")
+                print(f"\n[REFRESH] Establishing baseline for {test_category}...")
 
                 # Import the test module dynamically
                 module_name = f"tests.performance.{test_module}"
@@ -430,19 +430,19 @@ class PerformanceRegressionTest:
                         test_category, metric_name, measurements
                     )
                     print(
-                        f"  ✅ {metric_name}: {len(measurements)} samples, baseline mean: {baseline.baseline_stats['mean']:.3f}"
+                        f"  [PASS] {metric_name}: {len(measurements)} samples, baseline mean: {baseline.baseline_stats['mean']:.3f}"
                     )
 
             except Exception as e:
-                print(f"  ❌ Failed to establish baseline for {test_category}: {e}")
+                print(f"  [FAIL] Failed to establish baseline for {test_category}: {e}")
 
         print(
-            f"\n📈 Established baselines for {len(self.framework.baselines)} performance metrics"
+            f"\n Established baselines for {len(self.framework.baselines)} performance metrics"
         )
 
     def run_regression_detection(self):
         """Run regression detection against established baselines."""
-        print("\n🔍 Running Performance Regression Detection")
+        print("\n[MAGNIFY] Running Performance Regression Detection")
         print("=" * 50)
 
         # Simulate current test results (replace with actual test runs)
@@ -462,7 +462,7 @@ class PerformanceRegressionTest:
 
         # Report regressions
         if report["regressions_detected"]:
-            print("\n❌ PERFORMANCE REGRESSIONS DETECTED:")
+            print("\n[FAIL] PERFORMANCE REGRESSIONS DETECTED:")
             print("-" * 40)
             for regression in report["regressions_detected"]:
                 details = regression["details"]
@@ -470,7 +470,7 @@ class PerformanceRegressionTest:
 
         # Report improvements
         if report["improvements_found"]:
-            print("\n✅ PERFORMANCE IMPROVEMENTS DETECTED:")
+            print("\n[PASS] PERFORMANCE IMPROVEMENTS DETECTED:")
             print("-" * 40)
             for improvement in report["improvements_found"]:
                 details = improvement["details"]
@@ -478,13 +478,13 @@ class PerformanceRegressionTest:
 
         # Overall assessment
         if report["summary"]["regressions_detected"] > 0:
-            print("\n🚨 PERFORMANCE REGRESSION ALERT")
+            print("\n PERFORMANCE REGRESSION ALERT")
             print("   Address performance regressions before deployment")
         elif report["summary"]["pass_rate"] >= 95:
-            print("\n✅ PERFORMANCE WITHIN ACCEPTABLE RANGE")
+            print("\n[PASS] PERFORMANCE WITHIN ACCEPTABLE RANGE")
             print("   No critical regressions detected")
         else:
-            print("\n⚠️  PERFORMANCE MONITORING REQUIRED")
+            print("\n  PERFORMANCE MONITORING REQUIRED")
             print("   Some metrics lack baseline data")
 
         return report
@@ -617,7 +617,7 @@ class PerformanceRegressionTest:
 
 def run_performance_regression_tests():
     """Run the complete performance regression testing suite."""
-    print("🚀 URC 2026 Performance Regression Testing Framework")
+    print("[IGNITE] URC 2026 Performance Regression Testing Framework")
     print("=" * 60)
 
     framework = PerformanceRegressionTest()
@@ -635,7 +635,7 @@ def run_performance_regression_tests():
 
         # Generate trend analysis
         trends = framework.framework.get_performance_trends()
-        print(f"\n📈 Performance Trends Analysis:")
+        print(f"\n Performance Trends Analysis:")
         print("-" * 40)
 
         improving_trends = 0
@@ -655,7 +655,7 @@ def run_performance_regression_tests():
                 degrading_trends += 1
 
             if magnitude > 1.0:  # Only show significant trends
-                status = "📈" if direction == "improving" else "📉"
+                status = "" if direction == "improving" else ""
                 print(".1f")
 
         print(
@@ -665,7 +665,7 @@ def run_performance_regression_tests():
         return report["summary"]["regressions_detected"] == 0
 
     except Exception as e:
-        print(f"❌ Performance regression testing failed: {e}")
+        print(f"[FAIL] Performance regression testing failed: {e}")
         return False
 
 

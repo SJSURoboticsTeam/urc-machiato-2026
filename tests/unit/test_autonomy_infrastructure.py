@@ -11,7 +11,7 @@ import sys
 
 def test_mission_executor_import():
     """Test that mission executor can be imported and initialized"""
-    print("🔍 Testing Mission Executor Import...")
+    print("[MAGNIFY] Testing Mission Executor Import...")
 
     try:
         # Add current directory to path for imports
@@ -27,11 +27,11 @@ def test_mission_executor_import():
         # Execute the module (this will run the imports)
         spec.loader.exec_module(mission_executor_module)
 
-        print("✅ Mission Executor imports successfully")
+        print("[PASS] Mission Executor imports successfully")
         return True
 
     except Exception as e:
-        print(f"❌ Mission Executor import failed: {e}")
+        print(f"[FAIL] Mission Executor import failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -40,7 +40,7 @@ def test_mission_executor_import():
 
 def test_configuration_loading():
     """Test that configuration can be loaded"""
-    print("🔍 Testing Configuration Loading...")
+    print("[MAGNIFY] Testing Configuration Loading...")
 
     try:
         import yaml
@@ -50,7 +50,7 @@ def test_configuration_loading():
         )
 
         if not os.path.exists(config_path):
-            print(f"❌ Config file not found: {config_path}")
+            print(f"[FAIL] Config file not found: {config_path}")
             return False
 
         with open(config_path, "r") as f:
@@ -58,7 +58,7 @@ def test_configuration_loading():
 
         # Check that teleoperation config exists
         if "teleoperation" not in config:
-            print("❌ Teleoperation configuration not found")
+            print("[FAIL] Teleoperation configuration not found")
             return False
 
         # Check required sections
@@ -70,21 +70,21 @@ def test_configuration_loading():
         ]
         for section in required_sections:
             if section not in config["teleoperation"]:
-                print(f"❌ Required config section missing: {section}")
+                print(f"[FAIL] Required config section missing: {section}")
                 return False
 
-        print("✅ Configuration loads successfully")
+        print("[PASS] Configuration loads successfully")
         print(f"   Teleoperation config has {len(config['teleoperation'])} sections")
         return True
 
     except Exception as e:
-        print(f"❌ Configuration loading failed: {e}")
+        print(f"[FAIL] Configuration loading failed: {e}")
         return False
 
 
 def test_mock_teleoperation_import():
     """Test that mock teleoperation publisher can be imported"""
-    print("🔍 Testing Mock Teleoperation Import...")
+    print("[MAGNIFY] Testing Mock Teleoperation Import...")
 
     try:
         # Import the mock publisher
@@ -97,17 +97,17 @@ def test_mock_teleoperation_import():
         mock_module = importlib.util.module_from_spec(spec)
 
         # Just check that we can load the module (don't execute ROS2 parts)
-        print("✅ Mock Teleoperation module loads successfully")
+        print("[PASS] Mock Teleoperation module loads successfully")
         return True
 
     except Exception as e:
-        print(f"❌ Mock Teleoperation import failed: {e}")
+        print(f"[FAIL] Mock Teleoperation import failed: {e}")
         return False
 
 
 def test_data_structures():
     """Test that our data structures are properly defined"""
-    print("🔍 Testing Data Structure Definitions...")
+    print("[MAGNIFY] Testing Data Structure Definitions...")
 
     try:
         # Test that we can create the data structures used in autonomy
@@ -150,20 +150,20 @@ def test_data_structures():
 
         for key in required_keys:
             if key not in test_data:
-                print(f"❌ Missing data structure key: {key}")
+                print(f"[FAIL] Missing data structure key: {key}")
                 return False
 
-        print("✅ Data structures are properly defined")
+        print("[PASS] Data structures are properly defined")
         return True
 
     except Exception as e:
-        print(f"❌ Data structure test failed: {e}")
+        print(f"[FAIL] Data structure test failed: {e}")
         return False
 
 
 def test_validation_functions():
     """Test that our validation functions work (syntactically)"""
-    print("🔍 Testing Validation Function Structure...")
+    print("[MAGNIFY] Testing Validation Function Structure...")
 
     try:
         # Test basic validation logic without ROS2 dependencies
@@ -186,17 +186,17 @@ def test_validation_functions():
         assert mock_structural_check({"a": 1, "b": 2}, ["a", "b"]) == True
         assert mock_structural_check({"a": 1}, ["a", "b"]) == False
 
-        print("✅ Validation function logic works correctly")
+        print("[PASS] Validation function logic works correctly")
         return True
 
     except Exception as e:
-        print(f"❌ Validation function test failed: {e}")
+        print(f"[FAIL] Validation function test failed: {e}")
         return False
 
 
 def run_infrastructure_tests():
     """Run all infrastructure tests"""
-    print("🧪 Autonomy Infrastructure Test Suite")
+    print("[EXPERIMENT] Autonomy Infrastructure Test Suite")
     print("=" * 50)
 
     tests = [
@@ -209,40 +209,40 @@ def run_infrastructure_tests():
 
     results = []
     for test_name, test_func in tests:
-        print(f"\n🔍 Running: {test_name}")
+        print(f"\n[MAGNIFY] Running: {test_name}")
         try:
             result = test_func()
             results.append((test_name, result))
             if result:
-                print(f"✅ {test_name} PASSED")
+                print(f"[PASS] {test_name} PASSED")
             else:
-                print(f"❌ {test_name} FAILED")
+                print(f"[FAIL] {test_name} FAILED")
         except Exception as e:
-            print(f"💥 {test_name} CRASHED: {e}")
+            print(f" {test_name} CRASHED: {e}")
             results.append((test_name, False))
 
     # Summary
     print("\n" + "=" * 50)
-    print("📊 TEST RESULTS SUMMARY")
+    print("[GRAPH] TEST RESULTS SUMMARY")
 
     passed = 0
     total = len(results)
 
     for test_name, result in results:
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "[PASS] PASS" if result else "[FAIL] FAIL"
         print(f"   {status}: {test_name}")
         if result:
             passed += 1
 
-    print(f"\n🎯 Overall: {passed}/{total} tests passed")
+    print(f"\n[OBJECTIVE] Overall: {passed}/{total} tests passed")
 
     if passed == total:
-        print("🎉 All autonomy infrastructure tests PASSED!")
-        print("✅ Ready for ROS2 integration testing")
+        print("[PARTY] All autonomy infrastructure tests PASSED!")
+        print("[PASS] Ready for ROS2 integration testing")
         return True
     else:
-        print("⚠️  Some infrastructure tests failed")
-        print("❌ Fix issues before ROS2 integration")
+        print("  Some infrastructure tests failed")
+        print("[FAIL] Fix issues before ROS2 integration")
         return False
 
 

@@ -213,7 +213,7 @@ def measure_system_resources():
 
 def run_coupled_test(duration: float = 10.0):
     """Run intra-process communication performance test."""
-    print("🔗 Testing Intra-Process (Coupled) Communication...")
+    print(" Testing Intra-Process (Coupled) Communication...")
 
     # Initialize ROS2
     rclpy.init()
@@ -275,7 +275,7 @@ def run_coupled_test(duration: float = 10.0):
 
 def run_decoupled_test(duration: float = 10.0):
     """Run inter-process communication performance test."""
-    print("🌐 Testing Inter-Process (Decoupled) Communication...")
+    print("[NETWORK] Testing Inter-Process (Decoupled) Communication...")
 
     # Initialize ROS2
     rclpy.init()
@@ -337,7 +337,7 @@ def run_decoupled_test(duration: float = 10.0):
 
 def main():
     """Run the performance comparison test."""
-    print("🚀 URC 2026 ROS2 Communication Performance Test")
+    print("[IGNITE] URC 2026 ROS2 Communication Performance Test")
     print("=" * 55)
     print("Comparing Intra-Process vs Inter-Process Communication Performance")
     print()
@@ -352,10 +352,10 @@ def main():
     decoupled_results = run_decoupled_test(duration=5.0)
 
     # Results analysis
-    print("\n📊 PERFORMANCE TEST RESULTS")
+    print("\n[GRAPH] PERFORMANCE TEST RESULTS")
     print("=" * 40)
 
-    print("\n🔗 INTRA-PROCESS (Coupled):")
+    print("\n INTRA-PROCESS (Coupled):")
     print(f"  IMU Messages: {coupled_results['imu_messages']}")
     print(f"  Cmd Vel Messages: {coupled_results['cmd_vel_messages']}")
     print(".1f")
@@ -363,7 +363,7 @@ def main():
     print(".3f")
     print(".1f")
 
-    print("\n🌐 INTER-PROCESS (Decoupled):")
+    print("\n[NETWORK] INTER-PROCESS (Decoupled):")
     print(f"  IMU Messages: {decoupled_results['imu_messages']}")
     print(f"  Cmd Vel Messages: {decoupled_results['cmd_vel_messages']}")
     print(".1f")
@@ -372,7 +372,7 @@ def main():
     print(".1f")
 
     # Performance comparison
-    print("\n⚡ PERFORMANCE COMPARISON:")
+    print("\n[LIGHTNING] PERFORMANCE COMPARISON:")
 
     if (
         coupled_results["avg_latency_ms"] > 0
@@ -386,12 +386,12 @@ def main():
 
         if latency_improvement > 50:
             print(
-                "  ✅ Excellent performance improvement with intra-process communication!"
+                "  [PASS] Excellent performance improvement with intra-process communication!"
             )
         elif latency_improvement > 20:
-            print("  ⚠️ Good performance improvement with intra-process communication")
+            print("   Good performance improvement with intra-process communication")
         else:
-            print("  🤔 Limited performance improvement observed")
+            print("   Limited performance improvement observed")
 
     throughput_improvement = (
         (
@@ -410,24 +410,24 @@ def main():
     )
     print(".2f")
 
-    print("\n🎯 SYSTEM IMPACT ASSESSMENT:")
+    print("\n[OBJECTIVE] SYSTEM IMPACT ASSESSMENT:")
     print("  • Real-time sensor processing (IMU, odometry)")
     print("  • Control loop responsiveness (cmd_vel)")
     print("  • Safety system reaction times")
     print("  • Computer vision processing pipeline")
 
-    print("\n📋 RECOMMENDATIONS:")
+    print("\n[CLIPBOARD] RECOMMENDATIONS:")
 
     if latency_improvement > 30:
-        print("  ✅ Intra-process communication successfully optimized")
-        print("  ✅ Critical real-time topics properly configured")
-        print("  ✅ System ready for high-performance autonomous operation")
+        print("  [PASS] Intra-process communication successfully optimized")
+        print("  [PASS] Critical real-time topics properly configured")
+        print("  [PASS] System ready for high-performance autonomous operation")
     else:
-        print("  ⚠️ Consider reviewing QoS configurations")
-        print("  ⚠️ Check for publisher/subscriber compatibility")
-        print("  ⚠️ Verify intra-process communication setup")
+        print("   Consider reviewing QoS configurations")
+        print("   Check for publisher/subscriber compatibility")
+        print("   Verify intra-process communication setup")
 
-    print("\n✨ Performance test completed!")
+    print("\n[SHINE] Performance test completed!")
 
 
 if __name__ == "__main__":

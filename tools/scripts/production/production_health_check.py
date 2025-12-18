@@ -27,16 +27,16 @@ class ProductionHealthCheck:
     def log_error(self, message: str):
         """Log an error."""
         self.errors.append(message)
-        print(f"❌ {message}")
+        print(f"[FAIL] {message}")
 
     def log_warning(self, message: str):
         """Log a warning."""
         self.warnings.append(message)
-        print(f"⚠️  {message}")
+        print(f"  {message}")
 
     def log_success(self, message: str):
         """Log a success."""
-        print(f"✅ {message}")
+        print(f"[PASS] {message}")
 
     def check_file_exists(self, file_path: str, description: str) -> bool:
         """Check if a file exists."""
@@ -112,7 +112,7 @@ class ProductionHealthCheck:
 
     def run_all_checks(self) -> bool:
         """Run all health checks."""
-        print("🏥 Production Health Check\n")
+        print(" Production Health Check\n")
 
         # File existence checks
         self.check_file_exists("pyproject.toml", "Project configuration")
@@ -136,15 +136,15 @@ class ProductionHealthCheck:
         self.check_git_status()
 
         # Summary
-        print("\n📊 Health Check Summary:")
+        print("\n[GRAPH] Health Check Summary:")
         print(f"  Errors: {len(self.errors)}")
         print(f"  Warnings: {len(self.warnings)}")
 
         if self.errors:
-            print("\n💥 Production readiness failed!")
+            print("\n Production readiness failed!")
             return False
         else:
-            print("\n🎉 System passed health checks!")
+            print("\n[PARTY] System passed health checks!")
             if self.warnings:
                 print("Address warnings for optimal production readiness.")
             return True

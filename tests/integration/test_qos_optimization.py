@@ -23,12 +23,7 @@ sys.path.insert(0, AUTONOMY_ROOT)
 class TestQoSOptimization:
     """Test QoS settings for optimized performance."""
 
-    @pytest.fixture
-    def ros_context(self):
-        """Setup ROS2 context for testing."""
-        rclpy.init()
-        yield
-        rclpy.shutdown()
+    # ROS2 context managed by session fixture
 
     def test_control_message_qos(self):
         """Test control message QoS settings."""

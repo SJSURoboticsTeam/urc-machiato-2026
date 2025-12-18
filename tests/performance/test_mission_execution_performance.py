@@ -62,7 +62,7 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
 
     def test_mission_execution_performance(self):
         """Test complete mission execution performance."""
-        print("\n🎯 Testing Mission Execution Performance")
+        print("\n[OBJECTIVE] Testing Mission Execution Performance")
         print("=" * 60)
 
         try:
@@ -71,11 +71,11 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
             self._start_resource_monitoring()
 
             # Warm up mission system
-            print("🔥 Warming up mission execution system...")
+            print(" Warming up mission execution system...")
             self._warm_up_mission_system()
 
             # Run performance test
-            print("📊 Measuring mission execution performance...")
+            print("[GRAPH] Measuring mission execution performance...")
             self._run_mission_execution_performance_test()
 
             # Analyze results
@@ -302,7 +302,7 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
         )
 
         # Print detailed results
-        print("\n📈 Mission Execution Performance Results:")
+        print("\n Mission Execution Performance Results:")
         print("-" * 50)
         print("Planning Times:")
         print(".3f")
@@ -325,7 +325,7 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
         print(".2f")
 
         # Validate against competition targets
-        print("\n🎯 Competition Requirements Check:")
+        print("\n[OBJECTIVE] Competition Requirements Check:")
         print("-" * 50)
 
         requirements = {
@@ -348,26 +348,26 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
         all_passed = True
         for metric, (actual, target) in requirements.items():
             passed = actual <= target
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".3f")
 
             if not passed:
                 all_passed = False
 
         # Performance assessment
-        print("\n🚀 Performance Assessment:")
+        print("\n[IGNITE] Performance Assessment:")
         print("-" * 50)
 
         if all_passed:
-            print("✅ ALL MISSION EXECUTION REQUIREMENTS MET")
+            print("[PASS] ALL MISSION EXECUTION REQUIREMENTS MET")
             print("   Mission system suitable for competition operations")
         elif (
             avg_planning <= self.target_planning_ms and avg_execution <= 5000
         ):  # 5s total
-            print("⚠️  CORE FUNCTIONALITY OK, BUT OPTIMIZATION NEEDED")
+            print("  CORE FUNCTIONALITY OK, BUT OPTIMIZATION NEEDED")
             print("   Monitor performance during complex mission scenarios")
         else:
-            print("❌ MISSION EXECUTION REQUIREMENTS NOT MET")
+            print("[FAIL] MISSION EXECUTION REQUIREMENTS NOT MET")
             print("   Mission system requires optimization before competition")
 
         # Detailed analysis and recommendations
@@ -375,7 +375,7 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
             avg_planning > self.target_planning_ms
             or avg_path_gen > self.target_path_gen_ms
         ):
-            print("\n💡 Optimization Recommendations:")
+            print("\n Optimization Recommendations:")
             if avg_planning > self.target_planning_ms:
                 print("   - Optimize mission planning algorithm")
                 print("   - Consider pre-computed mission templates")
@@ -420,7 +420,7 @@ class MissionExecutionPerformanceTest(unittest.TestCase):
 
     def test_mission_execution_under_concurrent_load(self):
         """Test mission execution performance under concurrent operations."""
-        print("\n🔄 Testing Mission Execution Under Concurrent Load")
+        print("\n[REFRESH] Testing Mission Execution Under Concurrent Load")
 
         # Create multiple mission executors
         concurrent_executors = []

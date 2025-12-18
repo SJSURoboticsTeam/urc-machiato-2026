@@ -305,7 +305,7 @@ class CompetitionScenarioTests(unittest.TestCase):
 
 def run_competition_scenarios():
     """Run competition scenario test suite."""
-    print("🏁 Running Competition Scenario Tests...")
+    print("[FLAG] Running Competition Scenario Tests...")
     print("=" * 50)
 
     # Load test suite
@@ -319,10 +319,10 @@ def run_competition_scenarios():
     # Summary
     print("\n" + "=" * 50)
     if result.wasSuccessful():
-        print("✅ COMPETITION SCENARIOS PASSED")
+        print("[PASS] COMPETITION SCENARIOS PASSED")
         print("System ready for typical competition challenges")
     else:
-        print("❌ COMPETITION SCENARIOS FAILED")
+        print("[FAIL] COMPETITION SCENARIOS FAILED")
         print(f"Failed tests: {len(result.failures)}")
         print(f"Errors: {len(result.errors)}")
         print("Address scenario failures before competition")

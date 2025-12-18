@@ -78,7 +78,7 @@ class RoboticArmSimulator:
         self._initialize_state()
         self._initialize_controllers()
 
-        self.logger.info("🤖 MOCK Robotic Arm Simulator initialized")
+        self.logger.info(" MOCK Robotic Arm Simulator initialized")
 
     def _get_default_config(self) -> Dict:
         """Get default arm configuration."""
@@ -432,7 +432,7 @@ class RoboticArmSimulator:
 
     def emergency_stop_arm(self) -> bool:
         """Emergency stop the arm."""
-        self.logger.warning("🚨 ARM EMERGENCY STOP")
+        self.logger.warning(" ARM EMERGENCY STOP")
         self.emergency_stop = True
         self.joint_velocity_targets = np.zeros(self.dof)
         return True

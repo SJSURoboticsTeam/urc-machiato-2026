@@ -37,16 +37,16 @@ class RedundancyTestSuite:
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals."""
-        print("\n🛑 Received shutdown signal...")
+        print("\n Received shutdown signal...")
         self.running = False
         self.cleanup()
 
     def start_ros2_system(self):
         """Start the ROS2 system with redundant bridges."""
-        print("🚀 Starting ROS2 system with WebSocket redundancy...")
+        print("[IGNITE] Starting ROS2 system with WebSocket redundancy...")
 
         # Start competition bridge (primary endpoint)
-        print("  📡 Starting Competition Bridge (Primary - Port 8080)...")
+        print("  [ANTENNA] Starting Competition Bridge (Primary - Port 8080)...")
         proc1 = self.start_bridge(
             "competition_bridge", ["python3", "src/bridges/competition_bridge.py"]
         )
@@ -56,7 +56,7 @@ class RedundancyTestSuite:
         time.sleep(3)
 
         # Start secondary bridge
-        print("  📡 Starting Secondary WebSocket Bridge (Port 8081)...")
+        print("  [ANTENNA] Starting Secondary WebSocket Bridge (Port 8081)...")
         proc2 = self.start_bridge(
             "secondary_bridge", ["python3", "src/bridges/secondary_websocket_bridge.py"]
         )
@@ -66,7 +66,7 @@ class RedundancyTestSuite:
         time.sleep(3)
 
         # Start tertiary bridge (emergency)
-        print("  📡 Starting Tertiary WebSocket Bridge (Port 8082)...")
+        print("  [ANTENNA] Starting Tertiary WebSocket Bridge (Port 8082)...")
         proc3 = self.start_bridge(
             "tertiary_bridge", ["python3", "src/bridges/tertiary_websocket_bridge.py"]
         )
@@ -75,7 +75,7 @@ class RedundancyTestSuite:
         # Wait for all bridges to initialize
         time.sleep(5)
 
-        print("✅ All WebSocket bridges started successfully!")
+        print("[PASS] All WebSocket bridges started successfully!")
         return True
 
     def start_bridge(self, name: str, command: List[str]) -> subprocess.Popen:
@@ -96,20 +96,22 @@ class RedundancyTestSuite:
             # Wait a moment to see if it starts successfully
             time.sleep(2)
             if proc.poll() is None:
-                print(f"    ✅ {name} started (PID: {proc.pid})")
+                print(f"    [PASS] {name} started (PID: {proc.pid})")
                 return proc
             else:
                 stdout, stderr = proc.communicate()
-                print(f"    ❌ {name} failed to start: {stderr}")
+                print(f"    [FAIL] {name} failed to start: {stderr}")
                 return None
 
         except Exception as e:
-            print(f"    ❌ Error starting {name}: {e}")
+            print(f"    [FAIL] Error starting {name}: {e}")
             return None
 
     def run_redundancy_tests(self):
         """Run the WebSocket redundancy tests."""
-        print(f"\n🧪 Running WebSocket redundancy tests ({self.test_duration}s)...")
+        print(
+            f"\n[EXPERIMENT] Running WebSocket redundancy tests ({self.test_duration}s)..."
+        )
 
         # Test command
         test_cmd = [
@@ -123,7 +125,7 @@ class RedundancyTestSuite:
             test_cmd.append("--simulate-failures")
 
         try:
-            print("  📊 Starting redundancy test client...")
+            print("  [GRAPH] Starting redundancy test client...")
             proc = subprocess.run(
                 test_cmd,
                 capture_output=True,
@@ -132,8 +134,8 @@ class RedundancyTestSuite:
             )
 
             if proc.returncode == 0:
-                print("  ✅ Redundancy tests completed successfully!")
-                print("  📄 Test output:")
+                print("  [PASS] Redundancy tests completed successfully!")
+                print("   Test output:")
                 print("  " + "-" * 50)
                 # Print last 20 lines of output
                 lines = proc.stdout.strip().split("\n")
@@ -143,54 +145,56 @@ class RedundancyTestSuite:
                 print("  " + "-" * 50)
                 return True
             else:
-                print(f"  ❌ Redundancy tests failed (exit code: {proc.returncode})")
+                print(
+                    f"  [FAIL] Redundancy tests failed (exit code: {proc.returncode})"
+                )
                 print(f"  Error: {proc.stderr}")
                 return False
 
         except subprocess.TimeoutExpired:
-            print("  ❌ Redundancy tests timed out")
+            print("  [FAIL] Redundancy tests timed out")
             return False
         except Exception as e:
-            print(f"  ❌ Error running redundancy tests: {e}")
+            print(f"  [FAIL] Error running redundancy tests: {e}")
             return False
 
     def test_manual_failover(self):
         """Manually test failover by stopping and starting bridges."""
-        print("\n🔄 Testing manual failover scenarios...")
+        print("\n[REFRESH] Testing manual failover scenarios...")
 
         # Test 1: Stop primary, verify failover to secondary
-        print("  🧪 Test 1: Primary bridge failure...")
+        print("  [EXPERIMENT] Test 1: Primary bridge failure...")
         if self.stop_bridge("competition_bridge"):
-            print("    ✅ Primary bridge stopped")
+            print("    [PASS] Primary bridge stopped")
             time.sleep(10)  # Wait for failover
 
             # Check if secondary is still responding
             if self.test_bridge_connectivity("ws://localhost:8081"):
-                print("    ✅ Secondary bridge handling connections")
+                print("    [PASS] Secondary bridge handling connections")
             else:
-                print("    ❌ Secondary bridge not responding")
+                print("    [FAIL] Secondary bridge not responding")
 
             # Restart primary
             self.restart_bridge("competition_bridge")
             time.sleep(5)
 
         # Test 2: Stop secondary, verify tertiary backup
-        print("  🧪 Test 2: Secondary bridge failure...")
+        print("  [EXPERIMENT] Test 2: Secondary bridge failure...")
         if self.stop_bridge("secondary_bridge"):
-            print("    ✅ Secondary bridge stopped")
+            print("    [PASS] Secondary bridge stopped")
             time.sleep(10)  # Wait for failover
 
             # Check if tertiary is responding
             if self.test_bridge_connectivity("ws://localhost:8082"):
-                print("    ✅ Tertiary bridge handling emergency connections")
+                print("    [PASS] Tertiary bridge handling emergency connections")
             else:
-                print("    ❌ Tertiary bridge not responding")
+                print("    [FAIL] Tertiary bridge not responding")
 
             # Restart secondary
             self.restart_bridge("secondary_bridge")
             time.sleep(5)
 
-        print("  ✅ Manual failover tests completed")
+        print("  [PASS] Manual failover tests completed")
 
     def stop_bridge(self, bridge_name: str) -> bool:
         """Stop a specific bridge."""
@@ -208,7 +212,7 @@ class RedundancyTestSuite:
 
     def restart_bridge(self, bridge_name: str):
         """Restart a specific bridge."""
-        print(f"    🔄 Restarting {bridge_name}...")
+        print(f"    [REFRESH] Restarting {bridge_name}...")
 
         if bridge_name == "competition_bridge":
             proc = self.start_bridge(
@@ -263,15 +267,15 @@ class RedundancyTestSuite:
 
     def measure_performance_impact(self):
         """Measure the performance impact of redundancy."""
-        print("\n📊 Measuring performance impact...")
+        print("\n[GRAPH] Measuring performance impact...")
 
         # Test 1: Single bridge performance
-        print("  🧪 Testing single bridge performance...")
+        print("  [EXPERIMENT] Testing single bridge performance...")
         single_bridge_cpu = self.measure_system_load("single")
         print(".1f")
 
         # Test 2: Triple bridge performance
-        print("  🧪 Testing redundant bridge performance...")
+        print("  [EXPERIMENT] Testing redundant bridge performance...")
         redundant_bridge_cpu = self.measure_system_load("redundant")
         print(".1f")
 
@@ -300,16 +304,16 @@ class RedundancyTestSuite:
 
     def generate_test_report(self):
         """Generate comprehensive test report."""
-        print("\n📋 WebSocket Redundancy Test Report")
+        print("\n[CLIPBOARD] WebSocket Redundancy Test Report")
         print("=" * 60)
 
-        print("🕐 Test Configuration:")
+        print("[WATCH] Test Configuration:")
         print(f"   Duration: {self.test_duration}s")
         print(
             f"   Failure Simulation: {'Enabled' if self.simulate_failures else 'Disabled'}"
         )
 
-        print("\n🏗️ System Architecture:")
+        print("\n[CONSTRUCTION] System Architecture:")
         print("   • Competition Bridge (Primary): ws://localhost:8080")
         print("   • Secondary Bridge: ws://localhost:8081")
         print("   • Tertiary Bridge (Emergency): ws://localhost:8082")
@@ -319,28 +323,28 @@ class RedundancyTestSuite:
             perf = self.test_results["performance"]
             print("Test completed successfully")
             print("\nPerformance Impact:")
-            print("\n🎯 Reliability Improvements:")
+            print("\n[OBJECTIVE] Reliability Improvements:")
         print("   • Zero-downtime failover (<1 second detection)")
         print("   • Progressive data degradation (full → state → safety → emergency)")
         print("   • Automatic load balancing across healthy endpoints")
         print("   • Connection health monitoring and recovery")
 
         print(
-            "\n✅ Test Status: PASSED"
+            "\n[PASS] Test Status: PASSED"
             if all(p and p.poll() is None for _, p in self.processes if p)
-            else "❌ Test Status: FAILED"
+            else "[FAIL] Test Status: FAILED"
         )
         print("=" * 60)
 
     def run_full_test_suite(self):
         """Run the complete test suite."""
-        print("🌟 WebSocket Redundancy Full Test Suite")
+        print(" WebSocket Redundancy Full Test Suite")
         print("=" * 60)
 
         try:
             # Start the ROS2 system
             if not self.start_ros2_system():
-                print("❌ Failed to start ROS2 system")
+                print("[FAIL] Failed to start ROS2 system")
                 return False
 
             self.running = True
@@ -365,11 +369,11 @@ class RedundancyTestSuite:
 
     def cleanup(self):
         """Clean up all processes."""
-        print("\n🧹 Cleaning up test environment...")
+        print("\n[SWEEP] Cleaning up test environment...")
 
         for name, proc in self.processes:
             if proc and proc.poll() is None:
-                print(f"  🛑 Stopping {name}...")
+                print(f"   Stopping {name}...")
                 proc.terminate()
 
         # Wait for processes to terminate
@@ -379,7 +383,7 @@ class RedundancyTestSuite:
             if proc and proc.poll() is None:
                 proc.kill()
 
-        print("✅ Cleanup completed")
+        print("[PASS] Cleanup completed")
 
 
 def main():
@@ -411,7 +415,7 @@ def main():
 
     # Validate arguments
     if args.duration < 30:
-        print("❌ Test duration must be at least 30 seconds")
+        print("[FAIL] Test duration must be at least 30 seconds")
         sys.exit(1)
 
     # Run the test suite
@@ -424,12 +428,12 @@ def main():
         sys.exit(0 if success else 1)
 
     except KeyboardInterrupt:
-        print("\n🛑 Test interrupted by user")
+        print("\n Test interrupted by user")
         suite.cleanup()
         sys.exit(1)
 
     except Exception as e:
-        print(f"\n❌ Test suite error: {e}")
+        print(f"\n[FAIL] Test suite error: {e}")
         suite.cleanup()
         sys.exit(1)
 

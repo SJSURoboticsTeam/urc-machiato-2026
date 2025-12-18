@@ -89,7 +89,7 @@ class BasicROS2IntegrationTest:
 
     def run_integrated_test(self):
         """Run both publisher and subscriber in same ROS2 context"""
-        print("📡 Starting integrated ROS2 mission system test...")
+        print("[ANTENNA] Starting integrated ROS2 mission system test...")
 
         # Initialize ROS2 once
         rclpy.init()
@@ -130,12 +130,14 @@ class BasicROS2IntegrationTest:
                 message_counts = self.subscriber_node.get_message_counts()
                 has_data = self.subscriber_node.has_received_data()
 
-                print("\n📊 MISSION SYSTEM INTEGRATION TEST RESULTS:")
-                print(f"   Has received mission commands: {'✅' if has_data else '❌'}")
+                print("\n[GRAPH] MISSION SYSTEM INTEGRATION TEST RESULTS:")
+                print(
+                    f"   Has received mission commands: {'[PASS]' if has_data else '[FAIL]'}"
+                )
 
                 print("   Message counts:")
                 for topic, count in message_counts.items():
-                    status = "✅" if count > 0 else "❌"
+                    status = "[PASS]" if count > 0 else "[FAIL]"
                     print(f"     {status} {topic}: {count} messages")
 
                 # Check that we received mission commands (allow for timing variations)
@@ -144,19 +146,19 @@ class BasicROS2IntegrationTest:
                 min_expected_messages = 3  # Reasonable minimum for pub/sub validation
 
                 if has_data and received_count >= min_expected_messages:
-                    print("\n🎉 Mission System Integration Test PASSED!")
+                    print("\n[PARTY] Mission System Integration Test PASSED!")
                     print(
-                        f"✅ Mission commands published and received ({received_count} messages)"
+                        f"[PASS] Mission commands published and received ({received_count} messages)"
                     )
-                    print("✅ ROS2 pub/sub communication is working")
-                    print("✅ Simplified mission system is functional")
+                    print("[PASS] ROS2 pub/sub communication is working")
+                    print("[PASS] Simplified mission system is functional")
                     self.success = True
                 else:
-                    print("\n❌ Mission System Integration Test FAILED!")
+                    print("\n[FAIL] Mission System Integration Test FAILED!")
                     print(
-                        f"❌ Expected at least {min_expected_messages} messages, got {received_count}"
+                        f"[FAIL] Expected at least {min_expected_messages} messages, got {received_count}"
                     )
-                    print("❌ Check ROS2 setup and topic communication")
+                    print("[FAIL] Check ROS2 setup and topic communication")
                     self.success = False
 
             # Cleanup
@@ -166,7 +168,7 @@ class BasicROS2IntegrationTest:
             self.subscriber_node.destroy_node()
 
         except Exception as e:
-            print(f"\n💥 Integrated test failed: {e}")
+            print(f"\n Integrated test failed: {e}")
             self.success = False
 
         finally:
@@ -174,7 +176,7 @@ class BasicROS2IntegrationTest:
 
     def run_test(self):
         """Run the basic ROS2 integration test"""
-        print("🧪 Basic ROS2 Integration Test")
+        print("[EXPERIMENT] Basic ROS2 Integration Test")
         print("=" * 40)
 
         try:
@@ -182,7 +184,7 @@ class BasicROS2IntegrationTest:
             self.run_integrated_test()
 
         except Exception as e:
-            print(f"\n💥 Test failed with exception: {e}")
+            print(f"\n Test failed with exception: {e}")
             self.success = False
 
         return self.success
@@ -195,7 +197,7 @@ def main():
     test = BasicROS2IntegrationTest()
     success = test.run_test()
 
-    print(f"\n🏁 Final Result: {'SUCCESS' if success else 'FAILURE'}")
+    print(f"\n[FLAG] Final Result: {'SUCCESS' if success else 'FAILURE'}")
     return success
 
 

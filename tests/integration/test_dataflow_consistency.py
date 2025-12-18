@@ -45,9 +45,7 @@ except ImportError:
     EnvironmentFactory = None
     NetworkEmulator = None
 
-
-@pytest.fixture
-def ros_context():
+    # ROS2 context managed by session fixture
     """Initialize and cleanup ROS context."""
     if not ROS2_AVAILABLE:
         pytest.skip("ROS2 not available")
@@ -139,7 +137,7 @@ class TestDataFlow:
 
     def test_sensor_to_action_flow(self, ros_context):
         """Test sensor → processing → action data flow."""
-        print("\n🔄 Testing Sensor → Action Data Flow")
+        print("\n[REFRESH] Testing Sensor → Action Data Flow")
 
         # Simulate sensor reading
         sensor_value = 10.0
@@ -178,7 +176,7 @@ class TestDataFlow:
 
     def test_data_transformation_accuracy(self, ros_context):
         """Test data transformation accuracy through pipeline."""
-        print("\n📊 Testing Data Transformation Accuracy")
+        print("\n[GRAPH] Testing Data Transformation Accuracy")
 
         # Input data
         input_position = np.array([0.0, 0.0])
@@ -235,7 +233,7 @@ class TestDataFlow:
 
     def test_data_loss_detection(self, ros_context):
         """Test detection of data loss in pipeline."""
-        print("\n🔍 Testing Data Loss Detection")
+        print("\n[MAGNIFY] Testing Data Loss Detection")
 
         # Simulate continuous sensor readings
         base_time = time.time()
@@ -260,7 +258,7 @@ class TestDataFlow:
 
     def test_latency_measurement(self, ros_context):
         """Test latency measurement through pipeline."""
-        print("\n⏱️  Testing Latency Measurement")
+        print("\n[CLOCK]  Testing Latency Measurement")
 
         # Simulate sensor → processing → action with timestamps
         sensor_time = time.time()
@@ -294,7 +292,7 @@ class TestDataFlow:
 
     def test_data_integrity(self, ros_context):
         """Test data integrity through pipeline."""
-        print("\n🔒 Testing Data Integrity")
+        print("\n Testing Data Integrity")
 
         # Input data
         input_data = {"x": 10.0, "y": 20.0, "z": 30.0}
@@ -320,7 +318,7 @@ class TestDataFlow:
 
     def test_multi_sensor_fusion(self, ros_context):
         """Test data fusion from multiple sensors."""
-        print("\n🔗 Testing Multi-Sensor Fusion")
+        print("\n Testing Multi-Sensor Fusion")
 
         # Simulate multiple sensor readings
         gps_data = {"lat": 38.406, "lon": -110.792, "alt": 1500.0}

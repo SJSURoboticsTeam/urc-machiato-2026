@@ -516,7 +516,7 @@ class CompetitionTelemetryAnalyzer:
 
 def run_telemetry_collection(session_name: str = None):
     """Run telemetry collection for a competition session."""
-    print("📊 Starting Competition Telemetry Collection...")
+    print("[GRAPH] Starting Competition Telemetry Collection...")
     print("=" * 50)
 
     rclpy.init()
@@ -529,20 +529,20 @@ def run_telemetry_collection(session_name: str = None):
         pass
     finally:
         filename = collector.save_telemetry_data()
-        print(f"\n💾 Telemetry collection complete: {filename}")
+        print(f"\n Telemetry collection complete: {filename}")
         collector.destroy_node()
         rclpy.shutdown()
 
 
 def analyze_telemetry_file(telemetry_file: str):
     """Analyze a telemetry file and generate report."""
-    print(f"📈 Analyzing telemetry file: {telemetry_file}")
+    print(f" Analyzing telemetry file: {telemetry_file}")
     print("=" * 50)
 
     analyzer = CompetitionTelemetryAnalyzer(telemetry_file)
 
     if not analyzer.load_data():
-        print("❌ Failed to load telemetry file")
+        print("[FAIL] Failed to load telemetry file")
         return
 
     report = analyzer.generate_competition_report()
@@ -554,13 +554,13 @@ def analyze_telemetry_file(telemetry_file: str):
 
     # Mission analysis
     missions = report["mission_analysis"]
-    print(f"\n🏁 Mission Performance:")
+    print(f"\n[FLAG] Mission Performance:")
     print(f"  Attempted: {missions['missions_attempted']}")
     print(f"  Completed: {missions['missions_completed']}")
     print(f"  Success Rate: {missions['success_rate']:.1f}%")
     # Error analysis
     errors = report["error_analysis"]
-    print(f"\n⚠️  Error Analysis:")
+    print(f"\n  Error Analysis:")
     print(f"  Total Errors: {errors['total_errors']}")
     if errors["error_types"]:
         print("  Error Types:")
@@ -570,7 +570,7 @@ def analyze_telemetry_file(telemetry_file: str):
         print("  No errors recorded")
 
     # Recommendations
-    print(f"\n💡 Recommendations:")
+    print(f"\n Recommendations:")
     for rec in report["recommendations"]:
         print(f"  - {rec}")
 
@@ -579,7 +579,7 @@ def analyze_telemetry_file(telemetry_file: str):
     with open(report_file, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
-    print(f"\n📄 Detailed analysis saved to: {report_file}")
+    print(f"\n Detailed analysis saved to: {report_file}")
 
 
 def main():

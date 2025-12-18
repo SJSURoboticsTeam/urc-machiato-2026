@@ -150,7 +150,7 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
     def test_state_synchronization_comprehensive(self):
         """Test comprehensive state synchronization across all nodes."""
-        print("🔄 Testing Comprehensive State Synchronization...")
+        print("[REFRESH] Testing Comprehensive State Synchronization...")
 
         # Start all state managers
         self.state_mgr_primary.start()
@@ -254,11 +254,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         self.state_mgr_secondary.stop()
         self.state_mgr_tertiary.stop()
 
-        print("  ✅ State synchronization comprehensive test passed")
+        print("  [PASS] State synchronization comprehensive test passed")
 
     def test_dds_domain_redundancy_comprehensive(self):
         """Test comprehensive DDS domain redundancy."""
-        print("🔗 Testing Comprehensive DDS Domain Redundancy...")
+        print(" Testing Comprehensive DDS Domain Redundancy...")
 
         # Register nodes
         self.dds_mgr.register_node(
@@ -310,11 +310,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         # This would normally monitor actual DDS health
 
         self.dds_mgr.stop()
-        print("  ✅ DDS domain redundancy comprehensive test passed")
+        print("  [PASS] DDS domain redundancy comprehensive test passed")
 
     def test_dynamic_configuration_comprehensive(self):
         """Test comprehensive dynamic configuration."""
-        print("⚙️ Testing Comprehensive Dynamic Configuration...")
+        print(" Testing Comprehensive Dynamic Configuration...")
 
         # Register nodes with initial configs
         initial_configs = {
@@ -416,11 +416,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         history = self.config_mgr.get_config_history()
         self.assertGreater(len(history), 0, "Should have configuration history")
 
-        print("  ✅ Dynamic configuration comprehensive test passed")
+        print("  [PASS] Dynamic configuration comprehensive test passed")
 
     def test_websocket_redundancy_comprehensive(self):
         """Test comprehensive WebSocket redundancy."""
-        print("🌐 Testing Comprehensive WebSocket Redundancy...")
+        print("[NETWORK] Testing Comprehensive WebSocket Redundancy...")
 
         from bridges.websocket_redundancy_manager import (
             EndpointPriority,
@@ -495,11 +495,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         # Stop redundancy system
         self.ws_mgr.stop_redundancy_system()
 
-        print("  ✅ WebSocket redundancy comprehensive test passed")
+        print("  [PASS] WebSocket redundancy comprehensive test passed")
 
     def test_cross_system_integration(self):
         """Test integration across all advanced systems."""
-        print("🔧 Testing Cross-System Integration...")
+        print("[TOOL] Testing Cross-System Integration...")
 
         # Initialize all systems
         self.state_mgr_primary.start()
@@ -572,11 +572,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         self.dds_mgr.stop()
         self.ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Cross-system integration test passed")
+        print("  [PASS] Cross-system integration test passed")
 
     def test_failure_scenarios(self):
         """Test various failure scenarios and recovery."""
-        print("💥 Testing Failure Scenarios...")
+        print(" Testing Failure Scenarios...")
 
         # Initialize systems
         self.state_mgr_primary.start()
@@ -651,11 +651,11 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         self.config_mgr.stop()
         self.ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Failure scenarios test passed")
+        print("  [PASS] Failure scenarios test passed")
 
     def test_performance_under_load(self):
         """Test system performance under simulated load."""
-        print("📈 Testing Performance Under Load...")
+        print(" Testing Performance Under Load...")
 
         # Initialize systems
         self.state_mgr_primary.start()
@@ -700,7 +700,7 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         self.state_mgr_primary.stop()
         self.config_mgr.stop()
 
-        print("  ✅ Performance under load test passed")
+        print("  [PASS] Performance under load test passed")
 
     def tearDown(self):
         """Clean up after tests."""
@@ -728,7 +728,7 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
 
 def run_comprehensive_tests():
     """Run the comprehensive test suite."""
-    print("🧪 Advanced Systems Comprehensive Test Suite")
+    print("[EXPERIMENT] Advanced Systems Comprehensive Test Suite")
     print("=" * 60)
     print(
         "Testing: State Sync + DDS Redundancy + Dynamic Config + WebSocket Redundancy"
@@ -747,15 +747,15 @@ def run_comprehensive_tests():
 
     # Print summary
     print("\n" + "=" * 60)
-    print("📊 COMPREHENSIVE TEST RESULTS")
+    print("[GRAPH] COMPREHENSIVE TEST RESULTS")
     print("=" * 60)
 
     if result.wasSuccessful():
-        print("🎉 ALL TESTS PASSED!")
-        print("✅ Advanced systems are fully functional and integrated")
-        print("🚀 READY FOR COMPETITION DEPLOYMENT")
+        print("[PARTY] ALL TESTS PASSED!")
+        print("[PASS] Advanced systems are fully functional and integrated")
+        print("[IGNITE] READY FOR COMPETITION DEPLOYMENT")
     else:
-        print("❌ SOME TESTS FAILED!")
+        print("[FAIL] SOME TESTS FAILED!")
         print(f"   Failed: {len(result.failures)}")
         print(f"   Errors: {len(result.errors)}")
 
@@ -769,9 +769,9 @@ def run_comprehensive_tests():
             for test, traceback in result.errors:
                 print(f"   - {test}: {traceback[:100]}...")
 
-    print(f"\n⏱️  Total Tests Run: {result.testsRun}")
+    print(f"\n[CLOCK]  Total Tests Run: {result.testsRun}")
     print(
-        f"⏱️  Time Taken: {time.time() - time.time():.2f}s"
+        f"[CLOCK]  Time Taken: {time.time() - time.time():.2f}s"
     )  # This won't be accurate since we reset time
 
     return result.wasSuccessful()

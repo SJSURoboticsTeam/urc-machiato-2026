@@ -245,7 +245,7 @@ def run_can_stress_test_worker(stress_config: CANStressConfig) -> Dict:
 def run_can_stress_test_level(level: CANStressLevel) -> Dict:
     """Run CAN stress test for a specific severity level."""
 
-    print(f"🚗 Testing {level.value.upper()} CAN Bus Stress Conditions")
+    print(f" Testing {level.value.upper()} CAN Bus Stress Conditions")
     print("-" * 60)
 
     # Configure stress test
@@ -275,13 +275,13 @@ def run_can_stress_test_level(level: CANStressLevel) -> Dict:
     print(".1f")
     # Performance assessment
     if results["error_rate_percent"] < 5 and results["bus_availability_percent"] > 95:
-        assessment = "✅ EXCELLENT - Handles stress well"
+        assessment = "[PASS] EXCELLENT - Handles stress well"
     elif (
         results["error_rate_percent"] < 15 and results["bus_availability_percent"] > 85
     ):
-        assessment = "⚠️ GOOD - Some issues under stress"
+        assessment = " GOOD - Some issues under stress"
     else:
-        assessment = "❌ POOR - Significant problems"
+        assessment = "[FAIL] POOR - Significant problems"
 
     print(f"   • Assessment: {assessment}")
 
@@ -295,7 +295,7 @@ def run_can_stress_test_level(level: CANStressLevel) -> Dict:
 def run_comprehensive_can_stress_test():
     """Run comprehensive CAN bus stress testing across all severity levels."""
 
-    print("🔥 URC 2026 CAN Bus Communication Stress Test Suite")
+    print(" URC 2026 CAN Bus Communication Stress Test Suite")
     print("=" * 65)
 
     results = {}
@@ -312,7 +312,7 @@ def run_comprehensive_can_stress_test():
         print()  # Add spacing between tests
 
     # Comparative analysis
-    print("📊 CAN BUS STRESS ANALYSIS")
+    print("[GRAPH] CAN BUS STRESS ANALYSIS")
     print("=" * 35)
 
     print("\nPerformance by Stress Level:")
@@ -326,11 +326,11 @@ def run_comprehensive_can_stress_test():
         latency = result["avg_latency_ms"]
 
         if error_rate < 5 and bus_avail > 95:
-            assessment = "✅"
+            assessment = "[PASS]"
         elif error_rate < 15 and bus_avail > 85:
-            assessment = "⚠️"
+            assessment = ""
         else:
-            assessment = "❌"
+            assessment = "[FAIL]"
 
         print(
             f"{level_short:8} | {error_rate:10.1f}% | {bus_avail:9.1f}% | {latency:7.1f}ms | {assessment}"
@@ -339,31 +339,33 @@ def run_comprehensive_can_stress_test():
     # Overall assessment
     extreme_results = results["extreme"]
 
-    print("\n🎯 CAN BUS STRESS TEST ASSESSMENT")
+    print("\n[OBJECTIVE] CAN BUS STRESS TEST ASSESSMENT")
 
     if extreme_results["bus_availability_percent"] > 80:
-        print("✅ CAN bus maintains good reliability under extreme stress")
+        print("[PASS] CAN bus maintains good reliability under extreme stress")
     else:
-        print("❌ CAN bus reliability degrades significantly under extreme conditions")
+        print(
+            "[FAIL] CAN bus reliability degrades significantly under extreme conditions"
+        )
 
     if extreme_results["error_rate_percent"] < 20:
-        print("✅ Error handling is effective under high fault conditions")
+        print("[PASS] Error handling is effective under high fault conditions")
     else:
-        print("⚠️ Error rates may impact system reliability")
+        print(" Error rates may impact system reliability")
 
     if extreme_results["avg_latency_ms"] < 50:
-        print("✅ Latency remains acceptable under stress")
+        print("[PASS] Latency remains acceptable under stress")
     else:
-        print("⚠️ High latency may affect real-time control")
+        print(" High latency may affect real-time control")
 
-    print("\n🛠️ MITIGATION STRATEGIES:")
+    print("\n MITIGATION STRATEGIES:")
     print("   • Implement CAN message prioritization")
     print("   • Add redundancy for critical sensors")
     print("   • Use error detection and retransmission")
     print("   • Monitor bus loading and implement rate limiting")
     print("   • Add electrical noise filtering")
 
-    print("\n📋 SYSTEM IMPACT:")
+    print("\n[CLIPBOARD] SYSTEM IMPACT:")
     print("   • Motor control reliability under electrical interference")
     print("   • Sensor data integrity during high bus utilization")
     print("   • Emergency stop responsiveness during faults")
@@ -375,7 +377,7 @@ def run_comprehensive_can_stress_test():
 def simulate_can_bus_failure_recovery():
     """Test CAN bus failure and recovery scenarios."""
 
-    print("🔄 CAN Bus Failure & Recovery Simulation")
+    print("[REFRESH] CAN Bus Failure & Recovery Simulation")
     print("-" * 45)
 
     config = CANStressConfig(CANStressLevel.SEVERE)
@@ -423,9 +425,9 @@ def simulate_can_bus_failure_recovery():
     recovery_stats = simulator.get_stress_stats()
     print(".1f")
     if messages_after_recovery > 40:  # 80% success rate
-        print("   ✅ Bus recovery successful")
+        print("   [PASS] Bus recovery successful")
     else:
-        print("   ❌ Bus recovery failed")
+        print("   [FAIL] Bus recovery failed")
 
     return recovery_stats
 
@@ -439,7 +441,7 @@ if __name__ == "__main__":
     # Run comprehensive CAN stress tests
     can_results = run_comprehensive_can_stress_test()
 
-    print("\n🔄 Testing CAN Bus Failure Recovery...")
+    print("\n[REFRESH] Testing CAN Bus Failure Recovery...")
     simulate_can_bus_failure_recovery()
 
-    print("\n✨ CAN bus stress testing completed!")
+    print("\n[SHINE] CAN bus stress testing completed!")

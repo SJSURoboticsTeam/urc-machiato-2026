@@ -52,7 +52,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
     def test_primary_secondary_cascade(self):
         """Test cascade: Primary WebSocket fails → Secondary overloaded → Tertiary activated."""
-        print("🔗 Testing Primary-Secondary-Tertiary Cascade...")
+        print(" Testing Primary-Secondary-Tertiary Cascade...")
 
         with self.env_manager.create_environment(
             name="websocket_cascade_test",
@@ -100,7 +100,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 2: Primary fails
-            print("  💥 Phase 1: Primary endpoint fails...")
+            print("   Phase 1: Primary endpoint fails...")
             primary.is_running = False
             ws_mgr._check_endpoint_health()
 
@@ -113,7 +113,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 3: Secondary becomes overloaded
-            print("  🔥 Phase 2: Secondary becomes overloaded...")
+            print("   Phase 2: Secondary becomes overloaded...")
             secondary.clients = [Mock()] * 30  # Exceed max_clients (25)
             ws_mgr._check_endpoint_health()
 
@@ -126,7 +126,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 4: Secondary also fails
-            print("  💥 Phase 3: Secondary endpoint fails...")
+            print("   Phase 3: Secondary endpoint fails...")
             secondary.is_running = False
             ws_mgr._check_endpoint_health()
 
@@ -156,11 +156,11 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
             ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Primary-secondary-tertiary cascade test passed")
+        print("  [PASS] Primary-secondary-tertiary cascade test passed")
 
     def test_dds_domain_cascade(self):
         """Test DDS domain cascade: Primary fails → Backup fails → Emergency mode."""
-        print("🌐 Testing DDS Domain Cascade...")
+        print("[NETWORK] Testing DDS Domain Cascade...")
 
         with self.env_manager.create_environment(
             name="dds_cascade_test",
@@ -186,7 +186,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 2: Primary domain fails
-            print("  💥 Phase 1: Primary DDS domain fails...")
+            print("   Phase 1: Primary DDS domain fails...")
 
             # Mock domain health to return 0 (failed)
             original_measure = dds_mgr._measure_domain_health
@@ -205,7 +205,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 3: Backup domain also fails
-            print("  💥 Phase 2: Backup DDS domain fails...")
+            print("   Phase 2: Backup DDS domain fails...")
             dds_mgr._measure_domain_health = lambda x: 0.0 if x in [400, 401] else 0.9
 
             success2 = dds_mgr.trigger_domain_failover(
@@ -221,7 +221,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 4: Emergency domain fails (total failure)
-            print("  💥 Phase 3: Emergency DDS domain fails...")
+            print("   Phase 3: Emergency DDS domain fails...")
             dds_mgr._measure_domain_health = lambda x: 0.0  # All domains fail
 
             # System should handle total DDS failure gracefully
@@ -232,11 +232,11 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
             dds_mgr.stop()
 
-        print("  ✅ DDS domain cascade test passed")
+        print("  [PASS] DDS domain cascade test passed")
 
     def test_state_sync_cascade(self):
         """Test state synchronization cascade failures."""
-        print("🔄 Testing State Synchronization Cascade...")
+        print("[REFRESH] Testing State Synchronization Cascade...")
 
         with self.env_manager.create_environment(
             name="state_cascade_test",
@@ -284,7 +284,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             self.assertEqual(masters, 1, "Should have exactly one master initially")
 
             # Phase 2: Master fails
-            print("  💥 Phase 1: Master node fails...")
+            print("   Phase 1: Master node fails...")
             master_mgr = next(
                 mgr for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER"
             )
@@ -313,7 +313,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 3: New master fails (cascade)
-            print("  💥 Phase 2: New master fails (cascade)...")
+            print("   Phase 2: New master fails (cascade)...")
             new_master_mgr = next(
                 mgr for mgr in [mgr1, mgr2, mgr3] if mgr.role.name == "MASTER"
             )
@@ -350,11 +350,11 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             mgr2.stop()
             mgr3.stop()
 
-        print("  ✅ State synchronization cascade test passed")
+        print("  [PASS] State synchronization cascade test passed")
 
     def test_multi_system_simultaneous_failure(self):
         """Test simultaneous failure of multiple systems."""
-        print("💥 Testing Multi-System Simultaneous Failure...")
+        print(" Testing Multi-System Simultaneous Failure...")
 
         with self.env_manager.create_environment(
             name="multi_system_failure_test",
@@ -411,7 +411,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             )
 
             # Phase 2: Simultaneous multi-system failure
-            print("  💥 Phase 1: Simultaneous multi-system failure...")
+            print("   Phase 1: Simultaneous multi-system failure...")
 
             # Fail state system
             if "multi_fail_test" in state_mgr.nodes:
@@ -440,7 +440,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
 
             # Assess recovery results
             if recovery_coord.recovery_active:
-                print("  ⚠️ Recovery did not complete within timeout")
+                print("   Recovery did not complete within timeout")
                 recovery_success = False
             else:
                 recovery_success = True
@@ -456,7 +456,7 @@ class ExtremeCascadingFailureTest(unittest.TestCase):
             dds_mgr.stop()
             ws_mgr.stop_redundancy_system()
 
-        print("  ✅ Multi-system simultaneous failure test passed")
+        print("  [PASS] Multi-system simultaneous failure test passed")
 
 
 if __name__ == "__main__":

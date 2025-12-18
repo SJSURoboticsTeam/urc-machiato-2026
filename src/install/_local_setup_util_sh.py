@@ -54,6 +54,7 @@ def main(argv=sys.argv[1:]):  # noqa: D103
         ):
 
     for line in _remove_ending_separators():
+        pass
 
 def get_packages(prefix_path, merged_install):
     """

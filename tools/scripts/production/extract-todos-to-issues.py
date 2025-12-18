@@ -19,7 +19,9 @@ from typing import List
 try:
     import requests
 except ImportError:
-    print("❌ Error: 'requests' library not found. Install with: pip install requests")
+    print(
+        "[FAIL] Error: 'requests' library not found. Install with: pip install requests"
+    )
     sys.exit(1)
 
 
@@ -100,13 +102,13 @@ class TodoExtractor:
         all_todos = []
         files = self.find_todo_files()
 
-        print(f"📋 Found {len(files)} TODO files")
+        print(f"[CLIPBOARD] Found {len(files)} TODO files")
 
         for filepath in files:
             print(f"   Parsing: {filepath.relative_to(self.base_path)}")
             todos = self.parse_todo_file(filepath)
             all_todos.extend(todos)
-            print(f"      ✓ Found {len(todos)} unchecked items")
+            print(f"       Found {len(todos)} unchecked items")
 
         return all_todos
 
@@ -148,7 +150,7 @@ class GitHubIssueCreator:
             )
             return resp.json().get("total_count", 0) > 0
         except Exception as e:
-            print(f"   ⚠️ Error checking existing issues: {e}")
+            print(f"    Error checking existing issues: {e}")
             return False
 
     def add_issue_to_project(self, issue_id: str) -> bool:
@@ -187,14 +189,14 @@ class GitHubIssueCreator:
             )
 
             if proj_resp.status_code != 200:
-                print(f"      ⚠️ Failed to get project ID: {proj_resp.text}")
+                print(f"       Failed to get project ID: {proj_resp.text}")
                 return False
 
             proj_data = proj_resp.json()
             if "errors" in proj_data or not proj_data.get("data", {}).get(
                 "user", {}
             ).get("projectV2"):
-                print("      ⚠️ Project not found or access denied")
+                print("       Project not found or access denied")
                 return False
 
             project_id = proj_data["data"]["user"]["projectV2"]["id"]
@@ -218,7 +220,7 @@ class GitHubIssueCreator:
 
             return False
         except Exception as e:
-            print(f"      ⚠️ Error adding to project: {e}")
+            print(f"       Error adding to project: {e}")
             return False
 
     def create_issue(self, todo: dict) -> bool:
@@ -242,7 +244,7 @@ class GitHubIssueCreator:
                 issue = resp.json()
                 issue_num = issue["number"]
                 issue_id = issue["node_id"]
-                print(f"   ✅ Created issue #{issue_num}: {todo['title'][:60]}...")
+                print(f"   [PASS] Created issue #{issue_num}: {todo['title'][:60]}...")
                 self.created_count += 1
 
                 # Try to add to project
@@ -251,15 +253,19 @@ class GitHubIssueCreator:
 
                 return True
             else:
-                print(f"   ❌ Failed to create issue: {resp.status_code} - {resp.text}")
+                print(
+                    f"   [FAIL] Failed to create issue: {resp.status_code} - {resp.text}"
+                )
                 return False
         except Exception as e:
-            print(f"   ❌ Error creating issue: {e}")
+            print(f"   [FAIL] Error creating issue: {e}")
             return False
 
     def create_all(self, todos: List[dict]) -> dict:
         """Create issues for all TODOs."""
-        print(f"\n🚀 Creating issues (token auth: {'✅' if self.token else '❌'})")
+        print(
+            f"\n[IGNITE] Creating issues (token auth: {'[PASS]' if self.token else '[FAIL]'})"
+        )
         print(f"   Repository: {self.owner}/{self.repo}")
         print(f"   Project: users/{self.owner}/projects/{self.project_number}\n")
 
@@ -283,7 +289,7 @@ def main():
     repo_name = os.getenv("GITHUB_REPOSITORY", "ahmad-kad/robotics2025").split("/")[1]
 
     if not token:
-        print("❌ Error: GITHUB_TOKEN environment variable not set")
+        print("[FAIL] Error: GITHUB_TOKEN environment variable not set")
         sys.exit(1)
 
     # Extract TODOs
@@ -291,10 +297,10 @@ def main():
     todos = extractor.extract_all()
 
     if not todos:
-        print("\n✅ No unchecked TODO items found!")
+        print("\n[PASS] No unchecked TODO items found!")
         return
 
-    print(f"\n📊 Total unchecked items: {len(todos)}\n")
+    print(f"\n[GRAPH] Total unchecked items: {len(todos)}\n")
 
     # Create issues and add to project
     creator = GitHubIssueCreator(token, owner, repo_name)
@@ -302,7 +308,7 @@ def main():
 
     # Summary
     print(f"\n{'='*60}")
-    print("📈 Summary:")
+    print(" Summary:")
     print(f"   Created: {result['created']} new issues")
     print(f"   Added to project: {result['added_to_project']} items")
     print(f"   Skipped: {result['skipped']} (already exist)")
@@ -310,8 +316,10 @@ def main():
     print(f"{'='*60}\n")
 
     if result["created"] > 0:
-        print("✅ Issues created successfully!")
-        print("📊 View your project: https://github.com/users/ahmad-kad/projects/5")
+        print("[PASS] Issues created successfully!")
+        print(
+            "[GRAPH] View your project: https://github.com/users/ahmad-kad/projects/5"
+        )
 
 
 if __name__ == "__main__":

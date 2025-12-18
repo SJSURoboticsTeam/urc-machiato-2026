@@ -189,7 +189,7 @@ class SampleCollectionMission(Node):
             )
             return
 
-        self.get_logger().info("🚀 Starting Sample Collection Mission")
+        self.get_logger().info("[IGNITE] Starting Sample Collection Mission")
         self.state = SampleCollectionState.SEARCHING
         self.start_time = time.time()
         self.samples_collected = 0
@@ -205,7 +205,7 @@ class SampleCollectionMission(Node):
 
     def stop_mission(self):
         """Stop the current mission."""
-        self.get_logger().info("🛑 Stopping Sample Collection Mission")
+        self.get_logger().info(" Stopping Sample Collection Mission")
         self.state = SampleCollectionState.IDLE
         self.cleanup_timers()
 
@@ -217,7 +217,7 @@ class SampleCollectionMission(Node):
 
     def reset_mission(self):
         """Reset mission to initial state."""
-        self.get_logger().info("🔄 Resetting Sample Collection Mission")
+        self.get_logger().info("[REFRESH] Resetting Sample Collection Mission")
         self.stop_mission()
         self.start_mission()
 
@@ -268,7 +268,7 @@ class SampleCollectionMission(Node):
             if len(obstacles) >= 5:  # At least one obstacle detected
                 num_obstacles = len(obstacles) // 5
                 self.get_logger().info(
-                    f"🔍 Detected {num_obstacles} potential sample locations via vision processor"
+                    f"[MAGNIFY] Detected {num_obstacles} potential sample locations via vision processor"
                 )
 
                 # Convert obstacle coordinates to world poses
@@ -399,7 +399,7 @@ class SampleCollectionMission(Node):
         # Get next sample (for now, just take the first one)
         self.current_sample_location = self.potential_samples.pop(0)
 
-        self.get_logger().info("🧭 Approaching sample location...")
+        self.get_logger().info(" Approaching sample location...")
 
         # Create approach pose (close but not too close for excavation)
         approach_pose = PoseStamped()
@@ -474,7 +474,7 @@ class SampleCollectionMission(Node):
             and self.is_at_sample_location()
         ):
 
-            self.get_logger().info("📍 Reached sample location")
+            self.get_logger().info(" Reached sample location")
             self.state = SampleCollectionState.ANALYZING
             self.cleanup_timers()
 
@@ -500,7 +500,7 @@ class SampleCollectionMission(Node):
 
     def analyze_sample(self):
         """Analyze sample before excavation."""
-        self.get_logger().info("🔬 Analyzing sample...")
+        self.get_logger().info("[LAB] Analyzing sample...")
 
         # In a real implementation, this would:
         # - Take close-up images
@@ -512,7 +512,7 @@ class SampleCollectionMission(Node):
 
     def start_excavation(self):
         """Start the excavation process."""
-        self.get_logger().info("⛏️ Starting sample excavation...")
+        self.get_logger().info(" Starting sample excavation...")
 
         # Send excavation command to science payload STM32
         excavate_cmd = f"EXCAVATE:START:{self.excavation_depth:.3f}"
@@ -532,7 +532,7 @@ class SampleCollectionMission(Node):
             status = json.loads(msg.data)
 
             if status.get("complete", False):
-                self.get_logger().info("✅ Excavation completed")
+                self.get_logger().info("[PASS] Excavation completed")
                 self.excavation_active = False
                 self.sample_in_gripper = True
                 self.state = SampleCollectionState.COLLECTING
@@ -565,7 +565,7 @@ class SampleCollectionMission(Node):
 
     def cache_sample(self):
         """Cache the collected sample."""
-        self.get_logger().info("📦 Caching sample...")
+        self.get_logger().info(" Caching sample...")
 
         # Check if we have cache space
         if self.cache_used >= self.cache_slots:
@@ -582,7 +582,7 @@ class SampleCollectionMission(Node):
 
     def caching_complete(self):
         """Handle sample caching completion."""
-        self.get_logger().info("✅ Sample cached successfully")
+        self.get_logger().info("[PASS] Sample cached successfully")
         self.samples_collected += 1
         self.cache_used += 1
         self.sample_in_gripper = False
@@ -607,7 +607,7 @@ class SampleCollectionMission(Node):
         # Check if mission complete
         if self.samples_collected >= self.max_samples:
             self.get_logger().info(
-                f"🎉 Mission complete! Collected {self.samples_collected} samples"
+                f"[PARTY] Mission complete! Collected {self.samples_collected} samples"
             )
             self.state = SampleCollectionState.COMPLETED
 

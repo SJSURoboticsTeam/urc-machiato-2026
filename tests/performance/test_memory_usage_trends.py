@@ -49,7 +49,7 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
 
     def test_memory_usage_trends(self):
         """Test memory usage trends over extended period."""
-        print("\n💾 Testing Memory Usage Trends")
+        print("\n Testing Memory Usage Trends")
         print("=" * 60)
 
         # Install GC hook for monitoring
@@ -61,11 +61,11 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
             self._start_memory_monitoring()
 
             # Run memory stress test scenarios
-            print("🔄 Running memory stress test scenarios...")
+            print("[REFRESH] Running memory stress test scenarios...")
             self._run_memory_stress_scenarios()
 
             # Allow system to stabilize and monitor trends
-            print("📊 Monitoring memory trends...")
+            print("[GRAPH] Monitoring memory trends...")
             monitoring_start = time.time()
             while time.time() - monitoring_start < (
                 self.monitoring_duration_hours * 3600
@@ -374,7 +374,7 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
             memory_trend_mb_per_minute = 0
 
         # Print detailed results
-        print("\n📈 Memory Usage Trend Analysis Results:")
+        print("\n Memory Usage Trend Analysis Results:")
         print("-" * 50)
         print(".2f")
         print(".2f")
@@ -389,7 +389,7 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
         print(".1f")
 
         # Validate against competition targets
-        print("\n🎯 Competition Requirements Check:")
+        print("\n[OBJECTIVE] Competition Requirements Check:")
         print("-" * 50)
 
         requirements = {
@@ -415,29 +415,29 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
         all_passed = True
         for metric, (actual, target) in requirements.items():
             passed = actual <= target
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".3f")
 
             if not passed:
                 all_passed = False
 
         # Performance assessment
-        print("\n🚀 Memory Stability Assessment:")
+        print("\n[IGNITE] Memory Stability Assessment:")
         print("-" * 50)
 
         if all_passed:
-            print("✅ ALL MEMORY REQUIREMENTS MET")
+            print("[PASS] ALL MEMORY REQUIREMENTS MET")
             print("   System memory usage stable for competition deployment")
         elif abs(growth_rate_mb_per_hour) < self.target_growth_mb_per_hour * 2:
-            print("⚠️  MEMORY GROWTH ACCEPTABLE, MONITOR CLOSELY")
+            print("  MEMORY GROWTH ACCEPTABLE, MONITOR CLOSELY")
             print("   Memory leak potential exists, monitor during long runs")
         else:
-            print("❌ MEMORY REQUIREMENTS NOT MET")
+            print("[FAIL] MEMORY REQUIREMENTS NOT MET")
             print("   Memory leaks detected, requires investigation before competition")
 
         # Detailed analysis and recommendations
         if abs(growth_rate_mb_per_hour) > self.target_growth_mb_per_hour:
-            print("\n💡 Memory Optimization Recommendations:")
+            print("\n Memory Optimization Recommendations:")
             if growth_rate_mb_per_hour > 0:
                 print("   - Investigate memory leaks in long-running operations")
                 print("   - Check for accumulating data structures")
@@ -458,7 +458,7 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
         if self.memory_readings:
             latest_snapshot = self.memory_readings[-1]
             if latest_snapshot["top_allocations"]:
-                print("\n🔍 Top Memory Consumers:")
+                print("\n[MAGNIFY] Top Memory Consumers:")
                 print("-" * 30)
                 for i, alloc in enumerate(latest_snapshot["top_allocations"][:5], 1):
                     print(".1f")
@@ -488,7 +488,7 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
 
     def test_memory_usage_under_competition_load(self):
         """Test memory usage under simulated competition load."""
-        print("\n🏁 Testing Memory Usage Under Competition Load")
+        print("\n[FLAG] Testing Memory Usage Under Competition Load")
 
         try:
             # Start monitoring
@@ -517,9 +517,9 @@ class MemoryUsageTrendAnalysisTest(unittest.TestCase):
                 print(".2f")
 
                 if competition_growth > 50:  # More than 50MB growth
-                    print("⚠️  Significant memory growth during competition simulation")
+                    print("  Significant memory growth during competition simulation")
                 else:
-                    print("✅ Memory usage stable during competition simulation")
+                    print("[PASS] Memory usage stable during competition simulation")
 
         finally:
             self._stop_memory_monitoring()

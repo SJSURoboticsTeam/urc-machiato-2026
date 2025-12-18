@@ -21,12 +21,7 @@ from bridges.competition_bridge import CompetitionBridge
 class TestMonitoringSystem:
     """Test the complete monitoring system integration."""
 
-    @pytest.fixture
-    def ros_context(self):
-        """Setup ROS2 context for testing."""
-        rclpy.init()
-        yield
-        rclpy.shutdown()
+    # ROS2 context managed by session fixture
 
     @pytest.fixture
     def qos_profiler(self, ros_context):

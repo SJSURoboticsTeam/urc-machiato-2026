@@ -14,24 +14,24 @@ async def test_websocket_connection():
     """Test WebSocket connection to simulation bridge."""
     uri = "ws://localhost:8766"
 
-    print(f"🔌 Connecting to {uri}...")
+    print(f"[PLUG] Connecting to {uri}...")
 
     try:
         async with websockets.connect(uri) as websocket:
-            print("✅ Connected to simulation bridge")
+            print("[PASS] Connected to simulation bridge")
 
             # Wait for initial connection message
             response = await websocket.recv()
             data = json.loads(response)
-            print(f"📨 Received: {data.get('type', 'unknown')}")
+            print(f" Received: {data.get('type', 'unknown')}")
 
             if data.get("type") == "simulation_connected":
-                print("✅ Simulation bridge confirmed connection")
+                print("[PASS] Simulation bridge confirmed connection")
 
                 # Request current state
                 request = {"type": "request_state"}
                 await websocket.send(json.dumps(request))
-                print("📤 Sent state request")
+                print(" Sent state request")
 
                 # Listen for data updates
                 start_time = time.time()
@@ -48,7 +48,7 @@ async def test_websocket_connection():
 
                             # Print sample data
                             if message_count == 1:
-                                print("📊 Sample simulation data received:")
+                                print("[GRAPH] Sample simulation data received:")
                                 if "gps" in sim_data:
                                     gps = sim_data["gps"]
                                     print(
@@ -61,37 +61,37 @@ async def test_websocket_connection():
                                     )
 
                         elif data.get("type") == "simulation_state":
-                            print("📊 Received simulation state response")
+                            print("[GRAPH] Received simulation state response")
 
                     except asyncio.TimeoutError:
                         # No message received, continue
                         pass
 
-                print(f"📈 Received {message_count} simulation updates in 10 seconds")
+                print(f" Received {message_count} simulation updates in 10 seconds")
                 return message_count > 0
 
             else:
-                print(f"❌ Unexpected initial message: {data}")
+                print(f"[FAIL] Unexpected initial message: {data}")
                 return False
 
     except Exception as e:
-        print(f"❌ WebSocket connection failed: {e}")
+        print(f"[FAIL] WebSocket connection failed: {e}")
         return False
 
 
 def main():
     """Main test function."""
-    print("🧪 Testing WebSocket Connection to Simulation Bridge")
+    print("[EXPERIMENT] Testing WebSocket Connection to Simulation Bridge")
     print("=" * 55)
 
     # Run the async test
     success = asyncio.run(test_websocket_connection())
 
-    print("\n📊 Test Results:")
+    print("\n[GRAPH] Test Results:")
     if success:
-        print("✅ PASS: WebSocket connection successful, receiving simulation data")
+        print("[PASS] PASS: WebSocket connection successful, receiving simulation data")
     else:
-        print("❌ FAIL: WebSocket connection failed or no data received")
+        print("[FAIL] FAIL: WebSocket connection failed or no data received")
 
 
 if __name__ == "__main__":

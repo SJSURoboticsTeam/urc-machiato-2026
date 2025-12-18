@@ -33,15 +33,10 @@ except ImportError:
 class TestTerrainAnalyzerVisionIntegration:
     """Test Terrain Analyzer integration with centralized vision processing."""
 
-    @pytest.fixture
-    def ros_context(self):
-        """Setup ROS2 context for testing."""
-        rclpy.init()
-        yield
-        rclpy.shutdown()
+    # ROS2 context managed by session fixture
 
     @pytest.fixture
-    def terrain_analyzer(self, ros_context):
+    def terrain_analyzer(self, ros2_context):
         """Create terrain analyzer instance."""
         with patch("rclpy.node.Node.__init__", return_value=None):
             analyzer = TerrainAnalyzer.__new__(TerrainAnalyzer)

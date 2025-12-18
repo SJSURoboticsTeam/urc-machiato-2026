@@ -216,66 +216,70 @@ class SLAMBridgeTester(Node):
 
         # Check map data received
         if self.map_count > 0:
-            self.get_logger().info(f"✅ Map data received: {self.map_count} messages")
+            self.get_logger().info(
+                f"[PASS] Map data received: {self.map_count} messages"
+            )
         else:
-            self.get_logger().error("❌ No map data received")
+            self.get_logger().error("[FAIL] No map data received")
             success = False
 
         # Check pose data received
         if self.pose_count > 0:
-            self.get_logger().info(f"✅ Pose data received: {self.pose_count} messages")
+            self.get_logger().info(
+                f"[PASS] Pose data received: {self.pose_count} messages"
+            )
         else:
-            self.get_logger().error("❌ No pose data received")
+            self.get_logger().error("[FAIL] No pose data received")
             success = False
 
         # Check map data structure
         if self.received_map_data:
             robot = self.received_map_data.get("robot")
             if robot and "x" in robot and "y" in robot and "heading" in robot:
-                self.get_logger().info("✅ Map data structure valid")
+                self.get_logger().info("[PASS] Map data structure valid")
                 self.get_logger().info(
                     f'   Robot position: ({robot["x"]:.2f}, {robot["y"]:.2f}), heading: {robot["heading"]:.1f}°'
                 )
             else:
-                self.get_logger().error("❌ Map data structure invalid")
+                self.get_logger().error("[FAIL] Map data structure invalid")
                 success = False
 
             # Check sensors
             sensors = self.received_map_data.get("sensors", {})
             if sensors.get("imu"):
-                self.get_logger().info("✅ IMU data present in map data")
+                self.get_logger().info("[PASS] IMU data present in map data")
             if sensors.get("gps"):
-                self.get_logger().info("✅ GPS data present in map data")
+                self.get_logger().info("[PASS] GPS data present in map data")
 
             # Check mission data
             mission = self.received_map_data.get("mission", {})
             if mission.get("waypoints"):
                 self.get_logger().info(
-                    f'✅ Mission waypoints present: {len(mission["waypoints"])} waypoints'
+                    f'[PASS] Mission waypoints present: {len(mission["waypoints"])} waypoints'
                 )
         else:
-            self.get_logger().error("❌ No valid map data received")
+            self.get_logger().error("[FAIL] No valid map data received")
             success = False
 
         # Check coordinate transformations
         if self.received_pose:
             pose = self.received_pose
             self.get_logger().info(
-                f"✅ TF transformations working: pose at ({pose.pose.position.x:.2f}, {pose.pose.position.y:.2f})"
+                f"[PASS] TF transformations working: pose at ({pose.pose.position.x:.2f}, {pose.pose.position.y:.2f})"
             )
         else:
-            self.get_logger().error("❌ TF transformations not working")
+            self.get_logger().error("[FAIL] TF transformations not working")
             success = False
 
         if success:
-            self.get_logger().info("🎉 ALL SLAM BRIDGE TESTS PASSED!")
+            self.get_logger().info("[PARTY] ALL SLAM BRIDGE TESTS PASSED!")
             self.get_logger().info(
-                "✅ WebSocket sensor data → ROS2 → SLAM bridge → Frontend"
+                "[PASS] WebSocket sensor data → ROS2 → SLAM bridge → Frontend"
             )
-            self.get_logger().info("✅ Coordinate transformations working")
-            self.get_logger().info("✅ Map visualization data flowing")
+            self.get_logger().info("[PASS] Coordinate transformations working")
+            self.get_logger().info("[PASS] Map visualization data flowing")
         else:
-            self.get_logger().error("❌ SOME SLAM BRIDGE TESTS FAILED")
+            self.get_logger().error("[FAIL] SOME SLAM BRIDGE TESTS FAILED")
 
         self.get_logger().info("=" * 60)
 

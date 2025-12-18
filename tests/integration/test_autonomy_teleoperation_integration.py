@@ -23,7 +23,7 @@ class IntegrationTest:
 
     def start_mission_executor(self):
         """Start the mission executor"""
-        print("🚀 Starting Mission Executor...")
+        print("[IGNITE] Starting Mission Executor...")
         cmd = ["ros2", "run", "missions", "mission_executor"]
         env = os.environ.copy()
         env["ROVER_ENV"] = "production"
@@ -36,7 +36,7 @@ class IntegrationTest:
 
     def start_mock_teleoperation(self):
         """Start mock teleoperation publisher"""
-        print("📡 Starting Mock Teleoperation Publisher...")
+        print("[ANTENNA] Starting Mock Teleoperation Publisher...")
         cmd = ["python3", "test_teleoperation_integration.py"]
         process = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
@@ -47,7 +47,7 @@ class IntegrationTest:
 
     def check_topics(self):
         """Check that teleoperation topics are being published"""
-        print("🔍 Checking ROS2 topics...")
+        print("[MAGNIFY] Checking ROS2 topics...")
         try:
             result = subprocess.run(
                 ["ros2", "topic", "list"], capture_output=True, text=True, timeout=5
@@ -63,21 +63,21 @@ class IntegrationTest:
 
             found_topics = [topic for topic in topics if topic in expected_topics]
             print(
-                f"📋 Found {len(found_topics)}/{len(expected_topics)} expected topics:"
+                f"[CLIPBOARD] Found {len(found_topics)}/{len(expected_topics)} expected topics:"
             )
             for topic in expected_topics:
-                status = "✅" if topic in found_topics else "❌"
+                status = "[PASS]" if topic in found_topics else "[FAIL]"
                 print(f"  {status} {topic}")
 
             return len(found_topics) == len(expected_topics)
 
         except Exception as e:
-            print(f"❌ Error checking topics: {e}")
+            print(f"[FAIL] Error checking topics: {e}")
             return False
 
     def check_topic_rates(self):
         """Check that topics are publishing at expected rates"""
-        print("⏱️  Checking topic publish rates...")
+        print("[CLOCK]  Checking topic publish rates...")
         try:
             # Check joint states rate (should be ~10Hz)
             result = subprocess.run(
@@ -100,16 +100,16 @@ class IntegrationTest:
                             print(".1f")
                             return False
             else:
-                print("❌ No rate data for joint_states")
+                print("[FAIL] No rate data for joint_states")
                 return False
 
         except Exception as e:
-            print(f"❌ Error checking rates: {e}")
+            print(f"[FAIL] Error checking rates: {e}")
             return False
 
     def check_data_quality(self):
         """Check that autonomy is processing data correctly"""
-        print("🔬 Checking data processing...")
+        print("[LAB] Checking data processing...")
         try:
             # Listen for log messages indicating data processing
             time.sleep(5)  # Let system run a bit
@@ -117,19 +117,19 @@ class IntegrationTest:
             # Check if any of our processes have error logs
             for name, process in self.processes:
                 if process.poll() is not None:
-                    print(f"❌ {name} process died")
+                    print(f"[FAIL] {name} process died")
                     return False
 
-            print("✅ All processes still running")
+            print("[PASS] All processes still running")
             return True
 
         except Exception as e:
-            print(f"❌ Error checking data quality: {e}")
+            print(f"[FAIL] Error checking data quality: {e}")
             return False
 
     def run_test(self):
         """Run the full integration test"""
-        print("🧪 Starting Autonomy-Teleoperation Integration Test")
+        print("[EXPERIMENT] Starting Autonomy-Teleoperation Integration Test")
         print("=" * 60)
 
         success = True
@@ -137,11 +137,11 @@ class IntegrationTest:
         try:
             # Start components
             if not self.start_mission_executor():
-                print("❌ Failed to start Mission Executor")
+                print("[FAIL] Failed to start Mission Executor")
                 return False
 
             if not self.start_mock_teleoperation():
-                print("❌ Failed to start Mock Teleoperation")
+                print("[FAIL] Failed to start Mock Teleoperation")
                 return False
 
             # Wait for system to stabilize
@@ -156,35 +156,35 @@ class IntegrationTest:
             ]
 
             for check_name, check_func in checks:
-                print(f"\n🔍 Running: {check_name}")
+                print(f"\n[MAGNIFY] Running: {check_name}")
                 if not check_func():
-                    print(f"❌ {check_name} failed")
+                    print(f"[FAIL] {check_name} failed")
                     success = False
                 else:
-                    print(f"✅ {check_name} passed")
+                    print(f"[PASS] {check_name} passed")
 
             # Run for test duration
             print(f"\n⏳ Running integration test for {self.test_duration} seconds...")
             time.sleep(self.test_duration)
 
             if success:
-                print("\n🎉 Integration test PASSED!")
+                print("\n[PARTY] Integration test PASSED!")
                 print(
-                    "✅ Autonomy successfully receives and processes teleoperation data"
+                    "[PASS] Autonomy successfully receives and processes teleoperation data"
                 )
             else:
-                print("\n❌ Integration test FAILED!")
-                print("❌ Some components are not working correctly")
+                print("\n[FAIL] Integration test FAILED!")
+                print("[FAIL] Some components are not working correctly")
 
             return success
 
         except Exception as e:
-            print(f"\n💥 Test failed with exception: {e}")
+            print(f"\n Test failed with exception: {e}")
             return False
 
         finally:
             # Cleanup
-            print("\n🧹 Cleaning up...")
+            print("\n[SWEEP] Cleaning up...")
             self.cleanup()
 
     def cleanup(self):
@@ -192,7 +192,7 @@ class IntegrationTest:
         for name, process in self.processes:
             try:
                 if process.poll() is None:
-                    print(f"🛑 Stopping {name}...")
+                    print(f" Stopping {name}...")
                     process.terminate()
                     process.wait(timeout=5)
             except Exception as e:
@@ -220,10 +220,10 @@ def main():
             ["ros2", "--version"], capture_output=True, text=True, timeout=5
         )
         if result.returncode != 0:
-            print("❌ ROS2 not available. Please source ROS2 environment.")
+            print("[FAIL] ROS2 not available. Please source ROS2 environment.")
             sys.exit(1)
     except BaseException:
-        print("❌ ROS2 not found. Please install and source ROS2.")
+        print("[FAIL] ROS2 not found. Please install and source ROS2.")
         sys.exit(1)
 
     # Run the test

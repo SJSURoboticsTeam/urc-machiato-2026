@@ -44,22 +44,22 @@ class ExtremeTestRunner:
     def run_scenario(self, scenario: str, **kwargs) -> bool:
         """Run a specific test scenario."""
         if scenario not in self.scenarios:
-            print(f"❌ Unknown scenario: {scenario}")
+            print(f"[FAIL] Unknown scenario: {scenario}")
             print(f"Available scenarios: {list(self.scenarios.keys())}")
             return False
 
-        print(f"🚀 Running {scenario} scenario...")
+        print(f"[IGNITE] Running {scenario} scenario...")
         print("=" * 60)
 
         try:
             return self.scenarios[scenario](**kwargs)
         except Exception as e:
-            print(f"❌ Scenario {scenario} failed with error: {e}")
+            print(f"[FAIL] Scenario {scenario} failed with error: {e}")
             return False
 
     def run_network_chaos_tests(self, **kwargs) -> bool:
         """Run network chaos extreme tests."""
-        print("🌐 Network Chaos Extreme Tests")
+        print("[NETWORK] Network Chaos Extreme Tests")
         print("- Complete network partitions")
         print("- Asymmetric communication failures")
         print("- Extreme latency and packet loss")
@@ -76,7 +76,7 @@ class ExtremeTestRunner:
 
     def run_resource_exhaustion_tests(self, **kwargs) -> bool:
         """Run resource exhaustion extreme tests."""
-        print("🧠 Resource Exhaustion Extreme Tests")
+        print(" Resource Exhaustion Extreme Tests")
         print("- Memory pressure (99% usage)")
         print("- CPU starvation (single core)")
         print("- Disk I/O contention")
@@ -94,7 +94,7 @@ class ExtremeTestRunner:
 
     def run_cascading_failure_tests(self, **kwargs) -> bool:
         """Run cascading failure extreme tests."""
-        print("🔗 Cascading Failure Extreme Tests")
+        print(" Cascading Failure Extreme Tests")
         print("- Primary-secondary-tertiary cascades")
         print("- DDS domain cascade failures")
         print("- State synchronization cascades")
@@ -110,7 +110,7 @@ class ExtremeTestRunner:
 
     def run_competition_extreme_tests(self, **kwargs) -> bool:
         """Run competition-specific extreme tests."""
-        print("🏁 Competition Extreme Tests")
+        print("[FLAG] Competition Extreme Tests")
         print("- Emergency stop under maximum load")
         print("- Critical operation timeouts")
         print("- Sensor data floods")
@@ -126,7 +126,7 @@ class ExtremeTestRunner:
 
     def run_ros2_integration_tests(self, **kwargs) -> bool:
         """Run full ROS2 integration tests."""
-        print("🤖 Full ROS2 Integration Tests")
+        print(" Full ROS2 Integration Tests")
         print("- Real ROS2 nodes and DDS communication")
         print("- Multi-node state synchronization")
         print("- DDS domain failover with ROS2")
@@ -146,13 +146,13 @@ class ExtremeTestRunner:
             return result.wasSuccessful()
 
         except ImportError as e:
-            print(f"⚠️ ROS2 integration tests skipped: {e}")
+            print(f" ROS2 integration tests skipped: {e}")
             print("   (ROS2 not available in test environment)")
             return True  # Not a failure, just not available
 
     def run_all_tests(self, **kwargs) -> bool:
         """Run all extreme scenario tests."""
-        print("🎯 Running ALL Extreme Scenario Tests")
+        print("[OBJECTIVE] Running ALL Extreme Scenario Tests")
         print("=" * 60)
 
         scenarios = [
@@ -168,7 +168,7 @@ class ExtremeTestRunner:
 
         for scenario in scenarios:
             print(f"\n{'='*60}")
-            print(f"🚀 STARTING: {scenario.upper()}")
+            print(f"[IGNITE] STARTING: {scenario.upper()}")
             print(f"{'='*60}")
 
             start_time = time.time()
@@ -180,30 +180,30 @@ class ExtremeTestRunner:
             overall_success = overall_success and success
 
             print(
-                f"\n📊 {scenario.upper()} Result: {'✅ PASSED' if success else '❌ FAILED'}"
+                f"\n[GRAPH] {scenario.upper()} Result: {'[PASS] PASSED' if success else '[FAIL] FAILED'}"
             )
             print(".1f")
 
         # Final report
         print(f"\n{'='*80}")
-        print("🎯 EXTREME SCENARIO TEST SUITE FINAL REPORT")
+        print("[OBJECTIVE] EXTREME SCENARIO TEST SUITE FINAL REPORT")
         print(f"{'='*80}")
 
         if overall_success:
-            print("🎉 ALL EXTREME TESTS PASSED!")
-            print("✅ Advanced systems validated under extreme conditions")
-            print("🚀 Systems ready for competition deployment")
+            print("[PARTY] ALL EXTREME TESTS PASSED!")
+            print("[PASS] Advanced systems validated under extreme conditions")
+            print("[IGNITE] Systems ready for competition deployment")
         else:
-            print("❌ SOME EXTREME TESTS FAILED!")
-            print("⚠️ Review failures before competition deployment")
+            print("[FAIL] SOME EXTREME TESTS FAILED!")
+            print(" Review failures before competition deployment")
 
-        print(f"\n📈 Test Summary:")
+        print(f"\n Test Summary:")
         for scenario, result in results.items():
-            status = "✅" if result["success"] else "❌"
+            status = "[PASS]" if result["success"] else "[FAIL]"
             print("20")
 
         total_duration = sum(r["duration"] for r in results.values())
-        print(f"\n⏱️ Total Test Duration: {total_duration:.1f} seconds")
+        print(f"\n[CLOCK] Total Test Duration: {total_duration:.1f} seconds")
 
         return overall_success
 
@@ -238,7 +238,7 @@ def main():
     args = parser.parse_args()
 
     if args.cleanup_only:
-        print("🧹 Cleanup-only mode - no tests executed")
+        print("[SWEEP] Cleanup-only mode - no tests executed")
         return 0
 
     # Create test runner
@@ -251,7 +251,7 @@ def main():
     )
     end_time = time.time()
 
-    print(f"\n⏱️ Total Execution Time: {end_time - start_time:.1f} seconds")
+    print(f"\n[CLOCK] Total Execution Time: {end_time - start_time:.1f} seconds")
 
     return 0 if success else 1
 

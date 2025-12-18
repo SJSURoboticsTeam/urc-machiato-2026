@@ -27,7 +27,7 @@ class RecoveryPhase(Enum):
     CONFIG_RECOVERY = "config_recovery"
     WEBSOCKET_RECOVERY = "websocket_recovery"
     VALIDATION = "validation"
-    COMPLETE = "complete"
+    COMPLETE = "COMPLETE"
 
 
 class FailureSeverity(Enum):

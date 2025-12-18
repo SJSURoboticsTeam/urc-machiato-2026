@@ -10,10 +10,11 @@ import time
 from typing import Any, Dict, List, Optional
 
 import rclpy
-from constants import DEFAULT_TELEMETRY_RATE_HZ, WEBSOCKET_PING_INTERVAL
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 from std_msgs.msg import Bool
+
+from .constants import DEFAULT_TELEMETRY_RATE_HZ, WEBSOCKET_PING_INTERVAL
 
 
 class EmergencyCommunicator:

@@ -47,7 +47,7 @@ class CompetitionPerformanceProfiler:
         self.measurements = []
         self.scenario_name = scenario_name
 
-        print(f"📊 Started performance profiling: {scenario_name}")
+        print(f"[GRAPH] Started performance profiling: {scenario_name}")
         print(f"Start time: {datetime.now().strftime('%H:%M:%S')}")
 
     def record_measurement(
@@ -132,7 +132,7 @@ class CompetitionPerformanceProfiler:
 
     def profile_mission_execution(self, mission_type: str) -> Dict[str, Any]:
         """Profile a complete mission execution."""
-        print(f"🏁 Profiling mission execution: {mission_type}")
+        print(f"[FLAG] Profiling mission execution: {mission_type}")
 
         self.start_profiling(f"mission_{mission_type}")
 
@@ -275,7 +275,7 @@ class CompetitionPerformanceProfiler:
         with open(filename, "w") as f:
             json.dump(results, f, indent=2, default=str)
 
-        print(f"💾 Performance profile saved to: {filename}")
+        print(f" Performance profile saved to: {filename}")
         return filename
 
     def _execute_test_mission(self, mission_type: str) -> bool:
@@ -339,7 +339,7 @@ class CompetitionPerformanceProfiler:
 
 def run_competition_performance_tests():
     """Run comprehensive competition performance tests."""
-    print("🏎️  Running Competition Performance Tests...")
+    print("  Running Competition Performance Tests...")
     print("=" * 50)
 
     profiler = CompetitionPerformanceProfiler()
@@ -354,7 +354,7 @@ def run_competition_performance_tests():
     ]
 
     for scenario in test_scenarios:
-        print(f"\n📊 Testing scenario: {scenario}")
+        print(f"\n[GRAPH] Testing scenario: {scenario}")
 
         try:
             # Profile mission execution
@@ -381,19 +381,19 @@ def run_competition_performance_tests():
             results.append(scenario_result)
 
             if validation["passed"]:
-                print(f"✅ {scenario}: PASSED")
+                print(f"[PASS] {scenario}: PASSED")
             else:
                 print(
-                    f"❌ {scenario}: FAILED - {len(validation['violations'])} violations"
+                    f"[FAIL] {scenario}: FAILED - {len(validation['violations'])} violations"
                 )
 
         except Exception as e:
-            print(f"❌ {scenario}: ERROR - {e}")
+            print(f"[FAIL] {scenario}: ERROR - {e}")
             results.append({"scenario": scenario, "error": str(e)})
 
     # Overall summary
     print("\n" + "=" * 50)
-    print("📈 PERFORMANCE TEST SUMMARY")
+    print(" PERFORMANCE TEST SUMMARY")
 
     passed_scenarios = sum(1 for r in results if r.get("validation_passed", False))
     total_scenarios = len(results)
@@ -402,11 +402,11 @@ def run_competition_performance_tests():
     print(f"Scenarios passed: {passed_scenarios}")
 
     if passed_scenarios == total_scenarios:
-        print("🎉 ALL PERFORMANCE TESTS PASSED")
+        print("[PARTY] ALL PERFORMANCE TESTS PASSED")
         print("System meets competition performance requirements")
         success = True
     else:
-        print("⚠️  PERFORMANCE ISSUES DETECTED")
+        print("  PERFORMANCE ISSUES DETECTED")
         print("Address performance violations before competition")
 
         # Show violations
@@ -425,7 +425,7 @@ def run_competition_performance_tests():
     with open(results_file, "w") as f:
         json.dump(results, f, indent=2, default=str)
 
-    print(f"\n📄 Detailed results saved to: {results_file}")
+    print(f"\n Detailed results saved to: {results_file}")
 
     # Save full profile
     profiler.save_profile_results(f"competition_performance_profile_{timestamp}.json")

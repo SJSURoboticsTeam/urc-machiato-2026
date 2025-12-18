@@ -150,7 +150,7 @@ class MockTopicsPublisher(Node):
 
 def signal_handler(signum, frame):
     """Handle shutdown signals."""
-    print("\n🛑 Shutting down mock topics publisher...")
+    print("\n Shutting down mock topics publisher...")
     if rclpy.ok():
         rclpy.shutdown()
     sys.exit(0)
@@ -169,8 +169,8 @@ def main():
     publisher = MockTopicsPublisher()
 
     try:
-        print("🚀 Mock topics publisher running...")
-        print("📡 Publishing topics:")
+        print("[IGNITE] Mock topics publisher running...")
+        print("[ANTENNA] Publishing topics:")
         print("   /gps/fix")
         print("   /imu/data")
         print("   /camera/depth/image_raw")
@@ -187,7 +187,7 @@ def main():
     finally:
         publisher.destroy_node()
         rclpy.shutdown()
-        print("✅ Mock topics publisher stopped")
+        print("[PASS] Mock topics publisher stopped")
 
 
 if __name__ == "__main__":

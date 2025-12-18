@@ -41,9 +41,7 @@ except ImportError:
     EnvironmentFactory = None
     NetworkEmulator = None
 
-
-@pytest.fixture
-def ros_context():
+    # ROS2 context managed by session fixture
     """Initialize and cleanup ROS context."""
     rclpy.init()
     yield

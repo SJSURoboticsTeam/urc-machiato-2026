@@ -59,21 +59,21 @@ class SystemValidator:
 
     def run_test(self, test_name: str, test_function) -> bool:
         """Run a single test and record results."""
-        print(f"\n🧪 Running {test_name}...")
+        print(f"\n[EXPERIMENT] Running {test_name}...")
         self.results["tests_run"].append(test_name)
 
         try:
             result = test_function()
             if result:
-                print(f"✅ {test_name} PASSED")
+                print(f"[PASS] {test_name} PASSED")
                 self.results["passed"] += 1
                 return True
             else:
-                print(f"❌ {test_name} FAILED")
+                print(f"[FAIL] {test_name} FAILED")
                 self.results["failed"] += 1
                 return False
         except Exception as e:
-            print(f"💥 {test_name} ERROR: {e}")
+            print(f" {test_name} ERROR: {e}")
             self.results["errors"] += 1
             return False
 
@@ -348,63 +348,63 @@ class SystemValidator:
         )
 
         report = f"""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                          URC 2026 SYSTEM VALIDATION REPORT                   ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║ Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(self.results['timestamp']))}
-║ Tests Run: {len(self.results['tests_run'])}
-║ Total: {total_tests} | ✅ Passed: {self.results['passed']} | ❌ Failed: {self.results['failed']} | 💥 Errors: {self.results['errors']}
-╚══════════════════════════════════════════════════════════════════════════════╝
 
-🧪 TEST RESULTS:
+                          URC 2026 SYSTEM VALIDATION REPORT
+
+ Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(self.results['timestamp']))}
+ Tests Run: {len(self.results['tests_run'])}
+ Total: {total_tests} | [PASS] Passed: {self.results['passed']} | [FAIL] Failed: {self.results['failed']} |  Errors: {self.results['errors']}
+
+
+[EXPERIMENT] TEST RESULTS:
 """
 
         for test in self.results["tests_run"]:
             status = (
-                "✅"
+                "[PASS]"
                 if self.results["passed"] > 0
-                else "❌"
+                else "[FAIL]"
                 if self.results["failed"] > 0
-                else "💥"
+                else ""
             )
             report += f"   {status} {test}\n"
 
         if self.results["performance_metrics"]:
-            report += "\n⚡ PERFORMANCE METRICS:\n"
+            report += "\n[LIGHTNING] PERFORMANCE METRICS:\n"
             for metric, value in self.results["performance_metrics"].items():
                 report += f"   • {metric}: {value}\n"
 
         if self.results["recommendations"]:
-            report += "\n💡 RECOMMENDATIONS:\n"
+            report += "\n RECOMMENDATIONS:\n"
             for rec in self.results["recommendations"]:
                 report += f"   • {rec}\n"
 
         # Add system health assessment
         health_score = (self.results["passed"] / max(total_tests, 1)) * 100
         if health_score >= 90:
-            health_status = "🟢 EXCELLENT"
+            health_status = " EXCELLENT"
         elif health_score >= 75:
-            health_status = "🟡 GOOD"
+            health_status = " GOOD"
         elif health_score >= 50:
-            health_status = "🟠 FAIR"
+            health_status = " FAIR"
         else:
-            health_status = "🔴 NEEDS ATTENTION"
+            health_status = " NEEDS ATTENTION"
 
         report += f"""
-🏥 SYSTEM HEALTH: {health_status} ({health_score:.1f}% pass rate)
+ SYSTEM HEALTH: {health_status} ({health_score:.1f}% pass rate)
 
-📋 SUMMARY:
-- Core Components: {'✅ Working' if self.results['passed'] >= 6 else '❌ Issues'}
-- Integration: {'✅ Verified' if self.results['passed'] >= 8 else '❌ Needs Testing'}
-- Safety: {'✅ Validated' if any('safety' in t for t in self.results['tests_run']) else '❌ Not Tested'}
-- Performance: {'✅ Benchmarked' if self.results['performance_metrics'] else '❌ Not Measured'}
+[CLIPBOARD] SUMMARY:
+- Core Components: {'[PASS] Working' if self.results['passed'] >= 6 else '[FAIL] Issues'}
+- Integration: {'[PASS] Verified' if self.results['passed'] >= 8 else '[FAIL] Needs Testing'}
+- Safety: {'[PASS] Validated' if any('safety' in t for t in self.results['tests_run']) else '[FAIL] Not Tested'}
+- Performance: {'[PASS] Benchmarked' if self.results['performance_metrics'] else '[FAIL] Not Measured'}
 """
 
         return report
 
     def run_all_tests(self) -> bool:
         """Run all system validation tests."""
-        print("🚀 Starting URC 2026 Full System Validation")
+        print("[IGNITE] Starting URC 2026 Full System Validation")
         print("=" * 60)
 
         # Core component tests
@@ -491,14 +491,14 @@ def main():
             "Performance Benchmarking", lambda: bool(validator.benchmark_performance())
         )
     else:
-        print(f"❌ Component '{args.component}' testing not implemented yet")
+        print(f"[FAIL] Component '{args.component}' testing not implemented yet")
         success = False
 
     # Save results
     with open("system_validation_results.json", "w") as f:
         json.dump(validator.results, f, indent=2)
 
-    print(f"\n📄 Detailed results saved to: system_validation_results.json")
+    print(f"\n Detailed results saved to: system_validation_results.json")
 
     return 0 if success else 1
 

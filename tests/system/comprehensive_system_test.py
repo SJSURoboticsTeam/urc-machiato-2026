@@ -330,7 +330,7 @@ class ComprehensiveSystemTester(Node):
     # ===========================================
     def test_phase_3_slam_localization(self):
         """Test SLAM and localization systems"""
-        self.get_logger().info("🧭 Testing SLAM & Localization...")
+        self.get_logger().info(" Testing SLAM & Localization...")
 
         # Test 3.1: SLAM Pose Estimation
         if self.received_slam_pose:
@@ -388,7 +388,7 @@ class ComprehensiveSystemTester(Node):
     # ===========================================
     def test_phase_4_network_communication(self):
         """Test network and communication systems"""
-        self.get_logger().info("🌐 Testing Network & Communication...")
+        self.get_logger().info("[NETWORK] Testing Network & Communication...")
 
         # Test 4.1: ROS2 Topic Communication
         topics_to_check = [
@@ -457,7 +457,7 @@ class ComprehensiveSystemTester(Node):
     # ===========================================
     def test_phase_5_performance_testing(self):
         """Test system performance characteristics"""
-        self.get_logger().info("⚡ Testing System Performance...")
+        self.get_logger().info("[LIGHTNING] Testing System Performance...")
 
         # Test 5.1: CPU Usage
         if self.cpu_usage:
@@ -510,7 +510,7 @@ class ComprehensiveSystemTester(Node):
     # ===========================================
     def test_phase_6_error_handling(self):
         """Test error handling and system robustness"""
-        self.get_logger().info("🔧 Testing Error Handling & Robustness...")
+        self.get_logger().info("[TOOL] Testing Error Handling & Robustness...")
 
         # Test 6.1: Invalid Command Handling
         self.send_mission_command("invalid_command", {"param": "test"})
@@ -552,7 +552,7 @@ class ComprehensiveSystemTester(Node):
     # ===========================================
     def test_phase_7_integration_testing(self):
         """Test complete system integration"""
-        self.get_logger().info("🔗 Testing System Integration...")
+        self.get_logger().info(" Testing System Integration...")
 
         # Test 7.1: End-to-End Mission Workflow
         self.send_mission_command(
@@ -608,7 +608,7 @@ class ComprehensiveSystemTester(Node):
     # ===========================================
     def test_phase_8_final_validation(self):
         """Final system validation and readiness assessment"""
-        self.get_logger().info("🎯 Final System Validation...")
+        self.get_logger().info("[OBJECTIVE] Final System Validation...")
 
         # Calculate overall system health
         passed_tests = sum(1 for result in self.test_results if result["success"])
@@ -685,7 +685,7 @@ class ComprehensiveSystemTester(Node):
         }
         self.test_results.append(result)
 
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[PASS] PASS" if success else "[FAIL] FAIL"
         self.get_logger().info(f"{status} {test_name}: {message}")
 
     def get_active_topics(self) -> List[str]:
@@ -731,7 +731,7 @@ class ComprehensiveSystemTester(Node):
 
     def generate_final_report(self):
         """Generate comprehensive final test report"""
-        self.get_logger().info("📋 Generating Final Test Report...")
+        self.get_logger().info("[CLIPBOARD] Generating Final Test Report...")
 
         # Calculate statistics
         passed_tests = sum(1 for result in self.test_results if result["success"])
@@ -770,7 +770,7 @@ class ComprehensiveSystemTester(Node):
         # Generate report
         report = []
         report.append("=" * 80)
-        report.append("🎯 COMPREHENSIVE ROVER SYSTEM TEST REPORT")
+        report.append("[OBJECTIVE] COMPREHENSIVE ROVER SYSTEM TEST REPORT")
         report.append("=" * 80)
         report.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report.append(
@@ -785,19 +785,19 @@ class ComprehensiveSystemTester(Node):
         # Detailed results by category
         for category, results in categories.items():
             if results:
-                report.append(f"📋 {category} Tests:")
+                report.append(f"[CLIPBOARD] {category} Tests:")
                 for result in results:
-                    status = "✅ PASS" if result["success"] else "❌ FAIL"
+                    status = "[PASS] PASS" if result["success"] else "[FAIL] FAIL"
                     report.append(f"   {status}: {result['name']}")
                     if not result["success"]:
-                        report.append(f"      └─ {result['message']}")
+                        report.append(f"       {result['message']}")
                 report.append("")
 
         # Performance summary
         if self.cpu_usage and self.memory_usage:
             avg_cpu = sum(self.cpu_usage) / len(self.cpu_usage)
             avg_memory = sum(self.memory_usage) / len(self.memory_usage)
-            report.append("⚡ PERFORMANCE SUMMARY:")
+            report.append("[LIGHTNING] PERFORMANCE SUMMARY:")
             report.append(f"   Average CPU Usage: {avg_cpu:.1f}%")
             report.append(f"   Average Memory Usage: {avg_memory:.1f}%")
             report.append(f"   Peak CPU Usage: {max(self.cpu_usage):.1f}%")
@@ -805,7 +805,7 @@ class ComprehensiveSystemTester(Node):
             report.append("")
 
         # Readiness assessment
-        report.append("🚀 HARDWARE DEPLOYMENT READINESS:")
+        report.append("[IGNITE] HARDWARE DEPLOYMENT READINESS:")
         critical_tests = [
             "Waypoint Navigation",
             "Odometry Data",
@@ -819,20 +819,20 @@ class ComprehensiveSystemTester(Node):
         )
 
         if success_rate >= 85.0 and critical_passed >= len(critical_tests):
-            report.append("   ✅ SYSTEM READY FOR HARDWARE DEPLOYMENT")
-            report.append("   ✅ All critical components operational")
-            report.append("   ✅ Performance within acceptable limits")
+            report.append("   [PASS] SYSTEM READY FOR HARDWARE DEPLOYMENT")
+            report.append("   [PASS] All critical components operational")
+            report.append("   [PASS] Performance within acceptable limits")
         elif success_rate >= 70.0:
-            report.append("   ⚠️ SYSTEM MOSTLY READY - Minor issues to resolve")
-            report.append("   ✅ Core functionality working")
-            report.append("   ⚠️ Some non-critical components need attention")
+            report.append("    SYSTEM MOSTLY READY - Minor issues to resolve")
+            report.append("   [PASS] Core functionality working")
+            report.append("    Some non-critical components need attention")
         else:
-            report.append("   ❌ SYSTEM NEEDS ATTENTION BEFORE DEPLOYMENT")
-            report.append("   ❌ Critical components failing")
-            report.append("   ❌ Address issues before hardware testing")
+            report.append("   [FAIL] SYSTEM NEEDS ATTENTION BEFORE DEPLOYMENT")
+            report.append("   [FAIL] Critical components failing")
+            report.append("   [FAIL] Address issues before hardware testing")
 
         report.append("")
-        report.append("📝 NEXT STEPS:")
+        report.append(" NEXT STEPS:")
         if success_rate >= 85.0:
             report.append("   1. Deploy to hardware platform")
             report.append("   2. Perform real-world calibration")
@@ -860,14 +860,14 @@ class ComprehensiveSystemTester(Node):
         )
 
         if success_rate >= 85.0:
-            self.get_logger().info("🎉 SYSTEM READY FOR HARDWARE DEPLOYMENT!")
+            self.get_logger().info("[PARTY] SYSTEM READY FOR HARDWARE DEPLOYMENT!")
         elif success_rate >= 70.0:
-            self.get_logger().info("⚠️ MOSTLY READY - Address minor issues")
+            self.get_logger().info(" MOSTLY READY - Address minor issues")
         else:
-            self.get_logger().info("❌ NEEDS ATTENTION - Critical fixes required")
+            self.get_logger().info("[FAIL] NEEDS ATTENTION - Critical fixes required")
 
         self.get_logger().info(
-            "📄 Detailed report saved to: comprehensive_test_report.txt"
+            " Detailed report saved to: comprehensive_test_report.txt"
         )
         self.get_logger().info("=" * 60)
 

@@ -192,7 +192,7 @@ def curriculum_schedule(episode: int) -> dict:
 
 def run_rl_training():
     """Run RL training with enhanced monitoring and logging."""
-    print("🚀 Starting RL Training with Enhanced Monitoring")
+    print("[IGNITE] Starting RL Training with Enhanced Monitoring")
     print("=" * 60)
 
     # Setup logging
@@ -210,13 +210,13 @@ def run_rl_training():
 
     # Initialize simulation
     if not sim_manager.initialize(config):
-        print("❌ Failed to initialize simulation")
+        print("[FAIL] Failed to initialize simulation")
         return
 
     # Create RL agent
     agent = SimpleRLAgent()
 
-    print("🎯 Starting RL training loop...")
+    print("[OBJECTIVE] Starting RL training loop...")
     print("- Episodes: Curriculum learning (Easy → Medium → Hard)")
     print("- Monitoring: Real-time performance tracking")
     print("- Tracing: Detailed operation profiling")
@@ -228,12 +228,12 @@ def run_rl_training():
     episode_timeout = config["rl"]["episode_timeout"]
 
     for episode in range(max_episodes):
-        print(f"\n📊 Episode {episode + 1}/{max_episodes}")
+        print(f"\n[GRAPH] Episode {episode + 1}/{max_episodes}")
 
         # Curriculum learning: adjust difficulty
         curriculum_config = curriculum_schedule(episode)
         if curriculum_config:
-            print(f"🎓 Curriculum: {curriculum_config}")
+            print(f" Curriculum: {curriculum_config}")
 
             # Update environment
             if "environment" in curriculum_config:
@@ -335,7 +335,7 @@ def run_rl_training():
                     break
 
             except Exception as e:
-                print(f"❌ Episode {episode + 1} error: {e}")
+                print(f"[FAIL] Episode {episode + 1} error: {e}")
                 rl_recorder.end_episode("error", success=False)
                 break
 
@@ -351,7 +351,7 @@ def run_rl_training():
         if (episode + 1) % 10 == 0:
             checkpoint_file = f"rl_training_checkpoint_episode_{episode + 1}.json"
             rl_recorder.save_rl_dataset(checkpoint_file)
-            print(f"💾 Checkpoint saved: {checkpoint_file}")
+            print(f" Checkpoint saved: {checkpoint_file}")
 
         # Performance monitoring
         if episode > 0 and episode % 5 == 0:
@@ -359,7 +359,7 @@ def run_rl_training():
             monitoring = stats.get("monitoring", {})
             tracing = stats.get("tracing", {})
 
-            print("📈 Performance Summary:")
+            print(" Performance Summary:")
             if monitoring:
                 print(".1f")
             if tracing:
@@ -368,12 +368,12 @@ def run_rl_training():
                     slowest = slow_ops[0]
                     print(".3f")
 
-    print("\n🎉 RL Training Complete!")
+    print("\n[PARTY] RL Training Complete!")
     print("=" * 60)
 
     # Final statistics
     final_stats = rl_recorder.get_rl_statistics()
-    print("📊 Final RL Statistics:")
+    print("[GRAPH] Final RL Statistics:")
     print(".1f")
     print(".2f")
     print(".1f")
@@ -382,23 +382,25 @@ def run_rl_training():
     # Save final dataset
     final_dataset = "rl_training_final_dataset.json"
     rl_recorder.save_rl_dataset(final_dataset)
-    print(f"💾 Final dataset saved: {final_dataset}")
+    print(f" Final dataset saved: {final_dataset}")
 
     # Export monitoring data
     monitoring_data = "rl_training_monitoring.json"
     sim_manager.monitor.export_metrics(monitoring_data)
-    print(f"📊 Monitoring data exported: {monitoring_data}")
+    print(f"[GRAPH] Monitoring data exported: {monitoring_data}")
 
     # Export traces
     trace_data = "rl_training_traces.json"
     sim_manager.tracer.export_traces(trace_data)
-    print(f"🔍 Trace data exported: {trace_data}")
+    print(f"[MAGNIFY] Trace data exported: {trace_data}")
 
     # Cleanup
     sim_manager.monitor.stop_monitoring()
     sim_manager.stop()
 
-    print("\n✅ Training complete! Check the log files and exported data for analysis.")
+    print(
+        "\n[PASS] Training complete! Check the log files and exported data for analysis."
+    )
 
 
 if __name__ == "__main__":

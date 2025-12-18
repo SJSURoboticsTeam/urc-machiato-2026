@@ -3,11 +3,11 @@
 LED Status Controller for URC 2026 Competition
 
 Handles LED signaling for:
-- 🔴 Red: Autonomous operation
-- 🔵 Blue: Teleoperation (manual driving)
-- 🟢 Flashing Green: Successful target arrival
-- 🟡 Yellow: Calibration and boot states
-- ⚪ White: Idle/ready state
+-  Red: Autonomous operation
+-  Blue: Teleoperation (manual driving)
+-  Flashing Green: Successful target arrival
+-  Yellow: Calibration and boot states
+-  White: Idle/ready state
 
 Competition Requirements:
 - LED status must be judge-visible from 50m distance
@@ -208,7 +208,7 @@ class LEDController(StateMachineNode):
         Handle mission status changes (legacy support).
 
         Competition Requirements:
-        - 🟢 Flashing Green on successful target arrival
+        -  Flashing Green on successful target arrival
         """
         new_status = msg.data
 

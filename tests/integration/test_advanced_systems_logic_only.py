@@ -25,29 +25,29 @@ class AdvancedSystemsLogicTest:
 
     def run_logic_tests(self):
         """Run all logic tests without ROS2 runtime."""
-        print("🧪 Advanced Systems Logic-Only Test Suite")
+        print("[EXPERIMENT] Advanced Systems Logic-Only Test Suite")
         print("=" * 60)
         print("Testing system logic without ROS2 runtime")
         print("=" * 60)
 
         try:
             # Test 1: State Synchronization Logic
-            print("\n🔄 Testing State Synchronization Logic...")
+            print("\n[REFRESH] Testing State Synchronization Logic...")
             state_results = self.test_state_sync_logic()
             self.test_results["state_sync"] = state_results
 
             # Test 2: DDS Domain Redundancy Logic
-            print("\n🔗 Testing DDS Domain Redundancy Logic...")
+            print("\n Testing DDS Domain Redundancy Logic...")
             dds_results = self.test_dds_domain_logic()
             self.test_results["dds_domain"] = dds_results
 
             # Test 3: Dynamic Configuration Logic
-            print("\n⚙️ Testing Dynamic Configuration Logic...")
+            print("\n Testing Dynamic Configuration Logic...")
             config_results = self.test_dynamic_config_logic()
             self.test_results["dynamic_config"] = config_results
 
             # Test 4: System Integration Logic
-            print("\n🔧 Testing System Integration Logic...")
+            print("\n[TOOL] Testing System Integration Logic...")
             integration_results = self.test_system_integration_logic()
             self.test_results["integration"] = integration_results
 
@@ -58,7 +58,7 @@ class AdvancedSystemsLogicTest:
             return success
 
         except Exception as e:
-            print(f"\n❌ Logic test suite error: {e}")
+            print(f"\n[FAIL] Logic test suite error: {e}")
             return False
 
     def test_state_sync_logic(self) -> dict:
@@ -253,78 +253,78 @@ class AdvancedSystemsLogicTest:
 
     def generate_logic_test_report(self):
         """Generate logic test report."""
-        print("\n📋 Advanced Systems Logic Test Report")
+        print("\n[CLIPBOARD] Advanced Systems Logic Test Report")
         print("=" * 60)
 
         overall_success = self.validate_logic_tests()
-        status = "✅ PASSED" if overall_success else "❌ FAILED"
+        status = "[PASS] PASSED" if overall_success else "[FAIL] FAILED"
         print(f"Overall Logic Test Status: {status}")
 
         # Detailed results
         for test_name, results in self.test_results.items():
-            print(f"\n🔍 {test_name.upper().replace('_', ' ')} Results:")
+            print(f"\n[MAGNIFY] {test_name.upper().replace('_', ' ')} Results:")
 
             if test_name == "state_sync":
                 print(
-                    f"   • State Updates: {'✅' if results.get('state_updates_work') else '❌'}"
+                    f"   • State Updates: {'[PASS]' if results.get('state_updates_work') else '[FAIL]'}"
                 )
                 print(
-                    f"   • State Sync: {'✅' if results.get('state_sync_works') else '❌'}"
+                    f"   • State Sync: {'[PASS]' if results.get('state_sync_works') else '[FAIL]'}"
                 )
                 print(
-                    f"   • System Status: {'✅' if results.get('system_status_works') else '❌'}"
+                    f"   • System Status: {'[PASS]' if results.get('system_status_works') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Nodes Registered: {'✅' if results.get('nodes_registered') else '❌'}"
+                    f"   • Nodes Registered: {'[PASS]' if results.get('nodes_registered') else '[FAIL]'}"
                 )
 
             elif test_name == "dds_domain":
                 print(
-                    f"   • Domains Configured: {'✅' if results.get('domains_configured') else '❌'}"
+                    f"   • Domains Configured: {'[PASS]' if results.get('domains_configured') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Nodes Registered: {'✅' if results.get('nodes_registered') else '❌'}"
+                    f"   • Nodes Registered: {'[PASS]' if results.get('nodes_registered') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Domain Status: {'✅' if results.get('domain_status_tracking') else '❌'}"
+                    f"   • Domain Status: {'[PASS]' if results.get('domain_status_tracking') else '[FAIL]'}"
                 )
 
             elif test_name == "dynamic_config":
                 print(
-                    f"   • Single Updates: {'✅' if results.get('single_update_works') else '❌'}"
+                    f"   • Single Updates: {'[PASS]' if results.get('single_update_works') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Multiple Updates: {'✅' if results.get('multiple_updates_work') else '❌'}"
+                    f"   • Multiple Updates: {'[PASS]' if results.get('multiple_updates_work') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Config Updated: {'✅' if results.get('config_updated_correctly') else '❌'}"
+                    f"   • Config Updated: {'[PASS]' if results.get('config_updated_correctly') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Rollback Works: {'✅' if results.get('rollback_works') else '❌'}"
+                    f"   • Rollback Works: {'[PASS]' if results.get('rollback_works') else '[FAIL]'}"
                 )
 
             elif test_name == "integration":
                 print(
-                    f"   • All Managers: {'✅' if results.get('all_managers_created') else '❌'}"
+                    f"   • All Managers: {'[PASS]' if results.get('all_managers_created') else '[FAIL]'}"
                 )
                 print(
-                    f"   • State Data: {'✅' if results.get('state_manager_has_data') else '❌'}"
+                    f"   • State Data: {'[PASS]' if results.get('state_manager_has_data') else '[FAIL]'}"
                 )
                 print(
-                    f"   • DDS Nodes: {'✅' if results.get('dds_manager_has_nodes') else '❌'}"
+                    f"   • DDS Nodes: {'[PASS]' if results.get('dds_manager_has_nodes') else '[FAIL]'}"
                 )
                 print(
-                    f"   • Config Nodes: {'✅' if results.get('config_manager_has_nodes') else '❌'}"
+                    f"   • Config Nodes: {'[PASS]' if results.get('config_manager_has_nodes') else '[FAIL]'}"
                 )
                 print(
-                    f"   • WS Endpoints: {'✅' if results.get('ws_redundancy_has_endpoints') else '❌'}"
+                    f"   • WS Endpoints: {'[PASS]' if results.get('ws_redundancy_has_endpoints') else '[FAIL]'}"
                 )
                 print(
-                    f"   • No Conflicts: {'✅' if results.get('no_integration_conflicts') else '❌'}"
+                    f"   • No Conflicts: {'[PASS]' if results.get('no_integration_conflicts') else '[FAIL]'}"
                 )
 
         # Summary
-        print(f"\n📊 Test Summary:")
+        print(f"\n[GRAPH] Test Summary:")
         total_tests = len(self.test_results)
         passed_tests = sum(
             1
@@ -341,10 +341,10 @@ class AdvancedSystemsLogicTest:
         )
 
         if overall_success:
-            print("\n✅ All advanced system logic tests PASSED!")
-            print("   🎉 Systems are ready for ROS2 integration")
+            print("\n[PASS] All advanced system logic tests PASSED!")
+            print("   [PARTY] Systems are ready for ROS2 integration")
         else:
-            print("\n⚠️ Some logic tests failed - check individual results above")
+            print("\n Some logic tests failed - check individual results above")
 
         print("=" * 60)
 
@@ -400,7 +400,7 @@ def main():
         sys.exit(0 if success else 1)
 
     except Exception as e:
-        print(f"\n❌ Logic test suite error: {e}")
+        print(f"\n[FAIL] Logic test suite error: {e}")
         sys.exit(1)
 
 

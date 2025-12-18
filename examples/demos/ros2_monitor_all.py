@@ -57,7 +57,7 @@ class ROS2UniversalMonitor:
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals."""
-        print("\n🛑 Received shutdown signal...")
+        print("\n Received shutdown signal...")
         self.running = False
 
     def setup_ros2_environment(self):
@@ -108,14 +108,14 @@ class ROS2UniversalMonitor:
             )
 
             if result.returncode == 0:
-                print("✅ ROS2 environment ready")
+                print("[PASS] ROS2 environment ready")
                 return True
             else:
-                print(f"❌ ROS2 setup failed: {result.stderr}")
+                print(f"[FAIL] ROS2 setup failed: {result.stderr}")
                 return False
 
         except Exception as e:
-            print(f"❌ ROS2 environment setup error: {e}")
+            print(f"[FAIL] ROS2 environment setup error: {e}")
             return False
 
     def get_topic_list(self) -> List[str]:
@@ -135,11 +135,11 @@ class ROS2UniversalMonitor:
                 ]
                 return topics
             else:
-                print(f"❌ Failed to get topic list: {result.stderr}")
+                print(f"[FAIL] Failed to get topic list: {result.stderr}")
                 return []
 
         except Exception as e:
-            print(f"❌ Error getting topic list: {e}")
+            print(f"[FAIL] Error getting topic list: {e}")
             return []
 
     def get_service_list(self) -> List[str]:
@@ -159,11 +159,11 @@ class ROS2UniversalMonitor:
                 ]
                 return services
             else:
-                print(f"❌ Failed to get service list: {result.stderr}")
+                print(f"[FAIL] Failed to get service list: {result.stderr}")
                 return []
 
         except Exception as e:
-            print(f"❌ Error getting service list: {e}")
+            print(f"[FAIL] Error getting service list: {e}")
             return []
 
     def monitor_topic_data(self, topic: str, max_messages: int = 3) -> Dict[str, Any]:
@@ -248,10 +248,10 @@ class ROS2UniversalMonitor:
         """Monitor WebSocket telemetry from competition bridge."""
         while self.running:
             try:
-                print(f"🔌 Connecting to WebSocket at {self.websocket_url}...")
+                print(f"[PLUG] Connecting to WebSocket at {self.websocket_url}...")
                 async with websockets.connect(self.websocket_url) as websocket:
                     self.websocket_connected = True
-                    print("✅ WebSocket connected - receiving telemetry data")
+                    print("[PASS] WebSocket connected - receiving telemetry data")
 
                     # Send request for telemetry data
                     request = {"type": "request_telemetry"}
@@ -280,7 +280,7 @@ class ROS2UniversalMonitor:
                     "timestamp": time.time(),
                     "connected": False,
                 }
-                print(f"❌ WebSocket connection failed: {e}")
+                print(f"[FAIL] WebSocket connection failed: {e}")
                 await asyncio.sleep(5)  # Retry after 5 seconds
 
     def display_websocket_data(self):
@@ -292,52 +292,54 @@ class ROS2UniversalMonitor:
         timestamp = self.websocket_data.get("timestamp", 0)
 
         print(
-            f"\n🌐 WebSocket Telemetry Data ({time.strftime('%H:%M:%S', time.localtime(timestamp))})"
+            f"\n[NETWORK] WebSocket Telemetry Data ({time.strftime('%H:%M:%S', time.localtime(timestamp))})"
         )
         print("=" * 60)
 
         # System health
         if "system_health" in data:
-            print(f"🏥 System Health: {data['system_health']}")
+            print(f" System Health: {data['system_health']}")
 
         # Mission status
         if "current_mission" in data and data["current_mission"] != "none":
             print(
-                f"🎯 Mission: {data['current_mission']} | Status: {data.get('mission_status', 'unknown')}"
+                f"[OBJECTIVE] Mission: {data['current_mission']} | Status: {data.get('mission_status', 'unknown')}"
             )
 
         # GPS data
         if "gps_position" in data:
             gps = data["gps_position"]
             print(
-                f"📍 GPS: {gps.get('lat', 'N/A'):.6f}, {gps.get('lon', 'N/A'):.6f} | Alt: {gps.get('alt', 'N/A'):.1f}m"
+                f" GPS: {gps.get('lat', 'N/A'):.6f}, {gps.get('lon', 'N/A'):.6f} | Alt: {gps.get('alt', 'N/A'):.1f}m"
             )
 
         # IMU data
         if "imu_data" in data:
             imu = data["imu_data"]
             accel = imu.get("accel", [0, 0, 0])
-            print(f"🔄 IMU: Accel [{accel[0]:.2f}, {accel[1]:.2f}, {accel[2]:.2f}] m/s²")
+            print(
+                f"[REFRESH] IMU: Accel [{accel[0]:.2f}, {accel[1]:.2f}, {accel[2]:.2f}] m/s²"
+            )
 
         # Battery
         if "battery_level" in data:
             battery = data["battery_level"]
             current = data.get("current", 0)
-            print(f"🔋 Battery: {battery:.1f}% | Current: {current:.2f}A")
+            print(f" Battery: {battery:.1f}% | Current: {current:.2f}A")
 
         # Emergency stop
         if data.get("emergency_stop", False):
-            print("🚨 EMERGENCY STOP ACTIVE!")
+            print(" EMERGENCY STOP ACTIVE!")
 
         # Autonomous mode
         if data.get("autonomous_mode", False):
-            print("🤖 AUTONOMOUS MODE ACTIVE")
+            print(" AUTONOMOUS MODE ACTIVE")
 
     def display_topic_data(self):
         """Display data from all monitored ROS2 topics."""
         topics = self.get_topic_list()
 
-        print(f"\n📡 ROS2 Topics Data ({len(topics)} active topics)")
+        print(f"\n[ANTENNA] ROS2 Topics Data ({len(topics)} active topics)")
         print("=" * 60)
 
         # Priority topics to show first
@@ -386,15 +388,17 @@ class ROS2UniversalMonitor:
         )
 
         if success:
-            print(f"✅ {topic_short}: {data[:100]}{'...' if len(data) > 100 else ''}")
+            print(
+                f"[PASS] {topic_short}: {data[:100]}{'...' if len(data) > 100 else ''}"
+            )
         else:
-            print(f"❌ {topic_short}: {data}")
+            print(f"[FAIL] {topic_short}: {data}")
 
     def display_service_data(self):
         """Display information about all ROS2 services."""
         services = self.get_service_list()
 
-        print(f"\n🔧 ROS2 Services ({len(services)} active services)")
+        print(f"\n[TOOL] ROS2 Services ({len(services)} active services)")
         print("=" * 60)
 
         for service in services:
@@ -408,14 +412,14 @@ class ROS2UniversalMonitor:
             ):
                 info = self.monitor_service_info(service)
                 if info["available"]:
-                    print(f"✅ {service} ({info['type']})")
+                    print(f"[PASS] {service} ({info['type']})")
                 else:
-                    print(f"❌ {service} (Unavailable)")
+                    print(f"[FAIL] {service} (Unavailable)")
 
     def display_system_overview(self):
         """Display overall system status overview."""
         print("\n" + "=" * 80)
-        print("🚀 ROS2 UNIVERSAL MONITOR - SYSTEM OVERVIEW")
+        print("[IGNITE] ROS2 UNIVERSAL MONITOR - SYSTEM OVERVIEW")
         print("=" * 80)
 
         # ROS2 nodes
@@ -428,40 +432,40 @@ class ROS2UniversalMonitor:
                 timeout=5,
             )
             nodes = [line.strip() for line in result.stdout.split("\n") if line.strip()]
-            print(f"🔗 ROS2 Nodes: {len(nodes)} active")
+            print(f" ROS2 Nodes: {len(nodes)} active")
             for node in nodes[:5]:  # Show first 5
                 print(f"   • {node}")
             if len(nodes) > 5:
                 print(f"   ... and {len(nodes) - 5} more")
         except:
-            print("🔗 ROS2 Nodes: Unable to query")
+            print(" ROS2 Nodes: Unable to query")
 
         # Topics count
         topics = self.get_topic_list()
-        print(f"📡 ROS2 Topics: {len(topics)} active")
+        print(f"[ANTENNA] ROS2 Topics: {len(topics)} active")
 
         # Services count
         services = self.get_service_list()
-        print(f"🔧 ROS2 Services: {len(services)} active")
+        print(f"[TOOL] ROS2 Services: {len(services)} active")
 
         # WebSocket status
         ws_status = (
-            "✅ Connected"
+            "[PASS] Connected"
             if self.websocket_data.get("connected", False)
-            else "❌ Disconnected"
+            else "[FAIL] Disconnected"
         )
-        print(f"🌐 WebSocket Bridge: {ws_status}")
+        print(f"[NETWORK] WebSocket Bridge: {ws_status}")
 
         print("=" * 80)
 
     async def run_monitor(self):
         """Main monitoring loop."""
-        print("🚀 Starting ROS2 Universal Monitor...")
+        print("[IGNITE] Starting ROS2 Universal Monitor...")
         print("This will monitor ALL ROS2 topics, services, and WebSocket telemetry")
         print("Press Ctrl+C to stop\n")
 
         if not self.setup_ros2_environment():
-            print("❌ Failed to set up ROS2 environment. Exiting.")
+            print("[FAIL] Failed to set up ROS2 environment. Exiting.")
             return
 
         # Start WebSocket monitoring in background
@@ -491,7 +495,7 @@ class ROS2UniversalMonitor:
                 await asyncio.sleep(5)
 
         except KeyboardInterrupt:
-            print("\n🛑 Stopping monitor...")
+            print("\n Stopping monitor...")
         finally:
             self.running = False
             websocket_task.cancel()
@@ -523,7 +527,7 @@ def main():
 
     if args.websocket_only:
         # WebSocket-only monitoring
-        print("🌐 Starting WebSocket-only monitoring...")
+        print("[NETWORK] Starting WebSocket-only monitoring...")
         asyncio.run(monitor.websocket_monitor())
     else:
         # Full monitoring

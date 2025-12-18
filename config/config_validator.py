@@ -421,26 +421,26 @@ def validate_all_configs(
     """
     validator = ConfigurationValidator(config_dir)
 
-    print("🔍 Validating configuration files...")
+    print("[MAGNIFY] Validating configuration files...")
     validation_results = validator.validate_directory()
 
     if validation_results:
-        print("❌ Configuration validation failed:")
+        print("[FAIL] Configuration validation failed:")
         for filename, errors in validation_results.items():
-            print(f"  📄 {filename}:")
+            print(f"   {filename}:")
             for error in errors:
-                print(f"    ❌ {error}")
+                print(f"    [FAIL] {error}")
         print()
 
         if fail_on_errors:
-            print("💡 To generate default configurations, run:")
+            print(" To generate default configurations, run:")
             print(
                 '   python3 -c "from config.config_validator import ConfigurationValidator; '
                 'ConfigurationValidator().generate_default_configs()"'
             )
             return False
     else:
-        print("✅ All configuration files are valid")
+        print("[PASS] All configuration files are valid")
         return True
 
 
@@ -452,15 +452,15 @@ if __name__ == "__main__":
 
     # Generate defaults if validation failed
     if not success:
-        print("\n🔧 Generating default configuration files...")
+        print("\n[TOOL] Generating default configuration files...")
         validator = ConfigurationValidator()
         configs = validator.generate_default_configs()
-        print("✅ Default configurations generated:")
+        print("[PASS] Default configurations generated:")
         for name, path in configs.items():
-            print(f"  📄 {name} -> {path}")
+            print(f"   {name} -> {path}")
 
         # Re-validate
-        print("\n🔍 Re-validating generated configurations...")
+        print("\n[MAGNIFY] Re-validating generated configurations...")
         success = validate_all_configs()
 
     sys.exit(0 if success else 1)

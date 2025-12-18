@@ -89,7 +89,7 @@ def measure_system_resources():
 
 def run_intra_process_test():
     """Run intra-process communication performance test."""
-    print("🔗 Testing Intra-Process Communication...")
+    print(" Testing Intra-Process Communication...")
 
     # QoS profile for intra-process communication
     qos_intra = QoSProfile(
@@ -156,7 +156,7 @@ def run_intra_process_test():
 
 def run_inter_process_test():
     """Run inter-process communication performance test."""
-    print("🌐 Testing Inter-Process Communication...")
+    print("[NETWORK] Testing Inter-Process Communication...")
 
     # QoS profile for inter-process communication
     qos_inter = QoSProfile(
@@ -223,7 +223,7 @@ def run_inter_process_test():
 
 def main():
     """Run the performance comparison demo."""
-    print("🚀 URC 2026 ROS2 Communication Performance Demo")
+    print("[IGNITE] URC 2026 ROS2 Communication Performance Demo")
     print("=" * 55)
 
     print("\nTesting the performance difference between intra-process")
@@ -241,10 +241,10 @@ def main():
     inter_results = run_inter_process_test()
 
     # Generate comparison report
-    print("\n📊 PERFORMANCE COMPARISON RESULTS")
+    print("\n[GRAPH] PERFORMANCE COMPARISON RESULTS")
     print("=" * 50)
 
-    print("\n🔗 INTRA-PROCESS COMMUNICATION:")
+    print("\n INTRA-PROCESS COMMUNICATION:")
     print(f"  Messages sent: {intra_results['messages_sent']}")
     print(f"  Messages received: {intra_results['messages_received']}")
     print(".1f")
@@ -253,7 +253,7 @@ def main():
     print(".1f")
     print(".2f")
 
-    print("\n🌐 INTER-PROCESS COMMUNICATION:")
+    print("\n[NETWORK] INTER-PROCESS COMMUNICATION:")
     print(f"  Messages sent: {inter_results['messages_sent']}")
     print(f"  Messages received: {inter_results['messages_received']}")
     print(".1f")
@@ -262,7 +262,7 @@ def main():
     print(".1f")
     print(".2f")
 
-    print("\n⚡ PERFORMANCE IMPROVEMENTS:")
+    print("\n[LIGHTNING] PERFORMANCE IMPROVEMENTS:")
     if intra_results["avg_latency_ms"] > 0 and inter_results["avg_latency_ms"] > 0:
         latency_improvement = (
             (inter_results["avg_latency_ms"] - intra_results["avg_latency_ms"])
@@ -290,14 +290,14 @@ def main():
     memory_savings = inter_results["memory_delta_mb"] - intra_results["memory_delta_mb"]
     print(".2f")
 
-    print("\n🎯 IMPACT ON URC 2026 AUTONOMY SYSTEM:")
-    print("  ✅ /imu (100 Hz): Reduced latency improves state estimation")
-    print("  ✅ /cmd_vel (50 Hz): Faster rover control response")
-    print("  ✅ /odom (50 Hz): Better localization accuracy")
-    print("  ✅ vision/detections (30 Hz): Improved obstacle avoidance")
-    print("  ✅ Safety topics: Critical safety response time reduction")
+    print("\n[OBJECTIVE] IMPACT ON URC 2026 AUTONOMY SYSTEM:")
+    print("  [PASS] /imu (100 Hz): Reduced latency improves state estimation")
+    print("  [PASS] /cmd_vel (50 Hz): Faster rover control response")
+    print("  [PASS] /odom (50 Hz): Better localization accuracy")
+    print("  [PASS] vision/detections (30 Hz): Improved obstacle avoidance")
+    print("  [PASS] Safety topics: Critical safety response time reduction")
 
-    print("\n✨ Demo completed! Intra-process communication provides")
+    print("\n[SHINE] Demo completed! Intra-process communication provides")
     print(
         "   significant performance improvements for real-time robotics applications."
     )

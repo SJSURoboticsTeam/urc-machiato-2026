@@ -115,7 +115,7 @@ class ROS2EnvironmentManager:
 
     def _setup_environment(self, env: TestEnvironment):
         """Setup the test environment."""
-        print(f"🚀 Setting up ROS2 environment: {env.name}")
+        print(f"[IGNITE] Setting up ROS2 environment: {env.name}")
 
         # Create network namespace for isolation
         env.network_namespace = f"ros2_test_{env.name}_{env.ros_config.domain_id}"
@@ -131,7 +131,7 @@ class ROS2EnvironmentManager:
         # Initialize ROS2 context
         self._init_ros_context(env)
 
-        print(f"✅ Environment {env.name} ready")
+        print(f"[PASS] Environment {env.name} ready")
 
     def _create_network_namespace(self, env: TestEnvironment):
         """Create isolated network namespace."""
@@ -160,10 +160,10 @@ class ROS2EnvironmentManager:
                 capture_output=True,
             )
 
-            print(f"  📡 Created network namespace: {env.network_namespace}")
+            print(f"  [ANTENNA] Created network namespace: {env.network_namespace}")
 
         except subprocess.CalledProcessError as e:
-            print(f"  ⚠️ Network namespace creation failed: {e}")
+            print(f"   Network namespace creation failed: {e}")
             # Continue without network isolation
 
     def _setup_resource_limits(self, env: TestEnvironment):
@@ -208,10 +208,10 @@ class ROS2EnvironmentManager:
                     capture_output=True,
                 )
 
-            print(f"  📊 Resource limits set for {env.cgroup_name}")
+            print(f"  [GRAPH] Resource limits set for {env.cgroup_name}")
 
         except subprocess.CalledProcessError as e:
-            print(f"  ⚠️ Resource limit setup failed: {e}")
+            print(f"   Resource limit setup failed: {e}")
             # Continue without resource limits
 
     def _configure_ros_environment(self, env: TestEnvironment):
@@ -233,7 +233,7 @@ class ROS2EnvironmentManager:
             os.environ[env_var] = str(qos)
 
         print(
-            f"  🔧 ROS2 configured: domain={config.domain_id}, namespace={config.namespace}"
+            f"  [TOOL] ROS2 configured: domain={config.domain_id}, namespace={config.namespace}"
         )
 
     def _init_ros_context(self, env: TestEnvironment):
@@ -241,9 +241,9 @@ class ROS2EnvironmentManager:
         try:
             env.ros_context = rclpy.Context()
             rclpy.init(context=env.ros_context)
-            print("  📡 ROS2 context initialized")
+            print("  [ANTENNA] ROS2 context initialized")
         except Exception as e:
-            print(f"  ❌ ROS2 initialization failed: {e}")
+            print(f"  [FAIL] ROS2 initialization failed: {e}")
             raise
 
     def start_node(
@@ -262,11 +262,11 @@ class ROS2EnvironmentManager:
             )
             env.nodes.append(node)
 
-            print(f"  📡 Started node: {node_name} in {env_name}")
+            print(f"  [ANTENNA] Started node: {node_name} in {env_name}")
             return node
 
         except Exception as e:
-            print(f"  ❌ Failed to start node {node_name}: {e}")
+            print(f"  [FAIL] Failed to start node {node_name}: {e}")
             raise
 
     def start_process(
@@ -298,11 +298,11 @@ class ROS2EnvironmentManager:
             )
 
             env.processes.append(process)
-            print(f"  🚀 Started process: {' '.join(command)} in {env_name}")
+            print(f"  [IGNITE] Started process: {' '.join(command)} in {env_name}")
             return process
 
         except Exception as e:
-            print(f"  ❌ Failed to start process: {e}")
+            print(f"  [FAIL] Failed to start process: {e}")
             raise
 
     def monitor_environment(self, env_name: str, callback: Optional[Callable] = None):
@@ -335,16 +335,14 @@ class ROS2EnvironmentManager:
                         env.resource_limits.cpu_percent
                         and total_cpu > env.resource_limits.cpu_percent
                     ):
-                        print(
-                            f"  ⚠️ CPU limit exceeded in {env_name}: {total_cpu:.1f}%"
-                        )
+                        print(f"   CPU limit exceeded in {env_name}: {total_cpu:.1f}%")
 
                     if (
                         env.resource_limits.memory_mb
                         and total_memory > env.resource_limits.memory_mb * 1024 * 1024
                     ):
                         print(
-                            f"  ⚠️ Memory limit exceeded in {env_name}: {total_memory / 1024 / 1024:.1f}MB"
+                            f"   Memory limit exceeded in {env_name}: {total_memory / 1024 / 1024:.1f}MB"
                         )
 
                     if callback:
@@ -359,7 +357,7 @@ class ROS2EnvironmentManager:
                     time.sleep(1)
 
                 except Exception as e:
-                    print(f"  ❌ Monitoring error in {env_name}: {e}")
+                    print(f"  [FAIL] Monitoring error in {env_name}: {e}")
                     break
 
         monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
@@ -373,7 +371,7 @@ class ROS2EnvironmentManager:
 
         env = self.environments[env_name]
 
-        print(f"🧹 Cleaning up environment: {env_name}")
+        print(f"[SWEEP] Cleaning up environment: {env_name}")
 
         # Remove from active list
         if env_name in self.active_environments:
@@ -389,14 +387,14 @@ class ROS2EnvironmentManager:
             try:
                 node.destroy_node()
             except Exception as e:
-                print(f"  ❌ Error destroying node: {e}")
+                print(f"  [FAIL] Error destroying node: {e}")
 
         # Shutdown ROS2 context
         if env.ros_context:
             try:
                 env.ros_context.shutdown()
             except Exception as e:
-                print(f"  ❌ Error shutting down ROS2 context: {e}")
+                print(f"  [FAIL] Error shutting down ROS2 context: {e}")
 
         # Terminate processes
         for process in env.processes:
@@ -412,7 +410,7 @@ class ROS2EnvironmentManager:
                         process.wait()
 
             except Exception as e:
-                print(f"  ❌ Error terminating process: {e}")
+                print(f"  [FAIL] Error terminating process: {e}")
 
         # Remove resource limits
         if env.cgroup_name:
@@ -424,7 +422,7 @@ class ROS2EnvironmentManager:
                     ["cgdelete", f"memory:{env.cgroup_name}"], capture_output=True
                 )
             except Exception as e:
-                print(f"  ⚠️ Error removing cgroups: {e}")
+                print(f"   Error removing cgroups: {e}")
 
         # Remove network namespace
         if env.network_namespace:
@@ -434,7 +432,7 @@ class ROS2EnvironmentManager:
                     capture_output=True,
                 )
             except Exception as e:
-                print(f"  ⚠️ Error removing network namespace: {e}")
+                print(f"   Error removing network namespace: {e}")
 
         # Clean up environment variables
         ros_vars = [
@@ -447,7 +445,7 @@ class ROS2EnvironmentManager:
         for var in ros_vars:
             os.environ.pop(var, None)
 
-        print(f"✅ Environment {env_name} cleaned up")
+        print(f"[PASS] Environment {env_name} cleaned up")
 
     def get_environment_status(self, env_name: str) -> Dict[str, Any]:
         """Get status of a test environment."""
@@ -520,7 +518,7 @@ def example_extreme_environment():
         manager.monitor_environment(
             "extreme_test",
             lambda metrics: print(
-                f"📊 Metrics: CPU={metrics['cpu_percent']:.1f}%, "
+                f"[GRAPH] Metrics: CPU={metrics['cpu_percent']:.1f}%, "
                 f"Memory={metrics['memory_mb']:.1f}MB, "
                 f"Processes={metrics['process_count']}"
             ),

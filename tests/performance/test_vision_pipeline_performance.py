@@ -67,7 +67,7 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
 
     def test_complete_vision_pipeline_performance(self):
         """Test complete vision processing pipeline performance."""
-        print("\n👁️  Testing Complete Vision Pipeline Performance")
+        print("\n  Testing Complete Vision Pipeline Performance")
         print("=" * 60)
 
         # Start ROS2 executor
@@ -87,11 +87,11 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
             self._start_resource_monitoring()
 
             # Warm up pipeline
-            print("🔥 Warming up vision pipeline...")
+            print(" Warming up vision pipeline...")
             self._warm_up_pipeline()
 
             # Run performance test
-            print("📊 Measuring vision pipeline performance...")
+            print("[GRAPH] Measuring vision pipeline performance...")
             self._run_pipeline_performance_test()
 
             # Analyze results
@@ -217,7 +217,7 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
         max_cpu_percent = max(self.cpu_usage_readings) if self.cpu_usage_readings else 0
 
         # Print detailed results
-        print("\n📈 Vision Pipeline Performance Results:")
+        print("\n Vision Pipeline Performance Results:")
         print("-" * 50)
         print(".3f")
         print(".3f")
@@ -232,7 +232,7 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
         print(".1f")
 
         # Validate against competition targets
-        print("\n🎯 Competition Requirements Check:")
+        print("\n[OBJECTIVE] Competition Requirements Check:")
         print("-" * 50)
 
         requirements = {
@@ -256,29 +256,29 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
         all_passed = True
         for metric, (actual, target) in requirements.items():
             passed = actual <= target
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".3f")
 
             if not passed:
                 all_passed = False
 
         # Performance assessment
-        print("\n🚀 Performance Assessment:")
+        print("\n[IGNITE] Performance Assessment:")
         print("-" * 50)
 
         if all_passed:
-            print("✅ ALL VISION PIPELINE REQUIREMENTS MET")
+            print("[PASS] ALL VISION PIPELINE REQUIREMENTS MET")
             print("   Vision system suitable for 15Hz processing")
         elif avg_frame_time <= self.target_frame_time_ms:
-            print("⚠️  AVERAGE PERFORMANCE OK, BUT RESOURCE/CONSISTENCY CONCERNS")
+            print("  AVERAGE PERFORMANCE OK, BUT RESOURCE/CONSISTENCY CONCERNS")
             print("   Monitor resource usage in competition scenarios")
         else:
-            print("❌ VISION PERFORMANCE REQUIREMENTS NOT MET")
+            print("[FAIL] VISION PERFORMANCE REQUIREMENTS NOT MET")
             print("   Pipeline optimization required before competition")
 
         # Detailed analysis and recommendations
         if avg_frame_time > self.target_frame_time_ms:
-            print("\n💡 Optimization Recommendations:")
+            print("\n Optimization Recommendations:")
             if avg_memory_mb > self.target_memory_mb:
                 print("   - Optimize memory usage in image processing")
             if avg_cpu_percent > self.target_cpu_percent:
@@ -309,7 +309,7 @@ class VisionPipelinePerformanceTest(unittest.TestCase):
 
     def test_vision_pipeline_under_load(self):
         """Test vision pipeline performance under concurrent load."""
-        print("\n🔄 Testing Vision Pipeline Under Load")
+        print("\n[REFRESH] Testing Vision Pipeline Under Load")
 
         # Create multiple consumers to simulate load
         consumers = []

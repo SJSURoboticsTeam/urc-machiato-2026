@@ -43,51 +43,51 @@ class AutomatedDeployment:
         5. Status reporting
         """
         self.start_time = time.time()
-        self._log("🚀 Starting competition system deployment")
+        self._log("[IGNITE] Starting competition system deployment")
 
         try:
             # Step 1: Pre-deployment validation
             if not self._run_pre_deployment_checks():
-                self._log("❌ Pre-deployment checks failed")
+                self._log("[FAIL] Pre-deployment checks failed")
                 return False
 
             if validate_only:
-                self._log("✅ Validation only - deployment checks passed")
+                self._log("[PASS] Validation only - deployment checks passed")
                 return True
 
             # Step 2: Environment setup
             if not self._setup_deployment_environment():
-                self._log("❌ Environment setup failed")
+                self._log("[FAIL] Environment setup failed")
                 return False
 
             # Step 3: Service deployment
             if not self._deploy_services():
-                self._log("❌ Service deployment failed")
+                self._log("[FAIL] Service deployment failed")
                 self._rollback_deployment()
                 return False
 
             # Step 4: Post-deployment validation
             if not self._run_post_deployment_checks():
-                self._log("❌ Post-deployment checks failed")
+                self._log("[FAIL] Post-deployment checks failed")
                 self._rollback_deployment()
                 return False
 
             # Step 5: Final status
             deployment_time = time.time() - self.start_time
             self._log(f"Deployment completed in {deployment_time:.1f}s")
-            self._log("🎉 COMPETITION SYSTEM DEPLOYMENT COMPLETE")
+            self._log("[PARTY] COMPETITION SYSTEM DEPLOYMENT COMPLETE")
             self._log("System is ready for competition operation")
 
             return True
 
         except Exception as e:
-            self._log(f"❌ Deployment failed with error: {e}")
+            self._log(f"[FAIL] Deployment failed with error: {e}")
             self._rollback_deployment()
             return False
 
     def _run_pre_deployment_checks(self) -> bool:
         """Run pre-deployment validation checks."""
-        self._log("🔍 Running pre-deployment checks...")
+        self._log("[MAGNIFY] Running pre-deployment checks...")
 
         checks = [
             ("Hardware validation", self._check_hardware_readiness),
@@ -104,19 +104,19 @@ class AutomatedDeployment:
             self._log(f"  Checking {check_name}...")
             try:
                 if check_func():
-                    self._log(f"    ✅ {check_name}: PASSED")
+                    self._log(f"    [PASS] {check_name}: PASSED")
                     passed += 1
                 else:
-                    self._log(f"    ❌ {check_name}: FAILED")
+                    self._log(f"    [FAIL] {check_name}: FAILED")
             except Exception as e:
-                self._log(f"    ❌ {check_name}: ERROR - {e}")
+                self._log(f"    [FAIL] {check_name}: ERROR - {e}")
 
         self._log(f"Pre-deployment checks: {passed}/{total} passed")
         return passed == total
 
     def _setup_deployment_environment(self) -> bool:
         """Set up deployment environment."""
-        self._log("🔧 Setting up deployment environment...")
+        self._log("[TOOL] Setting up deployment environment...")
 
         try:
             # Set environment variables
@@ -143,16 +143,16 @@ class AutomatedDeployment:
             log_dir = self.project_root / "logs"
             log_dir.mkdir(exist_ok=True)
 
-            self._log("✅ Deployment environment ready")
+            self._log("[PASS] Deployment environment ready")
             return True
 
         except Exception as e:
-            self._log(f"❌ Environment setup failed: {e}")
+            self._log(f"[FAIL] Environment setup failed: {e}")
             return False
 
     def _deploy_services(self) -> bool:
         """Deploy system services with health checks."""
-        self._log("🚀 Deploying system services...")
+        self._log("[IGNITE] Deploying system services...")
 
         services = [
             {
@@ -203,7 +203,7 @@ class AutomatedDeployment:
             if not self._start_service(service):
                 return False
 
-        self._log("✅ All services deployed successfully")
+        self._log("[PASS] All services deployed successfully")
         return True
 
     def _start_service(self, service_config: Dict[str, Any]) -> bool:
@@ -250,20 +250,20 @@ class AutomatedDeployment:
                 time.sleep(1)
 
             if health_ok:
-                self._log(f"    ✅ {name}: STARTED (PID: {process.pid})")
+                self._log(f"    [PASS] {name}: STARTED (PID: {process.pid})")
                 return True
             else:
-                self._log(f"    ❌ {name}: HEALTH CHECK FAILED")
+                self._log(f"    [FAIL] {name}: HEALTH CHECK FAILED")
                 self._stop_service(name)
                 return False
 
         except Exception as e:
-            self._log(f"    ❌ {name}: STARTUP ERROR - {e}")
+            self._log(f"    [FAIL] {name}: STARTUP ERROR - {e}")
             return False
 
     def _run_post_deployment_checks(self) -> bool:
         """Run post-deployment validation."""
-        self._log("🔍 Running post-deployment validation...")
+        self._log("[MAGNIFY] Running post-deployment validation...")
 
         checks = [
             ("System health", self._check_overall_system_health),
@@ -279,25 +279,25 @@ class AutomatedDeployment:
             self._log(f"  Validating {check_name}...")
             try:
                 if check_func():
-                    self._log(f"    ✅ {check_name}: PASSED")
+                    self._log(f"    [PASS] {check_name}: PASSED")
                     passed += 1
                 else:
-                    self._log(f"    ❌ {check_name}: FAILED")
+                    self._log(f"    [FAIL] {check_name}: FAILED")
             except Exception as e:
-                self._log(f"    ❌ {check_name}: ERROR - {e}")
+                self._log(f"    [FAIL] {check_name}: ERROR - {e}")
 
         self._log(f"Post-deployment validation: {passed}/{total} passed")
         return passed == total
 
     def _rollback_deployment(self):
         """Rollback deployment on failure."""
-        self._log("🔄 Rolling back deployment...")
+        self._log("[REFRESH] Rolling back deployment...")
 
         for service in reversed(self.services_started):
             self._stop_service(service["name"])
 
         self.services_started = []
-        self._log("✅ Deployment rollback complete")
+        self._log("[PASS] Deployment rollback complete")
 
     def _stop_service(self, service_name: str):
         """Stop a specific service."""
@@ -306,12 +306,12 @@ class AutomatedDeployment:
                 try:
                     service["process"].terminate()
                     service["process"].wait(timeout=5)
-                    self._log(f"    🛑 Stopped {service_name}")
+                    self._log(f"     Stopped {service_name}")
                 except subprocess.TimeoutExpired:
                     service["process"].kill()
-                    self._log(f"    💀 Force killed {service_name}")
+                    self._log(f"     Force killed {service_name}")
                 except Exception as e:
-                    self._log(f"    ❌ Error stopping {service_name}: {e}")
+                    self._log(f"    [FAIL] Error stopping {service_name}: {e}")
                 break
 
     # Validation check implementations
@@ -509,13 +509,13 @@ def main():
     with open(report_file, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
-    print(f"\n📄 Deployment report saved to: {report_file}")
+    print(f"\n Deployment report saved to: {report_file}")
 
     if success:
-        print("🎉 Deployment successful!")
+        print("[PARTY] Deployment successful!")
         sys.exit(0)
     else:
-        print("❌ Deployment failed!")
+        print("[FAIL] Deployment failed!")
         sys.exit(1)
 
 

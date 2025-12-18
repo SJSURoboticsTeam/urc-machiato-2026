@@ -610,7 +610,7 @@ def create_stress_test_scenarios() -> List[StressTestScenario]:
 
 async def run_network_stress_tests():
     """Run comprehensive network stress tests."""
-    print("🌐 Starting Network Stress Testing Suite")
+    print("[NETWORK] Starting Network Stress Testing Suite")
     print("=" * 60)
 
     # Initialize ROS2
@@ -622,11 +622,11 @@ async def run_network_stress_tests():
     # Get test scenarios
     scenarios = create_stress_test_scenarios()
 
-    print(f"📋 Running {len(scenarios)} stress test scenarios...")
+    print(f"[CLIPBOARD] Running {len(scenarios)} stress test scenarios...")
 
     # Run all scenarios
     for i, scenario in enumerate(scenarios, 1):
-        print(f"\n🔄 Scenario {i}/{len(scenarios)}: {scenario.name}")
+        print(f"\n[REFRESH] Scenario {i}/{len(scenarios)}: {scenario.name}")
         print(f"   {scenario.description}")
         print(f"   Network: {scenario.network_profile.value}")
         print(
@@ -640,7 +640,7 @@ async def run_network_stress_tests():
         await asyncio.sleep(2.0)
 
     # Generate comprehensive report
-    print("\n📊 Generating Comprehensive Performance Report...")
+    print("\n[GRAPH] Generating Comprehensive Performance Report...")
     report = tester.generate_comprehensive_report()
 
     # Save report
@@ -649,7 +649,7 @@ async def run_network_stress_tests():
         json.dump(report, f, indent=2)
 
     # Display summary
-    print("\n🎯 NETWORK STRESS TESTING RESULTS")
+    print("\n[OBJECTIVE] NETWORK STRESS TESTING RESULTS")
     print("=" * 60)
 
     summary = report["summary"]
@@ -659,7 +659,7 @@ async def run_network_stress_tests():
     print(f"Average Packet Loss: {summary['average_packet_loss_percent']:.2f}%")
     print(f"Average Bandwidth: {summary['average_bandwidth_mbps']:.2f}Mbps")
 
-    print("\n📈 Performance by Network Profile:")
+    print("\n Performance by Network Profile:")
     for profile, stats in report["performance_by_profile"].items():
         print(f"  {profile}:")
         print(".1f")
@@ -667,11 +667,11 @@ async def run_network_stress_tests():
         print(".2f")
 
     if report.get("recommendations"):
-        print("\n💡 Recommendations:")
+        print("\n Recommendations:")
         for rec in report["recommendations"]:
             print(f"  • {rec}")
 
-    print(f"\n📄 Detailed report saved to: {report_file}")
+    print(f"\n Detailed report saved to: {report_file}")
 
     # Cleanup
     tester.destroy_node()

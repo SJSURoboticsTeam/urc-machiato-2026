@@ -10,7 +10,7 @@ import time
 
 def test_available_topics():
     """Test what topics are available."""
-    print("🔍 Checking available ROS2 topics...")
+    print("[MAGNIFY] Checking available ROS2 topics...")
 
     try:
         # Source ROS2 and check topics
@@ -26,7 +26,7 @@ def test_available_topics():
         )
 
         topics = result.stdout.strip().split("\n")
-        print(f"📡 Found {len(topics)} topics:")
+        print(f"[ANTENNA] Found {len(topics)} topics:")
         for topic in topics:
             if topic.strip():
                 print(f"   {topic}")
@@ -45,17 +45,17 @@ def test_available_topics():
         found = [topic for topic in expected_topics if topic in topics]
         missing = [topic for topic in expected_topics if topic not in topics]
 
-        print("\n✅ Found expected topics:")
+        print("\n[PASS] Found expected topics:")
         for topic in found:
             print(f"   {topic}")
 
         if missing:
-            print("\n❌ Missing expected topics:")
+            print("\n[FAIL] Missing expected topics:")
             for topic in missing:
                 print(f"   {topic}")
 
         # Check services
-        print("\n🔧 Checking available ROS2 services...")
+        print("\n[TOOL] Checking available ROS2 services...")
         service_result = subprocess.run(
             ["bash", "-c", "source /opt/ros/humble/setup.bash && ros2 service list"],
             env=env,
@@ -65,13 +65,13 @@ def test_available_topics():
         )
 
         services = service_result.stdout.strip().split("\n")
-        print(f"🔧 Found {len(services)} services:")
+        print(f"[TOOL] Found {len(services)} services:")
         for service in services:
             if service.strip():
                 print(f"   {service}")
 
     except Exception as e:
-        print(f"❌ Error checking topics/services: {e}")
+        print(f"[FAIL] Error checking topics/services: {e}")
 
 
 if __name__ == "__main__":

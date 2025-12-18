@@ -273,7 +273,7 @@ class HardwareValidationSuite(unittest.TestCase):
 
 def run_hardware_validation():
     """Run hardware validation suite."""
-    print("🔧 Running Hardware Validation Suite...")
+    print("[TOOL] Running Hardware Validation Suite...")
     print("=" * 50)
 
     # Load test suite
@@ -287,10 +287,10 @@ def run_hardware_validation():
     # Summary
     print("\n" + "=" * 50)
     if result.wasSuccessful():
-        print("✅ HARDWARE VALIDATION PASSED")
+        print("[PASS] HARDWARE VALIDATION PASSED")
         print("System is ready for competition deployment")
     else:
-        print("❌ HARDWARE VALIDATION FAILED")
+        print("[FAIL] HARDWARE VALIDATION FAILED")
         print(f"Failed tests: {len(result.failures)}")
         print(f"Errors: {len(result.errors)}")
         print("Check hardware connections and sensor calibration")

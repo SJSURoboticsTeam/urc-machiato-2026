@@ -58,14 +58,14 @@ def cleanup_commented_code():
                 files_processed += 1
                 lines_removed += lines_removed_in_file
                 print(
-                    f"✅ Cleaned {py_file.name} ({lines_removed_in_file} lines removed)"
+                    f"[PASS] Cleaned {py_file.name} ({lines_removed_in_file} lines removed)"
                 )
 
         except Exception as e:
-            print(f"❌ Error processing {py_file}: {e}")
+            print(f"[FAIL] Error processing {py_file}: {e}")
 
     print(
-        f"\n📊 SUMMARY: {files_processed} files processed, {lines_removed} lines removed"
+        f"\n[GRAPH] SUMMARY: {files_processed} files processed, {lines_removed} lines removed"
     )
 
 

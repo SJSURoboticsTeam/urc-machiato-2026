@@ -93,7 +93,7 @@ class SciencePayloadSimulator:
         self._load_configuration(config)
         self._initialize_state()
 
-        self.logger.info("🔬 MOCK Science Payload Simulator initialized")
+        self.logger.info("[LAB] MOCK Science Payload Simulator initialized")
 
     def _get_default_config(self) -> Dict:
         """Get default science payload configuration."""
@@ -271,7 +271,7 @@ class SciencePayloadSimulator:
         self.active_collection = None
         self.collection_start_time = None
 
-        self.logger.info(f"📦 Collected {sample_type.value} sample: {sample_id}")
+        self.logger.info(f" Collected {sample_type.value} sample: {sample_id}")
         return sample
 
     def analyze_sample(
@@ -356,7 +356,9 @@ class SciencePayloadSimulator:
         self.active_analysis = None
         self.analysis_start_time = None
 
-        self.logger.info(f"🔬 Completed {analysis_type.value} analysis of {sample_id}")
+        self.logger.info(
+            f"[LAB] Completed {analysis_type.value} analysis of {sample_id}"
+        )
         return analysis_result
 
     def get_sample_inventory(self) -> List[Dict]:
@@ -399,7 +401,7 @@ class SciencePayloadSimulator:
                 state["calibrated"] = True
                 state["last_calibration"] = time.time()
                 results[instrument_name] = True
-                self.logger.info(f"✅ Calibrated {instrument_name}")
+                self.logger.info(f"[PASS] Calibrated {instrument_name}")
             else:
                 results[instrument_name] = False
 
@@ -425,7 +427,7 @@ class SciencePayloadSimulator:
 
     def emergency_stop_payload(self) -> bool:
         """Emergency stop science payload operations."""
-        self.logger.warning("🚨 SCIENCE PAYLOAD EMERGENCY STOP")
+        self.logger.warning(" SCIENCE PAYLOAD EMERGENCY STOP")
         self.enabled = False
         self.active_collection = None
         self.active_analysis = None
@@ -470,7 +472,7 @@ class SciencePayloadSimulator:
                 if instrument_name not in self.faults:
                     self.faults.append(instrument_name)
                     state["enabled"] = False
-                    self.logger.error(f"🚨 {instrument_name.upper()} TEMPERATURE FAULT")
+                    self.logger.error(f" {instrument_name.upper()} TEMPERATURE FAULT")
 
         # Update storage temperature control
         if self.storage_config["temperature_control"]:
@@ -484,7 +486,7 @@ class SciencePayloadSimulator:
             if faulty_instrument not in self.faults:
                 self.faults.append(faulty_instrument)
                 self.instrument_states[faulty_instrument]["enabled"] = False
-                self.logger.error(f"🚨 {faulty_instrument.upper()} SIMULATED FAILURE")
+                self.logger.error(f" {faulty_instrument.upper()} SIMULATED FAILURE")
 
         self.last_update_time = current_time
 

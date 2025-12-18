@@ -26,13 +26,13 @@ class SimpleMissionTester(Node):
         )
 
         self.mission_status = None
-        self.get_logger().info("🧪 Simple Mission Tester ready")
+        self.get_logger().info("[EXPERIMENT] Simple Mission Tester ready")
 
     def status_callback(self, msg):
         """Handle mission status updates"""
         try:
             self.mission_status = json.loads(msg.data)
-            self.get_logger().info(f"📋 Mission status: {self.mission_status}")
+            self.get_logger().info(f"[CLIPBOARD] Mission status: {self.mission_status}")
         except json.JSONDecodeError as e:
             self.get_logger().error(f"Failed to parse status: {e}")
 
@@ -45,11 +45,11 @@ class SimpleMissionTester(Node):
         msg = String()
         msg.data = json.dumps(cmd_data)
         self.cmd_pub.publish(msg)
-        self.get_logger().info(f"📤 Sent: {cmd_data}")
+        self.get_logger().info(f" Sent: {cmd_data}")
 
     def test_mission(self):
         """Run the mission test"""
-        self.get_logger().info("🧪 Testing mission execution...")
+        self.get_logger().info("[EXPERIMENT] Testing mission execution...")
 
         # Wait for system to be ready
         time.sleep(2)
@@ -65,17 +65,17 @@ class SimpleMissionTester(Node):
 
             # Check if mission completed
             if self.mission_status and self.mission_status.get("status") == "completed":
-                self.get_logger().info("✅ Mission completed successfully!")
+                self.get_logger().info("[PASS] Mission completed successfully!")
                 return True
 
         # Send stop command
         self.send_command("stop_mission")
 
         if self.mission_status and self.mission_status.get("status") == "completed":
-            self.get_logger().info("✅ Mission completed!")
+            self.get_logger().info("[PASS] Mission completed!")
             return True
         else:
-            self.get_logger().error("❌ Mission did not complete")
+            self.get_logger().error("[FAIL] Mission did not complete")
             return False
 
 
@@ -87,9 +87,9 @@ def main():
         success = tester.test_mission()
 
         if success:
-            print("✅ MISSION TEST PASSED")
+            print("[PASS] MISSION TEST PASSED")
         else:
-            print("❌ MISSION TEST FAILED")
+            print("[FAIL] MISSION TEST FAILED")
 
     except KeyboardInterrupt:
         pass

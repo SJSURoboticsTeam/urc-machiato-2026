@@ -157,18 +157,20 @@ class MissionExecutorTester(Node):
 
         # Check status messages received
         if self.status_count > 0:
-            self.get_logger().info(f"✅ Status messages received: {self.status_count}")
+            self.get_logger().info(
+                f"[PASS] Status messages received: {self.status_count}"
+            )
         else:
-            self.get_logger().error("❌ No status messages received")
+            self.get_logger().error("[FAIL] No status messages received")
             success = False
 
         # Check progress messages received
         if self.progress_count > 0:
             self.get_logger().info(
-                f"✅ Progress messages received: {self.progress_count}"
+                f"[PASS] Progress messages received: {self.progress_count}"
             )
         else:
-            self.get_logger().error("❌ No progress messages received")
+            self.get_logger().error("[FAIL] No progress messages received")
             success = False
 
         # Check mission completion - look for completion in status history
@@ -178,24 +180,24 @@ class MissionExecutorTester(Node):
             if status
         )
         if mission_completed:
-            self.get_logger().info("✅ Mission completed successfully")
+            self.get_logger().info("[PASS] Mission completed successfully")
         else:
-            self.get_logger().error("❌ Mission did not complete")
+            self.get_logger().error("[FAIL] Mission did not complete")
             success = False
 
         # Check final progress
         if self.received_progress and self.received_progress >= 99.0:
-            self.get_logger().info("✅ Final progress 100%")
+            self.get_logger().info("[PASS] Final progress 100%")
         else:
             self.get_logger().error(
-                f"❌ Final progress not 100%: {self.received_progress}"
+                f"[FAIL] Final progress not 100%: {self.received_progress}"
             )
             success = False
 
         if success:
-            self.get_logger().info("🎉 ALL TESTS PASSED!")
+            self.get_logger().info("[PARTY] ALL TESTS PASSED!")
         else:
-            self.get_logger().error("❌ SOME TESTS FAILED")
+            self.get_logger().error("[FAIL] SOME TESTS FAILED")
 
         self.get_logger().info("=" * 50)
 

@@ -406,7 +406,7 @@ class RealTimeMonitor:
         self, loop_name: str, alert_type: str, alert_data: Dict[str, Any]
     ):
         """Trigger performance alert."""
-        logger.warning(f"🚨 Performance Alert: {loop_name} - {alert_type}")
+        logger.warning(f" Performance Alert: {loop_name} - {alert_type}")
 
         # Call all registered callbacks
         for callback in self.alert_callbacks:

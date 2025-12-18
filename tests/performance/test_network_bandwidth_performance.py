@@ -59,7 +59,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
 
     def test_network_bandwidth_under_competition_load(self):
         """Test network bandwidth usage under competition scenarios."""
-        print("\n🌐 Testing Network Bandwidth Under Competition Load")
+        print("\n[NETWORK] Testing Network Bandwidth Under Competition Load")
         print("=" * 60)
 
         try:
@@ -79,7 +79,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
 
             for scenario in scenarios:
                 print(
-                    f"\n🔄 Testing {scenario.__name__.replace('_', ' ').replace('test_', '').title()}..."
+                    f"\n[REFRESH] Testing {scenario.__name__.replace('_', ' ').replace('test_', '').title()}..."
                 )
                 result = scenario()
                 results_by_scenario[scenario.__name__] = result
@@ -600,7 +600,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
 
     def _analyze_bandwidth_usage(self, results_by_scenario: Dict[str, Any]):
         """Analyze bandwidth usage across scenarios."""
-        print("\n📊 Network Bandwidth Analysis Results:")
+        print("\n[GRAPH] Network Bandwidth Analysis Results:")
         print("=" * 50)
 
         # Aggregate bandwidth usage
@@ -636,7 +636,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
         print(".2f")
 
         # Scenario breakdown
-        print("\n🔍 Scenario Bandwidth Breakdown:")
+        print("\n[MAGNIFY] Scenario Bandwidth Breakdown:")
         print("-" * 40)
         for scenario_name, result in results_by_scenario.items():
             scenario_display = (
@@ -646,7 +646,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
             print(".2f")
 
         # Validate against competition targets
-        print("\n🎯 Competition Requirements Check:")
+        print("\n[OBJECTIVE] Competition Requirements Check:")
         print("-" * 50)
 
         requirements = {
@@ -665,28 +665,28 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
         all_passed = True
         for metric, (actual, target) in requirements.items():
             passed = actual <= target
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".3f")
 
             if not passed:
                 all_passed = False
 
         # Performance assessment
-        print("\n🚀 Network Performance Assessment:")
+        print("\n[IGNITE] Network Performance Assessment:")
         print("-" * 50)
 
         if all_passed:
-            print("✅ ALL NETWORK BANDWIDTH REQUIREMENTS MET")
+            print("[PASS] ALL NETWORK BANDWIDTH REQUIREMENTS MET")
             print(
                 "   Communication system suitable for competition bandwidth constraints"
             )
         else:
-            print("❌ NETWORK BANDWIDTH REQUIREMENTS NOT MET")
+            print("[FAIL] NETWORK BANDWIDTH REQUIREMENTS NOT MET")
             print("   Bandwidth optimization required before competition")
 
         # Detailed analysis and recommendations
         if avg_bandwidth > self.target_bandwidth_mbps:
-            print("\n💡 Network Optimization Recommendations:")
+            print("\n Network Optimization Recommendations:")
             if avg_compression_ratio > self.target_compression_ratio:
                 print("   - Implement message compression for large data streams")
                 print("   - Consider binary serialization formats")
@@ -713,7 +713,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
 
     def test_packet_loss_recovery_performance(self):
         """Test packet loss recovery performance."""
-        print("\n🔄 Testing Packet Loss Recovery Performance")
+        print("\n[REFRESH] Testing Packet Loss Recovery Performance")
 
         # Simulate packet loss scenarios
         loss_rates = [0.01, 0.05, 0.10]  # 1%, 5%, 10% packet loss
@@ -750,12 +750,12 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
             }
 
         # Analyze recovery performance
-        print("\n🔧 Packet Loss Recovery Results:")
+        print("\n[TOOL] Packet Loss Recovery Results:")
         print("-" * 40)
 
         for scenario, results in recovery_results.items():
             passed = results["avg_recovery_time_ms"] <= self.target_recovery_ms
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".1f" ".1f")
 
         # Overall recovery assessment
@@ -765,10 +765,10 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
         overall_avg_recovery = statistics.mean(avg_recovery_times)
 
         if overall_avg_recovery <= self.target_recovery_ms:
-            print("\n✅ PACKET LOSS RECOVERY PERFORMANCE ACCEPTABLE")
+            print("\n[PASS] PACKET LOSS RECOVERY PERFORMANCE ACCEPTABLE")
             print("   Recovery times within competition requirements")
         else:
-            print("\n❌ PACKET LOSS RECOVERY TOO SLOW")
+            print("\n[FAIL] PACKET LOSS RECOVERY TOO SLOW")
             print("   Implement faster recovery mechanisms")
 
     def _simulate_packet_recovery(self, messages_lost: int) -> int:

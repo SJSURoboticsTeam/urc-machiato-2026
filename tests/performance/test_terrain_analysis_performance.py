@@ -63,7 +63,7 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
 
     def test_terrain_analysis_computation_performance(self):
         """Test terrain analysis computation performance."""
-        print("\n🏔️  Testing Terrain Analysis Computation Performance")
+        print("\n  Testing Terrain Analysis Computation Performance")
         print("=" * 60)
 
         try:
@@ -73,11 +73,11 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
             self._start_resource_monitoring()
 
             # Warm up terrain analysis
-            print("🔥 Warming up terrain analysis...")
+            print(" Warming up terrain analysis...")
             self._warm_up_terrain_analysis()
 
             # Run performance test
-            print("📊 Measuring terrain analysis performance...")
+            print("[GRAPH] Measuring terrain analysis performance...")
             self._run_terrain_analysis_performance_test()
 
             # Analyze results
@@ -218,7 +218,7 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         max_cpu_percent = max(self.cpu_usage_readings) if self.cpu_usage_readings else 0
 
         # Print detailed results
-        print("\n📈 Terrain Analysis Performance Results:")
+        print("\n Terrain Analysis Performance Results:")
         print("-" * 55)
         print("Classification Times:")
         print(".3f")
@@ -240,7 +240,7 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         print(".1f")
 
         # Validate against competition targets
-        print("\n🎯 Competition Requirements Check:")
+        print("\n[OBJECTIVE] Competition Requirements Check:")
         print("-" * 55)
 
         requirements = {
@@ -276,26 +276,26 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
         all_passed = True
         for metric, (actual, target) in requirements.items():
             passed = actual <= target
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print(".3f")
 
             if not passed:
                 all_passed = False
 
         # Performance assessment
-        print("\n🚀 Performance Assessment:")
+        print("\n[IGNITE] Performance Assessment:")
         print("-" * 55)
 
         if all_passed:
-            print("✅ ALL TERRAIN ANALYSIS REQUIREMENTS MET")
+            print("[PASS] ALL TERRAIN ANALYSIS REQUIREMENTS MET")
             print("   Terrain intelligence suitable for real-time navigation")
         elif avg_total <= (
             self.target_classification_ms + self.target_traversability_ms
         ):
-            print("⚠️  AVERAGE PERFORMANCE OK, BUT RESOURCE/CONSISTENCY CONCERNS")
+            print("  AVERAGE PERFORMANCE OK, BUT RESOURCE/CONSISTENCY CONCERNS")
             print("   Monitor performance under competition terrain conditions")
         else:
-            print("❌ TERRAIN ANALYSIS REQUIREMENTS NOT MET")
+            print("[FAIL] TERRAIN ANALYSIS REQUIREMENTS NOT MET")
             print("   Optimization required for competition terrain navigation")
 
         # Detailed analysis and recommendations
@@ -303,7 +303,7 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
             avg_classification > self.target_classification_ms
             or avg_traversability > self.target_traversability_ms
         ):
-            print("\n💡 Optimization Recommendations:")
+            print("\n Optimization Recommendations:")
             if avg_classification > self.target_classification_ms:
                 print("   - Optimize terrain classification algorithm")
                 print("   - Consider simplified feature extraction")
@@ -346,7 +346,7 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
 
     def test_terrain_analysis_under_various_conditions(self):
         """Test terrain analysis under various terrain conditions."""
-        print("\n🏞️  Testing Terrain Analysis Under Various Conditions")
+        print("\n  Testing Terrain Analysis Under Various Conditions")
 
         terrain_conditions = [
             "flat_sand",  # Easy terrain
@@ -401,13 +401,13 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
             print(".3f")
 
         # Analyze condition-specific performance
-        print("\n📊 Terrain Condition Performance Summary:")
+        print("\n[GRAPH] Terrain Condition Performance Summary:")
         print("-" * 50)
         for condition, results in results_by_condition.items():
             passed = results["avg_time_ms"] <= (
                 self.target_classification_ms + self.target_traversability_ms
             )
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[PASS] PASS" if passed else "[FAIL] FAIL"
             print("25")
 
         # Check if performance varies significantly by terrain type
@@ -416,10 +416,10 @@ class TerrainAnalysisPerformanceTest(unittest.TestCase):
 
         print(".3f")
         if time_variation > 10.0:  # More than 10ms variation
-            print("⚠️  Significant performance variation by terrain type detected")
+            print("  Significant performance variation by terrain type detected")
             print("   Consider optimizing for worst-case terrain conditions")
         else:
-            print("✅ Consistent performance across terrain types")
+            print("[PASS] Consistent performance across terrain types")
 
 
 class TerrainDataGenerator:

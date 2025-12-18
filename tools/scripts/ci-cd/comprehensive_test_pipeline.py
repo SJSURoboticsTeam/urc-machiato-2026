@@ -45,34 +45,34 @@ class ComprehensiveTestPipeline:
 
     def run_full_pipeline(self) -> bool:
         """Run the complete testing pipeline."""
-        print("🚀 Starting Comprehensive Test Pipeline")
+        print("[IGNITE] Starting Comprehensive Test Pipeline")
         print("=" * 60)
 
         success = True
 
         # Phase 1: Environment Setup
         if not self._setup_test_environment():
-            print("❌ Environment setup failed")
+            print("[FAIL] Environment setup failed")
             return False
 
         # Phase 2: Unit Tests
         if not self._run_unit_tests():
-            print("❌ Unit tests failed")
+            print("[FAIL] Unit tests failed")
             success = False
 
         # Phase 3: Integration Tests
         if not self._run_integration_tests():
-            print("❌ Integration tests failed")
+            print("[FAIL] Integration tests failed")
             success = False
 
         # Phase 4: Performance Tests
         if not self._run_performance_tests():
-            print("❌ Performance tests failed")
+            print("[FAIL] Performance tests failed")
             success = False
 
         # Phase 5: Chaos Engineering
         if not self._run_chaos_tests():
-            print("⚠️  Chaos tests revealed issues (expected)")
+            print("  Chaos tests revealed issues (expected)")
             # Don't fail on chaos tests - they test failure scenarios
 
         # Phase 6: Coverage Analysis
@@ -83,15 +83,15 @@ class ComprehensiveTestPipeline:
 
         print("=" * 60)
         if success:
-            print("✅ Comprehensive Test Pipeline PASSED")
+            print("[PASS] Comprehensive Test Pipeline PASSED")
         else:
-            print("❌ Comprehensive Test Pipeline FAILED")
+            print("[FAIL] Comprehensive Test Pipeline FAILED")
 
         return success
 
     def _setup_test_environment(self) -> bool:
         """Set up the testing environment."""
-        print("\n🔧 Phase 1: Setting up test environment...")
+        print("\n[TOOL] Phase 1: Setting up test environment...")
 
         try:
             # Source ROS2
@@ -129,16 +129,16 @@ class ComprehensiveTestPipeline:
                     print("ROS2 environment setup failed")
                     return False
 
-            print("✅ Test environment ready")
+            print("[PASS] Test environment ready")
             return True
 
         except Exception as e:
-            print(f"❌ Environment setup failed: {e}")
+            print(f"[FAIL] Environment setup failed: {e}")
             return False
 
     def _run_unit_tests(self) -> bool:
         """Run unit tests."""
-        print("\n🧪 Phase 2: Running unit tests...")
+        print("\n[EXPERIMENT] Phase 2: Running unit tests...")
 
         try:
             result = subprocess.run(
@@ -165,21 +165,21 @@ class ComprehensiveTestPipeline:
             }
 
             if result.returncode == 0:
-                print("✅ Unit tests passed")
+                print("[PASS] Unit tests passed")
                 return True
             else:
-                print("❌ Unit tests failed")
+                print("[FAIL] Unit tests failed")
                 print(result.stdout)
                 print(result.stderr)
                 return False
 
         except subprocess.TimeoutExpired:
-            print("❌ Unit tests timed out")
+            print("[FAIL] Unit tests timed out")
             return False
 
     def _run_integration_tests(self) -> bool:
         """Run integration tests."""
-        print("\n🔗 Phase 3: Running integration tests...")
+        print("\n Phase 3: Running integration tests...")
 
         try:
             result = subprocess.run(
@@ -206,21 +206,21 @@ class ComprehensiveTestPipeline:
             }
 
             if result.returncode == 0:
-                print("✅ Integration tests passed")
+                print("[PASS] Integration tests passed")
                 return True
             else:
-                print("❌ Integration tests failed")
+                print("[FAIL] Integration tests failed")
                 print(result.stdout)
                 print(result.stderr)
                 return False
 
         except subprocess.TimeoutExpired:
-            print("❌ Integration tests timed out")
+            print("[FAIL] Integration tests timed out")
             return False
 
     def _run_performance_tests(self) -> bool:
         """Run performance regression tests."""
-        print("\n⚡ Phase 4: Running performance tests...")
+        print("\n[LIGHTNING] Phase 4: Running performance tests...")
 
         try:
             result = subprocess.run(
@@ -247,25 +247,25 @@ class ComprehensiveTestPipeline:
             # Check for performance regressions
             regressions = self._detect_performance_regressions(result.stdout)
             if regressions:
-                print("⚠️  Performance regressions detected:")
+                print("  Performance regressions detected:")
                 for regression in regressions:
                     print(f"   {regression}")
                 return False
 
             if result.returncode == 0:
-                print("✅ Performance tests passed")
+                print("[PASS] Performance tests passed")
                 return True
             else:
-                print("❌ Performance tests failed")
+                print("[FAIL] Performance tests failed")
                 return False
 
         except subprocess.TimeoutExpired:
-            print("❌ Performance tests timed out")
+            print("[FAIL] Performance tests timed out")
             return False
 
     def _run_chaos_tests(self) -> bool:
         """Run chaos engineering tests."""
-        print("\n🎭 Phase 5: Running chaos engineering tests...")
+        print("\n Phase 5: Running chaos engineering tests...")
 
         chaos_scenarios = ["network_partition", "high_latency", "packet_loss"]
 
@@ -288,14 +288,14 @@ class ComprehensiveTestPipeline:
                 )
 
                 if result.returncode != 0:
-                    print(f"⚠️  Chaos scenario {scenario} revealed system weaknesses")
+                    print(f"  Chaos scenario {scenario} revealed system weaknesses")
                     print(result.stdout)
                     # Don't fail - chaos tests are meant to find issues
 
             except subprocess.TimeoutExpired:
-                print(f"⚠️  Chaos scenario {scenario} timed out")
+                print(f"  Chaos scenario {scenario} timed out")
 
-        print("✅ Chaos engineering tests completed")
+        print("[PASS] Chaos engineering tests completed")
         return True  # Chaos tests don't "fail" - they reveal issues
 
     def _detect_performance_regressions(self, test_output: str) -> List[str]:
@@ -335,7 +335,7 @@ class ComprehensiveTestPipeline:
 
     def _analyze_coverage(self):
         """Analyze test coverage."""
-        print("\n📊 Phase 6: Analyzing test coverage...")
+        print("\n[GRAPH] Phase 6: Analyzing test coverage...")
 
         try:
             # Generate coverage report
@@ -355,7 +355,7 @@ class ComprehensiveTestPipeline:
 
     def _generate_comprehensive_report(self):
         """Generate comprehensive test report."""
-        print("\n📋 Phase 7: Generating comprehensive report...")
+        print("\n[CLIPBOARD] Phase 7: Generating comprehensive report...")
 
         report = {
             "timestamp": time.time(),
@@ -386,7 +386,7 @@ class ComprehensiveTestPipeline:
         with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
 
-        print(f"✅ Comprehensive report saved to {report_path}")
+        print(f"[PASS] Comprehensive report saved to {report_path}")
 
 
 def main():

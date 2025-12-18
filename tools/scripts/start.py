@@ -35,48 +35,48 @@ def run_command(
     cmd_list = cmd if isinstance(cmd, list) else cmd.split()
 
     try:
-        print(f"🚀 Running: {' '.join(cmd_list)}")
+        print(f"[IGNITE] Running: {' '.join(cmd_list)}")
         subprocess.run(cmd_list, cwd=cwd, env=env, check=True)
-        print("✅ Success")
+        print("[PASS] Success")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Command failed: {e}")
+        print(f"[FAIL] Command failed: {e}")
         return False
     except KeyboardInterrupt:
-        print("\n🛑 Interrupted by user")
+        print("\n Interrupted by user")
         return True
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"[FAIL] Unexpected error: {e}")
         return False
 
 
 def start_frontend(environment: str = "dev") -> bool:
     """Start the web frontend."""
-    print("🚀 Starting Frontend...")
+    print("[IGNITE] Starting Frontend...")
 
     frontend_dir = SRC_DIR / "frontend"
     if not frontend_dir.exists():
-        print("❌ Frontend directory not found")
+        print("[FAIL] Frontend directory not found")
         return False
 
     # Install dependencies if needed
     if not (frontend_dir / "node_modules").exists():
-        print("📦 Installing frontend dependencies...")
+        print(" Installing frontend dependencies...")
         if not run_command("npm install", cwd=frontend_dir):
             return False
 
     # Start development server
-    print("🌐 Starting development server on http://localhost:5173")
+    print("[NETWORK] Starting development server on http://localhost:5173")
     return run_command("npm run dev -- --host 0.0.0.0", cwd=frontend_dir)
 
 
 def start_dashboard() -> bool:
     """Start the testing dashboard (backend + frontend)."""
-    print("🧪 Starting Testing Dashboard...")
+    print("[EXPERIMENT] Starting Testing Dashboard...")
 
     dashboard_script = SCRIPTS_DIR / "testing" / "start_dashboard.sh"
     if not dashboard_script.exists():
-        print("❌ Dashboard script not found")
+        print("[FAIL] Dashboard script not found")
         return False
 
     return run_command(str(dashboard_script))
@@ -84,7 +84,7 @@ def start_dashboard() -> bool:
 
 def start_autonomy(environment: str = "dev") -> bool:
     """Start the full autonomy system."""
-    print("🤖 Starting Autonomy System...")
+    print(" Starting Autonomy System...")
 
     # Set environment variable for config
     env = os.environ.copy()
@@ -101,7 +101,7 @@ def start_autonomy(environment: str = "dev") -> bool:
     # Launch the integrated system
     launch_file = AUTONOMY_DIR / "launch" / "integrated_system.launch.py"
     if not launch_file.exists():
-        print("❌ Launch file not found")
+        print("[FAIL] Launch file not found")
         return False
 
     cmd = f"ros2 launch {launch_file}"
@@ -110,11 +110,11 @@ def start_autonomy(environment: str = "dev") -> bool:
 
 def start_simulation() -> bool:
     """Start the simulation environment."""
-    print("🎮 Starting Simulation...")
+    print(" Starting Simulation...")
 
     launch_file = SCRIPTS_DIR / "launch" / "rover_simulation.launch.py"
     if not launch_file.exists():
-        print("❌ Simulation launch file not found")
+        print("[FAIL] Simulation launch file not found")
         return False
 
     cmd = f"ros2 launch {launch_file}"
@@ -166,7 +166,7 @@ Components:
         parser.print_help()
         return 1
 
-    print("🎯 URC 2026 Launcher")
+    print("[OBJECTIVE] URC 2026 Launcher")
     print(f"   Environment: {args.environment}")
     print(f"   Component: {args.component}")
     print()

@@ -18,7 +18,7 @@ from pathlib import Path
 
 def run_quick_validation():
     """Run quick validation checks."""
-    print("⚡ Quick Dashboard Validation")
+    print("[LIGHTNING] Quick Dashboard Validation")
     print("=" * 40)
 
     # Check if services are accessible
@@ -43,12 +43,12 @@ def run_quick_validation():
             )
             output = result.stdout.strip()
             if expected in output:
-                print(f"✅ {name}: OK")
+                print(f"[PASS] {name}: OK")
             else:
-                print(f"❌ {name}: FAILED (got '{output}', expected '{expected}')")
+                print(f"[FAIL] {name}: FAILED (got '{output}', expected '{expected}')")
                 all_passed = False
         except Exception as e:
-            print(f"❌ {name}: ERROR - {e}")
+            print(f"[FAIL] {name}: ERROR - {e}")
             all_passed = False
 
     return all_passed
@@ -56,7 +56,7 @@ def run_quick_validation():
 
 def run_full_validation():
     """Run comprehensive validation."""
-    print("🔍 Full Dashboard Validation")
+    print("[MAGNIFY] Full Dashboard Validation")
     print("=" * 40)
 
     # Run the comprehensive health check
@@ -74,10 +74,10 @@ def run_full_validation():
 
         return result.returncode == 0
     except subprocess.TimeoutExpired:
-        print("❌ Validation timed out")
+        print("[FAIL] Validation timed out")
         return False
     except Exception as e:
-        print(f"❌ Validation failed: {e}")
+        print(f"[FAIL] Validation failed: {e}")
         return False
 
 
@@ -105,10 +105,10 @@ def main():
 
     print("\n" + "=" * 40)
     if success:
-        print("🎉 Dashboard validation PASSED!")
+        print("[PARTY] Dashboard validation PASSED!")
         sys.exit(0)
     else:
-        print("❌ Dashboard validation FAILED!")
+        print("[FAIL] Dashboard validation FAILED!")
         print("Run with --full for detailed diagnostics")
         sys.exit(1)
 

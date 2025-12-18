@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 def test_enhanced_state_sync_election():
     """Test the enhanced state synchronization election algorithm."""
-    print("🔄 Testing Enhanced State Sync Election...")
+    print("[REFRESH] Testing Enhanced State Sync Election...")
 
     from core.state_synchronization_manager import DistributedStateManager
 
@@ -116,16 +116,16 @@ def test_enhanced_state_sync_election():
     mgr3.stop()
 
     if success:
-        print("  ✅ Enhanced state sync election works")
+        print("  [PASS] Enhanced state sync election works")
     else:
-        print("  ❌ Enhanced state sync election failed")
+        print("  [FAIL] Enhanced state sync election failed")
 
     return success
 
 
 def test_enhanced_websocket_health():
     """Test the enhanced WebSocket health monitoring."""
-    print("🌐 Testing Enhanced WebSocket Health Monitoring...")
+    print("[NETWORK] Testing Enhanced WebSocket Health Monitoring...")
 
     from bridges.websocket_redundancy_manager import (
         EndpointPriority,
@@ -182,16 +182,16 @@ def test_enhanced_websocket_health():
     mgr.stop_redundancy_system()
 
     if success:
-        print("  ✅ Enhanced WebSocket health monitoring works")
+        print("  [PASS] Enhanced WebSocket health monitoring works")
     else:
-        print("  ❌ Enhanced WebSocket health monitoring failed")
+        print("  [FAIL] Enhanced WebSocket health monitoring failed")
 
     return success
 
 
 def test_coordinated_recovery():
     """Test the coordinated recovery system."""
-    print("🔧 Testing Coordinated Recovery System...")
+    print("[TOOL] Testing Coordinated Recovery System...")
 
     from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
     from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
@@ -270,16 +270,16 @@ def test_coordinated_recovery():
     ws_mgr.stop_redundancy_system()
 
     if recovery_success:
-        print("  ✅ Coordinated recovery system works")
+        print("  [PASS] Coordinated recovery system works")
     else:
-        print("  ❌ Coordinated recovery system failed")
+        print("  [FAIL] Coordinated recovery system failed")
 
     return recovery_success
 
 
 def test_performance_improvements():
     """Test that performance improvements are maintained."""
-    print("📈 Testing Performance Improvements...")
+    print(" Testing Performance Improvements...")
 
     from core.dynamic_config_manager import DynamicConfigManager
     from core.state_synchronization_manager import DistributedStateManager
@@ -318,16 +318,16 @@ def test_performance_improvements():
     state_mgr.stop()
 
     if success:
-        print("  ✅ Performance improvements maintained")
+        print("  [PASS] Performance improvements maintained")
     else:
-        print("  ❌ Performance improvements not maintained")
+        print("  [FAIL] Performance improvements not maintained")
 
     return success
 
 
 def run_validation_tests():
     """Run all validation tests."""
-    print("🧪 Advanced Systems Validation Tests")
+    print("[EXPERIMENT] Advanced Systems Validation Tests")
     print("=" * 60)
     print("Validating: Enhanced Election + Health Monitoring + Coordinated Recovery")
     print("=" * 60)
@@ -346,33 +346,33 @@ def run_validation_tests():
             results.append((test_name, result))
             print()
         except Exception as e:
-            print(f"  ❌ {test_name} crashed: {e}")
+            print(f"  [FAIL] {test_name} crashed: {e}")
             results.append((test_name, False))
             print()
 
     # Summary
     print("=" * 60)
-    print("📊 VALIDATION RESULTS")
+    print("[GRAPH] VALIDATION RESULTS")
     print("=" * 60)
 
     passed = 0
     total = len(results)
 
     for test_name, result in results:
-        status = "✅ PASSED" if result else "❌ FAILED"
+        status = "[PASS] PASSED" if result else "[FAIL] FAILED"
         print("20")
         if result:
             passed += 1
 
-    print(f"\n📈 Summary: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+    print(f"\n Summary: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
 
     if passed == total:
-        print("\n🎉 ALL VALIDATION TESTS PASSED!")
-        print("✅ Enhanced systems are working correctly")
-        print("🚀 Ready for production deployment")
+        print("\n[PARTY] ALL VALIDATION TESTS PASSED!")
+        print("[PASS] Enhanced systems are working correctly")
+        print("[IGNITE] Ready for production deployment")
         return True
     else:
-        print(f"\n⚠️ {total-passed} tests failed - needs investigation")
+        print(f"\n {total-passed} tests failed - needs investigation")
         return False
 
 

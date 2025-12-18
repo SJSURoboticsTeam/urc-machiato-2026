@@ -353,7 +353,7 @@ def main():
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        print("\n🛑 Enhanced Standalone Safety System Stopped")
+        print("\n Enhanced Standalone Safety System Stopped")
     finally:
         node.destroy_node()
         rclpy.shutdown()

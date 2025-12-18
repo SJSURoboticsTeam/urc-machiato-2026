@@ -364,7 +364,7 @@ class MovementStressSubscriber(Node):
 def run_movement_stress_test_level(level: MovementStressLevel) -> Dict:
     """Run movement control stress test for a specific severity level."""
 
-    print(f"🚗 Testing {level.value.upper()} Movement Control Stress")
+    print(f" Testing {level.value.upper()} Movement Control Stress")
     print("-" * 55)
 
     # Configure stress test
@@ -451,11 +451,11 @@ def run_movement_stress_test_level(level: MovementStressLevel) -> Dict:
         # Performance assessment
         success_rate = results["command_success_rate"]
         if success_rate > 90:
-            assessment = "✅ EXCELLENT - Handles stress well"
+            assessment = "[PASS] EXCELLENT - Handles stress well"
         elif success_rate > 75:
-            assessment = "⚠️ GOOD - Some issues under stress"
+            assessment = " GOOD - Some issues under stress"
         else:
-            assessment = "❌ POOR - Significant problems"
+            assessment = "[FAIL] POOR - Significant problems"
 
         print(f"   • Assessment: {assessment}")
 
@@ -468,7 +468,7 @@ def run_movement_stress_test_level(level: MovementStressLevel) -> Dict:
 def run_comprehensive_movement_stress_test():
     """Run comprehensive movement control stress testing."""
 
-    print("🎮 URC 2026 Movement Control Communication Stress Test Suite")
+    print(" URC 2026 Movement Control Communication Stress Test Suite")
     print("=" * 70)
 
     results = {}
@@ -485,7 +485,7 @@ def run_comprehensive_movement_stress_test():
         print()  # Add spacing
 
     # Comparative analysis
-    print("📊 MOVEMENT CONTROL STRESS ANALYSIS")
+    print("[GRAPH] MOVEMENT CONTROL STRESS ANALYSIS")
     print("=" * 42)
 
     print("\nPerformance by Stress Level:")
@@ -500,11 +500,11 @@ def run_comprehensive_movement_stress_test():
         latency = result["avg_response_latency_ms"]
 
         if success_rate > 90 and conflicts < 10:
-            assessment = "✅"
+            assessment = "[PASS]"
         elif success_rate > 75 and conflicts < 50:
-            assessment = "⚠️"
+            assessment = ""
         else:
-            assessment = "❌"
+            assessment = "[FAIL]"
 
         print(
             f"{level_short:8} | {success_rate:7.1f}% | {conflicts:9} | {estops:7} | {latency:7.1f}ms | {assessment}"
@@ -513,34 +513,34 @@ def run_comprehensive_movement_stress_test():
     # Overall assessment
     extreme_results = results["extreme"]
 
-    print("\n🎯 MOVEMENT CONTROL STRESS ASSESSMENT")
+    print("\n[OBJECTIVE] MOVEMENT CONTROL STRESS ASSESSMENT")
 
     if extreme_results["command_success_rate"] > 80:
-        print("✅ Movement control maintains good reliability under extreme stress")
+        print("[PASS] Movement control maintains good reliability under extreme stress")
     else:
-        print("❌ Movement control reliability degrades significantly")
+        print("[FAIL] Movement control reliability degrades significantly")
 
     if (
         extreme_results["command_conflicts"]
         < extreme_results["commands_processed"] * 0.2
     ):
-        print("✅ Command conflict resolution is effective")
+        print("[PASS] Command conflict resolution is effective")
     else:
-        print("⚠️ High command conflict rate may cause erratic movement")
+        print(" High command conflict rate may cause erratic movement")
 
     if extreme_results["avg_response_latency_ms"] < 20:
-        print("✅ Response latency remains acceptable under stress")
+        print("[PASS] Response latency remains acceptable under stress")
     else:
-        print("⚠️ High latency may impact real-time control performance")
+        print(" High latency may impact real-time control performance")
 
-    print("\n🛠️ MITIGATION STRATEGIES:")
+    print("\n MITIGATION STRATEGIES:")
     print("   • Implement command prioritization and queuing")
     print("   • Add command validation and safety limits")
     print("   • Implement emergency stop precedence")
     print("   • Add command smoothing for rapid changes")
     print("   • Use redundant command channels")
 
-    print("\n📋 SYSTEM IMPACT:")
+    print("\n[CLIPBOARD] SYSTEM IMPACT:")
     print("   • Rover stability during rapid command changes")
     print("   • Emergency stop responsiveness under conflict")
     print("   • Navigation accuracy with command latency")
@@ -552,7 +552,7 @@ def run_comprehensive_movement_stress_test():
 def simulate_movement_emergency_scenarios():
     """Test emergency movement scenarios."""
 
-    print("🚨 Movement Emergency Scenario Simulation")
+    print(" Movement Emergency Scenario Simulation")
     print("-" * 45)
 
     config = MovementStressConfig(MovementStressLevel.SEVERE)
@@ -567,7 +567,7 @@ def simulate_movement_emergency_scenarios():
     high_speed_cmd.angular.z = config.max_angular_speed * 0.5
 
     success, reason, latency = controller.process_movement_command(high_speed_cmd)
-    print(f"   High-speed command: {'✅' if success else '❌'} ({reason})")
+    print(f"   High-speed command: {'[PASS]' if success else '[FAIL]'} ({reason})")
 
     # Inject emergency stop
     controller.inject_movement_fault(MovementFaultType.EMERGENCY_STOP_CONFLICT)
@@ -578,7 +578,7 @@ def simulate_movement_emergency_scenarios():
 
     success, reason, latency = controller.process_movement_command(conflicting_cmd)
     print(
-        f"   Conflicting command during E-stop: {'❌' if not success else '✅'} ({reason})"
+        f"   Conflicting command during E-stop: {'[FAIL]' if not success else '[PASS]'} ({reason})"
     )
 
     # Clear emergency stop
@@ -586,7 +586,9 @@ def simulate_movement_emergency_scenarios():
 
     # Try command after clearing E-stop
     success, reason, latency = controller.process_movement_command(conflicting_cmd)
-    print(f"   Command after E-stop cleared: {'✅' if success else '❌'} ({reason})")
+    print(
+        f"   Command after E-stop cleared: {'[PASS]' if success else '[FAIL]'} ({reason})"
+    )
 
     # Test rapid command changes
     print("\n   Testing rapid command changes...")
@@ -613,9 +615,9 @@ def simulate_movement_emergency_scenarios():
         f"   Emergency test latency: {emergency_stats['avg_response_latency_ms']:.1f}ms"
     )
     if commands_rejected < commands_tested * 0.3:  # Less than 30% rejected
-        print("   ✅ System handles rapid changes reasonably well")
+        print("   [PASS] System handles rapid changes reasonably well")
     else:
-        print("   ⚠️ Too many valid commands rejected - overly conservative")
+        print("    Too many valid commands rejected - overly conservative")
 
     return emergency_stats
 
@@ -624,7 +626,7 @@ if __name__ == "__main__":
     # Run comprehensive movement stress tests
     movement_results = run_comprehensive_movement_stress_test()
 
-    print("\n🚨 Testing Movement Emergency Scenarios...")
+    print("\n Testing Movement Emergency Scenarios...")
     emergency_results = simulate_movement_emergency_scenarios()
 
-    print("\n✨ Movement control stress testing completed!")
+    print("\n[SHINE] Movement control stress testing completed!")

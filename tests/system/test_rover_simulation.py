@@ -64,20 +64,20 @@ class RoverSimulationTester(Node):
         # Test timer
         self.test_timer = self.create_timer(2.0, self.run_test_step)
 
-        self.get_logger().info("🧪 Rover Simulation Tester ready")
+        self.get_logger().info("[EXPERIMENT] Rover Simulation Tester ready")
 
     def odom_callback(self, msg):
         """Monitor odometry data"""
         self.received_odom = msg
         self.get_logger().debug(
-            f"📍 Odometry: x={msg.pose.pose.position.x:.2f}, y={msg.pose.pose.position.y:.2f}"
+            f" Odometry: x={msg.pose.pose.position.x:.2f}, y={msg.pose.pose.position.y:.2f}"
         )
 
     def imu_callback(self, msg):
         """Monitor IMU data"""
         self.received_imu = msg
         self.get_logger().debug(
-            f"🔄 IMU: accel=({msg.linear_acceleration.x:.2f}, {msg.linear_acceleration.y:.2f}, {msg.linear_acceleration.z:.2f})"
+            f"[REFRESH] IMU: accel=({msg.linear_acceleration.x:.2f}, {msg.linear_acceleration.y:.2f}, {msg.linear_acceleration.z:.2f})"
         )
 
     def map_callback(self, msg):
@@ -85,7 +85,7 @@ class RoverSimulationTester(Node):
         try:
             self.received_map_data = json.loads(msg.data)
             self.get_logger().debug(
-                f'🗺️ Map data received: robot at ({self.received_map_data["robot"]["x"]:.2f}, {self.received_map_data["robot"]["y"]:.2f})'
+                f' Map data received: robot at ({self.received_map_data["robot"]["x"]:.2f}, {self.received_map_data["robot"]["y"]:.2f})'
             )
         except json.JSONDecodeError:
             self.get_logger().error("Invalid map data format")
@@ -95,7 +95,7 @@ class RoverSimulationTester(Node):
         try:
             self.received_mission_status = json.loads(msg.data)
             self.get_logger().debug(
-                f'🎯 Mission status: {self.received_mission_status["status"]}'
+                f'[OBJECTIVE] Mission status: {self.received_mission_status["status"]}'
             )
         except json.JSONDecodeError:
             self.get_logger().error("Invalid mission status format")
@@ -104,7 +104,7 @@ class RoverSimulationTester(Node):
         """Monitor SLAM pose"""
         self.received_slam_pose = msg
         self.get_logger().debug(
-            f"🎯 SLAM pose: ({msg.pose.position.x:.2f}, {msg.pose.position.y:.2f})"
+            f"[OBJECTIVE] SLAM pose: ({msg.pose.position.x:.2f}, {msg.pose.position.y:.2f})"
         )
 
     def run_test_step(self):
@@ -122,7 +122,7 @@ class RoverSimulationTester(Node):
 
     def test_phase_0_check_simulation_startup(self):
         """Phase 0: Check that simulation systems are starting"""
-        self.get_logger().info("🧪 Phase 0: Checking simulation startup...")
+        self.get_logger().info("[EXPERIMENT] Phase 0: Checking simulation startup...")
 
         # Check if basic ROS2 nodes are running
         try:
@@ -150,7 +150,7 @@ class RoverSimulationTester(Node):
 
     def test_phase_1_check_sensor_data(self):
         """Phase 1: Verify sensor data is flowing"""
-        self.get_logger().info("🧪 Phase 1: Checking sensor data flow...")
+        self.get_logger().info("[EXPERIMENT] Phase 1: Checking sensor data flow...")
 
         # Check odometry
         if self.received_odom:
@@ -188,7 +188,7 @@ class RoverSimulationTester(Node):
 
     def test_phase_2_test_mission_commands(self):
         """Phase 2: Test mission command execution"""
-        self.get_logger().info("🧪 Phase 2: Testing mission commands...")
+        self.get_logger().info("[EXPERIMENT] Phase 2: Testing mission commands...")
 
         # Send a simple waypoint mission
         waypoints = [{"x": 1.0, "y": 0.0}, {"x": 1.0, "y": 1.0}, {"x": 0.0, "y": 1.0}]
@@ -208,7 +208,7 @@ class RoverSimulationTester(Node):
 
     def test_phase_3_test_data_flow(self):
         """Phase 3: Test complete data flow to frontend"""
-        self.get_logger().info("🧪 Phase 3: Testing complete data flow...")
+        self.get_logger().info("[EXPERIMENT] Phase 3: Testing complete data flow...")
 
         # Check map data flow
         if self.received_map_data:
@@ -242,7 +242,7 @@ class RoverSimulationTester(Node):
 
     def test_phase_4_final_validation(self):
         """Phase 4: Final system validation"""
-        self.get_logger().info("🧪 Phase 4: Final system validation...")
+        self.get_logger().info("[EXPERIMENT] Phase 4: Final system validation...")
 
         # Send stop command
         stop_command = {"command": "stop_mission"}
@@ -256,7 +256,7 @@ class RoverSimulationTester(Node):
         self.print_final_results()
 
         # Shutdown test
-        self.get_logger().info("✅ Rover simulation test completed")
+        self.get_logger().info("[PASS] Rover simulation test completed")
         rclpy.shutdown()
 
     def add_test_result(self, test_name: str, success: bool, message: str):
@@ -269,13 +269,13 @@ class RoverSimulationTester(Node):
                 "timestamp": time.time(),
             }
         )
-        status = "✅" if success else "❌"
+        status = "[PASS]" if success else "[FAIL]"
         self.get_logger().info(f"{status} {test_name}: {message}")
 
     def print_final_results(self):
         """Print comprehensive test results"""
         self.get_logger().info("=" * 80)
-        self.get_logger().info("🚀 ROVER SIMULATION TEST RESULTS")
+        self.get_logger().info("[IGNITE] ROVER SIMULATION TEST RESULTS")
         self.get_logger().info("=" * 80)
 
         passed = sum(1 for result in self.test_results if result["success"])
@@ -306,23 +306,25 @@ class RoverSimulationTester(Node):
 
         for category, results in categories.items():
             if results:
-                self.get_logger().info(f"\n📋 {category} Tests:")
+                self.get_logger().info(f"\n[CLIPBOARD] {category} Tests:")
                 for result in results:
-                    status = "✅ PASS" if result["success"] else "❌ FAIL"
+                    status = "[PASS] PASS" if result["success"] else "[FAIL] FAIL"
                     self.get_logger().info(f'   {status}: {result["name"]}')
                     if not result["success"]:
-                        self.get_logger().info(f'      └─ {result["message"]}')
+                        self.get_logger().info(f'       {result["message"]}')
 
-        self.get_logger().info(f"\n📊 OVERALL RESULTS: {passed}/{total} tests passed")
+        self.get_logger().info(
+            f"\n[GRAPH] OVERALL RESULTS: {passed}/{total} tests passed"
+        )
 
         if passed == total:
             self.get_logger().info(
-                "🎉 ALL TESTS PASSED! Rover simulation is production-ready!"
+                "[PARTY] ALL TESTS PASSED! Rover simulation is production-ready!"
             )
         elif passed >= total * 0.8:
-            self.get_logger().info("⚠️ MOST TESTS PASSED - Minor issues to resolve")
+            self.get_logger().info(" MOST TESTS PASSED - Minor issues to resolve")
         else:
-            self.get_logger().info("❌ CRITICAL ISSUES - System needs attention")
+            self.get_logger().info("[FAIL] CRITICAL ISSUES - System needs attention")
 
         self.get_logger().info("=" * 80)
 
