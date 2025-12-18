@@ -20,26 +20,30 @@ from typing import Dict, List
 sys.path.insert(0, "/home/ubuntu/urc-machiato-2026/src")
 
 import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-
-# Import autonomy interfaces
-from autonomy_interfaces.msg import SystemState, SafetyStatus
 
 # WebSocket client for testing
 import websockets
 import websockets.exceptions
+
+# Import autonomy interfaces
+from autonomy_interfaces.msg import SafetyStatus, SystemState
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 
 
 class SimpleROSPublisher(Node):
     """Simple ROS2 node that publishes test data."""
 
     def __init__(self):
-        super().__init__('simple_publisher')
+        super().__init__("simple_publisher")
         qos_profile = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
 
-        self.system_state_pub = self.create_publisher(SystemState, '/autonomy/system_state', qos_profile)
-        self.safety_status_pub = self.create_publisher(SafetyStatus, '/autonomy/safety_status', qos_profile)
+        self.system_state_pub = self.create_publisher(
+            SystemState, "/autonomy/system_state", qos_profile
+        )
+        self.safety_status_pub = self.create_publisher(
+            SafetyStatus, "/autonomy/safety_status", qos_profile
+        )
 
         self.timer = self.create_timer(1.0, self.publish_data)  # 1 Hz
         self.message_count = 0
@@ -111,7 +115,9 @@ class WebSocketPerformanceClient:
             print(f"[FAIL] WebSocket client {self.client_id} error: {e}")
             self.connected = False
 
-        print(f"[GRAPH] Client {self.client_id}: {self.messages_received} messages, {len(self.data_types)} data types")
+        print(
+            f"[GRAPH] Client {self.client_id}: {self.messages_received} messages, {len(self.data_types)} data types"
+        )
 
     def _process_message(self, message: str):
         """Process received message."""
@@ -120,8 +126,8 @@ class WebSocketPerformanceClient:
             self.messages_received += 1
             self.message_times.append(time.time())
 
-            if 'type' in data:
-                self.data_types.add(data['type'])
+            if "type" in data:
+                self.data_types.add(data["type"])
 
             # Keep only recent times for performance calc
             if len(self.message_times) > 50:
@@ -136,13 +142,15 @@ class WebSocketPerformanceClient:
             return {"messages_per_second": 0, "connected": self.connected}
 
         time_span = self.message_times[-1] - self.message_times[0]
-        messages_per_second = len(self.message_times) / time_span if time_span > 0 else 0
+        messages_per_second = (
+            len(self.message_times) / time_span if time_span > 0 else 0
+        )
 
         return {
             "messages_per_second": messages_per_second,
             "total_messages": self.messages_received,
             "data_types": list(self.data_types),
-            "connected": self.connected
+            "connected": self.connected,
         }
 
 
@@ -160,14 +168,15 @@ def run_end_to_end_test():
         "competition_bridge": {"status": "starting"},
         "websocket_clients": [],
         "performance": {},
-        "overall_status": "running"
+        "overall_status": "running",
     }
 
     try:
         # Phase 1: Start ROS2 Publisher
         print("\n[ANTENNA] Phase 1: Starting ROS2 Publisher...")
         import os
-        os.environ['ROS_DOMAIN_ID'] = str(ros_domain_id)
+
+        os.environ["ROS_DOMAIN_ID"] = str(ros_domain_id)
 
         # Start ROS2 publisher in separate thread
         def start_ros_publisher():
@@ -186,15 +195,15 @@ def run_end_to_end_test():
         print("\n[CONNECT] Phase 2: Starting Competition Bridge...")
 
         env = os.environ.copy()
-        env['PYTHONPATH'] = '/home/ubuntu/urc-machiato-2026/src'
-        env['ROS_DOMAIN_ID'] = str(ros_domain_id)
+        env["PYTHONPATH"] = "/home/ubuntu/urc-machiato-2026/src"
+        env["ROS_DOMAIN_ID"] = str(ros_domain_id)
 
         bridge_process = subprocess.Popen(
-            [sys.executable, '-m', 'bridges.competition_bridge'],
+            [sys.executable, "-m", "bridges.competition_bridge"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
-            cwd='/home/ubuntu/urc-machiato-2026'
+            cwd="/home/ubuntu/urc-machiato-2026",
         )
 
         time.sleep(3)  # Let bridge start
@@ -226,17 +235,23 @@ def run_end_to_end_test():
         # Phase 4: Analyze Results
         print("\n[GRAPH] Phase 4: Analyzing Results...")
 
-        total_messages = sum(client["total_messages"] for client in results["websocket_clients"])
-        avg_mps = sum(client["messages_per_second"] for client in results["websocket_clients"]) / len(clients)
+        total_messages = sum(
+            client["total_messages"] for client in results["websocket_clients"]
+        )
+        avg_mps = sum(
+            client["messages_per_second"] for client in results["websocket_clients"]
+        ) / len(clients)
 
-        connected_clients = sum(1 for client in results["websocket_clients"] if client["connected"])
+        connected_clients = sum(
+            1 for client in results["websocket_clients"] if client["connected"]
+        )
 
         results["performance"] = {
             "total_messages_received": total_messages,
             "average_messages_per_second": avg_mps,
             "connected_clients": connected_clients,
             "total_clients": len(clients),
-            "test_duration": test_duration
+            "test_duration": test_duration,
         }
 
         # Print results
@@ -246,24 +261,34 @@ def run_end_to_end_test():
         print(f"   Connected Clients: {connected_clients}/{len(clients)}")
 
         for i, client_stats in enumerate(results["websocket_clients"]):
-            print(f"   Client {i+1}: {client_stats['total_messages']} msgs, {client_stats['messages_per_second']:.1f} mps")
+            print(
+                f"   Client {i+1}: {client_stats['total_messages']} msgs, {client_stats['messages_per_second']:.1f} mps"
+            )
 
         # Assess success
         success = (
-            results["ros_publisher"]["status"] == "running" and
-            results["competition_bridge"]["status"] == "running" and
-            connected_clients > 0 and
-            total_messages > 0
+            results["ros_publisher"]["status"] == "running"
+            and results["competition_bridge"]["status"] == "running"
+            and connected_clients > 0
+            and total_messages > 0
         )
 
         results["overall_status"] = "PASSED" if success else "FAILED"
 
         print("\n[ACHIEVEMENT] FINAL RESULT:")
         print(f"   Status: {'[PASS] PASSED' if success else '[FAIL] FAILED'}")
-        print(f"   ROS2 Publisher: {'[PASS]' if results['ros_publisher']['status'] == 'running' else '[FAIL]'}")
-        print(f"   Competition Bridge: {'[PASS]' if results['competition_bridge']['status'] == 'running' else '[FAIL]'}")
-        print(f"   WebSocket Connections: {'[PASS]' if connected_clients > 0 else '[FAIL]'} {connected_clients} connected")
-        print(f"   Data Flow: {'[PASS]' if total_messages > 0 else '[FAIL]'} {total_messages} messages")
+        print(
+            f"   ROS2 Publisher: {'[PASS]' if results['ros_publisher']['status'] == 'running' else '[FAIL]'}"
+        )
+        print(
+            f"   Competition Bridge: {'[PASS]' if results['competition_bridge']['status'] == 'running' else '[FAIL]'}"
+        )
+        print(
+            f"   WebSocket Connections: {'[PASS]' if connected_clients > 0 else '[FAIL]'} {connected_clients} connected"
+        )
+        print(
+            f"   Data Flow: {'[PASS]' if total_messages > 0 else '[FAIL]'} {total_messages} messages"
+        )
 
         return results
 
@@ -283,8 +308,9 @@ def run_end_to_end_test():
             bridge_process.kill()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import logging
+
     logging.basicConfig(level=logging.WARNING)  # Reduce noise
 
     results = run_end_to_end_test()
