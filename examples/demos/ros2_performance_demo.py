@@ -47,7 +47,7 @@ class PerformanceSubscriber(Node):
             String, topic_name, self.message_callback, qos_profile
         )
 
-    def message_callback(self, msg):
+    def message_callback(self, msg) -> None:
         """Handle incoming messages and measure latency."""
         receive_time = time.time()
         # Extract timestamp from message (assuming format: "timestamp:content")
@@ -62,7 +62,7 @@ class PerformanceSubscriber(Node):
 
         self.message_count += 1
 
-    def get_stats(self):
+    def get_stats(self) -> dict:
         """Get performance statistics."""
         if not self.latencies:
             return {"count": 0, "avg_latency": 0, "min_latency": 0, "max_latency": 0}
@@ -78,7 +78,7 @@ class PerformanceSubscriber(Node):
         }
 
 
-def measure_system_resources():
+def measure_system_resources() -> dict:
     """Measure current system resource usage."""
     process = psutil.Process()
     return {
@@ -88,7 +88,7 @@ def measure_system_resources():
     }
 
 
-def run_intra_process_test():
+def run_intra_process_test() -> dict:
     """Run intra-process communication performance test."""
     print(" Testing Intra-Process Communication...")
 
@@ -155,7 +155,7 @@ def run_intra_process_test():
     }
 
 
-def run_inter_process_test():
+def run_inter_process_test() -> dict:
     """Run inter-process communication performance test."""
     print("[NETWORK] Testing Inter-Process Communication...")
 
@@ -223,7 +223,7 @@ def run_inter_process_test():
     }
 
 
-def main():
+def main() -> None:
     """Run the performance comparison demo."""
     print("[IGNITE] URC 2026 ROS2 Communication Performance Demo")
     print("=" * 55)
