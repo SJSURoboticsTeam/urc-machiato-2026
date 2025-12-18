@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: flake8
         args: [--max-line-length=88, --extend-ignore=E203, W503]
-        exclude: ^(docs|frontend/node_modules|build|install|\.git|examples/demos|missions|src/install)/
+        exclude: ^(docs|frontend/node_modules|build|install|\.git|examples/demos|missions|src/install|scripts|tools)/
 
   # Type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: mypy
         args: [--ignore-missing-imports, --no-strict-optional]
-        exclude: ^(examples/demos|missions|src/install)/
+        exclude: ^(examples/demos|missions|src/install|scripts|tools)/
 
   # Check for merge conflicts
   - repo: https://github.com/pre-commit/pre-commit-hooks
