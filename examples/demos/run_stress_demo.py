@@ -157,7 +157,7 @@ def main():
     total_time = time.time() - start_time
     print("\n[FLAG] Demo Summary")
     print("=" * 18)
-    print(".1f")
+    print(f"Total test duration: {total_time:.1f} seconds")
     print("[PASS] Communication stress testing framework is operational")
     print("[GRAPH] All major communication layers tested successfully")
     print("[TOOL] Framework ready for full stress testing campaigns")

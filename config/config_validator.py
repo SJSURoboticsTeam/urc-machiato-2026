@@ -437,7 +437,7 @@ def validate_all_configs(
             print(" To generate default configurations, run:")
             print(
                 '   python3 -c "from config.config_validator import '
-                'ConfigurationValidator; '
+                "ConfigurationValidator; "
                 'ConfigurationValidator().generate_default_configs()"'
             )
             return False

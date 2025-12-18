@@ -24,9 +24,8 @@ import os
 import signal
 import subprocess
 import sys
-import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import websockets
 
@@ -437,8 +436,8 @@ class ROS2UniversalMonitor:
                 print(f"   • {node}")
             if len(nodes) > 5:
                 print(f"   ... and {len(nodes) - 5} more")
-        except:
-            print(" ROS2 Nodes: Unable to query")
+        except Exception as e:
+            print(f" ROS2 Nodes: Unable to query - {e}")
 
         # Topics count
         topics = self.get_topic_list()

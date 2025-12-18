@@ -14,7 +14,6 @@ Usage:
 Author: URC 2026 Autonomy Team
 """
 
-import threading
 import time
 
 from src.bridges.websocket_redundancy_manager import (
