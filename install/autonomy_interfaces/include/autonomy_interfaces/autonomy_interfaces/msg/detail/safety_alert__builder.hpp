@@ -1,0 +1,1 @@
+/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_cpp/autonomy_interfaces/msg/detail/safety_alert__builder.hpp

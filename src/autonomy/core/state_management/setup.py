@@ -33,18 +33,10 @@ setup(
     version="1.0.0",
     packages=packages,
     data_files=[
-        # ROS2 package configuration
-        (
-            "share/ament_index/resource_index/packages",
-            ["resource/autonomy_state_machine"],
-        ),
-        ("share/autonomy_state_machine", ["package.xml"]),
         # Launch files
-        ("share/autonomy_state_machine/launch", glob("launch/*.launch.py")),
+        ("share/autonomy_state_machine/launch", glob("launch/*.launch.py") if glob("launch/*.launch.py") else []),
         # Configuration files
-        ("share/autonomy_state_machine/config", glob("config/*.yaml")),
-        # Documentation
-        ("share/autonomy_state_machine/docs", glob("docs/*.md") + glob("docs/*.rst")),
+        ("share/autonomy_state_machine/config", glob("config/*.yaml") if glob("config/*.yaml") else []),
     ],
     install_requires=[
         "setuptools",
@@ -73,7 +65,7 @@ setup(
     author="URC 2026 Team",
     author_email="urc2026@team.com",
     description="Adaptive State Machine for URC 2026 Mars Rover",
-    long_description=open(os.path.join(setup_dir, "README.md")).read(),
+    long_description=open(os.path.join(setup_dir, "README.md")).read() if os.path.exists(os.path.join(setup_dir, "README.md")) else "Adaptive State Machine for URC 2026 Mars Rover",
     long_description_content_type="text/markdown",
     license="MIT",
     classifiers=[

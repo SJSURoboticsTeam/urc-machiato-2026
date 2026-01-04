@@ -1,9 +1,1 @@
-# Validate existing calibration quality
-string calibration_file
-string[] test_images
----
-bool success
-float32 reprojection_error
-string quality_assessment
-string recommendations
-string error_message
+/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/srv/ValidateCalibration.srv

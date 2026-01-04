@@ -1,0 +1,1 @@
+/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_c/autonomy_interfaces/srv/detail/get_network_stats__functions.h

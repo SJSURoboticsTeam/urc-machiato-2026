@@ -26,6 +26,7 @@ from typing import Any, Dict, List
 import psutil
 import rclpy
 import yaml
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
@@ -58,13 +59,20 @@ class ComprehensiveSystemTester(Node):
         self.received_slam_pose = None
         self.mission_progress_values = []
 
+        # QoS for sensor monitoring
+        sensor_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+        )
+
         # Subscribers for monitoring
         self.odom_sub = self.create_subscription(
-            Odometry, "/odom", self.odom_callback, 10
+            Odometry, "/odom", self.odom_callback, sensor_qos
         )
-        self.imu_sub = self.create_subscription(Imu, "/imu", self.imu_callback, 10)
+        self.imu_sub = self.create_subscription(Imu, "/imu", self.imu_callback, sensor_qos)
         self.gps_sub = self.create_subscription(
-            NavSatFix, "/gps/fix", self.gps_callback, 10
+            NavSatFix, "/gps/fix", self.gps_callback, sensor_qos
         )
         self.map_sub = self.create_subscription(
             String, "/frontend/map_data", self.map_callback, 10
@@ -870,9 +878,6 @@ class ComprehensiveSystemTester(Node):
             " Detailed report saved to: comprehensive_test_report.txt"
         )
         self.get_logger().info("=" * 60)
-
-        # Shutdown the system
-        rclpy.shutdown()
 
 
 def main():

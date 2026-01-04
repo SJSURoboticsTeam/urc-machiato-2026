@@ -18,16 +18,16 @@ from autonomy_interfaces.srv import ChangeState, GetAdaptationHistory, GetContex
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 
-from .adaptive_policy_engine import (
+from autonomy_state_machine.adaptive_policy_engine import (
     AdaptiveAction,
     AdaptiveActionType,
     AdaptivePolicyEngine,
 )
-from .config import QoSConfig, Timing
-from .context_evaluator import ContextEvaluator
-from .error_handling import error_boundary, handle_service_error
-from .states import RoverState
-from .transition_manager import TransitionManager
+from autonomy_state_machine.config import QoSConfig, Timing
+from autonomy_state_machine.context_evaluator import ContextEvaluator
+from autonomy_state_machine.error_handling import error_boundary, handle_service_error
+from autonomy_state_machine.states import RoverState
+from autonomy_state_machine.transition_manager import TransitionManager
 
 
 class AdaptiveStateMachine(Node):
@@ -328,8 +328,9 @@ class AdaptiveStateMachine(Node):
         """Publish current state information."""
         try:
             state_msg = SystemState()
+            state_msg.header.stamp = self.get_clock().now().to_msg()
             state_msg.current_state = self.current_state.value
-            state_msg.timestamp = self.get_clock().now().to_msg()
+            state_msg.transition_timestamp = self.get_clock().now().to_msg()
 
             # Add additional state information
             if self.previous_state:

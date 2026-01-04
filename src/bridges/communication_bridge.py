@@ -15,6 +15,7 @@ import asyncio
 import json
 import threading
 import time
+import websockets
 from typing import Any, Dict, Optional
 
 import rclpy
@@ -236,11 +237,11 @@ class CommunicationBridge(Node):
         async def run_server():
             server = await websockets.serve(
                 self.websocket_handler,
-                "localhost",
-                8766,
+                "0.0.0.0",
+                8765,
                 ping_interval=None,  # Disable ping/pong for simplicity
             )
-            self.get_logger().info("WebSocket server started on ws://localhost:8766")
+            self.get_logger().info("WebSocket server started on ws://0.0.0.0:8765")
             await server.wait_closed()
 
         def run_async():

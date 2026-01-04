@@ -24,8 +24,8 @@ install(PROGRAMS
 )
 
 # Create resource marker
-ament_index_register_resource(vision_processing_plugin
-  CONTENT_FILE vision_processing_plugin.xml
-)
+# ament_index_register_resource(vision_processing_plugin
+#   CONTENT_FILE vision_processing_plugin.xml
+# )
 
 ament_package()
