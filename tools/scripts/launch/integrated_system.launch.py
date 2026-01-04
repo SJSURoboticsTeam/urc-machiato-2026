@@ -23,9 +23,28 @@ def generate_launch_description():
     """Generate complete integrated system launch description"""
 
     # Get workspace paths
-    workspace_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # File is at: tools/scripts/launch/integrated_system.launch.py
+    # dirname(abspath) -> tools/scripts/launch
+    # dirname*2 -> tools/scripts
+    # dirname*3 -> tools
+    # dirname*4 -> urc-machiato-2026 (root)
+    workspace_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     teleoperation_path = os.path.join(workspace_root, "submodules", "teleoperation")
     control_systems_path = os.path.join(workspace_root, "submodules", "control-systems")
+
+    # Define environment with PYTHONPATH
+    # This ensures all nodes can find modules in /src, /missions, and /simulation
+    # We append to existing PYTHONPATH to keep ROS2 libraries (rclpy, etc.)
+    node_env = os.environ.copy()
+    extra_python_paths = [
+        workspace_root,
+        os.path.join(workspace_root, "src"),
+        os.path.join(workspace_root, "src/autonomy/core/state_management"),
+        os.path.join(workspace_root, "src/autonomy/core/state_management/autonomy_state_machine"),
+    ]
+    
+    current_pp = node_env.get("PYTHONPATH", "")
+    node_env["PYTHONPATH"] = ":".join(extra_python_paths) + (f":{current_pp}" if current_pp else "")
 
     return LaunchDescription(
         [
@@ -78,8 +97,7 @@ def generate_launch_description():
                             "--once",
                             "/gps/fix",
                             "sensor_msgs/msg/NavSatFix",
-                            'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "gps"}, '
-                            "latitude: 35.0, longitude: -117.0, altitude: 100.0",
+                            "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'gps'}, latitude: 35.0, longitude: -117.0, altitude: 100.0}",
                         ],
                         output="log",
                         name="gps_publisher",
@@ -98,8 +116,7 @@ def generate_launch_description():
                             "--once",
                             "/imu/data",
                             "sensor_msgs/msg/Imu",
-                            'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "imu"}, '
-                            "orientation:{x: 0.0, y: 0.0, z: 0.0, w: 1.0}",
+                            "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'imu'}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}",
                         ],
                         output="log",
                         name="imu_publisher",
@@ -118,8 +135,7 @@ def generate_launch_description():
                             "--once",
                             "/camera/depth/image_raw",
                             "sensor_msgs/msg/Image",
-                            'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "camera_depth"}, '
-                            'height: 480, width: 640, encoding: "32FC1"',
+                            "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'camera_depth'}, height: 480, width: 640, encoding: '32FC1'}",
                         ],
                         output="log",
                         name="depth_publisher",
@@ -135,8 +151,9 @@ def generate_launch_description():
                     "--once",
                     "/cmd_vel",
                     "geometry_msgs/msg/Twist",
-                    "linear:{x: 0.0, y: 0.0, z: 0.0}, angular:{x: 0.0, y: 0.0, z: 0.0}",
+                    "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}",
                 ],
+                shell=True,  # Use shell to ensure YAML string is handled correctly
                 output="log",
                 name="cmd_vel_publisher",
             ),
@@ -154,7 +171,7 @@ def generate_launch_description():
                             "--once",
                             "/teleoperation/joint_states",
                             "sensor_msgs/msg/JointState",
-                            'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "teleop"}, name: ["joint1"], position: [0.0]',
+                            "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'teleop'}, name: ['joint1'], position: [0.0]}",
                         ],
                         output="log",
                         name="joint_states_publisher",
@@ -172,7 +189,7 @@ def generate_launch_description():
                             "--once",
                             "/teleoperation/chassis_velocity",
                             "geometry_msgs/msg/TwistStamped",
-                            'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "teleop"}',
+                            "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'teleop'}}",
                         ],
                         output="log",
                         name="chassis_velocity_publisher",
@@ -190,7 +207,7 @@ def generate_launch_description():
                             "--once",
                             "/teleoperation/motor_temperatures",
                             "std_msgs/msg/Float32MultiArray",
-                            "data: [25.0, 26.0, 24.5, 25.5]",
+                            "{data: [25.0, 26.0, 24.5, 25.5]}",
                         ],
                         output="log",
                         name="motor_temp_publisher",
@@ -208,7 +225,7 @@ def generate_launch_description():
                             "--once",
                             "/teleoperation/system_status",
                             "sensor_msgs/msg/BatteryState",
-                            "voltage: 24.0, current: 2.0, charge: 95.0",
+                            "{voltage: 24.0, current: 2.0, charge: 95.0}",
                         ],
                         output="log",
                         name="system_status_publisher",
@@ -230,7 +247,7 @@ def generate_launch_description():
                             "--once",
                             "/odom",
                             "nav_msgs/msg/Odometry",
-                            'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "odom"}, pose:{pose:{position:{x: 0.0, y: 0.0, z: 0.0}, orientation:{w: 1.0}}}',
+                            "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'odom'}, pose: {pose: {position: {x: 0.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}",
                         ],
                         output="log",
                         name="odom_publisher",
@@ -246,7 +263,7 @@ def generate_launch_description():
                     "--once",
                     "/map",
                     "nav_msgs/msg/OccupancyGrid",
-                    'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "map"}, info:{width: 100, height: 100, resolution: 0.1}',
+                    "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'map'}, info: {width: 100, height: 100, resolution: 0.1}}",
                 ],
                 output="log",
                 name="map_publisher",
@@ -260,7 +277,7 @@ def generate_launch_description():
                     "--once",
                     "/goal_pose",
                     "geometry_msgs/msg/PoseStamped",
-                    'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "map"}, pose:{position:{x: 5.0, y: 5.0, z: 0.0}, orientation:{w: 1.0}}',
+                    "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'map'}, pose: {position: {x: 5.0, y: 5.0, z: 0.0}, orientation: {w: 1.0}}}",
                 ],
                 output="log",
                 name="goal_pose_publisher",
@@ -274,7 +291,7 @@ def generate_launch_description():
                     "--once",
                     "/camera/camera_info",
                     "sensor_msgs/msg/CameraInfo",
-                    'header:{stamp:{sec: 0, nanosec: 0}, frame_id: "camera"}, height: 480, width: 640, distortion_model: "plumb_bob"',
+                    "{header: {stamp: {sec: 0, nanosec: 0}, frame_id: 'camera'}, height: 480, width: 640, distortion_model: 'plumb_bob'}",
                 ],
                 output="log",
                 name="camera_info_publisher",
@@ -328,28 +345,79 @@ def generate_launch_description():
                 ],
             ),
             # ===========================================
+            # SENSOR SIMULATOR & BRIDGES
+            # ===========================================
+            ExecuteProcess(
+                cmd=[
+                    "python3",
+                    os.path.join(workspace_root, "src/autonomy/perception/simulation/autonomy_simulation/sensor_simulator.py"),
+                ],
+                output="screen",
+                name="sensor_simulator",
+                env=node_env,
+            ),
+            ExecuteProcess(
+                cmd=[
+                    "python3",
+                    os.path.join(workspace_root, "src/bridges/communication_bridge.py"),
+                ],
+                output="screen",
+                name="communication_bridge",
+                env=node_env,
+            ),
+            ExecuteProcess(
+                cmd=[
+                    "python3",
+                    os.path.join(workspace_root, "src/bridges/ros2_mission_bridge.py"),
+                ],
+                output="screen",
+                name="mission_bridge",
+                env=node_env,
+            ),
+            ExecuteProcess(
+                cmd=[
+                    "python3",
+                    os.path.join(workspace_root, "src/bridges/slam_pose_publisher.py"),
+                ],
+                output="screen",
+                name="slam_pose_publisher",
+                env=node_env,
+            ),
+            ExecuteProcess(
+                cmd=[
+                    "python3",
+                    os.path.join(workspace_root, "src/bridges/map_data_publisher.py"),
+                ],
+                output="screen",
+                name="map_data_publisher",
+                env=node_env,
+            ),
+            # ===========================================
             # STATE MACHINE & NAVIGATION NODES
             # ===========================================
             ExecuteProcess(
                 cmd=[
                     "python3",
-                    "/home/ubuntu/urc-machiato-2026/tests/state_machine_director_node.py",
+                    os.path.join(workspace_root, "src/autonomy/core/state_management/autonomy_state_machine/adaptive_state_machine.py"),
                 ],
                 output="screen",
                 name="state_machine_director",
+                env=node_env,
             ),
             ExecuteProcess(
-                cmd=["python3", "/home/ubuntu/urc-machiato-2026/tests/slam_nodes.py"],
+                cmd=["python3", os.path.join(workspace_root, "tests/slam_nodes.py")],
                 output="screen",
                 name="slam_nodes",
+                env=node_env,
             ),
             ExecuteProcess(
                 cmd=[
                     "python3",
-                    "/home/ubuntu/urc-machiato-2026/tests/navigation_service_node.py",
+                    os.path.join(workspace_root, "tests/navigation_service_node.py"),
                 ],
                 output="screen",
                 name="navigation_service",
+                env=node_env,
             ),
             # ===========================================
             # INTEGRATION VERIFICATION

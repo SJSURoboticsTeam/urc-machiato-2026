@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import rclpy
-from autonomy_interfaces.msg import AdaptiveAction, ContextState
+from autonomy_interfaces.msg import AdaptiveAction as AdaptiveActionMsg, ContextState
 from rclpy.node import Node
 
 
@@ -42,9 +42,9 @@ class AdaptiveAction:
     expected_duration: float
     trigger_context: ContextState
 
-    def to_msg(self) -> "AdaptiveAction":
+    def to_msg(self) -> "AdaptiveActionMsg":
         """Convert to ROS2 message."""
-        msg = AdaptiveAction()
+        msg = AdaptiveActionMsg()
         msg.action_type = self.action_type.value
         msg.parameters = [f"{k}={v}" for k, v in self.parameters.items()]
         msg.trigger_context = self.trigger_context

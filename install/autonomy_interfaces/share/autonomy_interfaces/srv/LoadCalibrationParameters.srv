@@ -1,6 +1,1 @@
-# Load calibration data into ROS parameters
-string calibration_file
-string parameter_namespace
----
-bool success
-string error_message
+/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/srv/LoadCalibrationParameters.srv

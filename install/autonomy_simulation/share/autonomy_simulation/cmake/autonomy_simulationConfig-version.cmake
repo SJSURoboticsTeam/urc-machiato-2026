@@ -1,0 +1,1 @@
+/home/durian/urc-machiato-2026/build/autonomy_simulation/ament_cmake_core/autonomy_simulationConfig-version.cmake

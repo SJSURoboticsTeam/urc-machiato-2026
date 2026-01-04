@@ -23,7 +23,6 @@ find_package(tf2_ros REQUIRED)
 
 # Install directories
 install(DIRECTORY
-  launch
   urdf
   worlds
   config

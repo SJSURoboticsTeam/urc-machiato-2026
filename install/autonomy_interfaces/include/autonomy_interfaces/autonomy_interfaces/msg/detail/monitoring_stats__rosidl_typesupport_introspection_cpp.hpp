@@ -1,0 +1,1 @@
+/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_typesupport_introspection_cpp/autonomy_interfaces/msg/detail/monitoring_stats__rosidl_typesupport_introspection_cpp.hpp

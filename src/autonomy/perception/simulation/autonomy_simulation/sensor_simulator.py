@@ -29,13 +29,36 @@ class SensorSimulator(Node):
     def __init__(self):
         super().__init__("sensor_simulator")
 
-        # Declare parameters
-        self.declare_parameter("use_sim_time", True)
-        self.declare_parameter("gps_noise_std", 3.0)  # meters
-        self.declare_parameter("imu_noise_std", 0.01)  # rad/s for gyro, m/s² for accel
-        self.declare_parameter("camera_width", 640)
-        self.declare_parameter("camera_height", 480)
-        self.declare_parameter("camera_fps", 30.0)
+        # Declare parameters (handle already declared case)
+        try:
+            self.declare_parameter("use_sim_time", True)
+        except rclpy.exceptions.ParameterAlreadyDeclaredException:
+            pass  # Parameter already declared by another node
+
+        try:
+            self.declare_parameter("gps_noise_std", 3.0)  # meters
+        except rclpy.exceptions.ParameterAlreadyDeclaredException:
+            pass
+
+        try:
+            self.declare_parameter("imu_noise_std", 0.01)  # rad/s for gyro, m/s² for accel
+        except rclpy.exceptions.ParameterAlreadyDeclaredException:
+            pass
+
+        try:
+            self.declare_parameter("camera_width", 640)
+        except rclpy.exceptions.ParameterAlreadyDeclaredException:
+            pass
+
+        try:
+            self.declare_parameter("camera_height", 480)
+        except rclpy.exceptions.ParameterAlreadyDeclaredException:
+            pass
+
+        try:
+            self.declare_parameter("camera_fps", 30.0)
+        except rclpy.exceptions.ParameterAlreadyDeclaredException:
+            pass
 
         # Get parameters
         self.use_sim_time = self.get_parameter("use_sim_time").value
@@ -56,14 +79,14 @@ class SensorSimulator(Node):
             "yaw": 0.0,
         }
 
-        # Base GPS coordinates (Mars-like location)
-        self.base_lat = -4.5895  # Approximate Mars location
-        self.base_lon = 137.4417
-        self.base_alt = -2200.0  # Mars elevation in meters
+        # Base GPS coordinates (Standard reference location)
+        self.base_lat = 35.0
+        self.base_lon = -117.0
+        self.base_alt = 100.0
 
-        # QoS profile for sensor data
+        # QoS profile for sensor data - using RELIABLE to match test expectations
         sensor_qos = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
+            reliability=ReliabilityPolicy.RELIABLE,
             history=HistoryPolicy.KEEP_LAST,
             depth=10,
             durability=DurabilityPolicy.VOLATILE,
@@ -71,9 +94,9 @@ class SensorSimulator(Node):
 
         # Publishers
         self.gps_publisher = self.create_publisher(
-            NavSatFix, "/rover/gps/fix", sensor_qos
+            NavSatFix, "/gps/fix", sensor_qos
         )
-        self.imu_publisher = self.create_publisher(Imu, "/rover/imu/data", sensor_qos)
+        self.imu_publisher = self.create_publisher(Imu, "/imu", sensor_qos)
         self.camera_publisher = self.create_publisher(
             Image, "/rover/camera/image_raw", sensor_qos
         )

@@ -21,7 +21,8 @@ def generate_launch_description():
     """Generate launch description for integrated mission system"""
 
     # Get workspace paths for submodules
-    workspace_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # File is at: tools/scripts/launch/mission_system.launch.py
+    workspace_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     teleoperation_path = os.path.join(workspace_root, "submodules", "teleoperation")
     control_systems_path = os.path.join(workspace_root, "submodules", "control-systems")
 
@@ -47,7 +48,7 @@ def generate_launch_description():
             ExecuteProcess(
                 cmd=[
                     "python3",
-                    "/home/ubuntu/urc-machiato-2026/tests/state_machine_director_node.py",
+                    os.path.join(workspace_root, "src/autonomy/core/state_management/autonomy_state_machine/adaptive_state_machine.py"),
                 ],
                 output="screen",
                 name="state_machine_director",
@@ -56,7 +57,7 @@ def generate_launch_description():
             # SLAM PROCESSING NODES
             # ===========================================
             ExecuteProcess(
-                cmd=["python3", "/home/ubuntu/urc-machiato-2026/tests/slam_nodes.py"],
+                cmd=["python3", os.path.join(workspace_root, "tests/slam_nodes.py")],
                 output="screen",
                 name="slam_nodes",
             ),
@@ -66,7 +67,7 @@ def generate_launch_description():
             ExecuteProcess(
                 cmd=[
                     "python3",
-                    "/home/ubuntu/urc-machiato-2026/tests/navigation_service_node.py",
+                    os.path.join(workspace_root, "tests/navigation_service_node.py"),
                 ],
                 output="screen",
                 name="navigation_service",

@@ -6,15 +6,22 @@ Tests the actual ROS2 state machine bridge implementation with real ROS2 topics 
 This replaces mock-based testing with tests of the working implementation.
 """
 
+import os
+import sys
 import time
 import unittest
+
+# Add project paths for imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "src"))
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
 
-from src.bridges.ros2_state_machine_bridge import SystemState
+from bridges.ros2_state_machine_bridge import SystemState
 
 
 class StateMachineBridgeTester(Node):
@@ -134,6 +141,7 @@ class TestROS2StateMachineBridge(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment."""
+        rclpy.init()
         self.node = StateMachineBridgeTester()
         # Give some time for subscriptions to connect
         time.sleep(0.5)
@@ -142,6 +150,7 @@ class TestROS2StateMachineBridge(unittest.TestCase):
         """Clean up test environment."""
         if hasattr(self, "node"):
             self.node.destroy_node()
+        rclpy.shutdown()
 
     def test_bridge_initialization(self):
         """Test that the bridge initializes properly."""

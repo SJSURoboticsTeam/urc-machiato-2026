@@ -14,6 +14,17 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 
+# ROS2 imports for QoS testing
+try:
+    import rclpy
+    from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+except ImportError:
+    # Mock ROS2 imports for systems without ROS2 installed
+    rclpy = None
+    QoSProfile = Mock()
+    ReliabilityPolicy = Mock()
+    DurabilityPolicy = Mock()
+
 # Add project paths for imports
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 AUTONOMY_CODE_ROOT = os.path.join(PROJECT_ROOT, "autonomy", "code")
@@ -71,7 +82,7 @@ class TestBasicIntegration(unittest.TestCase):
             self.assertEqual(len(list(SystemState)), 7)  # All states defined
 
             # Test valid transitions (basic validation)
-            from autonomy.code.state_management.autonomy_state_machine.states import (
+            from src.autonomy.core.state_management.autonomy_state_machine.states import (
                 RoverState,
                 can_transition,
             )
@@ -144,7 +155,7 @@ class TestBasicIntegration(unittest.TestCase):
     def test_safety_system_integration(self):
         """Test safety system integrates with other components."""
         try:
-            from autonomy.code.state_management.autonomy_state_machine.safety_manager import (
+            from src.autonomy.core.state_management.autonomy_state_machine.safety_manager import (
                 SafetyManager,
                 SafetySeverity,
                 SafetyTriggerType,
