@@ -1,1 +1,6 @@
-/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/msg/QoSNetworkStats.msg
+float64 bandwidth_up_mbps
+float64 bandwidth_down_mbps
+float64 latency_ms
+float64 packet_loss_rate
+string current_band
+float64 signal_strength

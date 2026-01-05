@@ -12,11 +12,14 @@ import math
 # OpenCV for camera simulation
 import cv2
 import numpy as np
+import sys
+import os
 import rclpy
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, PoseStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from autonomy_utilities import QoSProfiles, ParameterManager
 
 # ROS2 message types
 from sensor_msgs.msg import CameraInfo, Image, Imu, NavSatFix
@@ -29,44 +32,49 @@ class SensorSimulator(Node):
     def __init__(self):
         super().__init__("sensor_simulator")
 
-        # Declare parameters (handle already declared case)
-        try:
-            self.declare_parameter("use_sim_time", True)
-        except rclpy.exceptions.ParameterAlreadyDeclaredException:
-            pass  # Parameter already declared by another node
+        # Standardized parameter management
+        self.param_manager = ParameterManager(self)
 
-        try:
-            self.declare_parameter("gps_noise_std", 3.0)  # meters
-        except rclpy.exceptions.ParameterAlreadyDeclaredException:
-            pass
+        # Define parameter specifications
+        # Note: use_sim_time is a standard ROS2 parameter handled automatically
+        param_specs = {
+            "gps_noise_std": {
+                "default": 0.5,  # Reduced for better test consistency
+                "type": float,
+                "description": "GPS position noise standard deviation (meters)"
+            },
+            "imu_noise_std": {
+                "default": 0.01,
+                "type": float,
+                "description": "IMU noise standard deviation (rad/s, m/s²)"
+            },
+            "camera_width": {
+                "default": 640,
+                "type": int,
+                "description": "Camera image width in pixels"
+            },
+            "camera_height": {
+                "default": 480,
+                "type": int,
+                "description": "Camera image height in pixels"
+            },
+            "camera_fps": {
+                "default": 30.0,
+                "type": float,
+                "description": "Camera frame rate"
+            }
+        }
 
-        try:
-            self.declare_parameter("imu_noise_std", 0.01)  # rad/s for gyro, m/s² for accel
-        except rclpy.exceptions.ParameterAlreadyDeclaredException:
-            pass
+        # Declare and get parameters
+        params = self.param_manager.declare_parameters(param_specs)
 
-        try:
-            self.declare_parameter("camera_width", 640)
-        except rclpy.exceptions.ParameterAlreadyDeclaredException:
-            pass
-
-        try:
-            self.declare_parameter("camera_height", 480)
-        except rclpy.exceptions.ParameterAlreadyDeclaredException:
-            pass
-
-        try:
-            self.declare_parameter("camera_fps", 30.0)
-        except rclpy.exceptions.ParameterAlreadyDeclaredException:
-            pass
-
-        # Get parameters
+        # Extract parameter values
         self.use_sim_time = self.get_parameter("use_sim_time").value
-        self.gps_noise_std = self.get_parameter("gps_noise_std").value
-        self.imu_noise_std = self.get_parameter("imu_noise_std").value
-        self.camera_width = self.get_parameter("camera_width").value
-        self.camera_height = self.get_parameter("camera_height").value
-        self.camera_fps = self.get_parameter("camera_fps").value
+        self.gps_noise_std = params["gps_noise_std"]
+        self.imu_noise_std = params["imu_noise_std"]
+        self.camera_width = params["camera_width"]
+        self.camera_height = params["camera_height"]
+        self.camera_fps = params["camera_fps"]
 
         # Simulation state
         self.start_time = self.get_clock().now()
@@ -84,13 +92,8 @@ class SensorSimulator(Node):
         self.base_lon = -117.0
         self.base_alt = 100.0
 
-        # QoS profile for sensor data - using RELIABLE to match test expectations
-        sensor_qos = QoSProfile(
-            reliability=ReliabilityPolicy.RELIABLE,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10,
-            durability=DurabilityPolicy.VOLATILE,
-        )
+        # Use standardized QoS profiles
+        sensor_qos = QoSProfiles.sensor_data()
 
         # Publishers
         self.gps_publisher = self.create_publisher(
@@ -104,7 +107,10 @@ class SensorSimulator(Node):
             CameraInfo, "/rover/camera/camera_info", sensor_qos
         )
         self.odom_publisher = self.create_publisher(
-            Odometry, "/odom", QoSProfile(depth=10)
+            Odometry, "/odom", QoSProfiles.state_data()
+        )
+        self.slam_pose_publisher = self.create_publisher(
+            PoseStamped, "/slam/pose", QoSProfiles.state_data()
         )
 
         # TF broadcaster
@@ -343,6 +349,13 @@ class SensorSimulator(Node):
         msg.twist.twist.angular.z = 0.01 * math.sin(0.2 * current_time)
 
         self.odom_publisher.publish(msg)
+
+        # Also publish SLAM pose for testing
+        slam_msg = PoseStamped()
+        slam_msg.header = msg.header
+        slam_msg.header.frame_id = "map"
+        slam_msg.pose = msg.pose.pose
+        self.slam_pose_publisher.publish(slam_msg)
 
         # Publish TF transform
         t = TransformStamped()

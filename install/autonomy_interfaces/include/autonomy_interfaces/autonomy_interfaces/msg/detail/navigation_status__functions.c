@@ -202,7 +202,7 @@ autonomy_interfaces__msg__NavigationStatus__copy(
 }
 
 autonomy_interfaces__msg__NavigationStatus *
-autonomy_interfaces__msg__NavigationStatus__create()
+autonomy_interfaces__msg__NavigationStatus__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__NavigationStatus * msg = (autonomy_interfaces__msg__NavigationStatus *)allocator.allocate(sizeof(autonomy_interfaces__msg__NavigationStatus), allocator.state);

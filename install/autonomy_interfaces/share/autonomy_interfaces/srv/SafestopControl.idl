@@ -1,1 +1,61 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/SafestopControl.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/SafestopControl.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Safestop Control Service" "\n"
+      "Allows operator to engage/disengage/toggle safestop")
+    struct SafestopControl_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "\"ENGAGE\", \"DISENGAGE\", \"TOGGLE\"")
+      string command;
+
+      @verbatim (language="comment", text=
+        "ID of operator initiating the command")
+      string operator_id;
+
+      @verbatim (language="comment", text=
+        "Operator acknowledges any risks")
+      boolean acknowledge_risks;
+
+      @verbatim (language="comment", text=
+        "Optional reason for the command")
+      string reason;
+
+      @verbatim (language="comment", text=
+        "Specific subsystems to control (empty = all)")
+      sequence<string> affected_subsystems;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct SafestopControl_Response {
+      @verbatim (language="comment", text=
+        "Command executed successfully")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Human-readable status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "\"ENGAGED\", \"DISENGAGED\", \"IN_PROGRESS\", \"FAILED\"")
+      string current_state;
+
+      @verbatim (language="comment", text=
+        "Subsystems that were affected")
+      sequence<string> affected_subsystems;
+
+      @verbatim (language="comment", text=
+        "When command was processed")
+      double timestamp;
+
+      @verbatim (language="comment", text=
+        "Operator who executed the command")
+      string operator_id;
+    };
+  };
+};

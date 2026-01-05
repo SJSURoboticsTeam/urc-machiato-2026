@@ -1,1 +1,71 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_cpp/autonomy_interfaces/srv/detail/follow_me_control__type_support.hpp
+// generated from rosidl_generator_cpp/resource/idl__type_support.hpp.em
+// with input from autonomy_interfaces:srv/FollowMeControl.idl
+// generated code does not contain a copyright notice
+
+#ifndef AUTONOMY_INTERFACES__SRV__DETAIL__FOLLOW_ME_CONTROL__TYPE_SUPPORT_HPP_
+#define AUTONOMY_INTERFACES__SRV__DETAIL__FOLLOW_ME_CONTROL__TYPE_SUPPORT_HPP_
+
+#include "rosidl_typesupport_interface/macros.h"
+
+#include "autonomy_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp"
+
+#include "rosidl_typesupport_cpp/service_type_support.hpp"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+// Forward declare the get type support functions for this type.
+ROSIDL_GENERATOR_CPP_PUBLIC_autonomy_interfaces
+const rosidl_service_type_support_t *
+  ROSIDL_TYPESUPPORT_INTERFACE__SERVICE_SYMBOL_NAME(
+  rosidl_typesupport_cpp,
+  autonomy_interfaces,
+  srv,
+  FollowMeControl
+)();
+#ifdef __cplusplus
+}
+#endif
+
+#include "rosidl_typesupport_cpp/message_type_support.hpp"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+// Forward declare the get type support functions for this type.
+ROSIDL_GENERATOR_CPP_PUBLIC_autonomy_interfaces
+const rosidl_message_type_support_t *
+  ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
+  rosidl_typesupport_cpp,
+  autonomy_interfaces,
+  srv,
+  FollowMeControl_Request
+)();
+#ifdef __cplusplus
+}
+#endif
+
+// already included above
+// #include "rosidl_typesupport_cpp/message_type_support.hpp"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+// Forward declare the get type support functions for this type.
+ROSIDL_GENERATOR_CPP_PUBLIC_autonomy_interfaces
+const rosidl_message_type_support_t *
+  ROSIDL_TYPESUPPORT_INTERFACE__MESSAGE_SYMBOL_NAME(
+  rosidl_typesupport_cpp,
+  autonomy_interfaces,
+  srv,
+  FollowMeControl_Response
+)();
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif  // AUTONOMY_INTERFACES__SRV__DETAIL__FOLLOW_ME_CONTROL__TYPE_SUPPORT_HPP_

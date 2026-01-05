@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Main navigation controller for URC 2026 rover.
 
@@ -17,23 +18,29 @@ from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import Imu, NavSatFix
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
-from utilities import (
+from rclpy.lifecycle import LifecycleState, TransitionCallbackReturn
+from autonomy_utilities import (
     AutonomyNode,
-    Failure,
+    OperationResult,
     MessagePipeline,
     NodeParameters,
-    OperationResult,
     ProcessingError,
     ValidationError,
     failure,
     success,
 )
 
-from .gnss_processor import GNSSProcessor
-from .motion_controller import MotionController
-from .path_planner import PathPlanner
+try:
+    from autonomy_navigation.gnss_processor import GNSSProcessor
+    from autonomy_navigation.motion_controller import MotionController
+    from autonomy_navigation.path_planner import PathPlanner
+except ImportError:
+    # Fallback for local development
+    from gnss_processor import GNSSProcessor
+    from motion_controller import MotionController
+    from path_planner import PathPlanner
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.dirname(__file__))
 
 
 @dataclass
@@ -60,19 +67,17 @@ class NavigationGoal:
 class NavigationNode(AutonomyNode):
     """
     Main navigation controller coordinating all navigation subsystems.
-
-    Integrates GNSS waypoint navigation, terrain-adaptive path planning,
-    AR tag precision approaches, obstacle avoidance, and mission tracking.
+    Now with Lifecycle management and optimized sensor integration.
     """
 
     def __init__(self) -> None:
-        """Initialize navigation node with streamlined infrastructure."""
+        """Initialize navigation node."""
         super().__init__("navigation_node", NodeParameters.for_navigation())
 
-        # Initialize navigation subsystems
-        self.gnss_processor = GNSSProcessor()
-        self.path_planner = PathPlanner()
-        self.motion_controller = MotionController()
+        # Subsystems initialized here but configured in on_configure
+        self.gnss_processor = None
+        self.path_planner = None
+        self.motion_controller = None
 
         # Navigation state
         self.current_waypoint: Optional[Waypoint] = None
@@ -80,17 +85,50 @@ class NavigationNode(AutonomyNode):
         self.current_pose = None
         self.last_imu: Optional[Imu] = None
         self.is_navigating = False
+        self.control_timer = None
 
-        # Setup interfaces with automatic registration
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to configured state."""
+        self.logger.info("Configuring Navigation Subsystems...")
+        
+        # Compatibility fix for legacy interface_factory usage
+        self.interface_factory = self
+
+        # Initialize subsystems
+        self.gnss_processor = GNSSProcessor()
+        self.path_planner = PathPlanner()
+        self.motion_controller = MotionController()
+
+        # Setup interfaces
         self._setup_interfaces()
-
-        # Setup processing pipeline
         self._setup_processing_pipeline()
 
-        self.logger.info(
-            "Navigation node initialized with subsystems",
-            subsystems=["gnss", "path_planner", "motion_controller", "terrain"],
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to active state."""
+        self.logger.info("Activating Navigation Control...")
+        
+        # Start control loop timer
+        self.control_timer = self.create_timer(
+            1.0 / self.params.update_rate, self._control_loop
         )
+        
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to inactive state."""
+        self.logger.info("Deactivating Navigation Control...")
+        self.stop_navigation()
+        if self.control_timer:
+            self.control_timer.cancel()
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to unconfigured state."""
+        self.logger.info("Cleaning up Navigation...")
+        self.is_navigating = False
+        return TransitionCallbackReturn.SUCCESS
 
     def _setup_interfaces(self) -> None:
         """Setup ROS2 interfaces with automatic registration."""
@@ -100,8 +138,8 @@ class NavigationNode(AutonomyNode):
         )
         self.interface_factory.create_subscriber(Imu, "/imu/data", self._imu_callback)
 
-        # Publishers
-        self.cmd_vel_pub = self.interface_factory.create_publisher(Twist, "/cmd_vel")
+        # Publishers - Updated to use Twist Mux autonomy topic
+        self.cmd_vel_pub = self.interface_factory.create_publisher(Twist, "/cmd_vel/autonomy")
         self.waypoint_pub = self.interface_factory.create_publisher(
             PoseStamped, "/navigation/current_waypoint"
         )
@@ -232,7 +270,7 @@ class NavigationNode(AutonomyNode):
 
     def start_navigation_to_pose(
         self, target_pose: PoseStamped
-    ) -> OperationResult[bool, ProcessingError]:
+    ) -> OperationResult:
         """Start navigation to target pose with validation."""
         try:
             # Convert to waypoint
@@ -321,7 +359,7 @@ class NavigationNode(AutonomyNode):
 
     def _validate_waypoint(
         self, waypoint: Waypoint
-    ) -> OperationResult[Waypoint, ValidationError]:
+    ) -> OperationResult:
         """Validate waypoint parameters."""
         if not (-90 <= waypoint.latitude <= 90):
             return failure(

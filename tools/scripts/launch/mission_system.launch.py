@@ -43,34 +43,25 @@ def generate_launch_description():
                 ],
             ),
             # ===========================================
-            # STATE MACHINE DIRECTOR
+            # CORE AUTONOMY NODES (Lifecycle-managed)
             # ===========================================
-            ExecuteProcess(
-                cmd=[
-                    "python3",
-                    os.path.join(workspace_root, "src/autonomy/core/state_management/autonomy_state_machine/adaptive_state_machine.py"),
-                ],
-                output="screen",
-                name="state_machine_director",
+            Node(
+                package="autonomy_state_management",
+                executable="adaptive_state_machine",
+                name="adaptive_state_machine",
+                output="screen"
             ),
-            # ===========================================
-            # SLAM PROCESSING NODES
-            # ===========================================
-            ExecuteProcess(
-                cmd=["python3", os.path.join(workspace_root, "tests/slam_nodes.py")],
-                output="screen",
-                name="slam_nodes",
+            Node(
+                package="autonomy_slam",
+                executable="slam_node",
+                name="slam_orchestrator",
+                output="screen"
             ),
-            # ===========================================
-            # NAVIGATION SERVICES
-            # ===========================================
-            ExecuteProcess(
-                cmd=[
-                    "python3",
-                    os.path.join(workspace_root, "tests/navigation_service_node.py"),
-                ],
-                output="screen",
-                name="navigation_service",
+            Node(
+                package="autonomy_navigation",
+                executable="navigation_node",
+                name="navigation_node",
+                output="screen"
             ),
             # ===========================================
             # TELEOPERATION STATUS MONITOR

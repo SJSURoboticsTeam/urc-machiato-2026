@@ -54,6 +54,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_MESSAGE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message (initialized later)
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -71,6 +72,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -88,6 +90,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_MESSAGE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message (initialized later)
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -105,6 +108,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_FLOAT,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -122,6 +126,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_FLOAT,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -139,6 +144,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_FLOAT,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -156,6 +162,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -173,6 +180,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_FLOAT,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -190,6 +198,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_MESSAGE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message (initialized later)
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -207,6 +216,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_FLOAT,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -224,6 +234,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_FLOAT,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -243,6 +254,7 @@ static const rosidl_typesupport_introspection_c__MessageMembers autonomy_interfa
   "TypingGoal",  // message name
   11,  // number of fields
   sizeof(autonomy_interfaces__msg__TypingGoal),
+  false,  // has_any_key_member_
   autonomy_interfaces__msg__TypingGoal__rosidl_typesupport_introspection_c__TypingGoal_message_member_array,  // message members
   autonomy_interfaces__msg__TypingGoal__rosidl_typesupport_introspection_c__TypingGoal_init_function,  // function to initialize message memory (memory has to be allocated)
   autonomy_interfaces__msg__TypingGoal__rosidl_typesupport_introspection_c__TypingGoal_fini_function  // function to terminate message instance (will not free memory)
@@ -254,6 +266,9 @@ static rosidl_message_type_support_t autonomy_interfaces__msg__TypingGoal__rosid
   0,
   &autonomy_interfaces__msg__TypingGoal__rosidl_typesupport_introspection_c__TypingGoal_message_members,
   get_message_typesupport_handle_function,
+  &autonomy_interfaces__msg__TypingGoal__get_type_hash,
+  &autonomy_interfaces__msg__TypingGoal__get_type_description,
+  &autonomy_interfaces__msg__TypingGoal__get_type_description_sources,
 };
 
 ROSIDL_TYPESUPPORT_INTROSPECTION_C_EXPORT_autonomy_interfaces

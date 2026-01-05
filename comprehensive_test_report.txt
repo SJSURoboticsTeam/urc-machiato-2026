@@ -1,16 +1,15 @@
 ================================================================================
 [OBJECTIVE] COMPREHENSIVE ROVER SYSTEM TEST REPORT
 ================================================================================
-Generated: 2026-01-03 21:34:10
-Total Test Duration: 40.0 seconds
+Generated: 2026-01-04 13:12:16
+Total Test Duration: 55746.0 seconds
 
-OVERALL RESULTS: 25/30 tests passed (83.3%)
+OVERALL RESULTS: 24/30 tests passed (80.0%)
 
 [CLIPBOARD] Mission Execution Tests:
    [FAIL] FAIL: Waypoint Navigation
        Mission did not complete
-   [FAIL] FAIL: Mission Interruption
-       Mission stop failed
+   [PASS] PASS: Mission Interruption
    [FAIL] FAIL: Progress Tracking
        Progress tracking failed
 
@@ -23,7 +22,8 @@ OVERALL RESULTS: 25/30 tests passed (83.3%)
 [CLIPBOARD] SLAM & Localization Tests:
    [PASS] PASS: SLAM Pose
    [PASS] PASS: Map Data Flow
-   [PASS] PASS: Coordinate Consistency
+   [FAIL] FAIL: Coordinate Consistency
+       Position difference too large: 407.412m
 
 [CLIPBOARD] Network & Communication Tests:
    [PASS] PASS: ROS2 Topic /odom
@@ -31,7 +31,8 @@ OVERALL RESULTS: 25/30 tests passed (83.3%)
    [PASS] PASS: ROS2 Topic /gps/fix
    [PASS] PASS: ROS2 Topic /mission/status
    [PASS] PASS: ROS2 Topic /frontend/map_data
-   [PASS] PASS: WebSocket Interface
+   [FAIL] FAIL: WebSocket Interface
+       WebSocket server not responding
    [PASS] PASS: Command Response Time
 
 [CLIPBOARD] Performance Tests:
@@ -58,10 +59,10 @@ OVERALL RESULTS: 25/30 tests passed (83.3%)
    [PASS] PASS: Performance Summary
 
 [LIGHTNING] PERFORMANCE SUMMARY:
-   Average CPU Usage: 9.2%
-   Average Memory Usage: 21.3%
-   Peak CPU Usage: 35.5%
-   Peak Memory Usage: 21.8%
+   Average CPU Usage: 6.8%
+   Average Memory Usage: 23.6%
+   Peak CPU Usage: 25.8%
+   Peak Memory Usage: 24.2%
 
 [IGNITE] HARDWARE DEPLOYMENT READINESS:
     SYSTEM MOSTLY READY - Minor issues to resolve

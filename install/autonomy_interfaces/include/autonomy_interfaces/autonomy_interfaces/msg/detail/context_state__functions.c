@@ -269,7 +269,7 @@ autonomy_interfaces__msg__ContextState__copy(
 }
 
 autonomy_interfaces__msg__ContextState *
-autonomy_interfaces__msg__ContextState__create()
+autonomy_interfaces__msg__ContextState__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__ContextState * msg = (autonomy_interfaces__msg__ContextState *)allocator.allocate(sizeof(autonomy_interfaces__msg__ContextState), allocator.state);

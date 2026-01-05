@@ -281,7 +281,7 @@ autonomy_interfaces__msg__AOIStatus__copy(
 }
 
 autonomy_interfaces__msg__AOIStatus *
-autonomy_interfaces__msg__AOIStatus__create()
+autonomy_interfaces__msg__AOIStatus__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__AOIStatus * msg = (autonomy_interfaces__msg__AOIStatus *)allocator.allocate(sizeof(autonomy_interfaces__msg__AOIStatus), allocator.state);

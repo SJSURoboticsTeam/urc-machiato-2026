@@ -1,1 +1,84 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/GetSystemState.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/GetSystemState.srv
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Query current system state")
+    struct GetSystemState_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "If true, include recent state history")
+      boolean include_history;
+
+      @verbatim (language="comment", text=
+        "If true, include subsystem status details")
+      boolean include_subsystems;
+
+      @verbatim (language="comment", text=
+        "Number of recent transitions to include (default: 10)")
+      int32 history_limit;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct GetSystemState_Response {
+      @verbatim (language="comment", text=
+        "True if query successful")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "Current state information" "\n"
+        "Current top-level state")
+      string current_state;
+
+      @verbatim (language="comment", text=
+        "Current substate")
+      string substate;
+
+      @verbatim (language="comment", text=
+        "Current sub-substate")
+      string sub_substate;
+
+      @verbatim (language="comment", text=
+        "Seconds in current state")
+      double time_in_state;
+
+      @verbatim (language="comment", text=
+        "When current state was entered")
+      builtin_interfaces::msg::Time state_entered;
+
+      @verbatim (language="comment", text=
+        "History (if requested)" "\n"
+        "List of recent states")
+      sequence<string> recent_states;
+
+      @verbatim (language="comment", text=
+        "Timestamps for each state")
+      sequence<builtin_interfaces::msg::Time> state_timestamps;
+
+      @verbatim (language="comment", text=
+        "Reasons for each transition")
+      sequence<string> transition_reasons;
+
+      @verbatim (language="comment", text=
+        "Subsystem status (if requested)" "\n"
+        "Currently active subsystems")
+      sequence<string> active_subsystems;
+
+      @verbatim (language="comment", text=
+        "Inactive subsystems")
+      sequence<string> inactive_subsystems;
+
+      @verbatim (language="comment", text=
+        "Failed/error subsystems")
+      sequence<string> failed_subsystems;
+    };
+  };
+};

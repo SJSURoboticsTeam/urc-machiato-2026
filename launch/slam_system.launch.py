@@ -36,51 +36,28 @@ def generate_launch_description():
             output='screen',
         ),
 
-        # Camera Bridge (delay to let camera start)
+        # Communication Bridge (handles all data routing)
         TimerAction(
             period=3.0,
             actions=[
-                ExecuteProcess(
-                    cmd=['python3', 'src/bridges/camera_bridge.py'],
+                Node(
+                    package='communication_bridge',
+                    executable='communication_bridge',
+                    name='communication_bridge',
                     output='screen',
-                    name='camera_bridge'
                 )
             ]
         ),
 
-        # SLAM Depth Processor (delay to let camera bridge start)
+        # SLAM Orchestrator (consolidated SLAM processing)
         TimerAction(
             period=5.0,
             actions=[
                 Node(
                     package='autonomy_slam',
-                    executable='depth_processor',
-                    name='depth_processor',
+                    executable='slam_node',
+                    name='slam_orchestrator',
                     output='screen',
-                )
-            ]
-        ),
-
-        # SLAM Pose Publisher (delay to let depth processor start)
-        TimerAction(
-            period=7.0,
-            actions=[
-                ExecuteProcess(
-                    cmd=['python3', 'src/bridges/slam_pose_publisher.py'],
-                    output='screen',
-                    name='slam_pose_publisher'
-                )
-            ]
-        ),
-
-        # Map Data Publisher (delay to let pose publisher start)
-        TimerAction(
-            period=9.0,
-            actions=[
-                ExecuteProcess(
-                    cmd=['python3', 'src/bridges/map_data_publisher.py'],
-                    output='screen',
-                    name='map_data_publisher'
                 )
             ]
         ),

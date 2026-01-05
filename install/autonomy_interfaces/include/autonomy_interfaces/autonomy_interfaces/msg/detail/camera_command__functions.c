@@ -226,7 +226,7 @@ autonomy_interfaces__msg__CameraCommand__copy(
 }
 
 autonomy_interfaces__msg__CameraCommand *
-autonomy_interfaces__msg__CameraCommand__create()
+autonomy_interfaces__msg__CameraCommand__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__CameraCommand * msg = (autonomy_interfaces__msg__CameraCommand *)allocator.allocate(sizeof(autonomy_interfaces__msg__CameraCommand), allocator.state);

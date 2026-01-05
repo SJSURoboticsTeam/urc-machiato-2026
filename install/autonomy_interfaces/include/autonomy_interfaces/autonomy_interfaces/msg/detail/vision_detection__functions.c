@@ -208,7 +208,7 @@ autonomy_interfaces__msg__VisionDetection__copy(
 }
 
 autonomy_interfaces__msg__VisionDetection *
-autonomy_interfaces__msg__VisionDetection__create()
+autonomy_interfaces__msg__VisionDetection__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__VisionDetection * msg = (autonomy_interfaces__msg__VisionDetection *)allocator.allocate(sizeof(autonomy_interfaces__msg__VisionDetection), allocator.state);

@@ -66,6 +66,7 @@ set(srv_files
 set(action_files
   "action/NavigateToPose.action"
   "action/PerformTyping.action"
+  "action/ExecuteMission.action"
 )
 
 # Generate interfaces

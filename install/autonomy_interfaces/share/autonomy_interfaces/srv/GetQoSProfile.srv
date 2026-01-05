@@ -1,1 +1,3 @@
-/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/srv/GetQoSProfile.srv
+---
+QoSTopicProfile[] topic_profiles
+QoSNetworkStats network_stats

@@ -39,42 +39,38 @@ def generate_launch_description():
             DeclareLaunchArgument("use_intra_process", default_value="true"),
             DeclareLaunchArgument("use_composable_nodes", default_value="true"),
             DeclareLaunchArgument("real_time_priority", default_value="true"),
-            # Centralized Vision Processing Node (eliminates image duplication)
-            Node(
-                package="vision_processing",
-                executable="vision_processing_node",
-                name="vision_processor",
-                output="screen",
-                parameters=[
-                    {
-                        "processing_rate_hz": 15.0,
-                        "enable_shared_memory": True,
-                        "use_zero_copy": True,
-                        "image_width": 640,
-                        "image_height": 480,
-                        "max_workers": 4,
-                    }
+
+            # High-Performance Composable Node Container for Zero-Copy
+            ComposableNodeContainer(
+                name="autonomy_container",
+                namespace="",
+                package="rclcpp_components",
+                executable="component_container_mt",
+                composable_node_descriptions=[
+                    # Vision Processing (Zero-Copy Source)
+                    ComposableNode(
+                        package="vision_processing",
+                        plugin="vision_processing::VisionProcessingNode",
+                        name="vision_processor",
+                        extra_arguments=[{"use_intra_process_comms": use_intra_process}],
+                        parameters=[{
+                            "processing_rate_hz": 15.0,
+                            "enable_shared_memory": True,
+                            "use_zero_copy": True,
+                        }],
+                    ),
+                    # Terrain Intelligence (Zero-Copy Consumer)
+                    ComposableNode(
+                        package="terrain_intelligence",
+                        plugin="terrain_intelligence::TerrainAnalyzer",
+                        name="terrain_analyzer",
+                        extra_arguments=[{"use_intra_process_comms": use_intra_process}],
+                    ),
                 ],
-                arguments=["--ros-args", "--log-level", "WARN"],
-            ),
-            # Terrain Intelligence (uses centralized vision processing)
-            Node(
-                package="terrain_intelligence",
-                executable="terrain_analyzer",
-                name="terrain_analyzer",
                 output="screen",
-                parameters=[
-                    {
-                        "map_resolution": 0.1,
-                        "map_width": 20.0,
-                        "map_height": 20.0,
-                        "max_slope_angle": 30.0,
-                        "hazard_height_threshold": 0.3,
-                    }
-                ],
-                arguments=["--ros-args", "--log-level", "WARN"],
             ),
-            # Autonomous Keyboard Typing Mission (uses centralized vision)
+
+            # Hardware Interface (separate for real-time CAN communication)
             Node(
                 package="missions",
                 executable="autonomous_keyboard_mission",

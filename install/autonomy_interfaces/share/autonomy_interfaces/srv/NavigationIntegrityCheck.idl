@@ -1,1 +1,80 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/NavigationIntegrityCheck.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/NavigationIntegrityCheck.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Navigation Integrity Check Service" "\n"
+      "Checks and reports navigation system integrity")
+    struct NavigationIntegrityCheck_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "Request detailed integrity analysis")
+      boolean detailed_check;
+
+      @verbatim (language="comment", text=
+        "Specific components to check (empty = all)")
+      sequence<string> check_components;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct NavigationIntegrityCheck_Response {
+      @verbatim (language="comment", text=
+        "Overall navigation integrity status")
+      boolean integrity_ok;
+
+      @verbatim (language="comment", text=
+        "Integrity score (0.0-1.0)")
+      double integrity_score;
+
+      @verbatim (language="comment", text=
+        "\"NOMINAL\", \"DEGRADED\", \"CRITICAL\", \"FAILED\"")
+      string integrity_level;
+
+      @verbatim (language="comment", text=
+        "Component status" "\n"
+        "Components that were checked")
+      sequence<string> checked_components;
+
+      @verbatim (language="comment", text=
+        "Status of each component")
+      sequence<boolean> component_status;
+
+      @verbatim (language="comment", text=
+        "Detailed status for each component")
+      sequence<string> component_details;
+
+      @verbatim (language="comment", text=
+        "Metrics" "\n"
+        "Current position accuracy (meters)")
+      double position_accuracy;
+
+      @verbatim (language="comment", text=
+        "Current heading accuracy (degrees)")
+      double heading_accuracy;
+
+      @verbatim (language="comment", text=
+        "Velocity consistency score (0.0-1.0)")
+      double velocity_consistency;
+
+      @verbatim (language="comment", text=
+        "Number of satellites used")
+      int32 satellite_count;
+
+      @verbatim (language="comment", text=
+        "Horizontal dilution of precision")
+      double hdop;
+
+      @verbatim (language="comment", text=
+        "Recommendations" "\n"
+        "Recommended actions if integrity is compromised")
+      sequence<string> recommendations;
+
+      @verbatim (language="comment", text=
+        "When check was performed")
+      string timestamp;
+    };
+  };
+};

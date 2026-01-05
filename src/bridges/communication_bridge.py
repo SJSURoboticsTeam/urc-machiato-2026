@@ -21,95 +21,159 @@ from typing import Any, Dict, Optional
 import rclpy
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from nav_msgs.msg import Path
+from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackReturn
 from rclpy.node import Node
 from sensor_msgs.msg import Imu, NavSatFix
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 from tf2_ros import TransformBroadcaster
 
 from simulation.can.can_bus_mock_simulator import CANBusMockSimulator
+from utilities import QoSProfiles, ParameterManager, PerformanceMonitor, CommunicationError, ValidationError
 
-
-class CommunicationBridge(Node):
+class CommunicationBridge(LifecycleNode):
     """
-    Unified Communication Bridge
-
-    Handles all WebSocket to ROS2 data flow:
-    - WebSocket connections and message routing
-    - Mission command forwarding
-    - SLAM sensor data publishing
-    - CAN bus mock data simulation
-    - System status broadcasting
+    Unified Communication Bridge with Lifecycle management.
     """
 
     def __init__(self):
         super().__init__("communication_bridge")
 
+        # Logger for standardized error handling
+        from utilities import NodeLogger
+        self.logger = NodeLogger(self, "communication_bridge")
+
+        # Performance monitoring
+        self.perf_monitor = PerformanceMonitor(self, "communication_bridge")
+
         # Initialize CAN simulator
         self.can_simulator = CANBusMockSimulator()
 
-        # TF broadcaster for coordinate frames
+        # Simulation state tracking for mission tests
+        self.mission_active = False
+        self.current_mission = None
+        self._current_status_override = None
+
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Configure publishers and subscribers."""
+        self.get_logger().info("Configuring Communication Bridge...")
+
+        # TF broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        # Frame IDs for SLAM
-        self.declare_parameter("imu_frame", "imu_link")
-        self.declare_parameter("gps_frame", "gps_link")
-        self.declare_parameter("base_frame", "base_link")
-        self.declare_parameter("map_frame", "map")
+        # Standardized parameter management
+        self.param_manager = ParameterManager(self)
 
-        self.imu_frame = self.get_parameter("imu_frame").value
-        self.gps_frame = self.get_parameter("gps_frame").value
-        self.base_frame = self.get_parameter("base_frame").value
-        self.map_frame = self.get_parameter("map_frame").value
+        # Define parameter specifications
+        param_specs = {
+            "imu_frame": {
+                "default": "imu_link",
+                "type": str,
+                "description": "Frame ID for IMU data"
+            },
+            "gps_frame": {
+                "default": "gps_link",
+                "type": str,
+                "description": "Frame ID for GPS data"
+            },
+            "base_frame": {
+                "default": "base_link",
+                "type": str,
+                "description": "Frame ID for robot base"
+            },
+            "map_frame": {
+                "default": "map",
+                "type": str,
+                "description": "Frame ID for map coordinate system"
+            }
+        }
 
-        # Publishers for mission control
-        self.mission_cmd_pub = self.create_publisher(String, "/mission/commands", 10)
-        self.can_data_pub = self.create_publisher(String, "/can/sensor_data", 10)
-        self.system_status_pub = self.create_publisher(String, "/system/status", 10)
+        # Declare and get parameters
+        params = self.param_manager.declare_parameters(param_specs)
 
-        # Publishers for SLAM system
-        self.imu_pub = self.create_publisher(Imu, "/imu/data_slam", 10)
-        self.gps_pub = self.create_publisher(NavSatFix, "/gps/fix_slam", 10)
+        # Extract parameter values
+        self.imu_frame = params["imu_frame"]
+        self.gps_frame = params["gps_frame"]
+        self.base_frame = params["base_frame"]
+        self.map_frame = params["map_frame"]
 
-        # Publishers for frontend
-        self.map_pub = self.create_publisher(String, "/frontend/map_data", 10)
-        self.pose_pub = self.create_publisher(PoseStamped, "/frontend/robot_pose", 10)
-        self.path_pub = self.create_publisher(Path, "/frontend/robot_path", 10)
-
-        # Subscribers for CAN data requests
-        self.can_request_sub = self.create_subscription(
-            String, "/can/data_request", self.handle_can_request, 10
+        # Publishers with standardized QoS
+        self.mission_cmd_pub = self.create_lifecycle_publisher(
+            String, "/mission/commands", QoSProfiles.command_data()
+        )
+        self.mission_status_pub = self.create_lifecycle_publisher(
+            String, "/mission/status", QoSProfiles.state_data()
+        )
+        self.mission_progress_pub = self.create_lifecycle_publisher(
+            Float32, "/mission/progress", QoSProfiles.state_data()
+        )
+        self.can_data_pub = self.create_lifecycle_publisher(
+            String, "/can/sensor_data", QoSProfiles.sensor_data()
+        )
+        self.system_status_pub = self.create_lifecycle_publisher(
+            String, "/system/status", QoSProfiles.diagnostic_data()
         )
 
-        # Subscribers to WebSocket data (would come from external WebSocket server)
+        # SLAM & Frontend publishers
+        self.imu_pub = self.create_lifecycle_publisher(
+            Imu, "/imu/data_slam", QoSProfiles.high_frequency_sensor()
+        )
+        self.gps_pub = self.create_lifecycle_publisher(
+            NavSatFix, "/gps/fix_slam", QoSProfiles.sensor_data()
+        )
+        self.map_pub = self.create_lifecycle_publisher(
+            String, "/frontend/map_data", QoSProfiles.state_data()
+        )
+
+        # Subscribers
+        self.can_request_sub = self.create_subscription(String, "/can/data_request", self.handle_can_request, 10)
         self.imu_sub = self.create_subscription(Imu, "/imu/data", self.imu_callback, 10)
-        self.gps_sub = self.create_subscription(
-            NavSatFix, "/gps/fix", self.gps_callback, 10
-        )
+        self.gps_sub = self.create_subscription(NavSatFix, "/gps/fix", self.gps_callback, 10)
+        
+        # Re-using mission command subscription from legacy bridge
+        self.mission_command_sub = self.create_subscription(String, "/mission/commands", self.handle_mission_command, 10)
 
-        # Message buffer for batch processing
-        self.message_buffer = []
-        self.buffer_lock = threading.Lock()
+        return TransitionCallbackReturn.SUCCESS
 
-        self.get_logger().info("Communication Bridge initialized")
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Start the WebSocket server and timers."""
+        self.get_logger().info("Activating Communication Bridge...")
+        self.start_websocket_server()
+        self.tf_timer = self.create_timer(0.1, self.publish_tf_transforms)
+        self.status_timer = self.create_timer(1.0, self.publish_mission_status)
+        self.perf_timer = self.create_timer(30.0, self._log_performance_report)
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Stop timers and server."""
+        self.get_logger().info("Deactivating Communication Bridge...")
+        self.tf_timer.cancel()
+        self.status_timer.cancel()
+        return TransitionCallbackReturn.SUCCESS
 
     def handle_can_request(self, msg):
-        """Handle CAN data requests."""
+        """Handle CAN data requests with consistent error handling."""
         try:
             request = json.loads(msg.data)
-            can_data = self.can_simulator.get_sensor_data(
-                request.get("sensor_type", "imu")
-            )
+            if not isinstance(request, dict):
+                raise ValidationError("CAN request must be a JSON object")
+
+            sensor_type = request.get("sensor_type", "imu")
+            can_data = self.can_simulator.get_sensor_data(sensor_type)
+
             response_msg = String()
             response_msg.data = json.dumps(
                 {
-                    "sensor_type": request.get("sensor_type", "imu"),
+                    "sensor_type": sensor_type,
                     "reading": can_data,
                     "timestamp": time.time(),
                 }
             )
             self.can_data_pub.publish(response_msg)
+        self.perf_monitor.track_message("/can/sensor_data", len(response_msg.data))
+        except (ValidationError, json.JSONDecodeError) as e:
+            self.logger.warn("CAN request validation failed", error=str(e), operation="can_request")
         except Exception as e:
-            self.get_logger().error(f"Error handling CAN request: {e}")
+            self.logger.error("CAN request processing failed", error=e, operation="can_request")
 
     def imu_callback(self, msg: Imu):
         """Process IMU data for SLAM."""
@@ -178,7 +242,7 @@ class CommunicationBridge(Node):
         msg = String()
         msg.data = json.dumps(command_data)
         self.mission_cmd_pub.publish(msg)
-        self.get_logger().info(f"Published mission command: {command_data}")
+        self.logger.info("Published mission command", command_type=command_data.get("command", "unknown"))
 
     def publish_system_status(self, status_data: Dict[str, Any]):
         """Publish system status update."""
@@ -188,7 +252,7 @@ class CommunicationBridge(Node):
 
     async def websocket_handler(self, websocket, path):
         """Handle WebSocket connections."""
-        self.get_logger().info(f"WebSocket connection established: {path}")
+        self.logger.info("WebSocket connection established", path=path)
         try:
             async for message in websocket:
                 try:
@@ -214,6 +278,7 @@ class CommunicationBridge(Node):
                     await websocket.send(
                         json.dumps({"status": "received", "type": message_type})
                     )
+                    self.perf_monitor.track_message("websocket_in", len(message))
 
                 except json.JSONDecodeError:
                     self.get_logger().error(f"Invalid JSON message: {message}")
@@ -230,6 +295,70 @@ class CommunicationBridge(Node):
             self.get_logger().info("WebSocket connection closed")
         except Exception as e:
             self.get_logger().error(f"WebSocket handler error: {e}")
+
+    def publish_mission_status(self):
+        """Publish mission status and map data updates (consolidated)."""
+        status = "idle"
+        if self.mission_active:
+            status = "active"
+        if self._current_status_override:
+            status = self._current_status_override
+
+        status_data = {
+            "active": self.mission_active,
+            "status": status,
+            "timestamp": self.get_clock().now().nanoseconds / 1e9
+        }
+        msg = String()
+        msg.data = json.dumps(status_data)
+        self.mission_status_pub.publish(msg)
+        self.perf_monitor.track_message("/mission/status", len(msg.data))
+
+        # Also publish map data for frontend
+        map_data = {
+            "type": "occupancy_grid",
+            "robot": {
+                "x": 0.0, "y": 0.0, "heading": 0.0,
+                "timestamp": status_data["timestamp"]
+            },
+            "map": {"width": 100, "height": 100, "data": []}
+        }
+        map_msg = String()
+        map_msg.data = json.dumps(map_data)
+        self.map_pub.publish(map_msg)
+
+    def handle_mission_command(self, msg):
+        """Handle mission commands (merging logic from legacy mission bridge)."""
+        try:
+            command_data = json.loads(msg.data)
+            command = command_data.get("command", "").lower()
+            
+            if "start" in command:
+                self.mission_active = True
+                self._current_status_override = "active"
+                self.start_mission_simulation()
+            elif "stop" in command:
+                self.mission_active = False
+                self._current_status_override = "stopped"
+                self.publish_mission_status()
+        except Exception as e:
+            self.get_logger().error(f"Error in mission command: {e}")
+
+    def start_mission_simulation(self):
+        """Mock mission simulation for testing."""
+        def run_sim():
+            for i in range(0, 101, 20):
+                if not self.mission_active: break
+                msg = Float32()
+                msg.data = float(i)
+                self.mission_progress_pub.publish(msg)
+                if i == 100: self._current_status_override = "completed"
+                time.sleep(0.5)
+        threading.Thread(target=run_sim, daemon=True).start()
+
+    def _log_performance_report(self):
+        """Log performance metrics every 30 seconds."""
+        self.perf_monitor.log_performance_summary()
 
     def start_websocket_server(self):
         """Start WebSocket server in background thread."""

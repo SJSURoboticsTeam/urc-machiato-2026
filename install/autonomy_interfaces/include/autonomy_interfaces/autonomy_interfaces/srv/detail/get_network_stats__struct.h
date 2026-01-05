@@ -1,1 +1,100 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_c/autonomy_interfaces/srv/detail/get_network_stats__struct.h
+// generated from rosidl_generator_c/resource/idl__struct.h.em
+// with input from autonomy_interfaces:srv/GetNetworkStats.idl
+// generated code does not contain a copyright notice
+
+// IWYU pragma: private, include "autonomy_interfaces/srv/get_network_stats.h"
+
+
+#ifndef AUTONOMY_INTERFACES__SRV__DETAIL__GET_NETWORK_STATS__STRUCT_H_
+#define AUTONOMY_INTERFACES__SRV__DETAIL__GET_NETWORK_STATS__STRUCT_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+
+// Constants defined in the message
+
+/// Struct defined in srv/GetNetworkStats in the package autonomy_interfaces.
+typedef struct autonomy_interfaces__srv__GetNetworkStats_Request
+{
+  uint8_t structure_needs_at_least_one_member;
+} autonomy_interfaces__srv__GetNetworkStats_Request;
+
+// Struct for a sequence of autonomy_interfaces__srv__GetNetworkStats_Request.
+typedef struct autonomy_interfaces__srv__GetNetworkStats_Request__Sequence
+{
+  autonomy_interfaces__srv__GetNetworkStats_Request * data;
+  /// The number of valid items in data
+  size_t size;
+  /// The number of allocated items in data
+  size_t capacity;
+} autonomy_interfaces__srv__GetNetworkStats_Request__Sequence;
+
+// Constants defined in the message
+
+/// Struct defined in srv/GetNetworkStats in the package autonomy_interfaces.
+typedef struct autonomy_interfaces__srv__GetNetworkStats_Response
+{
+  double bandwidth_up_mbps;
+  double bandwidth_down_mbps;
+  double latency_ms;
+  double packet_loss_rate;
+} autonomy_interfaces__srv__GetNetworkStats_Response;
+
+// Struct for a sequence of autonomy_interfaces__srv__GetNetworkStats_Response.
+typedef struct autonomy_interfaces__srv__GetNetworkStats_Response__Sequence
+{
+  autonomy_interfaces__srv__GetNetworkStats_Response * data;
+  /// The number of valid items in data
+  size_t size;
+  /// The number of allocated items in data
+  size_t capacity;
+} autonomy_interfaces__srv__GetNetworkStats_Response__Sequence;
+
+// Constants defined in the message
+
+// Include directives for member types
+// Member 'info'
+#include "service_msgs/msg/detail/service_event_info__struct.h"
+
+// constants for array fields with an upper bound
+// request
+enum
+{
+  autonomy_interfaces__srv__GetNetworkStats_Event__request__MAX_SIZE = 1
+};
+// response
+enum
+{
+  autonomy_interfaces__srv__GetNetworkStats_Event__response__MAX_SIZE = 1
+};
+
+/// Struct defined in srv/GetNetworkStats in the package autonomy_interfaces.
+typedef struct autonomy_interfaces__srv__GetNetworkStats_Event
+{
+  service_msgs__msg__ServiceEventInfo info;
+  autonomy_interfaces__srv__GetNetworkStats_Request__Sequence request;
+  autonomy_interfaces__srv__GetNetworkStats_Response__Sequence response;
+} autonomy_interfaces__srv__GetNetworkStats_Event;
+
+// Struct for a sequence of autonomy_interfaces__srv__GetNetworkStats_Event.
+typedef struct autonomy_interfaces__srv__GetNetworkStats_Event__Sequence
+{
+  autonomy_interfaces__srv__GetNetworkStats_Event * data;
+  /// The number of valid items in data
+  size_t size;
+  /// The number of allocated items in data
+  size_t capacity;
+} autonomy_interfaces__srv__GetNetworkStats_Event__Sequence;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // AUTONOMY_INTERFACES__SRV__DETAIL__GET_NETWORK_STATS__STRUCT_H_

@@ -1,1 +1,69 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/msg/FollowMeStatus.idl
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/FollowMeStatus.msg
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/Point.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "FollowMeStatus.msg" "\n"
+      "Status information for follow me mode")
+    struct FollowMeStatus {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "Follow me state" "\n"
+        "Whether currently following")
+      boolean is_following;
+
+      @verbatim (language="comment", text=
+        "ID of tag being followed")
+      int32 target_tag_id;
+
+      @verbatim (language="comment", text=
+        "Current distance to target")
+      float target_distance;
+
+      @verbatim (language="comment", text=
+        "Current angle to target (radians)")
+      float target_angle;
+
+      @verbatim (language="comment", text=
+        "Safety information" "\n"
+        "Configured safety distance")
+      float safety_distance;
+
+      @verbatim (language="comment", text=
+        "Whether safety distance is violated")
+      boolean safety_violation;
+
+      @verbatim (language="comment", text=
+        "Current following speed")
+      float current_speed;
+
+      @verbatim (language="comment", text=
+        "Target tracking" "\n"
+        "3D position of target")
+      geometry_msgs::msg::Point target_position;
+
+      @verbatim (language="comment", text=
+        "Whether target is currently visible")
+      boolean target_visible;
+
+      @verbatim (language="comment", text=
+        "Time since last detection (seconds)")
+      float last_detection_time;
+
+      @verbatim (language="comment", text=
+        "Control parameters" "\n"
+        "Maximum allowed speed")
+      float max_speed;
+
+      @verbatim (language="comment", text=
+        "ID of controlling operator")
+      string operator_id;
+    };
+  };
+};

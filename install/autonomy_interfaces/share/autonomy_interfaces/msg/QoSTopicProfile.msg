@@ -1,1 +1,5 @@
-/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/msg/QoSTopicProfile.msg
+string topic_name
+float64 avg_latency_ms
+float64 jitter_ms
+float64 packet_loss_rate
+int32 samples_count

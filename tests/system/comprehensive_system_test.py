@@ -90,6 +90,16 @@ class ComprehensiveSystemTester(Node):
         # Publishers for testing
         self.cmd_pub = self.create_publisher(String, "/mission/commands", 10)
         self.test_cmd_pub = self.create_publisher(String, "/test_commands", 10)
+        
+        # Mux test publishers
+        from geometry_msgs.msg import Twist
+        self.teleop_pub = self.create_publisher(Twist, "/cmd_vel/teleop", 10)
+        self.autonomy_pub = self.create_publisher(Twist, "/cmd_vel/autonomy", 10)
+        self.hardware_cmd_sub = self.create_subscription(Twist, "/cmd_vel", self.hardware_cmd_callback, 10)
+        self.last_hardware_cmd = None
+
+    def hardware_cmd_callback(self, msg):
+        self.last_hardware_cmd = msg
 
         # Load configuration
         self.config = self.load_config()
@@ -195,6 +205,10 @@ class ComprehensiveSystemTester(Node):
             self.test_phase_6_error_handling,
             self.test_phase_7_integration_testing,
             self.test_phase_8_final_validation,
+            self.test_phase_9_twist_mux_arbitration,
+            self.test_phase_10_lifecycle_management,
+            self.test_phase_11_bt_orchestration,
+            self.test_phase_12_zero_copy_performance,
         ]
 
         if self.current_test_phase < len(test_phases):
@@ -737,6 +751,87 @@ class ComprehensiveSystemTester(Node):
 
         return rates
 
+    # ===========================================
+    # TEST PHASE 9: TWIST MUX ARBITRATION
+    # ===========================================
+    def test_phase_9_twist_mux_arbitration(self):
+        """Test priority-based command arbitration"""
+        self.get_logger().info("[MUX] Testing Twist Mux Arbitration...")
+        from geometry_msgs.msg import Twist
+        
+        # Test 9.1: Autonomy Command
+        autonomy_cmd = Twist()
+        autonomy_cmd.linear.x = 1.0
+        self.autonomy_pub.publish(autonomy_cmd)
+        time.sleep(0.5)
+        
+        if self.last_hardware_cmd and abs(self.last_hardware_cmd.linear.x - 1.0) < 0.1:
+            self.add_test_result("Mux Autonomy", True, "Autonomy command passed through")
+        else:
+            self.add_test_result("Mux Autonomy", False, "Autonomy command failed or was blocked")
+            
+        # Test 9.2: Teleop Override (Higher Priority)
+        teleop_cmd = Twist()
+        teleop_cmd.linear.x = 2.0
+        self.teleop_pub.publish(teleop_cmd)
+        time.sleep(0.5)
+        
+        if self.last_hardware_cmd and abs(self.last_hardware_cmd.linear.x - 2.0) < 0.1:
+            self.add_test_result("Mux Teleop Override", True, "Teleop correctly overrode autonomy")
+        else:
+            self.add_test_result("Mux Teleop Override", False, "Teleop failed to override autonomy")
+
+    # ===========================================
+    # TEST PHASE 10: LIFECYCLE MANAGEMENT
+    # ===========================================
+    def test_phase_10_lifecycle_management(self):
+        """Test ROS2 Lifecycle transitions"""
+        self.get_logger().info("[LIFECYCLE] Testing Lifecycle Management...")
+        
+        nodes_to_check = ["/navigation_node", "/slam_orchestrator", "/hardware_interface"]
+        
+        for node_name in nodes_to_check:
+            try:
+                result = subprocess.run(
+                    ["ros2", "lifecycle", "get", node_name],
+                    capture_output=True, text=True, timeout=5
+                )
+                state = result.stdout.strip()
+                if "active" in state.lower():
+                    self.add_test_result(f"Lifecycle {node_name}", True, f"Node is ACTIVE")
+                else:
+                    self.add_test_result(f"Lifecycle {node_name}", False, f"Node is in state: {state}")
+            except Exception as e:
+                self.add_test_result(f"Lifecycle {node_name}", False, f"Failed to get state: {e}")
+
+    # ===========================================
+    # TEST PHASE 11: BEHAVIOR TREE ORCHESTRATION
+    # ===========================================
+    def test_phase_11_bt_orchestration(self):
+        """Test Behavior Tree orchestrator status"""
+        self.get_logger().info("[BT] Testing Behavior Tree Orchestration...")
+        
+        active_nodes = subprocess.run(["ros2", "node", "list"], capture_output=True, text=True).stdout
+        
+        if "/bt_orchestrator" in active_nodes:
+            self.add_test_result("BT Orchestrator", True, "BT Orchestrator is running")
+        else:
+            self.add_test_result("BT Orchestrator", False, "BT Orchestrator NOT found in node list")
+
+    # ===========================================
+    # TEST PHASE 12: ZERO COPY PERFORMANCE
+    # ===========================================
+    def test_phase_12_zero_copy_performance(self):
+        """Test zero-copy composable node container"""
+        self.get_logger().info("[ZERO-COPY] Testing Zero-Copy Infrastructure...")
+        
+        active_nodes = subprocess.run(["ros2", "node", "list"], capture_output=True, text=True).stdout
+        
+        if "/autonomy_container" in active_nodes:
+            self.add_test_result("Zero-Copy Container", True, "Composable container is running")
+        else:
+            self.add_test_result("Zero-Copy Container", False, "autonomy_container NOT found")
+
     def generate_final_report(self):
         """Generate comprehensive final test report"""
         self.get_logger().info("[CLIPBOARD] Generating Final Test Report...")
@@ -756,6 +851,10 @@ class ComprehensiveSystemTester(Node):
             "Error Handling": [],
             "Integration": [],
             "Validation": [],
+            "Twist Mux": [],
+            "Lifecycle": [],
+            "Behavior Tree": [],
+            "Zero Copy": [],
         }
 
         phase_names = [
@@ -767,6 +866,10 @@ class ComprehensiveSystemTester(Node):
             "Error Handling",
             "Integration",
             "Validation",
+            "Twist Mux",
+            "Lifecycle",
+            "Behavior Tree",
+            "Zero Copy",
         ]
 
         for result in self.test_results:

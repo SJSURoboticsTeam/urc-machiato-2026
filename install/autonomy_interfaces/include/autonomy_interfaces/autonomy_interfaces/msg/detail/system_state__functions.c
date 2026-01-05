@@ -23,6 +23,7 @@
 // Member `mission_phase`
 // Member `operator_id`
 // Member `state_reason`
+// Member `active_adaptations`
 #include "rosidl_runtime_c/string_functions.h"
 // Member `transition_timestamp`
 #include "builtin_interfaces/msg/detail/time__functions.h"
@@ -92,6 +93,12 @@ autonomy_interfaces__msg__SystemState__init(autonomy_interfaces__msg__SystemStat
     autonomy_interfaces__msg__SystemState__fini(msg);
     return false;
   }
+  // adaptive_enabled
+  // active_adaptations
+  if (!rosidl_runtime_c__String__Sequence__init(&msg->active_adaptations, 0)) {
+    autonomy_interfaces__msg__SystemState__fini(msg);
+    return false;
+  }
   return true;
 }
 
@@ -127,6 +134,9 @@ autonomy_interfaces__msg__SystemState__fini(autonomy_interfaces__msg__SystemStat
   rosidl_runtime_c__String__fini(&msg->operator_id);
   // state_reason
   rosidl_runtime_c__String__fini(&msg->state_reason);
+  // adaptive_enabled
+  // active_adaptations
+  rosidl_runtime_c__String__Sequence__fini(&msg->active_adaptations);
 }
 
 bool
@@ -217,6 +227,16 @@ autonomy_interfaces__msg__SystemState__are_equal(const autonomy_interfaces__msg_
   {
     return false;
   }
+  // adaptive_enabled
+  if (lhs->adaptive_enabled != rhs->adaptive_enabled) {
+    return false;
+  }
+  // active_adaptations
+  if (!rosidl_runtime_c__String__Sequence__are_equal(
+      &(lhs->active_adaptations), &(rhs->active_adaptations)))
+  {
+    return false;
+  }
   return true;
 }
 
@@ -302,11 +322,19 @@ autonomy_interfaces__msg__SystemState__copy(
   {
     return false;
   }
+  // adaptive_enabled
+  output->adaptive_enabled = input->adaptive_enabled;
+  // active_adaptations
+  if (!rosidl_runtime_c__String__Sequence__copy(
+      &(input->active_adaptations), &(output->active_adaptations)))
+  {
+    return false;
+  }
   return true;
 }
 
 autonomy_interfaces__msg__SystemState *
-autonomy_interfaces__msg__SystemState__create()
+autonomy_interfaces__msg__SystemState__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__SystemState * msg = (autonomy_interfaces__msg__SystemState *)allocator.allocate(sizeof(autonomy_interfaces__msg__SystemState), allocator.state);

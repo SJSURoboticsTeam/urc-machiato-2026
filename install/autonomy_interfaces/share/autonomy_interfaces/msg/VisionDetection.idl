@@ -1,1 +1,58 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/msg/VisionDetection.idl
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/VisionDetection.msg
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/PoseStamped.idl"
+#include "geometry_msgs/msg/Vector3.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "Single object detection result" "\n"
+      "Used in DetectionArray for multiple detections")
+    struct VisionDetection {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "Detection metadata" "\n"
+        "Object class (\"aruco_marker\", \"keyboard\", \"target\", etc.)")
+      string class_name;
+
+      @verbatim (language="comment", text=
+        "Class identifier")
+      int32 class_id;
+
+      @verbatim (language="comment", text=
+        "Detection confidence (0.0 to 1.0)")
+      float confidence;
+
+      @verbatim (language="comment", text=
+        "Object pose and size" "\n"
+        "Object position and orientation")
+      geometry_msgs::msg::PoseStamped pose;
+
+      @verbatim (language="comment", text=
+        "Object dimensions (width, height, depth)")
+      geometry_msgs::msg::Vector3 size;
+
+      @verbatim (language="comment", text=
+        "Vision-specific data" "\n"
+        "Feature points (x,y coordinates)")
+      sequence<float> keypoints;
+
+      @verbatim (language="comment", text=
+        "\"aruco\", \"yolo\", \"template_matching\", etc.")
+      string detector_type;
+
+      @verbatim (language="comment", text=
+        "Tracking information" "\n"
+        "Object track ID for multi-frame tracking")
+      int32 track_id;
+
+      @verbatim (language="comment", text=
+        "Seconds since first detection")
+      float age;
+    };
+  };
+};

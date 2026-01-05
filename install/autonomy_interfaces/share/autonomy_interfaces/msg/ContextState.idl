@@ -1,1 +1,82 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/msg/ContextState.idl
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/ContextState.msg
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "ContextState.msg" "\n"
+      "Real-time context information for adaptive state machine")
+    struct ContextState {
+      @verbatim (language="comment", text=
+        "Battery information")
+      float battery_level;
+
+      float battery_voltage;
+
+      boolean battery_critical;
+
+      boolean battery_warning;
+
+      @verbatim (language="comment", text=
+        "Mission status")
+      string mission_type;
+
+      @verbatim (language="comment", text=
+        "IDLE, EXECUTING, COMPLETED, FAILED, PAUSED")
+      string mission_status;
+
+      @verbatim (language="comment", text=
+        "0.0 to 1.0")
+      float mission_progress;
+
+      @verbatim (language="comment", text=
+        "seconds")
+      float mission_time_remaining;
+
+      @verbatim (language="comment", text=
+        "Communication health")
+      boolean communication_active;
+
+      @verbatim (language="comment", text=
+        "seconds")
+      float communication_latency;
+
+      @verbatim (language="comment", text=
+        "0-100")
+      int32 communication_quality;
+
+      @verbatim (language="comment", text=
+        "System performance")
+      float cpu_usage;
+
+      float memory_usage;
+
+      float temperature;
+
+      @verbatim (language="comment", text=
+        "Environmental conditions")
+      boolean obstacle_detected;
+
+      float obstacle_distance;
+
+      @verbatim (language="comment", text=
+        "0.0 (easy) to 1.0 (difficult)")
+      float terrain_difficulty;
+
+      boolean weather_adverse;
+
+      @verbatim (language="comment", text=
+        "Safety status")
+      boolean safety_active;
+
+      string safety_reason;
+
+      @verbatim (language="comment", text=
+        "Timestamp")
+      builtin_interfaces::msg::Time timestamp;
+    };
+  };
+};

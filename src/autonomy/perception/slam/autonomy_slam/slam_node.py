@@ -20,38 +20,41 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackReturn
 from rclpy.node import Node
 from std_msgs.msg import String
 
 
-class SLAMOrchestrator(Node):
+class SLAMOrchestrator(LifecycleNode):
     """
-    Main SLAM orchestrator node.
-
-    Responsibilities:
-    - Coordinate RGB-D depth processing
-    - Manage RTAB-Map SLAM configuration
-    - Integrate GPS for global localization
-    - Monitor system health
-    - Publish unified pose estimates
-    - Provide fallback mechanisms
+    Main SLAM orchestrator node with Lifecycle management.
     """
 
     def __init__(self):
         super().__init__("slam_orchestrator")
-
         self.callback_group = ReentrantCallbackGroup()
-
-        # Declare parameters
+        
+        # Parameters declared here, values retrieved in on_configure
         self.declare_parameter("enable_depth_processing", True)
         self.declare_parameter("enable_gps_fusion", True)
         self.declare_parameter("enable_diagnostics", True)
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("base_frame", "base_link")
-        self.declare_parameter(
-            "min_feature_count", 50
-        )  # Minimum features for valid pose
+        self.declare_parameter("min_feature_count", 50)
 
+        # State tracking
+        self.system_ready = False
+        self.slam_pose: Optional[np.ndarray] = None
+        self.fused_pose: Optional[np.ndarray] = None
+        self.slam_confidence = 0.0
+        self.feature_count = 0
+        self.loop_closures = 0
+        self.health_timer = None
+
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to configured state."""
+        self.get_logger().info("Configuring SLAM Orchestrator...")
+        
         # Get parameters
         self.enable_depth_proc = self.get_parameter("enable_depth_processing").value
         self.enable_gps_fus = self.get_parameter("enable_gps_fusion").value
@@ -60,81 +63,51 @@ class SLAMOrchestrator(Node):
         self.base_frame = self.get_parameter("base_frame").value
         self.min_features = self.get_parameter("min_feature_count").value
 
-        # System state tracking
-        self.system_ready = False
-        self.slam_pose: Optional[np.ndarray] = None
-        self.fused_pose: Optional[np.ndarray] = None
-        self.slam_confidence = 0.0
-        self.feature_count = 0
-        self.loop_closures = 0
-
-        # Metrics tracking (for diagnostics)
-        self.pose_history: deque = deque(maxlen=100)
-        self.cpu_usage = 0.0
-        self.memory_usage = 0.0
-        self.slam_update_rate = 0.0
-
         # Publishers
-        self.slam_status_pub = self.create_publisher(
-            String, "slam/system/status", 10, callback_group=self.callback_group
+        self.slam_status_pub = self.create_lifecycle_publisher(
+            String, "slam/system/status", 10
         )
-        self.slam_health_pub = self.create_publisher(
-            String, "slam/system/health", 10, callback_group=self.callback_group
+        self.slam_health_pub = self.create_lifecycle_publisher(
+            String, "slam/system/health", 10
         )
-        self.diagnostics_pub = self.create_publisher(
-            DiagnosticArray,
-            "slam/system/diagnostics",
-            10,
-            callback_group=self.callback_group,
+        self.diagnostics_pub = self.create_lifecycle_publisher(
+            DiagnosticArray, "slam/system/diagnostics", 10
         )
 
-        # Subscribers for monitoring
+        # Subscribers
         self.slam_pose_sub = self.create_subscription(
-            PoseWithCovarianceStamped,
-            "slam/pose",
-            self.on_slam_pose,
-            10,
-            callback_group=self.callback_group,
+            PoseWithCovarianceStamped, "slam/pose", self.on_slam_pose, 10,
+            callback_group=self.callback_group
         )
-
         self.fused_pose_sub = self.create_subscription(
-            PoseWithCovarianceStamped,
-            "slam/pose/fused",
-            self.on_fused_pose,
-            10,
-            callback_group=self.callback_group,
+            PoseWithCovarianceStamped, "slam/pose/fused", self.on_fused_pose, 10,
+            callback_group=self.callback_group
         )
-        
-        # Subscriber for Odometry (to stay in sync with simulator)
         from nav_msgs.msg import Odometry
         self.odom_sub = self.create_subscription(
-            Odometry,
-            "/odom",
-            self.on_odom_received,
-            10,
+            Odometry, "/odom", self.on_odom_received, 10,
             callback_group=self.callback_group
         )
 
-        self.rtabmap_status_sub = self.create_subscription(
-            String,
-            "rtabmap/stat",
-            self.on_rtabmap_status,
-            10,
-            callback_group=self.callback_group,
-        )
+        return TransitionCallbackReturn.SUCCESS
 
-        self.fusion_status_sub = self.create_subscription(
-            String,
-            "slam/fusion/status",
-            self.on_fusion_status,
-            10,
-            callback_group=self.callback_group,
-        )
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to active state."""
+        self.get_logger().info("Activating SLAM Monitoring...")
+        self.health_timer = self.create_timer(1.0, self.on_health_check, callback_group=self.callback_group)
+        return TransitionCallbackReturn.SUCCESS
 
-        # Timer for health monitoring
-        self.health_timer = self.create_timer(
-            1.0, self.on_health_check, callback_group=self.callback_group
-        )
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to inactive state."""
+        self.get_logger().info("Deactivating SLAM Monitoring...")
+        if self.health_timer:
+            self.health_timer.cancel()
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to unconfigured state."""
+        self.get_logger().info("Cleaning up SLAM Orchestrator...")
+        return TransitionCallbackReturn.SUCCESS
 
         # TF broadcaster for diagnostics
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -308,6 +281,8 @@ def main(args=None):
     """Entry point for SLAM orchestrator."""
     rclpy.init(args=args)
     node = SLAMOrchestrator()
+    
+    # Use SingleThreadedExecutor for lifecycle consistency
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)
 

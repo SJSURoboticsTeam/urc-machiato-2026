@@ -1,1 +1,5 @@
-/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/srv/GetContext.srv
+# GetContext.srv
+# Request current system context
+
+---
+ContextState context

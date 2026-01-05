@@ -19,10 +19,11 @@ import rclpy
 import serial
 from geometry_msgs.msg import Twist, TwistStamped
 from nav_msgs.msg import Odometry
-from rclpy.node import Node
+from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackReturn
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import BatteryState, Imu, JointState, NavSatFix
 from std_msgs.msg import Bool, Float32MultiArray, String
+from autonomy_interfaces.msg import LedCommand
 
 # Import direct CAN safety
 sys.path.insert(
@@ -37,16 +38,33 @@ except ImportError:
     DirectCANSafety = None
 
 
-class HardwareInterfaceNode(Node):
+class HardwareInterfaceNode(LifecycleNode):
     """
     Hardware Interface Node - ROS2 ↔ STM32 Controller Bridge
-
-    Connects the ROS2 autonomy stack to the deployed STM32 control systems
-    via CAN serial communication, following the teleoperation integration guide.
+    Now with integrated Advanced Twist Mux and Lifecycle management.
     """
 
     def __init__(self):
         super().__init__("hardware_interface")
+
+        # Twist Mux Priority Configuration
+        self.PRIORITIES = {
+            "emergency": 1000,
+            "safety": 900,
+            "teleop": 500,
+            "autonomy": 100,
+            "idle": 0
+        }
+        
+        # Hot-swappable Blackboard for command arbitration
+        self.blackboard = {
+            "emergency": {"twist": Twist(), "stamp": 0.0},
+            "safety": {"twist": Twist(), "stamp": 0.0},
+            "teleop": {"twist": Twist(), "stamp": 0.0},
+            "autonomy": {"twist": Twist(), "stamp": 0.0}
+        }
+        self.command_timeout = 0.5 # seconds
+        self.active_source = "idle"
 
         # Declare parameters
         self.declare_parameter("can_port", "/dev/ttyACM0")
@@ -54,112 +72,152 @@ class HardwareInterfaceNode(Node):
         self.declare_parameter("control_rate_hz", 50.0)
         self.declare_parameter("telemetry_rate_hz", 10.0)
 
+        # Connect to CAN serial on startup - Now handled by lifecycle
+        self.can_serial = None
+        self.can_connected = False
+        self.emergency_stop_active = False
+        self.system_healthy = False
+        self.last_cmd_vel = Twist()
+
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to configured state."""
+        self.get_logger().info("Configuring Hardware Interface...")
+        
         # Get parameters
         self.can_port = self.get_parameter("can_port").value
         self.can_baudrate = self.get_parameter("can_baudrate").value
         self.control_rate = self.get_parameter("control_rate_hz").value
         self.telemetry_rate = self.get_parameter("telemetry_rate_hz").value
 
-        # CAN serial connection (based on teleoperation can_serial.py)
-        self.can_serial = None
-        self.can_connected = False
-
-        # Optimized ROS2 QoS profiles for real-time control
+        # QoS Profiles
         control_qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=20,  # Increased buffer for bursts
-            deadline=rclpy.duration.Duration(milliseconds=50),  # 50ms max latency
-            lifespan=rclpy.duration.Duration(milliseconds=100),  # Message lifetime
+            depth=20,
         )
-
         sensor_qos = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,  # Allow drops for speed
+            reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
-            depth=5,  # Increased buffer
-            deadline=rclpy.duration.Duration(milliseconds=20),  # 20ms for sensors
+            depth=5,
         )
 
-        # Publishers (data FROM hardware TO autonomy)
-        self.joint_state_pub = self.create_publisher(
+        # Publishers
+        self.joint_state_pub = self.create_lifecycle_publisher(
             JointState, "/hardware/joint_states", sensor_qos
         )
-
-        self.chassis_velocity_pub = self.create_publisher(
+        self.chassis_velocity_pub = self.create_lifecycle_publisher(
             TwistStamped, "/hardware/chassis_velocity", sensor_qos
         )
-
-        self.motor_temperatures_pub = self.create_publisher(
+        self.motor_temperatures_pub = self.create_lifecycle_publisher(
             Float32MultiArray, "/hardware/motor_temperatures", sensor_qos
         )
-
-        self.battery_state_pub = self.create_publisher(
+        self.battery_state_pub = self.create_lifecycle_publisher(
             BatteryState, "/hardware/battery_state", sensor_qos
         )
-
-        self.imu_pub = self.create_publisher(Imu, "/hardware/imu", sensor_qos)
-
-        self.gps_pub = self.create_publisher(NavSatFix, "/hardware/gps", sensor_qos)
-
-        self.system_status_pub = self.create_publisher(
+        self.imu_pub = self.create_lifecycle_publisher(Imu, "/hardware/imu", sensor_qos)
+        self.gps_pub = self.create_lifecycle_publisher(NavSatFix, "/hardware/gps", sensor_qos)
+        self.system_status_pub = self.create_lifecycle_publisher(
             String, "/hardware/system_status", sensor_qos
         )
 
-        # Subscribers (commands FROM autonomy TO hardware)
+        # Twist Mux Subscribers
+        self.teleop_sub = self.create_subscription(
+            Twist, "/cmd_vel/teleop", lambda msg: self.mux_callback(msg, "teleop"), control_qos
+        )
+        self.autonomy_sub = self.create_subscription(
+            Twist, "/cmd_vel/autonomy", lambda msg: self.mux_callback(msg, "autonomy"), control_qos
+        )
+        self.safety_sub = self.create_subscription(
+            Twist, "/cmd_vel/safety", lambda msg: self.mux_callback(msg, "safety"), control_qos
+        )
+        
+        # Legacy/Global subscriber
         self.cmd_vel_sub = self.create_subscription(
-            Twist, "/cmd_vel", self.cmd_vel_callback, control_qos
+            Twist, "/cmd_vel", lambda msg: self.mux_callback(msg, "autonomy"), control_qos
         )
 
         self.arm_cmd_sub = self.create_subscription(
             String, "/hardware/arm_command", self.arm_cmd_callback, control_qos
         )
-
         self.excavate_cmd_sub = self.create_subscription(
-            String,
-            "/hardware/excavate_command",
-            self.excavate_cmd_callback,
-            control_qos,
+            String, "/hardware/excavate_command", self.excavate_cmd_callback, control_qos
         )
-
-        # Emergency stop subscriber
         self.emergency_stop_sub = self.create_subscription(
             Bool, "/emergency_stop", self.emergency_stop_callback, control_qos
         )
 
-        # Control loop timer
-        self.control_timer = self.create_timer(
-            1.0 / self.control_rate, self.control_loop
+        self.led_cmd_sub = self.create_subscription(
+            LedCommand, "/hardware/led_command", self.led_cmd_callback, control_qos
         )
 
-        # Telemetry timer
-        self.telemetry_timer = self.create_timer(
-            1.0 / self.telemetry_rate, self.telemetry_loop
-        )
-
-        # Connect to CAN serial on startup
-        self.connect_can_serial()
-
-        # Initialize direct CAN safety for emergency stops
-        self.direct_can_safety = None
+        # Initialize safety
         if DIRECT_CAN_AVAILABLE:
             try:
                 self.direct_can_safety = DirectCANSafety(can_port=self.can_port)
-                if self.direct_can_safety.is_connected():
-                    self.get_logger().info(
-                        "Direct CAN safety initialized for emergency stops"
-                    )
-                else:
-                    self.direct_can_safety = None
             except Exception as e:
-                self.get_logger().warn(f"Failed to initialize direct CAN safety: {e}")
-                self.direct_can_safety = None
+                self.get_logger().warn(f"Safety init fail: {e}")
 
-        # Hardware state tracking
-        self.last_cmd_vel = Twist()
-        self.emergency_stop_active = False
-        self.system_healthy = False
+        return TransitionCallbackReturn.SUCCESS
 
-        self.get_logger().info("Hardware Interface Node initialized")
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to active state."""
+        self.get_logger().info("Activating Hardware Interface...")
+        self.connect_can_serial()
+        
+        # Start timers
+        self.control_timer = self.create_timer(1.0 / self.control_rate, self.control_loop)
+        self.telemetry_timer = self.create_timer(1.0 / self.telemetry_rate, self.telemetry_loop)
+        
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to inactive state."""
+        self.get_logger().info("Deactivating Hardware Interface...")
+        self.send_velocity_command(Twist()) # Stop rover
+        self.control_timer.cancel()
+        self.telemetry_timer.cancel()
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to unconfigured state."""
+        self.get_logger().info("Cleaning up Hardware Interface...")
+        if self.can_serial:
+            self.can_serial.close()
+        return TransitionCallbackReturn.SUCCESS
+
+    def mux_callback(self, msg: Twist, source: str):
+        """Advanced Twist Mux Arbitration logic."""
+        now = self.get_clock().now().nanoseconds / 1e9
+        self.blackboard[source] = {"twist": msg, "stamp": now}
+        self.arbitrate()
+
+    def arbitrate(self):
+        """Find highest priority active command in blackboard."""
+        now = self.get_clock().now().nanoseconds / 1e9
+        best_source = "idle"
+        best_priority = -1
+        
+        for source, data in self.blackboard.items():
+            if (now - data["stamp"]) < self.command_timeout:
+                priority = self.PRIORITIES[source]
+                if priority > best_priority:
+                    best_priority = priority
+                    best_source = source
+        
+        self.active_source = best_source
+        if best_source != "idle":
+            self.last_cmd_vel = self.blackboard[best_source]["twist"]
+        else:
+            self.last_cmd_vel = Twist()
+
+    def control_loop(self):
+        """Main control loop - send arbitrated command."""
+        if self.emergency_stop_active:
+            self.send_velocity_command(Twist())
+            return
+
+        self.arbitrate() # Re-check timeouts
+        self.send_velocity_command(self.last_cmd_vel)
 
     def connect_can_serial(self):
         """Connect to CAN serial interface using teleoperation protocol."""
@@ -185,19 +243,6 @@ class HardwareInterfaceNode(Node):
             # Fallback: create mock interface for testing
             self.can_serial = None
             self.get_logger().warn("Using mock CAN interface for testing")
-
-    def cmd_vel_callback(self, msg: Twist):
-        """Handle velocity commands from autonomy stack."""
-        if self.emergency_stop_active:
-            self.get_logger().warn("Emergency stop active - ignoring velocity command")
-            return
-
-        self.last_cmd_vel = msg
-
-        if self.can_connected and self.can_serial:
-            self.send_velocity_command(msg)
-        else:
-            self.get_logger().debug("CAN not connected - velocity command buffered")
 
     def arm_cmd_callback(self, msg: String):
         """Handle arm control commands."""
@@ -297,6 +342,39 @@ class HardwareInterfaceNode(Node):
                 self.can_serial.write(resume_cmd.encode())
         except Exception as e:
             self.get_logger().error(f"Failed to send emergency resume: {e}")
+
+    def led_cmd_callback(self, msg: LedCommand):
+        """Handle LED command messages."""
+        try:
+            # URC 2026 LED status mapping:
+            # Red: Autonomous operation
+            # Blue: Teleoperation
+            # Flashing Green: Successful arrival
+
+            # Convert ROS message to CAN command
+            if msg.status_code == 0:  # OFF
+                led_cmd = "LED_OFF\r"
+            elif msg.status_code == 1:  # Ready (Blue)
+                led_cmd = "LED_BLUE\r"
+            elif msg.status_code == 2:  # Running (Red)
+                led_cmd = "LED_RED\r"
+            elif msg.status_code == 5:  # Success (Flashing Green)
+                led_cmd = "LED_GREEN_FLASH\r"
+            else:
+                # Custom color command
+                r = int(msg.red * 255)
+                g = int(msg.green * 255)
+                b = int(msg.blue * 255)
+                led_cmd = f"LED_RGB_{r:03d}_{g:03d}_{b:03d}\r"
+
+            if self.can_serial:
+                self.can_serial.write(led_cmd.encode())
+                self.get_logger().debug(f"Sent LED command: {led_cmd.strip()}")
+            else:
+                self.get_logger().debug(f"LED command (no CAN): {led_cmd.strip()}")
+
+        except Exception as e:
+            self.get_logger().error(f"Failed to send LED command: {e}")
 
     def control_loop(self):
         """Main control loop - send commands at control rate."""
@@ -464,11 +542,14 @@ class HardwareInterfaceNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     node = HardwareInterfaceNode()
+    
+    # In LifecycleNodes, the executor handles transitions
+    executor = rclpy.executors.SingleThreadedExecutor()
+    executor.add_node(node)
 
     try:
-        rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:

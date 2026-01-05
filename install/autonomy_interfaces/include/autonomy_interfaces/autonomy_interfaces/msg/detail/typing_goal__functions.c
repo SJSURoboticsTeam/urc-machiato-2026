@@ -203,7 +203,7 @@ autonomy_interfaces__msg__TypingGoal__copy(
 }
 
 autonomy_interfaces__msg__TypingGoal *
-autonomy_interfaces__msg__TypingGoal__create()
+autonomy_interfaces__msg__TypingGoal__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__TypingGoal * msg = (autonomy_interfaces__msg__TypingGoal *)allocator.allocate(sizeof(autonomy_interfaces__msg__TypingGoal), allocator.state);

@@ -19,26 +19,26 @@ from enum import Enum
 class RoverState(Enum):
     """7 essential rover states - covers all common use cases"""
 
-    BOOT = "boot"  # Starting up, initializing systems
-    READY = "ready"  # Systems ready, waiting for commands
-    TELEOP = "teleop"  # Manual remote control
-    AUTO = "auto"  # Autonomous mission execution
-    PAUSED = "paused"  # Temporary stop (can resume)
-    ESTOP = "estop"  # Emergency stop (requires reset)
-    SHUTDOWN = "shutdown"  # Powering down
+    BOOT = "BOOT"  # Starting up, initializing systems
+    CALIBRATION = "CALIBRATION"  # Sensor calibration
+    IDLE = "IDLE"  # Systems ready, waiting for commands
+    TELEOP = "TELEOPERATION"  # Manual remote control
+    AUTO = "AUTONOMOUS"  # Autonomous mission execution
+    SAFETY = "SAFETY"  # Safety/Emergency stop (requires reset)
+    SHUTDOWN = "SHUTDOWN"  # Powering down
 
     def __str__(self) -> str:
         return self.value
 
 
-# Valid state transitions - simple and clear
+# Valid state transitions - consolidated for competition
 VALID_TRANSITIONS = {
-    RoverState.BOOT: [RoverState.READY],
-    RoverState.READY: [RoverState.TELEOP, RoverState.AUTO, RoverState.SHUTDOWN],
-    RoverState.TELEOP: [RoverState.READY, RoverState.PAUSED, RoverState.ESTOP],
-    RoverState.AUTO: [RoverState.READY, RoverState.PAUSED, RoverState.ESTOP],
-    RoverState.PAUSED: [RoverState.TELEOP, RoverState.AUTO, RoverState.READY],
-    RoverState.ESTOP: [RoverState.READY],  # Only way out is manual reset
+    RoverState.BOOT: [RoverState.CALIBRATION, RoverState.IDLE],
+    RoverState.CALIBRATION: [RoverState.IDLE],
+    RoverState.IDLE: [RoverState.TELEOP, RoverState.AUTO, RoverState.SHUTDOWN],
+    RoverState.TELEOP: [RoverState.IDLE, RoverState.SAFETY],
+    RoverState.AUTO: [RoverState.IDLE, RoverState.SAFETY],
+    RoverState.SAFETY: [RoverState.IDLE],  # Reset to IDLE
     RoverState.SHUTDOWN: [],  # Terminal state
 }
 

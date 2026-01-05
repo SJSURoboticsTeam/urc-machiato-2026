@@ -1,1 +1,78 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/RecoverFromSafety.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/RecoverFromSafety.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Initiate recovery from safety state")
+    struct RecoverFromSafety_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "\"AUTO\", \"MANUAL_GUIDED\", \"FULL_RESET\"")
+      string recovery_method;
+
+      @verbatim (language="comment", text=
+        "ID of operator initiating recovery")
+      string operator_id;
+
+      @verbatim (language="comment", text=
+        "Operator acknowledges recovery risks")
+      boolean acknowledge_risks;
+
+      @verbatim (language="comment", text=
+        "Manual steps already completed (for verification)")
+      sequence<string> completed_steps;
+
+      @verbatim (language="comment", text=
+        "Additional notes about recovery conditions")
+      string notes;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct RecoverFromSafety_Response {
+      @verbatim (language="comment", text=
+        "True if recovery initiated/completed")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Human-readable status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "\"IN_PROGRESS\", \"COMPLETED\", \"FAILED\", \"REQUIRES_ACTION\"")
+      string recovery_state;
+
+      @verbatim (language="comment", text=
+        "Recovery details" "\n"
+        "True if safe to continue operations")
+      boolean is_safe_to_proceed;
+
+      @verbatim (language="comment", text=
+        "Steps still needed for full recovery")
+      sequence<string> remaining_steps;
+
+      @verbatim (language="comment", text=
+        "Systems that passed verification")
+      sequence<string> verified_systems;
+
+      @verbatim (language="comment", text=
+        "Systems that failed verification")
+      sequence<string> failed_systems;
+
+      @verbatim (language="comment", text=
+        "Estimated time to complete recovery (seconds)")
+      double estimated_time;
+
+      @verbatim (language="comment", text=
+        "Next state information" "\n"
+        "Recommended state after recovery")
+      string recommended_next_state;
+
+      @verbatim (language="comment", text=
+        "Operational restrictions after recovery")
+      sequence<string> restrictions;
+    };
+  };
+};
