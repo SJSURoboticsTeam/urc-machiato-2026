@@ -1,0 +1,63 @@
+Collecting pydantic
+  Using cached pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+Collecting pydantic-settings
+  Downloading pydantic_settings-2.12.0-py3-none-any.whl.metadata (3.4 kB)
+Collecting tenacity
+  Using cached tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+Collecting rich
+  Downloading rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+Collecting typer
+  Using cached typer-0.21.0-py3-none-any.whl.metadata (16 kB)
+Collecting questionary
+  Using cached questionary-2.1.1-py3-none-any.whl.metadata (5.4 kB)
+Collecting orjson
+  Using cached orjson-3.11.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (41 kB)
+Collecting annotated-types>=0.6.0 (from pydantic)
+  Using cached annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.41.5 (from pydantic)
+  Using cached pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+Collecting typing-extensions>=4.14.1 (from pydantic)
+  Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting typing-inspection>=0.4.2 (from pydantic)
+  Using cached typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+Collecting python-dotenv>=0.21.0 (from pydantic-settings)
+  Downloading python_dotenv-1.2.1-py3-none-any.whl.metadata (25 kB)
+Collecting markdown-it-py>=2.2.0 (from rich)
+  Downloading markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich)
+  Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+Collecting click>=8.0.0 (from typer)
+  Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+Collecting shellingham>=1.3.0 (from typer)
+  Using cached shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+Collecting prompt_toolkit<4.0,>=2.0 (from questionary)
+  Using cached prompt_toolkit-3.0.52-py3-none-any.whl.metadata (6.4 kB)
+Collecting wcwidth (from prompt_toolkit<4.0,>=2.0->questionary)
+  Using cached wcwidth-0.2.14-py2.py3-none-any.whl.metadata (15 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Using cached pydantic-2.12.5-py3-none-any.whl (463 kB)
+Using cached pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+Downloading pydantic_settings-2.12.0-py3-none-any.whl (51 kB)
+Using cached tenacity-9.1.2-py3-none-any.whl (28 kB)
+Downloading rich-14.2.0-py3-none-any.whl (243 kB)
+Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 25.3 MB/s  0:00:00
+
+Using cached typer-0.21.0-py3-none-any.whl (47 kB)
+Using cached questionary-2.1.1-py3-none-any.whl (36 kB)
+Using cached prompt_toolkit-3.0.52-py3-none-any.whl (391 kB)
+Using cached orjson-3.11.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (139 kB)
+Using cached annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Downloading click-8.3.1-py3-none-any.whl (108 kB)
+Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading python_dotenv-1.2.1-py3-none-any.whl (21 kB)
+Using cached shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Using cached typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+Using cached wcwidth-0.2.14-py2.py3-none-any.whl (37 kB)
+Installing collected packages: wcwidth, typing-extensions, tenacity, shellingham, python-dotenv, pygments, orjson, mdurl, click, annotated-types, typing-inspection, pydantic-core, prompt_toolkit, markdown-it-py, rich, questionary, pydantic, typer, pydantic-settings
+
+
+Successfully installed annotated-types-0.7.0 click-8.3.1 markdown-it-py-4.0.0 mdurl-0.1.2 orjson-3.11.5 prompt_toolkit-3.0.52 pydantic-2.12.5 pydantic-core-2.41.5 pydantic-settings-2.12.0 pygments-2.19.2 python-dotenv-1.2.1 questionary-2.1.1 rich-14.2.0 shellingham-1.5.4 tenacity-9.1.2 typer-0.21.0 typing-extensions-4.15.0 typing-inspection-0.4.2 wcwidth-0.2.14

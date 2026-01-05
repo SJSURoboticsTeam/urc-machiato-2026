@@ -2,61 +2,158 @@
 Quick Start
 ==========
 
-This guide will help you get up and running with the URC 2026 Mars Rover Autonomy System quickly.
+**Goal: Get the rover running in your browser in 10 minutes**
 
-Prerequisites
-=============
+If you're new to the project, this guide will get you from zero to "I can see the rover working" as quickly as possible. Skip the details - we'll get to those later.
 
-Before starting, ensure you have:
+.. image:: big_picture.png
+   :alt: URC 2026 System Overview
+   :align: center
+   :width: 60%
 
-- Python 3.10+
-- ROS2 Humble (Ubuntu 22.04 recommended)
-- Git
-- Basic understanding of robotics and autonomous systems
+Step 1: System Requirements Check (2 minutes)
+==============================================
 
-Installation
-============
+**Ubuntu 22.04 with ROS2 Humble?** If not, see :doc:`installation`.
 
-1. Clone the repository:
+**Python 3.10+ installed?**
+```bash
+python3 --version  # Should show 3.10 or higher
+```
 
-   .. code-block:: bash
+**Git installed?**
+```bash
+git --version
+```
 
-      git clone https://github.com/your-org/urc-2026.git
-      cd urc-2026
+Step 2: Clone & Setup (3 minutes)
+=================================
 
-2. Install Python dependencies:
+**Clone the repository:**
+```bash
+git clone https://github.com/your-org/urc-machiato-2026.git
+cd urc-machiato-2026
+```
 
-   .. code-block:: bash
+**Install Python dependencies:**
+```bash
+pip install -e .
+```
 
-      pip install -r requirements.txt
+**Quick test that everything works:**
+```bash
+python -c "import rclpy; print('ROS2 Python works!')"
+```
 
-3. Set up ROS2 workspace:
+Step 3: Launch Development Environment (2 minutes)
+===================================================
 
-   .. code-block:: bash
+**Start the dashboard (includes backend):**
+```bash
+./start.py dev dashboard
+```
 
-      cd autonomy/ros2_ws
-      colcon build
+**Wait for startup messages, then open:**
+http://localhost:3000
 
-First Run
-=========
+**You should see:**
+- Rover status dashboard
+- Mission control panel
+- Real-time telemetry
+- System health indicators
 
-1. Start the ROS2 system:
+Step 4: Try Basic Operations (3 minutes)
+=========================================
 
-   .. code-block:: bash
+**Run a quick test:**
+```bash
+# In another terminal, run basic tests
+python -m pytest tests/unit/test_utilities.py -v
+```
 
-      ros2 launch autonomy_system system.launch.py
+**Monitor system health:**
+```bash
+# Check ROS2 topics (in another terminal)
+ros2 topic list | head -10
+```
 
-2. Open the web interface:
+**Try the web interface:**
+- Click around the dashboard
+- Check system status
+- View available missions
 
-   Open your browser to ``http://localhost:3000``
+Step 5: Your First Code Change (Optional - 5 minutes)
+=====================================================
 
-3. Begin calibration:
+**Find a simple file to edit:**
+```bash
+# Look at a basic utility
+code src/core/json_processor.py
+```
 
-   Follow the on-screen calibration wizard for camera setup.
+**Make a small change:**
+- Add a comment
+- Save the file
+- Check that tests still pass: ``python -m pytest tests/unit/ -k json``
+
+What Just Happened?
+===================
+
+You now have a working rover development environment! The system includes:
+
+- **ROS2 backend** running autonomy software
+- **Web dashboard** for monitoring and control
+- **Test suite** to verify everything works
+- **Development tools** for making changes
 
 Next Steps
 ==========
 
-- Read the :doc:`overview` for system architecture
-- Check the :doc:`api/python/index` for API documentation
-- Join our Discord/Slack for community support
+**Choose your path:**
+
+🏃 **I want to explore more:**
+   - Read the :doc:`big_picture` guide
+   - Try running in simulation: ``./start.py dev simulation``
+
+👥 **I know my role:**
+   - Network team → :doc:`network_guide`
+   - SLAM/NAV team → :doc:`slam_nav_guide`
+   - ARM team → :doc:`arm_guide`
+   - Testing team → :doc:`testing_guide`
+
+📚 **I want to learn the details:**
+   - Deep dive: :doc:`getting_started`
+   - Architecture: :doc:`architecture/overview`
+   - API docs: :doc:`api/python/index`
+
+Troubleshooting
+===============
+
+**Dashboard won't load?**
+```bash
+# Check if processes are running
+ps aux | grep python
+# Kill and restart
+pkill -f "start.py"
+./start.py dev dashboard
+```
+
+**Tests failing?**
+```bash
+# Run with more verbose output
+python -m pytest tests/unit/ -v -s
+```
+
+**ROS2 issues?**
+```bash
+# Check ROS2 installation
+source /opt/ros/humble/setup.bash
+ros2 doctor
+```
+
+**Still stuck?**
+- Check the detailed :doc:`getting_started` guide
+- Ask in team chat
+- File an issue on GitHub
+
+Remember: This is a complex robotics system. It's normal to have questions - ask early and often!

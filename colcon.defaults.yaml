@@ -1,0 +1,37 @@
+# Colcon Build Optimization Configuration
+# Place in project root or ~/.colcon/defaults.yaml
+
+# Build settings for optimal performance
+build:
+  # Parallel execution
+  parallel-workers: 4  # Adjust based on CPU cores
+
+  # Incremental builds
+  continue-on-error: true
+  symlink-install: true
+
+  # Build type optimizations
+  cmake-args:
+    - -DCMAKE_BUILD_TYPE=Release
+    - -DCMAKE_CXX_FLAGS="-O3 -march=native"
+    - -DCMAKE_C_FLAGS="-O3 -march=native"
+
+  # Package selection
+  packages-up-to: []  # Build all by default
+  packages-skip:
+    - urc-machiato-2026  # Skip our main package if needed
+
+# Test settings
+test:
+  parallel-workers: 2
+  return-code-on-test-failure: true
+
+# Logging
+log:
+  # Verbose logging for build debugging
+  level: info
+
+# Cache settings (Linux/macOS)
+# Set COLCON_HOME environment variable for persistent caching
+# export COLCON_HOME=$HOME/.colcon
+

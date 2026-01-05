@@ -1,4 +1,11 @@
+source;share/autonomy_computer_vision/hook/cmake_prefix_path.ps1
+source;share/autonomy_computer_vision/hook/cmake_prefix_path.dsv
+source;share/autonomy_computer_vision/hook/cmake_prefix_path.sh
+source;share/autonomy_computer_vision/hook/pythonpath.ps1
+source;share/autonomy_computer_vision/hook/pythonpath.dsv
+source;share/autonomy_computer_vision/hook/pythonpath.sh
 source;share/autonomy_computer_vision/local_setup.bash
 source;share/autonomy_computer_vision/local_setup.dsv
+source;share/autonomy_computer_vision/local_setup.ps1
 source;share/autonomy_computer_vision/local_setup.sh
 source;share/autonomy_computer_vision/local_setup.zsh

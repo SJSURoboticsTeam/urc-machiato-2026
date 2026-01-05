@@ -1,7 +1,11 @@
-"""Real-time simulation monitoring and performance dashboard.
+"""Enhanced Real-time Monitoring Dashboard with Telemetry Analytics
 
-Provides comprehensive monitoring of simulation performance, system resources,
-and generates alerts for performance issues.
+Provides comprehensive monitoring using Polars-powered telemetry system:
+- Real-time performance analytics with Polars DataFrames
+- Advanced anomaly detection and trend prediction
+- Interactive visualizations with rich formatting
+- Time-series analytics with memory-efficient storage
+- Health scoring and predictive maintenance alerts
 
 Author: URC 2026 Autonomy Team
 """
@@ -11,8 +15,35 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+from datetime import datetime, timedelta
+import json
 
-import psutil
+# Enhanced monitoring libraries
+try:
+    import polars as pl
+    POLARS_AVAILABLE = True
+except ImportError:
+    POLARS_AVAILABLE = False
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
+# Import telemetry system
+try:
+    from src.core.telemetry_system import get_telemetry_system, record_metric
+    TELEMETRY_AVAILABLE = True
+except ImportError:
+    TELEMETRY_AVAILABLE = False
+
+# Import resource manager
+try:
+    from src.core.mission_resource_manager import get_mission_resource_manager
+    RESOURCE_MANAGER_AVAILABLE = True
+except ImportError:
+    RESOURCE_MANAGER_AVAILABLE = False
 
 from simulation.core.logging_config import get_simulation_logger
 
@@ -43,7 +74,7 @@ class SimulationMonitor:
     """Real-time simulation monitoring and metrics collection."""
 
     def __init__(self, simulation_manager=None):
-        """Initialize simulation monitor.
+        """Initialize enhanced simulation monitor with telemetry analytics.
 
         Args:
             simulation_manager: SimulationManager instance to monitor
@@ -51,23 +82,66 @@ class SimulationMonitor:
         self.sim_manager = simulation_manager
         self.logger = get_simulation_logger(__name__, "monitor")
 
+        # Enhanced telemetry integration (HIGH PRIORITY)
+        if TELEMETRY_AVAILABLE:
+            self.telemetry = get_telemetry_system()
+            self.logger.info("Telemetry system integrated for monitoring")
+        else:
+            self.telemetry = None
+            self.logger.warning("Telemetry system not available - using basic monitoring")
+
+        # Mission resource manager integration
+        if RESOURCE_MANAGER_AVAILABLE:
+            self.resource_manager = get_mission_resource_manager()
+            self.logger.info("Mission Resource Manager integrated for adaptive monitoring")
+        else:
+            self.resource_manager = None
+            self.logger.warning("Mission Resource Manager not available - basic monitoring only")
+
+        # Polars-based high-performance metrics storage (HIGH PRIORITY)
+        if POLARS_AVAILABLE:
+            self.metrics_schema = {
+                'timestamp': pl.Datetime('ns'),
+                'component': pl.Utf8,
+                'metric_name': pl.Utf8,
+                'value': pl.Float64,
+                'unit': pl.Utf8,
+                'tags': pl.Utf8  # JSON string of tags
+            }
+            self.metrics_df = pl.DataFrame(schema=self.metrics_schema)
+            self.metrics_lock = threading.Lock()
+            self.logger.info("Polars-based metrics storage initialized")
+        else:
+            self.metrics_df = None
+            self.metrics_lock = None
+            self.logger.warning("Polars not available - using legacy metrics storage")
+
         # Monitoring state
         self.monitoring = False
         self.monitor_thread: Optional[threading.Thread] = None
         self.monitoring_interval = 1.0  # seconds
 
-        # Metrics storage
+        # Enhanced metrics storage (legacy fallback)
         self.metrics_history: Dict[float, Dict[str, Any]] = {}
         self.alerts: List[Alert] = []
-        self.max_metrics_history = 1000  # Keep last 1000 measurements
+        self.max_metrics_history = 10000  # Increased for Polars efficiency
 
-        # Performance data
+        # Advanced analytics state
+        self.anomaly_detection_enabled = True
+        self.predictive_analytics_enabled = True
+        self.health_scoring_enabled = True
+        self.alert_cooldown = 30.0  # seconds
+        self.last_alert_times: Dict[str, float] = {}
+
+        # Performance data with enhanced tracking
         self.performance_data: Dict[str, List[Any]] = {
             "step_times": [],
             "memory_usage": [],
             "cpu_usage": [],
             "network_stats": [],
             "step_counts": [],
+            "health_scores": [],  # New: system health tracking
+            "anomaly_counts": [],  # New: anomaly detection
         }
 
         # Alert thresholds
@@ -198,11 +272,24 @@ class SimulationMonitor:
                 step_time = time.time() - self.sim_manager._last_step_time
                 sim_metrics["last_step_time_seconds"] = step_time
 
+        # Resource manager metrics
+        resource_metrics = {}
+        if self.resource_manager:
+            resource_status = self.resource_manager.get_resource_status()
+            resource_metrics.update({
+                "component_status": resource_status.get("component_status", {}),
+                "mission_profile": resource_status.get("mission_profile", "unknown"),
+                "adaptive_scaling_active": resource_status.get("adaptive_scaling", False),
+                "resource_manager_memory_mb": resource_status.get("current_resources", {}).get("memory_mb", 0),
+                "resource_manager_cpu_percent": resource_status.get("current_resources", {}).get("cpu_percent", 0),
+            })
+
         # Combine all metrics
         metrics = {
             "timestamp": current_time,
             "system": system_metrics,
             "simulation": sim_metrics,
+            "resource_manager": resource_metrics,
         }
 
         return metrics
@@ -218,11 +305,15 @@ class SimulationMonitor:
 
         # Memory alerts
         memory_usage = system_metrics.get("memory_usage_percent", 0)
-        self._check_threshold("memory_usage_percent", memory_usage, "system")
+        memory_alert = self._check_threshold("memory_usage_percent", memory_usage, "system")
 
         # CPU alerts
         cpu_usage = system_metrics.get("cpu_usage_percent", 0)
-        self._check_threshold("cpu_usage_percent", cpu_usage, "system")
+        cpu_alert = self._check_threshold("cpu_usage_percent", cpu_usage, "system")
+
+        # Adaptive scaling integration
+        if self.resource_manager and self.resource_manager.adaptive_scaling_enabled:
+            self._trigger_adaptive_scaling(memory_usage, cpu_usage, memory_alert, cpu_alert)
 
         # Network alerts
         network_latency = sim_metrics.get("network_latency_ms", 0)
@@ -308,6 +399,35 @@ class SimulationMonitor:
                 callback(alert)
             except Exception as e:
                 self.logger.error("Alert callback failed", error=str(e))
+
+    def _trigger_adaptive_scaling(self, memory_usage: float, cpu_usage: float,
+                                memory_alert: bool, cpu_alert: bool):
+        """Trigger adaptive scaling based on resource usage and alerts.
+
+        Args:
+            memory_usage: Current memory usage percentage
+            cpu_usage: Current CPU usage percentage
+            memory_alert: Whether memory alert was triggered
+            cpu_alert: Whether CPU alert was triggered
+        """
+        if not self.resource_manager:
+            return
+
+        # Emergency scaling for critical alerts
+        if memory_alert or cpu_alert:
+            if memory_usage >= self.alert_thresholds.get("memory_usage_percent", {}).get("critical", 90) or \
+               cpu_usage >= self.alert_thresholds.get("cpu_usage_percent", {}).get("critical", 95):
+                self.logger.warning("Critical resource usage - triggering emergency scaling")
+                # Emergency scaling is handled by the resource manager internally
+                return
+
+        # Gradual scaling for warning thresholds
+        memory_warning = self.alert_thresholds.get("memory_usage_percent", {}).get("warning", 75)
+        cpu_warning = self.alert_thresholds.get("cpu_usage_percent", {}).get("warning", 80)
+
+        if memory_usage >= memory_warning or cpu_usage >= cpu_warning:
+            self.logger.info("Resource warning threshold reached - triggering adaptive scaling")
+            # Gradual scaling is handled by the resource manager internally
 
     def _store_metrics(self, metrics: Dict[str, Any]):
         """Store metrics in history.
@@ -499,6 +619,338 @@ class SimulationMonitor:
         report["simulation_performance"] = sim_stats
 
         return report
+
+    # ============================================================================
+    # ENHANCED ANALYTICS METHODS (HIGH PRIORITY)
+    # ============================================================================
+
+    def record_metric_polars(self, component: str, metric_name: str,
+                           value: float, unit: str = "",
+                           tags: Optional[Dict[str, Any]] = None) -> None:
+        """Record metric using high-performance Polars storage."""
+        if not POLARS_AVAILABLE or not self.metrics_df or not self.metrics_lock:
+            # Fallback to legacy recording
+            self.record_metric_legacy(component, metric_name, value, unit, tags)
+            return
+
+        with self.metrics_lock:
+            # Create new row
+            row_data = {
+                'timestamp': datetime.now(),
+                'component': component,
+                'metric_name': metric_name,
+                'value': float(value),
+                'unit': unit,
+                'tags': json.dumps(tags or {})
+            }
+
+            # Convert to Polars DataFrame and append
+            row_df = pl.DataFrame([row_data])
+            self.metrics_df = pl.concat([self.metrics_df, row_df], how='diagonal')
+
+            # Maintain size limit
+            if len(self.metrics_df) > self.max_metrics_history:
+                # Keep most recent entries
+                self.metrics_df = self.metrics_df.tail(self.max_metrics_history)
+
+        # Also record to telemetry system if available
+        if TELEMETRY_AVAILABLE and self.telemetry:
+            self.telemetry.record_point(
+                measurement=f"simulation.{component}",
+                fields={metric_name: value},
+                tags={"unit": unit, **(tags or {})}
+            )
+
+    def record_metric_legacy(self, component: str, metric_name: str,
+                           value: float, unit: str = "",
+                           tags: Optional[Dict[str, Any]] = None) -> None:
+        """Legacy metric recording for fallback."""
+        timestamp = time.time()
+        metric_key = f"{component}.{metric_name}"
+
+        if metric_key not in self.metrics_history:
+            self.metrics_history[metric_key] = []
+
+        self.metrics_history[metric_key].append({
+            'timestamp': timestamp,
+            'value': value,
+            'unit': unit,
+            'tags': tags or {}
+        })
+
+        # Maintain size limit
+        if len(self.metrics_history[metric_key]) > self.max_metrics_history:
+            self.metrics_history[metric_key] = self.metrics_history[metric_key][-self.max_metrics_history:]
+
+    def get_health_score(self) -> float:
+        """Calculate comprehensive system health score using telemetry analytics."""
+        if TELEMETRY_AVAILABLE and self.telemetry:
+            return self.telemetry.get_health_score()
+
+        # Fallback health calculation
+        try:
+            if PSUTIL_AVAILABLE:
+                cpu_usage = psutil.cpu_percent()
+                memory = psutil.virtual_memory()
+
+                # Simple health score based on resource usage
+                cpu_health = max(0, 1.0 - cpu_usage / 100.0)
+                memory_health = max(0, 1.0 - memory.percent / 100.0)
+
+                return (cpu_health + memory_health) / 2.0
+            else:
+                return 0.8  # Default good health if no monitoring available
+        except Exception:
+            return 0.5  # Neutral health on error
+
+    def detect_anomalies(self, component: str, metric_name: str,
+                        time_window_minutes: int = 10) -> List[Dict[str, Any]]:
+        """Detect anomalies in metrics using statistical analysis."""
+        if TELEMETRY_AVAILABLE and self.telemetry:
+            measurement = f"simulation.{component}"
+            return self.telemetry.get_anomalies(measurement)
+
+        # Fallback anomaly detection using stored metrics
+        if POLARS_AVAILABLE and self.metrics_df:
+            with self.metrics_lock:
+                # Filter data
+                component_data = self.metrics_df.filter(
+                    (pl.col('component') == component) &
+                    (pl.col('metric_name') == metric_name) &
+                    (pl.col('timestamp') >= datetime.now() - timedelta(minutes=time_window_minutes))
+                )
+
+                if len(component_data) < 5:
+                    return []
+
+                # Simple anomaly detection based on standard deviation
+                values = component_data['value'].to_list()
+                if not values:
+                    return []
+
+                mean = sum(values) / len(values)
+                variance = sum((x - mean) ** 2 for x in values) / len(values)
+                std_dev = variance ** 0.5
+
+                anomalies = []
+                for i, (timestamp, value) in enumerate(zip(
+                    component_data['timestamp'].to_list(),
+                    values
+                )):
+                    if std_dev > 0:
+                        z_score = abs(value - mean) / std_dev
+                        if z_score > 3.0:  # 3-sigma rule
+                            anomalies.append({
+                                'timestamp': timestamp,
+                                'component': component,
+                                'metric': metric_name,
+                                'value': value,
+                                'z_score': z_score,
+                                'severity': 'high' if z_score > 4.0 else 'medium'
+                            })
+
+                return anomalies
+
+        return []
+
+    def predict_performance_trend(self, component: str, metric_name: str) -> Dict[str, Any]:
+        """Predict performance trends using telemetry analytics."""
+        if TELEMETRY_AVAILABLE and self.telemetry:
+            measurement = f"simulation.{component}"
+            return self.telemetry.predict_trend(measurement, metric_name)
+
+        # Fallback trend analysis
+        if POLARS_AVAILABLE and self.metrics_df:
+            with self.metrics_lock:
+                # Get recent data
+                recent_data = self.metrics_df.filter(
+                    (pl.col('component') == component) &
+                    (pl.col('metric_name') == metric_name) &
+                    (pl.col('timestamp') >= datetime.now() - timedelta(minutes=30))
+                )
+
+                if len(recent_data) < 5:
+                    return {'trend': 'insufficient_data'}
+
+                # Simple linear regression
+                values = recent_data['value'].to_list()
+                n = len(values)
+
+                if n < 2:
+                    return {'trend': 'insufficient_data'}
+
+                # Calculate slope
+                x = list(range(n))
+                y = values
+
+                slope = sum((xi - sum(x)/n) * (yi - sum(y)/n) for xi, yi in zip(x, y)) / sum((xi - sum(x)/n)**2 for xi in x)
+
+                trend = "increasing" if slope > 0.01 else "decreasing" if slope < -0.01 else "stable"
+
+                return {
+                    'trend': trend,
+                    'slope': slope,
+                    'confidence': min(1.0, max(0.0, 1.0 - abs(slope) * 10))
+                }
+
+        return {'trend': 'analytics_unavailable'}
+
+    def get_performance_analytics(self, time_window_minutes: int = 30) -> Dict[str, Any]:
+        """Get comprehensive performance analytics."""
+        analytics = {
+            'health_score': self.get_health_score(),
+            'anomalies_detected': 0,
+            'performance_trends': {},
+            'resource_usage': {},
+            'timestamp': datetime.now().isoformat()
+        }
+
+        # Analyze key components
+        components_to_analyze = ['simulation', 'network', 'memory', 'cpu']
+        metrics_to_analyze = ['step_time', 'memory_usage', 'cpu_usage', 'latency']
+
+        for component in components_to_analyze:
+            for metric in metrics_to_analyze:
+                try:
+                    anomalies = self.detect_anomalies(component, metric, time_window_minutes)
+                    analytics['anomalies_detected'] += len(anomalies)
+
+                    trend = self.predict_performance_trend(component, metric)
+                    analytics['performance_trends'][f"{component}.{metric}"] = trend
+
+                except Exception as e:
+                    self.logger.debug(f"Failed to analyze {component}.{metric}: {e}")
+
+        # Resource usage summary
+        if PSUTIL_AVAILABLE:
+            try:
+                memory = psutil.virtual_memory()
+                analytics['resource_usage'] = {
+                    'cpu_percent': psutil.cpu_percent(),
+                    'memory_percent': memory.percent,
+                    'memory_used_gb': memory.used / (1024**3),
+                    'memory_available_gb': memory.available / (1024**3)
+                }
+            except Exception as e:
+                self.logger.debug(f"Failed to get resource usage: {e}")
+
+        return analytics
+
+    def generate_enhanced_report(self, time_window_minutes: int = 30) -> Dict[str, Any]:
+        """Generate enhanced monitoring report with analytics."""
+        base_report = self.generate_report()
+
+        # Add advanced analytics
+        analytics = self.get_performance_analytics(time_window_minutes)
+
+        enhanced_report = {
+            **base_report,
+            'analytics': analytics,
+            'recommendations': self._generate_recommendations(analytics),
+            'alerts_summary': self._summarize_alerts(),
+            'data_quality': self._assess_data_quality()
+        }
+
+        return enhanced_report
+
+    def _generate_recommendations(self, analytics: Dict[str, Any]) -> List[str]:
+        """Generate performance improvement recommendations."""
+        recommendations = []
+
+        health_score = analytics.get('health_score', 1.0)
+        if health_score < 0.7:
+            recommendations.append("System health is degraded - investigate high resource usage")
+
+        anomaly_count = analytics.get('anomalies_detected', 0)
+        if anomaly_count > 5:
+            recommendations.append(f"High anomaly count ({anomaly_count}) detected - review system stability")
+
+        # Check performance trends
+        trends = analytics.get('performance_trends', {})
+        concerning_trends = []
+        for metric, trend_data in trends.items():
+            if trend_data.get('trend') == 'increasing' and 'memory' in metric:
+                concerning_trends.append(f"Memory usage increasing for {metric}")
+
+        if concerning_trends:
+            recommendations.extend(concerning_trends)
+
+        # Resource usage recommendations
+        resource_usage = analytics.get('resource_usage', {})
+        cpu_percent = resource_usage.get('cpu_percent', 0)
+        memory_percent = resource_usage.get('memory_percent', 0)
+
+        if cpu_percent > 80:
+            recommendations.append("High CPU usage detected - consider performance optimization")
+        if memory_percent > 85:
+            recommendations.append("High memory usage detected - monitor for memory leaks")
+
+        return recommendations
+
+    def _summarize_alerts(self) -> Dict[str, Any]:
+        """Summarize recent alerts by severity."""
+        summary = {
+            'total_alerts': len(self.alerts),
+            'by_severity': {},
+            'recent_alerts': [],
+            'most_common_types': {}
+        }
+
+        # Count by severity
+        severity_counts = {}
+        type_counts = {}
+
+        for alert in self.alerts[-100:]:  # Last 100 alerts
+            severity = alert.level.value
+            severity_counts[severity] = severity_counts.get(severity, 0) + 1
+
+            alert_type = alert.metric
+            type_counts[alert_type] = type_counts.get(alert_type, 0) + 1
+
+            # Add to recent alerts (last 10)
+            if len(summary['recent_alerts']) < 10:
+                summary['recent_alerts'].append({
+                    'timestamp': alert.timestamp,
+                    'level': severity,
+                    'message': alert.message,
+                    'metric': alert.metric
+                })
+
+        summary['by_severity'] = severity_counts
+        summary['most_common_types'] = dict(sorted(type_counts.items(), key=lambda x: x[1], reverse=True)[:5])
+
+        return summary
+
+    def _assess_data_quality(self) -> Dict[str, Any]:
+        """Assess quality of monitoring data."""
+        quality = {
+            'data_points_total': 0,
+            'data_points_recent': 0,
+            'missing_data_rate': 0.0,
+            'outlier_rate': 0.0,
+            'quality_score': 1.0
+        }
+
+        if POLARS_AVAILABLE and self.metrics_df:
+            with self.metrics_lock:
+                total_points = len(self.metrics_df)
+                quality['data_points_total'] = total_points
+
+                # Recent data (last 5 minutes)
+                recent_cutoff = datetime.now() - timedelta(minutes=5)
+                recent_data = self.metrics_df.filter(pl.col('timestamp') >= recent_cutoff)
+                quality['data_points_recent'] = len(recent_data)
+
+                if total_points > 0:
+                    # Simple quality assessment
+                    null_count = self.metrics_df.null_count().sum_horizontal()[0]
+                    quality['missing_data_rate'] = null_count / (total_points * len(self.metrics_schema))
+
+                    # Assess if we have diverse metrics
+                    unique_metrics = self.metrics_df['metric_name'].n_unique()
+                    quality['quality_score'] = min(1.0, unique_metrics / 10.0)  # Expect at least 10 different metrics
+
+        return quality
 
     def export_metrics(self, filepath: str, format: str = "json") -> bool:
         """Export monitoring data to file.

@@ -40,12 +40,42 @@ dependencies = [
     "sphinx-copybutton>=0.5.0",  # Copy button for code blocks
     "sphinx-autodoc-typehints>=1.19.0",
 
+    # Behavior Tree (HIGH PRIORITY REPLACEMENT)
+    "py-trees>=2.1.0",           # Mature behavior tree library
+    "py-trees-ros>=2.0.0",       # ROS2 integration for BT
+
+    # Circuit Breaker Enhancement
+    "circuitbreaker>=1.3.0",     # Mature circuit breaker library
+
+    # Robotics-Specific Libraries (HIGH PRIORITY)
+    "pinocchio>=2.6.0",          # Rigid body dynamics (C++ with Python bindings)
+    "hpp-fcl>=2.3.0",           # Collision detection
+    "rtree>=1.0.0",             # Spatial indexing for fast queries
+    "shapely>=2.0.0",           # Geometric operations
+    "geopandas>=0.13.0",        # Geographic data handling
+
+    # Computer Vision ML Enhancement
+    "torch>=2.0.0",             # PyTorch for ML-based vision
+    "torchvision>=0.15.0",      # Computer vision models
+    "detectron2>=0.6.0",        # Facebook's CV library
+    "albumentations>=1.3.0",    # Image augmentation
+
+    # Time Series & Telemetry (HIGH PRIORITY)
+    "polars>=0.19.0",           # Fast DataFrame library (Rust-based)
+    "influxdb-client>=1.36.0",  # Time-series data storage
+    "apache-arrow>=13.0.0",     # Columnar data format
+
+    # Async & Concurrency Enhancement
+    "aiofiles>=23.1.0",         # Async file operations
+    "aiomultiprocess>=0.9.0",   # CPU-intensive task processing
+
+    # Memory Profiling
+    "pympler>=1.0.0",           # Memory profiling and analysis
+    "objgraph>=3.6.0",          # Object graph visualization
+
     # Development and testing
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "black>=22.0.0",
-    "isort>=5.10.0",
-    "flake8>=4.0.0",
     "mypy>=1.0.0",
 
     # Logging and monitoring
@@ -56,6 +86,27 @@ dependencies = [
     "pandas>=1.3.0",
     "matplotlib>=3.5.0",
     "opencv-python>=4.5.0",
+
+    # Phase 1: Core Infrastructure (High Impact)
+    "pydantic>=2.0.0",           # Data validation & settings management
+    "pydantic-settings>=2.0.0",  # Environment-aware configuration
+    "tenacity>=8.2.0",           # Retry patterns & circuit breakers
+
+    # Phase 2: Performance & Monitoring
+    "orjson>=3.9.0",             # Fast JSON serialization
+    "uvloop>=0.17.0; sys_platform == 'linux'",  # Faster asyncio (Linux only)
+
+    # Phase 3: Advanced Features
+    "sqlalchemy>=2.0.0",         # ORM for data persistence
+    "alembic>=1.12.0",           # Database migrations
+    "redis>=4.6.0",              # Caching and pub/sub
+    "aioredis>=2.0.0",           # Async Redis client
+    "fastapi>=0.100.0",          # Modern API framework
+    "uvicorn[standard]>=0.23.0", # ASGI server
+    "dependency-injector>=4.41.0", # Dependency injection container
+
+    # ROS2 Integration specific
+    "asyncio-mqtt>=0.13.0",      # MQTT client for sensor networks
 ]
 
 [project.optional-dependencies]
@@ -72,12 +123,43 @@ docs = [
     "pyyaml>=6.0",
 ]
 dev = [
+    # Code Quality (HIGH PRIORITY: Replace flake8 + isort with ruff)
+    "ruff>=0.1.0",               # Fast Python linter (replaces flake8 + isort)
+    "mypy>=1.5.0",               # Type checking
+    "pre-commit>=3.5.0",         # Git hooks for quality gates
+
+    # Advanced Testing (HIGH PRIORITY)
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "black>=22.0.0",
-    "isort>=5.10.0",
-    "flake8>=4.0.0",
-    "mypy>=1.0.0",
+    "pytest-asyncio>=0.21.0",    # Async test support
+    "pytest-xdist>=3.3.0",       # Parallel test execution
+    "pytest-timeout>=2.1.0",     # Test timeouts
+    "pytest-mock>=3.11.0",       # Enhanced mocking
+    "pytest-factoryboy>=2.5.0",  # Test data factories
+    "responses>=0.24.0",         # Mock HTTP responses
+    "freezegun>=1.2.0",          # Time mocking for deterministic tests
+    "hypothesis>=6.80.0",        # Property-based testing
+    "coverage[toml]>=7.2.0",     # Enhanced coverage reporting
+
+    # Performance Testing
+    "pytest-benchmark>=4.0.0",   # Performance benchmarking
+    "pyperf>=2.6.0",            # Microbenchmarking
+
+    # Memory & Profiling (HIGH PRIORITY)
+    "memory-profiler>=0.61.0",   # Memory usage profiling
+    "line-profiler>=4.1.0",      # Line-by-line performance profiling
+    "pympler>=1.0.0",           # Memory profiling and analysis
+    "objgraph>=3.6.0",          # Object graph visualization
+
+    # Developer Experience
+    "rich>=13.5.0",              # Beautiful CLI output
+    "typer>=0.9.0",              # Modern CLI framework
+    "questionary>=2.0.0",        # Interactive prompts
+
+    # Legacy tools (keep for migration period)
+    "black>=22.0.0",             # Code formatting (ruff will replace)
+    "isort>=5.10.0",             # Import sorting (ruff will replace)
+    "flake8>=4.0.0",             # Linting (ruff will replace)
 ]
 analysis = [
     "numpy>=1.21.0",
@@ -94,6 +176,38 @@ Issues = "https://github.com/SJSURoboticsTeam/urc-machiato-2026/issues"
 
 [tool.setuptools]
 packages = ["scripts"]
+
+[tool.ruff]
+# Replace flake8, isort, and provide additional capabilities
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable comprehensive rule set
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+
+ignore = [
+    "E501",  # Line too long (handled by line-length)
+    "E203",  # Whitespace before ':' (conflicts with black)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["scripts", "src", "simulation"]
+force-sort-within-sections = true
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"test_*.py" = ["E501"]  # Allow longer lines in tests
+"docs/**/*.py" = ["INP001"]  # Allow implicit namespace packages in docs
+"simulation/**/*.py" = ["INP001"]  # Allow implicit namespace packages in simulation
 
 [tool.black]
 line-length = 88
@@ -114,13 +228,6 @@ extend-exclude = '''
   | frontend/node_modules
 )/
 '''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
-known_first_party = ["scripts"]
-skip = ["docs", "frontend/node_modules", "Autonomy/ros2_ws"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -174,23 +281,4 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
-]
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503", "E501"]
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "install",
-    "docs",
-    "frontend/node_modules",
-    ".venv",
-    ".tox",
-    ".eggs"
-]
-per-file-ignores = [
-    "__init__.py:F401",  # Allow unused imports in __init__.py
-    "test_*.py:E501,W503",  # Allow longer lines and line breaks in tests
 ]

@@ -1,5 +1,1 @@
-string property
-string severity
-string details
-float64 timestamp
-bool acknowledged
+/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/msg/SafetyAlert.msg

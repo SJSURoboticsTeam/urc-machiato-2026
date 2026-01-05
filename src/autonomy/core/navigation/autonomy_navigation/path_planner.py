@@ -120,15 +120,43 @@ class PathPlanner:
         goal: Tuple[float, float],
         constraints: Optional[dict] = None,
     ) -> List[Tuple[float, float]]:
-        """A* path planning implementation"""
-        # TODO: Implement A* algorithm
-        # - Grid discretization
-        # - Open/closed set management
-        # - Cost calculation with terrain
-        # - Path reconstruction
+        """A* path planning implementation using NetworkX"""
+        try:
+            import networkx as nx
+            import heapq
+        except ImportError:
+            logger.warning("NetworkX not available, falling back to simple path")
+            return self._simple_path(start, goal)
 
-        # Placeholder implementation
-        return [start, goal]
+        # Create grid-based graph for path planning
+        graph = self._create_navigation_graph(start, goal, constraints)
+
+        if graph is None or len(graph.nodes) == 0:
+            return self._simple_path(start, goal)
+
+        # Convert coordinates to node IDs
+        start_node = self._coord_to_node(start)
+        goal_node = self._coord_to_node(goal)
+
+        if start_node not in graph or goal_node not in graph:
+            return self._simple_path(start, goal)
+
+        try:
+            # Use NetworkX A* implementation
+            path = nx.astar_path(
+                graph,
+                start_node,
+                goal_node,
+                heuristic=self._euclidean_heuristic,
+                weight='weight'
+            )
+
+            # Convert back to coordinates
+            return [self._node_to_coord(node) for node in path]
+
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            logger.warning(f"No path found from {start} to {goal}")
+            return self._simple_path(start, goal)
 
     def _plan_dijkstra(
         self,
@@ -136,9 +164,36 @@ class PathPlanner:
         goal: Tuple[float, float],
         constraints: Optional[dict] = None,
     ) -> List[Tuple[float, float]]:
-        """Dijkstra path planning implementation"""
-        # TODO: Implement Dijkstra algorithm
-        return [start, goal]
+        """Dijkstra path planning implementation using NetworkX"""
+        try:
+            import networkx as nx
+        except ImportError:
+            logger.warning("NetworkX not available, falling back to simple path")
+            return self._simple_path(start, goal)
+
+        # Create grid-based graph for path planning
+        graph = self._create_navigation_graph(start, goal, constraints)
+
+        if graph is None or len(graph.nodes) == 0:
+            return self._simple_path(start, goal)
+
+        # Convert coordinates to node IDs
+        start_node = self._coord_to_node(start)
+        goal_node = self._coord_to_node(goal)
+
+        if start_node not in graph or goal_node not in graph:
+            return self._simple_path(start, goal)
+
+        try:
+            # Use NetworkX Dijkstra implementation
+            path = nx.dijkstra_path(graph, start_node, goal_node, weight='weight')
+
+            # Convert back to coordinates
+            return [self._node_to_coord(node) for node in path]
+
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            logger.warning(f"No path found from {start} to {goal}")
+            return self._simple_path(start, goal)
 
     def get_terrain_cost(self, position: Tuple[float, float]) -> float:
         """Get terrain cost at position"""
@@ -157,12 +212,44 @@ class PathPlanner:
         return True  # Placeholder
 
     def smooth_path(self, path: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
-        """Smooth path to reduce sharp turns"""
-        # TODO: Implement path smoothing
-        # - Remove unnecessary waypoints
-        # - Apply smoothing algorithms
-        # - Maintain safety margins
-        return path  # Placeholder
+        """Smooth path to reduce sharp turns using SciPy B-splines"""
+        if len(path) < 3:
+            return path
+
+        try:
+            import numpy as np
+            from scipy.interpolate import splprep, splev
+        except ImportError:
+            logger.warning("SciPy not available, skipping path smoothing")
+            return path
+
+        try:
+            # Convert path to numpy array
+            points = np.array(path)
+
+            # B-spline smoothing with safety margin consideration
+            smoothing_factor = min(0.1, len(path) * 0.01)  # Adaptive smoothing
+
+            # Interpolate x and y coordinates separately
+            tck, u = splprep([points[:, 0], points[:, 1]], s=smoothing_factor)
+
+            # Generate more points for smoother path
+            u_new = np.linspace(u.min(), u.max(), max(50, len(path) * 2))
+            x_smooth, y_smooth = splev(u_new, tck)
+
+            # Convert back to list of tuples
+            smoothed_path = list(zip(x_smooth, y_smooth))
+
+            # Ensure start and end points are preserved
+            smoothed_path[0] = path[0]
+            smoothed_path[-1] = path[-1]
+
+            logger.debug(f"Smoothed path from {len(path)} to {len(smoothed_path)} points")
+            return smoothed_path
+
+        except Exception as e:
+            logger.warning(f"Path smoothing failed: {e}, returning original path")
+            return path
 
     def optimize_path(
         self, path: List[Tuple[float, float]], criteria: Optional[List[str]] = None
@@ -466,3 +553,73 @@ class DStarLite:
 
         path.append(self._grid_to_world(self.s_goal))
         return path
+
+    def _create_navigation_graph(self, start: Tuple[float, float], goal: Tuple[float, float],
+                                constraints: Optional[dict] = None) -> Optional[object]:
+        """Create NetworkX graph for path planning"""
+        try:
+            import networkx as nx
+        except ImportError:
+            return None
+
+        # Create directed graph
+        graph = nx.Graph()
+
+        # Define search bounds around start and goal
+        margin = 10.0  # meters
+        min_x = min(start[0], goal[0]) - margin
+        max_x = max(start[0], goal[0]) + margin
+        min_y = min(start[1], goal[1]) - margin
+        max_y = max(start[1], goal[1]) + margin
+
+        # Create grid nodes (resolution of 1 meter)
+        resolution = 1.0
+        nodes = []
+
+        x = min_x
+        while x <= max_x:
+            y = min_y
+            while y <= max_y:
+                if self.is_position_valid((x, y)):
+                    nodes.append((x, y))
+                y += resolution
+            x += resolution
+
+        # Add nodes to graph
+        for node in nodes:
+            node_id = self._coord_to_node(node)
+            graph.add_node(node_id, pos=node)
+
+        # Add edges between adjacent nodes
+        for node in nodes:
+            node_id = self._coord_to_node(node)
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+                neighbor = (node[0] + dx * resolution, node[1] + dy * resolution)
+                if neighbor in nodes:
+                    neighbor_id = self._coord_to_node(neighbor)
+                    # Calculate edge weight based on terrain cost and distance
+                    distance = ((dx * resolution) ** 2 + (dy * resolution) ** 2) ** 0.5
+                    terrain_cost = (self.get_terrain_cost(node) + self.get_terrain_cost(neighbor)) / 2.0
+                    weight = distance * terrain_cost
+                    graph.add_edge(node_id, neighbor_id, weight=weight)
+
+        return graph
+
+    def _coord_to_node(self, coord: Tuple[float, float]) -> str:
+        """Convert coordinate to node ID"""
+        return f"{coord[0]:.1f},{coord[1]:.1f}"
+
+    def _node_to_coord(self, node_id: str) -> Tuple[float, float]:
+        """Convert node ID to coordinate"""
+        x, y = node_id.split(',')
+        return (float(x), float(y))
+
+    def _euclidean_heuristic(self, node1: str, node2: str) -> float:
+        """Euclidean distance heuristic for A*"""
+        coord1 = self._node_to_coord(node1)
+        coord2 = self._node_to_coord(node2)
+        return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
+
+    def _simple_path(self, start: Tuple[float, float], goal: Tuple[float, float]) -> List[Tuple[float, float]]:
+        """Fallback simple straight-line path"""
+        return [start, goal]

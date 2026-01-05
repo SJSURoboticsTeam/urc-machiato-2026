@@ -1,304 +1,199 @@
+.. _getting_started:
+
+==================
 Getting Started
-===============
+==================
 
-This guide will help you set up your development environment and get started with the URC 2026 Robotics Project.
+Welcome to the URC 2026 Mars Rover project! This guide will help you understand the codebase structure and get up to speed quickly.
 
-Prerequisites
--------------
+Project Overview
+================
 
-Before setting up the project, ensure you have the following prerequisites installed:
+The URC 2026 rover is a complete autonomous robotics system with:
 
-System Requirements
-~~~~~~~~~~~~~~~~~~~
+- **ROS2-based autonomy stack** for navigation and control
+- **Computer vision** for object detection and scene understanding
+- **Mission execution** for URC competition challenges
+- **Web dashboard** for monitoring and control
+- **Simulation environment** for testing and validation
 
-- **Operating System**: Ubuntu 22.04 LTS (recommended) or Ubuntu 20.04 LTS
-- **RAM**: Minimum 16GB, Recommended 32GB+
-- **Storage**: 50GB+ free space
-- **GPU**: NVIDIA GPU with CUDA support (optional, for accelerated computer vision)
+Quick Start Checklist
+=====================
 
-Required Software
-~~~~~~~~~~~~~~~~~
+.. checklist::
 
-.. list-table:: Required Software
-   :header-rows: 1
-   :widths: 20 40 40
+   [ ] Clone repository: ``git clone --recurse-submodules <repo-url>``
+   [ ] Install dependencies: ``pip install -e .``
+   [ ] Setup ROS2 workspace: ``source /opt/ros/humble/setup.bash``
+   [ ] Build packages: ``colcon build``
+   [ ] Launch development environment: ``./start.py dev dashboard``
+   [ ] Run basic tests: ``python -m pytest tests/unit/ -v``
 
-   * - **Software**
-     - **Version**
-     - **Installation Command**
-   * - **Git**
-     - Latest
-     - ``sudo apt install git``
-   * - **Python**
-     - 3.10+
-     - ``sudo apt install python3 python3-pip python3-venv``
-   * - **Node.js**
-     - 18+
-     - ``curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs``
-   * - **Docker**
-     - Latest
-     - ``curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh``
-   * - **VS Code**
-     - Latest
-     - Download from `https://code.visualstudio.com/`_
+Understanding the Codebase
+===========================
 
-Recommended Extensions
-~~~~~~~~~~~~~~~~~~~~~~
+The project follows a **layered architecture** with clear separation of concerns:
 
-For the best development experience, install these VS Code extensions:
+Code Organization Map
+----------------------
 
-- **C/C++** (ms-vscode.cpptools) - C++ development support
-- **Python** (ms-python.python) - Python development support
-- **ROS** (ms-iot.vscode-ros) - ROS2 development support
-- **Docker** (ms-azuretools.vscode-docker) - Docker integration
-- **GitLens** (eamodio.gitlens) - Enhanced Git capabilities
+.. code-block:: text
 
-Project Setup
--------------
+   urc-machiato-2026/
+   ├── src/                    # 🚀 ROS2 Source Packages
+   │   ├── autonomy/          # 🤖 Core Robotics Stack
+   │   │   ├── bt/            # Behavior Tree logic
+   │   │   ├── control/       # Hardware control (LEDs, motors)
+   │   │   ├── core/          # Navigation, state, safety
+   │   │   ├── interfaces/    # ROS2 messages/services
+   │   │   ├── perception/    # Vision, SLAM, sensors
+   │   │   └── utilities/     # Shared code
+   │   ├── bridges/           # 🌉 Communication layer
+   │   ├── frontend/          # 💻 Web dashboard
+   │   └── simulation/        # 🎮 Gazebo integration
+   ├── missions/              # 🎯 URC Mission implementations
+   ├── simulation/            # 🏗️ Additional simulation tools
+   ├── config/                # ⚙️ Configuration files
+   ├── tests/                 # 🧪 Test suites
+   └── tools/                 # 🔧 Development utilities
 
-Clone the Repository
-~~~~~~~~~~~~~~~~~~~
+Where to Find What You Need
+---------------------------
 
-.. code-block:: bash
++----------------+------------------+-----------------------------------+
+| I want to...   | Look in...       | Example files                     |
++================+==================+===================================+
+| Change robot   | ``src/autonomy/``| ``navigation_node.py``            |
+| behavior       |                  | ``state_machine.py``              |
++----------------+------------------+-----------------------------------+
+| Add new        | ``missions/``     | ``sample_collection_mission.py``  |
+| mission        |                  |                                   |
++----------------+------------------+-----------------------------------+
+| Modify web UI  | ``src/frontend/``| ``Dashboard.jsx``                 |
+|                |                  | ``MissionControl.tsx``            |
++----------------+------------------+-----------------------------------+
+| Test in        | ``simulation/``   | ``worlds/mars_yard.world``        |
+| simulation     |                  | ``rover_model.urdf``              |
++----------------+------------------+-----------------------------------+
+| Add ROS2       | ``src/autonomy/``| ``interfaces/msg/SensorData.msg`` |
+| messages       | ``interfaces/``   |                                   |
++----------------+------------------+-----------------------------------+
+| Write tests    | ``tests/``        | ``test_navigation.py``            |
++----------------+------------------+-----------------------------------+
 
-   # Clone the repository
-   git clone https://github.com/your-org/urc-2026-machiato.git
-   cd urc-2026-machiato
+Key Concepts to Understand
+===========================
 
-   # Initialize submodules if any
-   git submodule update --init --recursive
+ROS2 Architecture
+------------------
 
-Environment Setup
-~~~~~~~~~~~~~~~~~
+The system uses **ROS2 Humble** with a distributed architecture:
 
-1. **Python Virtual Environment**
+- **Nodes**: Individual processes (navigation, perception, control)
+- **Topics**: Data streams between nodes
+- **Services**: Request/response communication
+- **Actions**: Long-running tasks with feedback
 
-   .. code-block:: bash
+Behavior Trees
+--------------
 
-      # Create virtual environment
-      python3 -m venv venv
-      source venv/bin/activate
+Mission logic is implemented using **Behavior Trees** (BT.CPP):
 
-      # Install Python dependencies
-      pip install -r requirements.txt
+- **Sequences**: Execute tasks in order
+- **Selectors**: Try alternatives until one succeeds
+- **Decorators**: Modify behavior (retry, timeout, etc.)
+- **Actions**: Leaf nodes that perform work
 
-2. **ROS2 Installation**
+Mission Structure
+-----------------
 
-   .. code-block:: bash
+Each URC mission follows a standard pattern:
 
-      # Add ROS2 repository
-      sudo apt update && sudo apt install locales
-      sudo locale-gen en_US en_US.UTF-8
-      sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-      export LANG=en_US.UTF-8
-
-      sudo apt install software-properties-common
-      sudo add-apt-repository universe
-
-      sudo apt update && sudo apt install curl -y
-      sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-
-      sudo apt update
-      sudo apt upgrade
-
-      # Install ROS2 Humble
-      sudo apt install ros-humble-desktop
-
-      # Source ROS2 setup
-      source /opt/ros/humble/setup.bash
-
-3. **Frontend Setup**
-
-   .. code-block:: bash
-
-      cd frontend
-
-      # Install Node.js dependencies
-      npm install
-
-      # Start development server
-      npm run dev
-
-4. **Build ROS2 Packages**
-
-   .. code-block:: bash
-
-      cd Autonomy
-
-      # Install ROS2 dependencies
-      sudo apt install python3-colcon-common-extensions
-
-      # Build packages
-      colcon build --symlink-install
-
-      # Source workspace
-      source install/setup.bash
+1. **Planning**: Generate waypoints or trajectories
+2. **Execution**: Navigate and perform tasks
+3. **Monitoring**: Track progress and handle failures
+4. **Recovery**: Handle errors and edge cases
 
 Development Workflow
--------------------
+=====================
 
-Daily Development Cycle
-~~~~~~~~~~~~~~~~~~~~~~~
+Daily Development
+------------------
 
-1. **Pull Latest Changes**
+1. **Pull latest changes**: ``git pull --recurse-submodules``
+2. **Create feature branch**: ``git checkout -b feature/my-feature``
+3. **Make changes** following the architecture above
+4. **Test locally**: ``./start.py dev dashboard``
+5. **Run tests**: ``python -m pytest tests/unit/ -v``
+6. **Commit changes**: ``git commit -m "Add feature"``
+7. **Create PR** for review
 
-   .. code-block:: bash
+Code Standards
+--------------
 
-      git pull origin main
-      git submodule update --recursive
+- **Python**: Black formatting, type hints, docstrings
+- **C++**: Follow ROS2 style guidelines
+- **JavaScript**: ESLint, Prettier formatting
+- **Tests**: pytest with coverage >80%
+- **Documentation**: Sphinx docs for public APIs
 
-2. **Activate Environment**
+Common Development Tasks
+=========================
 
-   .. code-block:: bash
+Adding a New Mission
+---------------------
 
-      # Python virtual environment
-      source venv/bin/activate
+1. Create ``missions/new_mission.py``
+2. Implement mission class inheriting from base
+3. Add BT XML in ``src/autonomy/bt/behavior_trees/``
+4. Add ROS2 action server in autonomy stack
+5. Update launch files and dashboard
 
-      # ROS2 workspace
-      cd Autonomy
-      source /opt/ros/humble/setup.bash
-      source install/setup.bash
+Modifying Robot Behavior
+-------------------------
 
-3. **Run Tests**
+1. Find relevant autonomy package in ``src/autonomy/``
+2. Modify behavior logic (Python/C++)
+3. Update ROS2 interfaces if needed
+4. Test in simulation first
+5. Validate on hardware
 
-   .. code-block:: bash
+Adding Web Dashboard Features
+------------------------------
 
-   # Complete testing pyramid
-   python3 test_everything.py
-
-   # Individual test suites
-   python3 tests/run_tests.py --unit
-   python3 tests/run_tests.py --integration
-
-4. **Start Development**
-
-   .. code-block:: bash
-
-      # Frontend development
-      cd ../frontend && npm run dev
-
-      # ROS2 development
-      cd ../Autonomy && ros2 launch system_integration.launch.py
-
-Building Documentation
-~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   cd docs
-
-   # Build HTML documentation
-   make html
-
-   # Open documentation in browser
-   xdg-open _build/html/index.html
-
-Code Quality Checks
-~~~~~~~~~~~~~~~~~~~
-
-Before committing code, run these quality checks:
-
-.. code-block:: bash
-
-   # Python linting and formatting
-   black .
-   flake8 .
-   mypy .
-
-   # C++ linting
-   cppcheck --enable=all --std=c++17 --language=c++ .
-
-   # Frontend linting
-   cd frontend && npm run lint
-
-Running Tests
--------------
-
-Unit Tests
-~~~~~~~~~~
-
-.. code-block:: bash
-
-   # Python unit tests
-   python -m pytest tests/ -v
-
-   # ROS2 unit tests
-   cd Autonomy && colcon test --packages-select YOUR_PACKAGE
-
-Integration Tests
-~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   # Run integration test suite
-   python scripts/run_integration_tests.py
-
-   # ROS2 integration tests
-   ros2 launch integration_tests.launch.py
-
-Simulation Testing
-~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   # Start Gazebo simulation
-   ros2 launch simulation full_simulation.launch.py
-
-   # Run automated simulation tests
-   python scripts/simulation_validation.py
+1. Modify React components in ``src/frontend/``
+2. Update WebSocket communication in ``src/bridges/``
+3. Add backend endpoints if needed
+4. Test real-time updates
 
 Troubleshooting
----------------
+===============
 
 Common Issues
-~~~~~~~~~~~~~
+--------------
 
-**ROS2 Build Failures**
+**ROS2 build fails:**
+- Check dependencies in ``package.xml``
+- Ensure all required packages are installed
+- Look for missing includes or linking errors
 
-.. code-block:: bash
+**Tests failing:**
+- Run ``python -m pytest tests/ -v`` for details
+- Check ROS2 nodes are running
+- Verify configuration files
 
-   # Clean and rebuild
-   cd Autonomy
-   rm -rf build/ install/ log/
-   colcon build --symlink-install
-
-**Python Import Errors**
-
-.. code-block:: bash
-
-   # Ensure virtual environment is activated
-   source venv/bin/activate
-
-   # Reinstall dependencies
-   pip install -r requirements.txt --force-reinstall
-
-**Frontend Build Issues**
-
-.. code-block:: bash
-
-   cd frontend
-
-   # Clear node_modules and reinstall
-   rm -rf node_modules package-lock.json
-   npm install
+**Simulation not working:**
+- Check Gazebo installation
+- Verify URDF files are valid
+- Look at simulation logs
 
 Getting Help
-------------
+=============
 
-- **Documentation**: Check the full documentation at ``docs/_build/html/index.html``
-- **Issues**: Report bugs and request features on GitHub Issues
-- **Discussions**: Join development discussions on GitHub Discussions
-- **Team Chat**: Connect with the team on Slack/Discord
+- **📖 Documentation**: ``docs/`` directory (run ``make html``)
+- **🧪 Testing Guide**: ``docs/testing/``
+- **🚀 Deployment**: ``DEPLOYMENT.md``
+- **💬 Team Chat**: Ask questions in development channels
+- **📋 Issues**: Check existing GitHub issues first
 
-Next Steps
-----------
-
-Now that your environment is set up:
-
-1. Read the :doc:`architecture` documentation to understand the system design
-2. Explore the :doc:`development/workflow` guide for coding standards
-3. Check the :doc:`api/index` for available interfaces
-4. Join a development team and start contributing!
-
-Happy coding! 🚀
+Remember: This is a complex robotics system. Don't hesitate to ask questions - the codebase has evolved over time and some complexity is inherent to the domain!

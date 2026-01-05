@@ -1,0 +1,174 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            python3-dev \
+            build-essential \
+            cmake \
+            git \
+            curl \
+            libopencv-dev \
+            libpcl-dev \
+            ros-humble-desktop
+
+      - name: Install Python dependencies
+        run: |
+          pip install -e .[dev]
+          pip install \
+            black==22.0.0 \
+            isort==5.10.0 \
+            flake8==4.0.0 \
+            mypy==1.0.0 \
+            pytest==7.0.0 \
+            pytest-cov==4.0.0 \
+            pytest-xdist==3.0.0
+
+      - name: Setup ROS2 workspace
+        run: |
+          source /opt/ros/humble/setup.bash
+          mkdir -p ~/ros2_ws/src
+          cp -r . ~/ros2_ws/src/urc-machiato-2026
+          cd ~/ros2_ws
+          rosdep install --from-paths src --ignore-src -y
+          colcon build --symlink-install --packages-skip urc-machiato-2026
+
+      - name: Code formatting check
+        run: |
+          black --check --diff .
+          echo "✅ Code formatting check passed"
+
+      - name: Import sorting check
+        run: |
+          isort --check-only --diff .
+          echo "✅ Import sorting check passed"
+
+      - name: Linting check
+        run: |
+          flake8 . --max-line-length=88 --extend-ignore=E203,W503
+          echo "✅ Linting check passed"
+
+      - name: Type checking
+        run: |
+          mypy . --ignore-missing-imports --no-strict-optional
+          echo "✅ Type checking passed"
+
+      - name: Unit tests
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ~/ros2_ws/install/setup.bash
+          pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=85
+          echo "✅ Unit tests passed"
+
+      - name: Integration tests
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ~/ros2_ws/install/setup.bash
+          pytest tests/integration/ -v --cov-append --cov-report=xml
+          echo "✅ Integration tests passed"
+
+      - name: ROS2 package build check
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd ~/ros2_ws
+          colcon build --symlink-install --packages-select autonomy_interfaces
+          colcon build --symlink-install --packages-select autonomy_navigation
+          colcon build --symlink-install --packages-select autonomy_state_management
+          echo "✅ ROS2 package build check passed"
+
+      - name: Documentation build check
+        run: |
+          cd docs
+          pip install -r requirements.txt
+          make html
+          echo "✅ Documentation build check passed"
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  security-scan:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install security tools
+        run: |
+          pip install bandit[sarif]
+
+      - name: Security scan
+        run: |
+          bandit -r . -f sarif -o bandit-results.sarif --exclude tests
+          echo "✅ Security scan completed"
+
+      - name: Upload SARIF file
+        uses: github/codecov-action@v3
+        if: always()
+        with:
+          file: bandit-results.sarif
+          flags: security
+          name: security-scan
+          fail_ci_if_error: false
+
+  performance-check:
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install performance tools
+        run: |
+          pip install -e .
+          pip install pytest-benchmark
+
+      - name: Performance regression check
+        run: |
+          pytest tests/performance/ -v --benchmark-only --benchmark-autosave
+          echo "✅ Performance check completed"
+

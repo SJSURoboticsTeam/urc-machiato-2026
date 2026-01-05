@@ -1,7 +1,1 @@
-string property_name
----
-string property_name
-bool satisfied
-string details
-int32 violation_count
-float64 last_violation
+/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/srv/VerifySafetyProperty.srv
