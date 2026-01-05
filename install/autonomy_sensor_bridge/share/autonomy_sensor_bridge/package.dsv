@@ -1,0 +1,11 @@
+source;share/autonomy_sensor_bridge/hook/cmake_prefix_path.ps1
+source;share/autonomy_sensor_bridge/hook/cmake_prefix_path.dsv
+source;share/autonomy_sensor_bridge/hook/cmake_prefix_path.sh
+source;share/autonomy_sensor_bridge/hook/pythonpath.ps1
+source;share/autonomy_sensor_bridge/hook/pythonpath.dsv
+source;share/autonomy_sensor_bridge/hook/pythonpath.sh
+source;share/autonomy_sensor_bridge/local_setup.bash
+source;share/autonomy_sensor_bridge/local_setup.dsv
+source;share/autonomy_sensor_bridge/local_setup.ps1
+source;share/autonomy_sensor_bridge/local_setup.sh
+source;share/autonomy_sensor_bridge/local_setup.zsh

@@ -1,0 +1,52 @@
+@startuml Onboarding Flow
+title URC 2026 Developer Onboarding Flow
+
+start
+
+:New Team Member;
+
+if (First Day?) then (yes)
+    :Read Big Picture Guide;
+    :Understand 6-Layer Architecture;
+    :Run Quick Start;
+else (no)
+endif
+
+:Identify Your Role;
+note right
+    Network, SLAM/NAV,
+    ARM, or Testing
+end note
+
+if (Network Team?) then (yes)
+    :Read Network Guide;
+    :Monitor ROS Topics;
+    :Test Communication;
+elseif (SLAM/NAV Team?) then (yes)
+    :Read SLAM/NAV Guide;
+    :Run Navigation Tests;
+    :Test in Simulation;
+elseif (ARM Team?) then (yes)
+    :Read ARM Guide;
+    :Calibrate Systems;
+    :Test Arm Movement;
+elseif (Testing Team?) then (yes)
+    :Read Testing Guide;
+    :Run Test Suite;
+    :Add New Tests;
+else (no)
+endif
+
+:Find Your Code;
+note right
+    Use directory map
+    in Big Picture guide
+end note
+
+:Make First Change;
+:Run Tests;
+:Create PR;
+
+stop
+@enduml
+

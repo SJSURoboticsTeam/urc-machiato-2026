@@ -12,23 +12,29 @@ import sys
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-import rclpy
-from autonomy_interfaces.action import NavigateToPose
-from geometry_msgs.msg import PoseStamped, Twist
-from sensor_msgs.msg import Imu, NavSatFix
-from std_msgs.msg import String
-from std_srvs.srv import Trigger
-from rclpy.lifecycle import LifecycleState, TransitionCallbackReturn
-from autonomy_utilities import (
-    AutonomyNode,
-    OperationResult,
-    MessagePipeline,
-    NodeParameters,
-    ProcessingError,
-    ValidationError,
-    failure,
-    success,
-)
+# Intelligent ROS2 imports with fallbacks
+from src.core.ros2_environment import get_ros2_environment_manager
+
+# Get ROS2 environment for intelligent imports
+ros2_env = get_ros2_environment_manager()
+optimized_imports = ros2_env.get_optimized_imports()
+
+# Import with fallbacks
+rclpy = optimized_imports.get('rclpy')
+NavigateToPose = optimized_imports.get('NavigateToPose')
+PoseStamped = optimized_imports.get('PoseStamped')
+Twist = optimized_imports.get('Twist')
+Imu = optimized_imports.get('Imu')
+NavSatFix = optimized_imports.get('NavSatFix')
+String = optimized_imports.get('String')
+Trigger = optimized_imports.get('Trigger')
+LifecycleState = optimized_imports.get('LifecycleState')
+TransitionCallbackReturn = optimized_imports.get('TransitionCallbackReturn')
+
+# Use optimized node utilities and unified systems
+from autonomy.core.node_utils import BaseURCNode
+from src.core.component_registry import get_component_registry
+from src.core.configuration import get_system_config
 
 try:
     from autonomy_navigation.gnss_processor import GNSSProcessor
@@ -64,20 +70,88 @@ class NavigationGoal:
     target_heading: float = 0.0  # radians
 
 
-class NavigationNode(AutonomyNode):
+class NavigationNode(BaseURCNode):
     """
     Main navigation controller coordinating all navigation subsystems.
     Now with Lifecycle management and optimized sensor integration.
     """
 
     def __init__(self) -> None:
-        """Initialize navigation node."""
-        super().__init__("navigation_node", NodeParameters.for_navigation())
+        """Initialize navigation node with intelligent ROS2 handling."""
+        super().__init__("navigation_node")
 
-        # Subsystems initialized here but configured in on_configure
+        # Performance and monitoring
+        self.profiler = get_profiler()
+        self.memory_monitor = get_memory_monitor()
+
+        # Set memory baseline
+        self.memory_monitor.set_baseline()
+
+        # Get component registry for advanced component management
+        self.component_registry = get_component_registry()
+
+        # Register component loaders for heavy dependencies
+        # These will be loaded lazily when first accessed
+        self._component_loaders = {
+            'gnss_processor': self._load_gnss_processor,
+            'path_planner': self._load_path_planner,
+            'motion_controller': self._load_motion_controller,
+            'terrain_analyzer': self._load_terrain_analyzer,
+            'ml_analyzer': self._load_ml_analyzer
+        }
+
+        # Subsystems - loaded lazily
         self.gnss_processor = None
         self.path_planner = None
         self.motion_controller = None
+        self.terrain_analyzer = None
+        self.ml_analyzer = None
+
+        # Lazy loading methods for heavy components
+    def _load_gnss_processor(self):
+        """Lazy load GNSS processor."""
+        try:
+            from autonomy_navigation.gnss_processor import GNSSProcessor
+            return GNSSProcessor()
+        except ImportError:
+            from gnss_processor import GNSSProcessor
+            return GNSSProcessor()
+
+    def _load_path_planner(self):
+        """Lazy load path planner."""
+        try:
+            from autonomy_navigation.path_planner import PathPlanner
+            return PathPlanner()
+        except ImportError:
+            from path_planner import PathPlanner
+            return PathPlanner()
+
+    def _load_motion_controller(self):
+        """Lazy load motion controller."""
+        try:
+            from autonomy_navigation.motion_controller import MotionController
+            return MotionController()
+        except ImportError:
+            from motion_controller import MotionController
+            return MotionController()
+
+    def _load_terrain_analyzer(self):
+        """Lazy load terrain analyzer (heavy dependency)."""
+        try:
+            from autonomy.core.terrain_intelligence.terrain_analyzer import TerrainAnalyzer
+            return TerrainAnalyzer()
+        except ImportError:
+            logger.warning("Terrain analyzer not available")
+            return None
+
+    def _load_ml_analyzer(self):
+        """Lazy load ML analyzer (very heavy dependency)."""
+        try:
+            from autonomy.core.terrain_intelligence.terrain_ml_analyzer import TerrainMLAnalyzer
+            return TerrainMLAnalyzer()
+        except ImportError:
+            logger.warning("ML analyzer not available")
+            return None
 
         # Navigation state
         self.current_waypoint: Optional[Waypoint] = None
@@ -88,20 +162,25 @@ class NavigationNode(AutonomyNode):
         self.control_timer = None
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
-        """Handle transition to configured state."""
+        """Handle transition to configured state with lazy loading."""
         self.logger.info("Configuring Navigation Subsystems...")
-        
+
         # Compatibility fix for legacy interface_factory usage
         self.interface_factory = self
 
-        # Initialize subsystems
-        self.gnss_processor = GNSSProcessor()
-        self.path_planner = PathPlanner()
-        self.motion_controller = MotionController()
+        # Load core subsystems lazily (only when needed)
+        # GNSS processor loaded on first GPS message
+        # Path planner loaded on first navigation request
+        # Motion controller loaded on first movement command
 
-        # Setup interfaces
+        # Setup interfaces (lightweight - no heavy dependencies)
         self._setup_interfaces()
         self._setup_processing_pipeline()
+
+        # Log memory usage after configuration
+        memory_info = self.get_memory_usage()
+        self.logger.info(f"Navigation node configured. Memory: {memory_info['total_memory_mb']:.1f}MB "
+                        f"(+{memory_info['memory_delta_mb']:.1f}MB)")
 
         return TransitionCallbackReturn.SUCCESS
 
@@ -192,8 +271,22 @@ class NavigationNode(AutonomyNode):
         return data
 
     def _gnss_callback(self, msg: NavSatFix) -> None:
-        """Handle GNSS data updates."""
+        """Handle GNSS data updates with lazy loading."""
         self.trace_data("gnss_received", msg)
+
+        # Lazy load GNSS processor on first GPS message
+        if self.gnss_processor is None:
+            try:
+                if 'gnss_processor' in self._component_loaders:
+                    self.gnss_processor = self._component_loaders['gnss_processor']()
+                    self.logger.info("GNSS processor loaded on-demand")
+                else:
+                    # Fallback to registry
+                    self.gnss_processor = self.component_registry.get_component('gnss_processor')
+            except Exception as e:
+                self.logger.error(f"Failed to load GNSS processor: {e}")
+                return
+
         # Process GNSS data through pipeline
         pipeline_data = {
             "gnss": msg,
@@ -214,29 +307,41 @@ class NavigationNode(AutonomyNode):
 
     def _navigate_to_pose_callback(self, goal_handle) -> NavigateToPose.Result:
         """Handle navigation action requests."""
-        # Validate operation requirements
-        validation = self.validate_operation(
-            "navigate_to_pose",
-            required_state="idle",
-            required_interfaces={"subscribers": 2},  # GNSS and IMU
-        )
+        self.profiler.start_timer("navigate_to_pose")
 
-        if isinstance(validation, Failure):
-            self.logger.error("Navigation validation failed", error=validation.error)
+        try:
+            # Validate operation requirements
+            validation = self.validate_operation(
+                "navigate_to_pose",
+                required_state="idle",
+                required_interfaces={"subscribers": 2},  # GNSS and IMU
+            )
+
+            if isinstance(validation, Failure):
+                self.logger.error("Navigation validation failed", error=validation.error)
+                goal_handle.abort()
+                return NavigateToPose.Result()
+
+            # Extract goal and start navigation
+            goal = goal_handle.request.target_pose
+            result = self.start_navigation_to_pose(goal)
+
+            if isinstance(result, Failure):
+                self.logger.error("Navigation start failed", error=result.error)
+                goal_handle.abort()
+                return NavigateToPose.Result()
+
+            goal_handle.succeed()
+
+            # End profiling
+            duration = self.profiler.end_timer("navigate_to_pose")
+            self.get_logger().debug(".3f")
+
+            return NavigateToPose.Result()
+        except Exception as e:
+            self.logger.error(f"Navigation failed: {e}")
             goal_handle.abort()
             return NavigateToPose.Result()
-
-        # Extract goal and start navigation
-        goal = goal_handle.request.target_pose
-        result = self.start_navigation_to_pose(goal)
-
-        if isinstance(result, Failure):
-            self.logger.error("Navigation start failed", error=result.error)
-            goal_handle.abort()
-            return NavigateToPose.Result()
-
-        goal_handle.succeed()
-        return NavigateToPose.Result()
 
     def _stop_navigation_callback(self, request, response) -> Trigger.Response:
         """Handle navigation stop requests."""
@@ -251,6 +356,26 @@ class NavigationNode(AutonomyNode):
             return
 
         try:
+            # Memory monitoring
+            mem_usage = self.memory_monitor.get_memory_usage()
+            mem_pressure = self.memory_monitor.check_memory_pressure()
+
+            if mem_pressure in ["HIGH", "CRITICAL"]:
+                self.get_logger().warn(".1f")
+
+            # Lazy load motion controller on first movement command
+            if self.motion_controller is None:
+                try:
+                    if 'motion_controller' in self._component_loaders:
+                        self.motion_controller = self._component_loaders['motion_controller']()
+                        self.logger.info("Motion controller loaded on-demand")
+                    else:
+                        # Fallback to registry
+                        self.motion_controller = self.component_registry.get_component('motion_controller')
+                except Exception as e:
+                    self.logger.error(f"Failed to load motion controller: {e}")
+                    return
+
             # Generate velocity commands
             cmd_vel = self.motion_controller.compute_velocity_commands(
                 self.current_path, self.current_pose
@@ -280,6 +405,22 @@ class NavigationNode(AutonomyNode):
             validation = self._validate_waypoint(waypoint)
             if isinstance(validation, Failure):
                 return validation
+
+            # Lazy load path planner on first navigation request
+            if self.path_planner is None:
+                try:
+                    if 'path_planner' in self._component_loaders:
+                        self.path_planner = self._component_loaders['path_planner']()
+                        self.logger.info("Path planner loaded on-demand")
+                    else:
+                        # Fallback to registry
+                        self.path_planner = self.component_registry.get_component('path_planner')
+                except Exception as e:
+                    self.logger.error(f"Failed to load path planner: {e}")
+                    return failure(
+                        ProcessingError("component_loading", "path_planner_failed"),
+                        operation="start_navigation",
+                    )
 
             # Plan path
             path_result = self.path_planner.plan_path(

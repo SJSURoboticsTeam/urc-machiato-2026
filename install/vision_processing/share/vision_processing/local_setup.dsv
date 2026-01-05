@@ -1,3 +1,1 @@
-source;share/vision_processing/environment/ament_prefix_path.sh
-source;share/vision_processing/environment/path.sh
-source;share/vision_processing/environment/pythonpath.sh
+/home/durian/urc-machiato-2026/build/vision_processing/ament_cmake_environment_hooks/local_setup.dsv

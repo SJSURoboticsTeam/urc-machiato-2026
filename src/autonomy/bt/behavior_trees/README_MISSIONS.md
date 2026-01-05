@@ -135,3 +135,4 @@ The BT system integrates with the adaptive state machine:
 - BT reports progress and completion status
 - Emergency stops coordinated between systems
 
+

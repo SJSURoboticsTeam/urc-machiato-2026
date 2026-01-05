@@ -25,14 +25,17 @@ This comprehensive documentation covers all aspects of our autonomous rover plat
    :maxdepth: 2
    :caption: 🚀 Getting Started
 
-   overview
+   big_picture
    quickstart
+   getting_started
    installation
 
 .. toctree::
    :maxdepth: 2
    :caption: 📚 System Architecture
 
+   unified_systems
+   diagrams_overview
    architecture/overview
    architecture/diagrams
    architecture/communication_patterns
@@ -41,6 +44,15 @@ This comprehensive documentation covers all aspects of our autonomous rover plat
    architecture/state_machine
    architecture/ros2_interfaces
    architecture/hardware
+
+.. toctree::
+   :maxdepth: 2
+   :caption: 👥 Team Guides
+
+   network_guide
+   slam_nav_guide
+   arm_guide
+   testing_guide
 
 .. toctree::
    :maxdepth: 2

@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 """
-Hardware Interface Node - ROS2 to STM32 CAN Bus Bridge
-Connects ROS2 autonomy commands to physical STM32 controllers.
+Hardware Interface Node - ROS2 to STM32 CAN Bus Bridge.
 
-Based on teleoperation system CAN serial communication protocol.
-Integrates with vendor/control-systems STM32 firmware.
+Connects ROS2 autonomy commands to physical STM32 controllers via CAN serial protocol.
+Integrates with vendor/control-systems STM32 firmware for complete hardware control.
+
+Key Features:
+- Advanced Twist Mux for command arbitration (emergency > safety > teleop > autonomy)
+- Lifecycle management for proper startup/shutdown sequences
+- Direct CAN safety integration for fail-safe operation
+- Real-time telemetry publishing and health monitoring
+- Hot-swappable command blackboard for priority-based control
 """
 
 import json
-import math
+import logging
 import os
 import sys
-import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import rclpy
-import serial
 from geometry_msgs.msg import Twist, TwistStamped
 from nav_msgs.msg import Odometry
 from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackReturn
@@ -25,59 +29,100 @@ from sensor_msgs.msg import BatteryState, Imu, JointState, NavSatFix
 from std_msgs.msg import Bool, Float32MultiArray, String
 from autonomy_interfaces.msg import LedCommand
 
-# Import direct CAN safety
+logger = logging.getLogger(__name__)
+
+# Import direct CAN safety with proper error handling
 sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "..", "core", "safety_system")
 )
 try:
     from direct_can_safety import DirectCANSafety
-
     DIRECT_CAN_AVAILABLE = True
-except ImportError:
+    logger.info("Direct CAN safety module loaded successfully")
+except ImportError as e:
     DIRECT_CAN_AVAILABLE = False
     DirectCANSafety = None
+    logger.warning(f"Direct CAN safety module not available: {e}")
 
 
 class HardwareInterfaceNode(LifecycleNode):
     """
-    Hardware Interface Node - ROS2 ↔ STM32 Controller Bridge
-    Now with integrated Advanced Twist Mux and Lifecycle management.
+    Hardware Interface Node - ROS2 to STM32 CAN Bus Bridge.
+
+    Provides complete hardware abstraction layer between ROS2 autonomy stack and
+    physical STM32 controllers. Implements advanced command arbitration via Twist Mux
+    with priority-based control (emergency > safety > teleop > autonomy).
+
+    Key Features:
+    - Advanced Twist Mux for command arbitration
+    - Lifecycle management for proper startup/shutdown
+    - Direct CAN safety integration for fail-safe operation
+    - Real-time telemetry and health monitoring
+    - Hot-swappable command blackboard
+
+    Hardware Integration:
+    - CAN serial communication to STM32 controllers
+    - Sensor data publishing (IMU, GPS, battery, etc.)
+    - Actuator control (motors, servos, LEDs)
+    - Emergency stop and safety monitoring
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize hardware interface with ROS2 lifecycle management."""
         super().__init__("hardware_interface")
 
-        # Twist Mux Priority Configuration
-        self.PRIORITIES = {
-            "emergency": 1000,
-            "safety": 900,
-            "teleop": 500,
-            "autonomy": 100,
-            "idle": 0
+        # Command arbitration priorities (higher = more important)
+        self.PRIORITIES: Dict[str, int] = {
+            "emergency": 1000,  # Emergency stop - highest priority
+            "safety": 900,      # Safety systems
+            "teleop": 500,      # Manual teleoperation
+            "autonomy": 100,    # Autonomous control
+            "idle": 0           # No active commands
         }
-        
-        # Hot-swappable Blackboard for command arbitration
-        self.blackboard = {
-            "emergency": {"twist": Twist(), "stamp": 0.0},
-            "safety": {"twist": Twist(), "stamp": 0.0},
-            "teleop": {"twist": Twist(), "stamp": 0.0},
-            "autonomy": {"twist": Twist(), "stamp": 0.0}
+
+        # Hot-swappable command blackboard for priority arbitration
+        self.blackboard: Dict[str, Dict] = {
+            "emergency": {"twist": Twist(), "stamp": 0.0, "active": False},
+            "safety": {"twist": Twist(), "stamp": 0.0, "active": False},
+            "teleop": {"twist": Twist(), "stamp": 0.0, "active": False},
+            "autonomy": {"twist": Twist(), "stamp": 0.0, "active": False}
         }
-        self.command_timeout = 0.5 # seconds
+
+        # Control parameters
+        self.command_timeout = 0.5  # seconds - command expiration
         self.active_source = "idle"
+        self.is_initialized = False
 
-        # Declare parameters
-        self.declare_parameter("can_port", "/dev/ttyACM0")
-        self.declare_parameter("can_baudrate", 115200)
-        self.declare_parameter("control_rate_hz", 50.0)
-        self.declare_parameter("telemetry_rate_hz", 10.0)
-
-        # Connect to CAN serial on startup - Now handled by lifecycle
+        # Hardware interface state
         self.can_serial = None
         self.can_connected = False
         self.emergency_stop_active = False
         self.system_healthy = False
         self.last_cmd_vel = Twist()
+
+        # Safety system integration
+        self.direct_can_safety = None
+        if DIRECT_CAN_AVAILABLE:
+            try:
+                self.direct_can_safety = DirectCANSafety()
+                logger.info("Direct CAN safety system initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize direct CAN safety: {e}")
+                self.direct_can_safety = None
+
+        # Declare ROS2 parameters with defaults
+        self.declare_parameter("can_port", "/dev/ttyACM0")
+        self.declare_parameter("can_baudrate", 115200)
+        self.declare_parameter("control_rate_hz", 50.0)      # 20ms control loop
+        self.declare_parameter("telemetry_rate_hz", 10.0)    # 100ms telemetry
+
+        # Get initial parameter values
+        self.can_port = self.get_parameter("can_port").value
+        self.can_baudrate = self.get_parameter("can_baudrate").value
+        self.control_rate_hz = self.get_parameter("control_rate_hz").value
+        self.telemetry_rate_hz = self.get_parameter("telemetry_rate_hz").value
+
+        logger.info("HardwareInterfaceNode initialized with default parameters")
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handle transition to configured state."""

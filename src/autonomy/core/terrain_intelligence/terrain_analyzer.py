@@ -19,6 +19,17 @@ import cv2
 import numpy as np
 import rclpy
 from cv_bridge import CvBridge
+
+# Import scikit-image for advanced image processing
+try:
+    from skimage import color, filters, morphology, measure, feature, segmentation
+    from skimage.filters import threshold_otsu, sobel
+    from skimage.morphology import remove_small_objects, binary_closing
+    from skimage.measure import label, regionprops
+    from skimage.segmentation import slic, mark_boundaries
+    SKIMAGE_AVAILABLE = True
+except ImportError:
+    SKIMAGE_AVAILABLE = False
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
 from rclpy.node import Node
@@ -182,13 +193,105 @@ class TerrainAnalyzer(Node):
 
     def classify_terrain(self, image: np.ndarray) -> np.ndarray:
         """
-        Classify terrain types using computer vision.
+        Classify terrain types using advanced computer vision with scikit-image.
 
         Returns a classification map where:
         0 = sand (traversable)
         1 = rock (difficult)
         2 = slope (challenging)
         3 = hazard (avoid)
+        """
+        if not SKIMAGE_AVAILABLE:
+            # Fallback to original OpenCV implementation
+            self.get_logger().warning("scikit-image not available, using fallback OpenCV implementation")
+            return self._classify_terrain_opencv_fallback(image)
+
+        try:
+            # Convert to different color spaces for analysis
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            lab = color.rgb2lab(image.astype(float) / 255.0)
+            gray = color.rgb2gray(image.astype(float) / 255.0)
+
+            # Create classification mask
+            height, width = image.shape[:2]
+            classification = np.zeros((height, width), dtype=np.uint8)
+
+            # Advanced terrain classification using scikit-image
+
+            # 1. Detect sand (bright, uniform colors) using LAB color space
+            # Sand typically has high L (lightness) and low color saturation
+            lightness = lab[:, :, 0]
+            sand_threshold = threshold_otsu(lightness)
+            sand_mask = lightness > sand_threshold * 0.8  # Bright areas
+            # Remove small isolated regions
+            sand_mask = remove_small_objects(sand_mask, min_size=100)
+            sand_mask = binary_closing(sand_mask, morphology.disk(3))
+            classification[sand_mask] = 0  # Traversable
+
+            # 2. Detect rocks using texture analysis and segmentation
+            # Rocks have high texture variance and are darker
+            texture = filters.sobel(gray)  # Edge detection
+            texture_threshold = threshold_otsu(texture)
+            rock_candidates = texture > texture_threshold * 0.7
+
+            # Use SLIC superpixels for rock segmentation
+            segments = slic(image, n_segments=100, compactness=10, sigma=1)
+            rock_mask = np.zeros_like(rock_candidates, dtype=bool)
+
+            # Analyze each segment
+            for segment_id in np.unique(segments):
+                segment_mask = segments == segment_id
+                segment_texture = np.mean(texture[segment_mask])
+                segment_darkness = np.mean(gray[segment_mask])
+
+                # Rocks are dark and textured
+                if segment_texture > 0.1 and segment_darkness < 0.4:
+                    rock_mask |= segment_mask
+
+            rock_mask = remove_small_objects(rock_mask, min_size=50)
+            classification[rock_mask] = 1  # Difficult
+
+            # 3. Detect slopes using gradient analysis
+            # Slopes show up as consistent gradients in the image
+            gradient_magnitude = sobel(gray)
+            slope_threshold = threshold_otsu(gradient_magnitude)
+            slope_candidates = gradient_magnitude > slope_threshold * 0.6
+
+            # Use morphological operations to find slope regions
+            slope_mask = binary_closing(slope_candidates, morphology.disk(5))
+            slope_mask = remove_small_objects(slope_mask, min_size=200)
+
+            # Only classify as slope if not already classified as rock
+            slope_only = slope_mask & ~(rock_mask | sand_mask)
+            classification[slope_only] = 2  # Challenging
+
+            # 4. Detect hazards using multiple criteria
+            # Hazards are very dark, have unusual colors, or show danger patterns
+            darkness = gray < 0.2  # Very dark areas
+            unusual_color = (hsv[:, :, 1] < 30) & (hsv[:, :, 2] < 50)  # Low saturation, low brightness
+
+            hazard_mask = darkness | unusual_color
+            hazard_mask = remove_small_objects(hazard_mask, min_size=25)
+            hazard_mask = binary_closing(hazard_mask, morphology.disk(2))
+
+            # Hazards override other classifications
+            classification[hazard_mask] = 3  # Avoid
+
+            self.get_logger().info(f"Terrain classification completed using scikit-image: "
+                                 f"{np.sum(classification == 0)} sand, "
+                                 f"{np.sum(classification == 1)} rock, "
+                                 f"{np.sum(classification == 2)} slope, "
+                                 f"{np.sum(classification == 3)} hazard pixels")
+
+            return classification
+
+        except Exception as e:
+            self.get_logger().error(f"scikit-image classification failed: {e}, using fallback")
+            return self._classify_terrain_opencv_fallback(image)
+
+    def _classify_terrain_opencv_fallback(self, image: np.ndarray) -> np.ndarray:
+        """
+        Fallback OpenCV implementation when scikit-image is not available.
         """
         # Convert to HSV for better color analysis
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -198,7 +301,6 @@ class TerrainAnalyzer(Node):
         classification = np.zeros((height, width), dtype=np.uint8)
 
         # Simple terrain classification based on color and texture
-        # This is a simplified version - real implementation would use ML
 
         # Detect sand (bright, uniform colors)
         sand_mask = cv2.inRange(hsv, (0, 30, 150), (50, 150, 255))

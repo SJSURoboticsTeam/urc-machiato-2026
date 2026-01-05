@@ -59,6 +59,84 @@ testing_performance_monitor_interval: 0.2 # Performance check frequency
 enable_monitoring: true # Collect performance data
 log_level: "INFO" # DEBUG, INFO, WARN, ERROR
 
+# === MISSION PROFILES ===
+# Resource optimization profiles for different mission types
+mission_profiles:
+  waypoint_navigation:
+    # Minimal resources for GPS waypoint following
+    computer_vision_enabled: false
+    terrain_analysis_enabled: false
+    slam_loop_closure_enabled: false
+    slam_memory_limit_mb: 256
+    vision_fps: 10
+    vision_resolution: "480p"
+    excavation_enabled: false
+    science_payload_enabled: false
+    advanced_path_planning: false
+    telemetry_level: "minimal"  # reduced logging
+
+  object_search:
+    # Vision-focused with moderate SLAM
+    computer_vision_enabled: true
+    terrain_analysis_enabled: false  # save resources during search
+    slam_loop_closure_enabled: true
+    slam_memory_limit_mb: 512
+    vision_fps: 20
+    vision_resolution: "720p"
+    excavation_enabled: false
+    science_payload_enabled: false
+    advanced_path_planning: false
+    telemetry_level: "standard"
+
+  sample_collection:
+    # Full capabilities for precision work
+    computer_vision_enabled: true
+    terrain_analysis_enabled: true
+    slam_loop_closure_enabled: true
+    slam_memory_limit_mb: 1024
+    vision_fps: 30
+    vision_resolution: "1080p"
+    excavation_enabled: true
+    science_payload_enabled: true
+    advanced_path_planning: true
+    telemetry_level: "detailed"
+
+  equipment_service:
+    # Precision navigation with reduced vision
+    computer_vision_enabled: false
+    terrain_analysis_enabled: true
+    slam_loop_closure_enabled: true
+    slam_memory_limit_mb: 768
+    vision_fps: 0  # disabled
+    vision_resolution: "disabled"
+    excavation_enabled: false
+    science_payload_enabled: false
+    advanced_path_planning: true
+    telemetry_level: "standard"
+
+  delivery:
+    # Balanced for carrying payloads
+    computer_vision_enabled: true
+    terrain_analysis_enabled: true
+    slam_loop_closure_enabled: true
+    slam_memory_limit_mb: 768
+    vision_fps: 15
+    vision_resolution: "720p"
+    excavation_enabled: false
+    science_payload_enabled: false
+    advanced_path_planning: true
+    telemetry_level: "standard"
+
+# === RESOURCE LIMITS ===
+# Adaptive resource management thresholds
+resource_limits:
+  cpu_warning_percent: 75
+  cpu_critical_percent: 90
+  memory_warning_mb: 500
+  memory_critical_mb: 700
+  adaptive_scaling_enabled: true
+  auto_disable_components: true
+
 # === MISSION WAYPOINTS ===
 waypoints:
   - name: "Start Point"

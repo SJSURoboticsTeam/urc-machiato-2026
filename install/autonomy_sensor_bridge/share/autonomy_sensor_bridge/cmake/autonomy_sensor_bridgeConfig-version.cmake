@@ -1,0 +1,1 @@
+/home/durian/urc-machiato-2026/build/autonomy_sensor_bridge/ament_cmake_core/autonomy_sensor_bridgeConfig-version.cmake

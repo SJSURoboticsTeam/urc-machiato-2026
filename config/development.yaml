@@ -1,21 +1,45 @@
-# URC 2026 Development Configuration
-# Overrides for development environment - inherits from rover.yaml
+environment: development
+version: "1.0.0"
 
-# === DEVELOPMENT SPECIFIC ===
-hardware_use_mock: true # Always use mock hardware in dev
-simulation_update_rate_hz: 5 # Slower for easier debugging
-enable_monitoring: true # Enable monitoring in dev
-log_level: "DEBUG" # Verbose logging for dev
+ros2:
+  namespace: "urc"
+  domain_id: null
+  use_sim_time: false
+  qos_preset: "reliable"
 
-# === TESTING SETTINGS ===
-testing_phase_interval: 1.0 # Faster test phases
-testing_performance_monitor_interval: 0.1 # More frequent checks
+database:
+  type: "sqlite"
+  path: "data/urc_database.db"
+  connection_pool_size: 5
+  enable_migrations: true
+  backup_interval_hours: 24
 
-# === SAFETY RELAXATIONS FOR DEV ===
-safety_distance_meters: 0.1 # Closer obstacle detection for testing
-safety_auto_recovery_enabled: true # Allow auto-recovery in dev
-safety_watchdog_heartbeat_timeout: 10.0 # More lenient timeouts
+network:
+  websocket_port: 8765
+  http_port: 8080
+  enable_cors: true
+  max_connections: 100
+  connection_timeout_sec: 30.0
 
-# === MISSION SETTINGS ===
-mission_timeout_seconds: 300 # Shorter missions for dev
-mission_waypoint_timeout_seconds: 60 # Faster waypoint timeouts
+navigation:
+  update_rate_hz: 10.0
+  waypoint_tolerance_m: 1.0
+  max_linear_velocity_ms: 2.0
+  max_angular_velocity_rads: 1.0
+  obstacle_avoidance_enabled: true
+  path_planning_algorithm: "astar"
+
+safety:
+  emergency_stop_timeout_sec: 5.0
+  heartbeat_interval_sec: 1.0
+  max_sensor_age_sec: 2.0
+  enable_circuit_breaker: true
+  failure_threshold_percent: 80.0
+
+monitoring:
+  enabled: true
+  metrics_interval_sec: 5.0
+  enable_prometheus: true
+  prometheus_port: 9090
+  log_level: "INFO"
+  enable_structured_logging: true

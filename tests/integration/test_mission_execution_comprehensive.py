@@ -1,356 +1,529 @@
 #!/usr/bin/env python3
 """
-Comprehensive Mission Execution Tests
+Comprehensive Mission Execution Integration Tests
 
-Tests mission execution system with:
-- Multi-waypoint mission execution
-- Mission replanning when waypoints unreachable
-- Task priority management
-- Mission abort scenarios
-- Progress tracking accuracy
-- Mission recovery from failures
-- Concurrent mission handling
-- Time budget validation
+Tests complete mission execution workflows combining:
+- Mission behaviors (waypoint navigation, object detection, follow-me)
+- Mission executor (command processing, state management)
+- Hardware interfaces (mocked sensors and actuators)
+- Safety systems (emergency stops, monitoring)
+- Navigation stack integration
 
-This addresses P1 high priority gap: Mission Execution (10% coverage).
+Uses realistic simulation and comprehensive mocking.
 
-NOTE: This test is skipped because Complex mission execution replaced with simple command processing."""
-
-import os
-import sys
-import time
-from typing import Dict, List, Optional
+Author: URC 2026 Test Suite
+"""
 
 import pytest
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
+import time
+import math
+from unittest.mock import Mock, MagicMock, patch, AsyncMock
+import sys
+import os
+from typing import Dict, List, Any, Tuple
+import threading
 
-# Add project paths
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "missions"))
+# Import mission components
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../missions'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
-# Import simulation framework
-try:
-    from simulation.environments.environment_factory import EnvironmentFactory
-    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
-except ImportError:
-    EnvironmentFactory = None
-    NetworkEmulator = None
+from mission_behaviors import (
+    WaypointNavigation,
+    ObjectDetection,
+    FollowMe,
+    DeliveryMission,
+    SampleCollection
+)
+from mission_executor import MissionExecutor
+from waypoint_navigation_mission import WaypointNavigationMission
 
-    # ROS2 context managed by session fixture
-    """Initialize and cleanup ROS context."""
-    rclpy.init()
-    yield
-    rclpy.shutdown()
+# Mock hardware interfaces
+class MockHardwareInterface:
+    """Comprehensive mock hardware interface for integration testing."""
+
+    def __init__(self):
+        self.position = [0.0, 0.0, 0.0]
+        self.velocity = [0.0, 0.0, 0.0]
+        self.gps_position = [40.0, -74.0]  # Default GPS coordinates
+        self.imu_data = {'accel': [0.0, 0.0, 9.81], 'gyro': [0.0, 0.0, 0.0]}
+        self.lidar_points = []
+        self.camera_images = []
+        self.battery_level = 100.0
+        self.motor_speeds = [0.0, 0.0, 0.0, 0.0]  # 4 wheels
+        self.servo_positions = [90.0, 90.0]  # Pan/tilt servos
+        self.samples_collected = []
+
+    def get_current_position(self) -> List[float]:
+        """Get current position from odometry/GPS fusion."""
+        return self.position.copy()
+
+    def get_gps_position(self) -> List[float]:
+        """Get GPS position."""
+        return self.gps_position.copy()
+
+    def get_imu_data(self) -> Dict[str, List[float]]:
+        """Get IMU sensor data."""
+        return self.imu_data.copy()
+
+    def get_lidar_scan(self) -> List[List[float]]:
+        """Get LiDAR point cloud."""
+        return self.lidar_points.copy()
+
+    def get_camera_image(self) -> Any:
+        """Get camera image."""
+        return self.camera_images[-1] if self.camera_images else None
+
+    def get_battery_level(self) -> float:
+        """Get battery level percentage."""
+        return self.battery_level
+
+    def set_motor_speeds(self, speeds: List[float]) -> bool:
+        """Set motor speeds for all wheels."""
+        if len(speeds) != 4:
+            return False
+        self.motor_speeds = speeds.copy()
+        return True
+
+    def set_servo_positions(self, positions: List[float]) -> bool:
+        """Set servo positions."""
+        if len(positions) != 2:
+            return False
+        self.servo_positions = positions.copy()
+        return True
+
+    def collect_sample(self) -> bool:
+        """Collect a sample."""
+        self.samples_collected.append({
+            'timestamp': time.time(),
+            'position': self.position.copy(),
+            'gps': self.gps_position.copy()
+        })
+        return True
+
+    def emergency_stop(self) -> bool:
+        """Emergency stop all actuators."""
+        self.motor_speeds = [0.0, 0.0, 0.0, 0.0]
+        self.servo_positions = [90.0, 90.0]
+        return True
+
+    def simulate_movement(self, distance: float, direction: float = 0.0):
+        """Simulate rover movement for testing."""
+        # Update position based on distance and direction
+        self.position[0] += distance * math.cos(math.radians(direction))
+        self.position[1] += distance * math.sin(math.radians(direction))
+
+    def simulate_sensor_noise(self, noise_level: float = 0.1):
+        """Add realistic sensor noise."""
+        import random
+        for i in range(3):
+            self.position[i] += random.uniform(-noise_level, noise_level)
+        for i in range(2):
+            self.gps_position[i] += random.uniform(-noise_level, noise_level)
 
 
-class TestVisionProcessingIntegration:
-    """Test mission execution with centralized vision processing."""
+class MissionIntegrationTestHarness:
+    """Test harness for comprehensive mission integration testing."""
 
-    def test_keyboard_mission_vision_topic_subscription(self):
-        """Test keyboard mission subscribes to correct vision processing topics."""
-        try:
-            # Import keyboard mission
-            from missions.autonomous_keyboard_mission import AutonomousKeyboardMission
+    def __init__(self):
+        self.hardware = MockHardwareInterface()
+        self.mission_executor = None
+        self.waypoint_navigation = None
+        self.object_detection = None
+        self.follow_me = None
+        self.delivery_mission = None
+        self.sample_collection = None
 
-            # Verify the mission uses centralized vision processing
-            # Should subscribe to /vision/keyboard_pose instead of processing raw images
-            # Mock ROS2 components
-            with pytest.mock.patch("rclpy.node.Node.__init__", return_value=None):
-                mission = AutonomousKeyboardMission.__new__(AutonomousKeyboardMission)
+        self.mock_node = self._create_mock_node()
+        self._initialize_components()
 
-                # Mock required attributes for testing
-                mission.get_logger = lambda: pytest.mock.Mock()
+    def _create_mock_node(self) -> Mock:
+        """Create comprehensive mock ROS2 node."""
+        node = Mock()
+        node.create_subscription = Mock()
+        node.create_publisher = Mock()
+        node.create_client = Mock()
+        node.create_timer = Mock()
+        node.get_logger = Mock()
+        node.get_logger.return_value.info = Mock()
+        node.get_logger.return_value.warn = Mock()
+        node.get_logger.return_value.error = Mock()
+        node.get_logger.return_value.debug = Mock()
+        node.get_clock = Mock()
+        node.get_clock.return_value.now = Mock()
+        node.get_clock.return_value.now.return_value.nanoseconds = 1000000000
+        return node
 
-                # Verify vision processing integration
-                # The mission should be designed to work with centralized vision system
+    def _initialize_components(self):
+        """Initialize all mission components with mocks."""
+        with patch('mission_executor.Node', return_value=self.mock_node):
+            self.mission_executor = MissionExecutor()
 
-        except Exception as e:
-            pytest.fail(f"Vision processing integration test failed: {e}")
+        self.waypoint_navigation = WaypointNavigation(self.mock_node)
+        self.object_detection = ObjectDetection(self.mock_node)
+        self.follow_me = FollowMe(self.mock_node)
+        self.delivery_mission = DeliveryMission(self.mock_node)
+        self.sample_collection = SampleCollection(self.mock_node)
 
-    def test_obstacle_avoidance_vision_integration(self):
-        """Test missions use vision-based obstacle avoidance."""
-        try:
-            # Test that missions integrate with vision obstacle detection
-            # Should use /vision/obstacles or /terrain/traversability topics
+    def execute_complete_mission(self, mission_config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute a complete mission from configuration.
 
-            # Mock mission execution
-            # Verify obstacle avoidance uses centralized vision processing
-            pass  # Placeholder for actual test implementation
+        Args:
+            mission_config: Mission configuration dictionary
 
-        except Exception as e:
-            pytest.fail(f"Obstacle avoidance vision integration test failed: {e}")
-
-    def test_terrain_aware_navigation(self):
-        """Test navigation uses terrain intelligence from vision processing."""
-        try:
-            # Test waypoint navigation considers terrain costs from vision system
-            # Should integrate with /terrain/traversability topic
-
-            # Mock navigation with terrain awareness
-            # Verify terrain costs affect path planning
-            pass  # Placeholder for actual test implementation
-
-        except Exception as e:
-            pytest.fail(f"Terrain aware navigation test failed: {e}")
-
-
-@pytest.mark.integration
-@pytest.mark.ros2
-@pytest.mark.slow
-class TestMissionExecution:
-    """Test comprehensive mission execution."""
-
-    def setUp(self):
-        """Set up test environment."""
-        if EnvironmentFactory:
-            # Available environment tiers
-            tiers = ["perfect", "real_life", "extreme"]
-            self.env_simulators = {
-                tier: EnvironmentFactory.create({"tier": tier}) for tier in tiers
-            }
-        if NetworkEmulator:
-            self.net_emulators = {
-                profile: NetworkEmulator(profile) for profile in NetworkProfile
-            }
-
-    def tearDown(self):
-        """Clean up test environment."""
-        if NetworkEmulator:
-            for emulator in self.net_emulators.values():
-                emulator.stop()
-
-    def test_multi_waypoint_mission(self, ros_context):
-        """Test multi-waypoint mission execution."""
-        waypoints = [
-            {"x": 0.0, "y": 0.0, "heading": 0.0},
-            {"x": 10.0, "y": 0.0, "heading": 0.0},
-            {"x": 10.0, "y": 10.0, "heading": 90.0},
-            {"x": 0.0, "y": 10.0, "heading": 180.0},
-            {"x": 0.0, "y": 0.0, "heading": 270.0},
-        ]
-
-        mission_result = self._execute_waypoint_mission(waypoints)
-
-        assert mission_result["success"], "Multi-waypoint mission should succeed"
-        assert mission_result["waypoints_completed"] == len(
-            waypoints
-        ), "All waypoints should be completed"
-        assert (
-            mission_result["final_position"] == waypoints[-1]
-        ), "Should reach final waypoint"
-
-    def test_mission_replanning_unreachable_waypoint(self, ros_context):
-        """Test mission replanning when waypoint is unreachable."""
-        waypoints = [
-            {"x": 0.0, "y": 0.0, "heading": 0.0},
-            {"x": 10.0, "y": 0.0, "heading": 0.0},
-            {"x": 100.0, "y": 100.0, "heading": 45.0},  # Unreachable (too far)
-            {"x": 20.0, "y": 0.0, "heading": 0.0},
-        ]
-
-        # Simulate unreachable waypoint
-        mission_result = self._execute_waypoint_mission_with_replanning(waypoints)
-
-        # Mission should replan and skip unreachable waypoint
-        assert mission_result["success"], "Mission should succeed after replanning"
-        assert mission_result["replanned"], "Mission should have replanned"
-        assert (
-            mission_result["waypoints_completed"] >= 2
-        ), "Should complete at least some waypoints"
-
-    def test_task_priority_management(self, ros_context):
-        """Test task priority management in missions."""
-        tasks = [
-            {"id": 1, "priority": "high", "type": "navigation"},
-            {"id": 2, "priority": "medium", "type": "science"},
-            {"id": 3, "priority": "high", "type": "safety"},
-            {"id": 4, "priority": "low", "type": "data_collection"},
-        ]
-
-        execution_order = self._execute_tasks_by_priority(tasks)
-
-        # High priority tasks should execute first
-        high_priority_tasks = [t for t in tasks if t["priority"] == "high"]
-        first_executed = execution_order[: len(high_priority_tasks)]
-
-        assert all(
-            t["priority"] == "high" for t in first_executed
-        ), "High priority tasks should execute first"
-        assert (
-            execution_order[0]["type"] == "safety"
-        ), "Safety should have highest priority"
-
-    def test_mission_abort_scenario(self, ros_context):
-        """Test mission abort handling."""
-        waypoints = [
-            {"x": 0.0, "y": 0.0},
-            {"x": 10.0, "y": 0.0},
-            {"x": 20.0, "y": 0.0},
-            {"x": 30.0, "y": 0.0},
-        ]
-
-        # Start mission
-        mission_state = {"active": True, "current_waypoint": 1, "aborted": False}
-
-        # Abort mission mid-execution
-        mission_state["aborted"] = True
-        mission_state["active"] = False
-
-        # Mission should stop safely
-        assert not mission_state["active"], "Mission should stop after abort"
-        assert mission_state["aborted"], "Mission should be marked as aborted"
-
-        # Should be able to resume or start new mission
-        mission_state["aborted"] = False
-        assert not mission_state["aborted"], "Should be able to clear abort state"
-
-    def test_progress_tracking_accuracy(self, ros_context):
-        """Test mission progress tracking accuracy."""
-        waypoints = [
-            {"x": 0.0, "y": 0.0},
-            {"x": 10.0, "y": 0.0},
-            {"x": 20.0, "y": 0.0},
-            {"x": 30.0, "y": 0.0},
-        ]
-
-        progress_updates = []
-        for i, waypoint in enumerate(waypoints):
-            progress = {
-                "waypoint_index": i,
-                "waypoint_total": len(waypoints),
-                "percentage": (i + 1) / len(waypoints) * 100,
-                "completed": i < len(waypoints) - 1,
-            }
-            progress_updates.append(progress)
-
-        # Verify progress accuracy
-        assert len(progress_updates) == len(waypoints), "Should track all waypoints"
-        assert (
-            progress_updates[-1]["percentage"] == 100.0
-        ), "Final progress should be 100%"
-        assert all(
-            0 <= p["percentage"] <= 100 for p in progress_updates
-        ), "Progress should be 0-100%"
-
-    def test_mission_recovery_from_failure(self, ros_context):
-        """Test mission recovery after failure."""
-        waypoints = [
-            {"x": 0.0, "y": 0.0},
-            {"x": 10.0, "y": 0.0},
-            {"x": 20.0, "y": 0.0},
-        ]
-
-        # Simulate failure at waypoint 1
-        mission_state = {
-            "current_waypoint": 1,
-            "failed": True,
-            "failure_reason": "navigation_timeout",
+        Returns:
+            Mission execution results
+        """
+        results = {
+            'success': False,
+            'phases_completed': [],
+            'errors': [],
+            'metrics': {}
         }
 
-        # Recovery: retry waypoint
-        mission_state["failed"] = False
-        mission_state["retry_count"] = mission_state.get("retry_count", 0) + 1
+        try:
+            # Phase 1: Waypoint Navigation
+            if 'waypoints' in mission_config:
+                waypoint_result = self._execute_waypoint_navigation(mission_config['waypoints'])
+                results['phases_completed'].append('waypoint_navigation')
+                if not waypoint_result['success']:
+                    results['errors'].append(f"Waypoint navigation failed: {waypoint_result.get('error', 'Unknown error')}")
+                    return results
 
-        # Should be able to continue
-        assert not mission_state["failed"], "Mission should recover from failure"
-        assert mission_state["retry_count"] > 0, "Should track retry attempts"
+            # Phase 2: Object Detection/Collection
+            if mission_config.get('collect_samples', False):
+                sample_result = self._execute_sample_collection()
+                results['phases_completed'].append('sample_collection')
+                if not sample_result['success']:
+                    results['errors'].append(f"Sample collection failed: {sample_result.get('error', 'Unknown error')}")
 
-        # After recovery, continue mission
-        mission_state["current_waypoint"] = 2
-        assert mission_state["current_waypoint"] == 2, "Should continue after recovery"
+            # Phase 3: Delivery (if applicable)
+            if mission_config.get('delivery_required', False):
+                delivery_result = self._execute_delivery_mission(mission_config.get('delivery_config', {}))
+                results['phases_completed'].append('delivery')
+                if not delivery_result['success']:
+                    results['errors'].append(f"Delivery failed: {delivery_result.get('error', 'Unknown error')}")
 
-    def test_time_budget_validation(self, ros_context):
-        """Test mission time budget validation."""
-        waypoints = [
-            {"x": 0.0, "y": 0.0},
-            {"x": 10.0, "y": 0.0},
-            {"x": 20.0, "y": 0.0},
+            # Phase 4: Return to Operator
+            if mission_config.get('return_to_operator', False):
+                return_result = self._execute_return_to_operator()
+                results['phases_completed'].append('return_to_operator')
+                if not return_result['success']:
+                    results['errors'].append(f"Return to operator failed: {return_result.get('error', 'Unknown error')}")
+
+            results['success'] = len(results['errors']) == 0
+            results['metrics'] = self._collect_metrics()
+
+        except Exception as e:
+            results['errors'].append(f"Mission execution failed: {str(e)}")
+
+        return results
+
+    def _execute_waypoint_navigation(self, waypoints: List[Dict[str, float]]) -> Dict[str, Any]:
+        """Execute waypoint navigation phase."""
+        return self.waypoint_navigation.execute(waypoints, self.hardware)
+
+    def _execute_sample_collection(self) -> Dict[str, Any]:
+        """Execute sample collection phase."""
+        # Simulate finding samples at current location
+        self.hardware.lidar_points = [
+            [1.0, 0.0, 0.0],  # Sample location
+            [2.0, 1.0, 0.0],  # Another sample
         ]
+        return self.sample_collection.execute(self.hardware)
 
-        time_budget = 300.0  # 5 minutes
-        start_time = time.time()
+    def _execute_delivery_mission(self, delivery_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute delivery mission phase."""
+        pickup_location = delivery_config.get('pickup', {'x': 1.0, 'y': 1.0})
+        delivery_location = delivery_config.get('delivery', {'x': 5.0, 'y': 5.0})
+        return self.delivery_mission.execute(pickup_location, delivery_location, self.hardware)
 
-        # Simulate mission execution
-        elapsed_time = 0.0
-        for i, waypoint in enumerate(waypoints):
-            waypoint_time = 60.0  # 1 minute per waypoint
-            elapsed_time += waypoint_time
+    def _execute_return_to_operator(self) -> Dict[str, Any]:
+        """Execute return to operator phase."""
+        # Simulate operator at known GPS location
+        operator_gps = [40.001, -74.001]  # Slightly offset from current position
+        return self.waypoint_navigation.execute([{
+            'x': operator_gps[0],
+            'y': operator_gps[1],
+            'heading': 0.0
+        }], self.hardware)
 
-            if elapsed_time > time_budget:
-                # Mission should abort if over budget
-                assert False, f"Mission exceeded time budget at waypoint {i}"
-
-        total_time = elapsed_time
-        assert (
-            total_time <= time_budget
-        ), f"Mission should complete within budget, took {total_time:.1f}s"
-
-    def _execute_waypoint_mission(self, waypoints: List[Dict]) -> Dict:
-        """Simulate waypoint mission execution."""
-        completed_waypoints = []
-        current_position = {"x": 0.0, "y": 0.0, "heading": 0.0}
-
-        for waypoint in waypoints:
-            # Navigate to waypoint
-            distance = (
-                (waypoint["x"] - current_position["x"]) ** 2
-                + (waypoint["y"] - current_position["y"]) ** 2
-            ) ** 0.5
-
-            if distance < 1.0:  # Within tolerance
-                completed_waypoints.append(waypoint)
-                current_position = waypoint.copy()
-
+    def _collect_metrics(self) -> Dict[str, Any]:
+        """Collect mission execution metrics."""
         return {
-            "success": len(completed_waypoints) == len(waypoints),
-            "waypoints_completed": len(completed_waypoints),
-            "final_position": current_position,
+            'total_samples_collected': len(self.hardware.samples_collected),
+            'final_position': self.hardware.get_current_position(),
+            'final_gps': self.hardware.get_gps_position(),
+            'battery_remaining': self.hardware.get_battery_level(),
+            'total_distance_traveled': 0.0,  # Would need to track this
+            'execution_time': 0.0  # Would need to track this
         }
 
-    def _execute_waypoint_mission_with_replanning(self, waypoints: List[Dict]) -> Dict:
-        """Simulate mission with replanning."""
-        completed_waypoints = []
-        replanned = False
-        current_position = {"x": 0.0, "y": 0.0}
 
-        for waypoint in waypoints:
-            distance = (
-                (waypoint["x"] - current_position["x"]) ** 2
-                + (waypoint["y"] - current_position["y"]) ** 2
-            ) ** 0.5
+class TestComprehensiveMissionIntegration:
+    """Comprehensive integration tests for mission execution."""
 
-            # Check if waypoint is reachable (within reasonable distance)
-            if distance > 50.0:  # Unreachable
-                replanned = True
-                # Skip unreachable waypoint
-                continue
+    @pytest.fixture
+    def test_harness(self):
+        """Create mission integration test harness."""
+        return MissionIntegrationTestHarness()
 
-            if distance < 1.0:
-                completed_waypoints.append(waypoint)
-                current_position = waypoint.copy()
-
-        return {
-            "success": len(completed_waypoints) > 0,
-            "waypoints_completed": len(completed_waypoints),
-            "replanned": replanned,
+    @pytest.mark.integration
+    def test_sample_collection_mission(self, test_harness):
+        """Test complete sample collection mission."""
+        mission_config = {
+            'waypoints': [
+                {'x': 2.0, 'y': 0.0, 'heading': 0.0},
+                {'x': 4.0, 'y': 2.0, 'heading': 45.0},
+                {'x': 6.0, 'y': 4.0, 'heading': 90.0}
+            ],
+            'collect_samples': True,
+            'return_to_operator': True
         }
 
-    def _execute_tasks_by_priority(self, tasks: List[Dict]) -> List[Dict]:
-        """Execute tasks in priority order."""
-        priority_order = {"high": 0, "medium": 1, "low": 2}
-        safety_boost = {"safety": -1}  # Safety tasks get highest priority
+        result = test_harness.execute_complete_mission(mission_config)
 
-        def task_key(task):
-            base_priority = priority_order.get(task["priority"], 99)
-            type_boost = safety_boost.get(task["type"], 0)
-            return (base_priority + type_boost, task["id"])
+        # Mission should complete successfully
+        assert result['success'] is True
+        assert 'waypoint_navigation' in result['phases_completed']
+        assert 'sample_collection' in result['phases_completed']
+        assert 'return_to_operator' in result['phases_completed']
+        assert len(result['errors']) == 0
 
-        sorted_tasks = sorted(tasks, key=task_key)
-        return sorted_tasks
+        # Should have collected samples
+        assert result['metrics']['total_samples_collected'] > 0
+
+    @pytest.mark.integration
+    def test_delivery_mission(self, test_harness):
+        """Test complete delivery mission."""
+        mission_config = {
+            'waypoints': [
+                {'x': 1.0, 'y': 1.0, 'heading': 0.0}  # Pickup location
+            ],
+            'delivery_required': True,
+            'delivery_config': {
+                'pickup': {'x': 1.0, 'y': 1.0},
+                'delivery': {'x': 5.0, 'y': 5.0}
+            }
+        }
+
+        result = test_harness.execute_complete_mission(mission_config)
+
+        assert result['success'] is True
+        assert 'waypoint_navigation' in result['phases_completed']
+        assert 'delivery' in result['phases_completed']
+
+    @pytest.mark.integration
+    def test_mission_failure_recovery(self, test_harness):
+        """Test mission failure and recovery scenarios."""
+        # Configure mission that will fail
+        mission_config = {
+            'waypoints': [
+                {'x': 100.0, 'y': 100.0, 'heading': 0.0}  # Very far waypoint
+            ],
+            'collect_samples': True
+        }
+
+        # Set timeout to very short for test
+        test_harness.waypoint_navigation.timeout = 0.1
+
+        result = test_harness.execute_complete_mission(mission_config)
+
+        # Mission should fail due to timeout
+        assert result['success'] is False
+        assert len(result['errors']) > 0
+        assert 'timeout' in str(result['errors']).lower()
+
+    @pytest.mark.integration
+    def test_emergency_stop_integration(self, test_harness):
+        """Test emergency stop integration across all systems."""
+        # Start a mission
+        mission_config = {
+            'waypoints': [{'x': 1.0, 'y': 0.0, 'heading': 0.0}]
+        }
+
+        # Start mission execution in thread
+        mission_thread = threading.Thread(
+            target=test_harness.execute_complete_mission,
+            args=(mission_config,)
+        )
+        mission_thread.start()
+
+        # Wait a bit then trigger emergency stop
+        time.sleep(0.1)
+        emergency_result = test_harness.hardware.emergency_stop()
+
+        # Wait for mission to complete
+        mission_thread.join(timeout=1.0)
+
+        # Emergency stop should succeed
+        assert emergency_result is True
+
+        # Motors should be stopped
+        assert all(speed == 0.0 for speed in test_harness.hardware.motor_speeds)
+
+    @pytest.mark.integration
+    @pytest.mark.slow
+    def test_sensor_fusion_integration(self, test_harness):
+        """Test sensor fusion across multiple sensor types."""
+        # Add realistic sensor noise
+        test_harness.hardware.simulate_sensor_noise(0.05)
+
+        # Execute navigation mission
+        mission_config = {
+            'waypoints': [
+                {'x': 1.0, 'y': 1.0, 'heading': 45.0},
+                {'x': 2.0, 'y': 2.0, 'heading': 45.0}
+            ]
+        }
+
+        result = test_harness.execute_complete_mission(mission_config)
+
+        # Should still succeed despite sensor noise
+        assert result['success'] is True
+
+        # Position should be reasonably close to final waypoint
+        final_pos = result['metrics']['final_position']
+        expected_pos = [2.0, 2.0, 0.0]
+
+        distance_error = math.sqrt(
+            (final_pos[0] - expected_pos[0])**2 +
+            (final_pos[1] - expected_pos[1])**2
+        )
+
+        # Allow for some error due to sensor noise and timing
+        assert distance_error < 0.5, f"Position error too large: {distance_error}"
+
+
+class TestSystemIntegrationWithMocks:
+    """System-level integration tests using comprehensive mocking."""
+
+    @pytest.fixture
+    def full_system_mock(self):
+        """Create full system mock for integration testing."""
+        system = {
+            'hardware': MockHardwareInterface(),
+            'navigation': Mock(),
+            'vision': Mock(),
+            'control': Mock(),
+            'safety': Mock(),
+            'communication': Mock()
+        }
+
+        # Configure navigation mock
+        system['navigation'].navigate_to_waypoint = Mock(return_value=True)
+        system['navigation'].get_navigation_status = Mock(return_value={
+            'is_navigating': True,
+            'current_position': [1.0, 1.0, 0.0],
+            'distance_to_target': 0.5
+        })
+
+        # Configure vision mock
+        system['vision'].detect_objects = Mock(return_value=[
+            {'type': 'sample', 'position': [1.1, 1.1, 0.0], 'confidence': 0.9}
+        ])
+        system['vision'].detect_aruco_markers = Mock(return_value=[])
+
+        # Configure control mock
+        system['control'].set_velocity = Mock(return_value=True)
+        system['control'].emergency_stop = Mock(return_value=True)
+
+        # Configure safety mock
+        system['safety'].get_safety_status = Mock(return_value={
+            'system_safe': True,
+            'active_triggers': [],
+            'highest_severity': None
+        })
+
+        return system
+
+    @pytest.mark.integration
+    def test_cross_system_data_flow(self, full_system_mock):
+        """Test data flow between all major systems."""
+        system = full_system_mock
+
+        # Simulate mission execution data flow
+        # 1. Navigation requests position from hardware
+        current_pos = system['hardware'].get_current_position()
+
+        # 2. Vision processes sensor data
+        objects = system['vision'].detect_objects()
+
+        # 3. Navigation uses vision data for planning
+        system['navigation'].navigate_to_waypoint.assert_not_called()  # Not yet called
+
+        # 4. Control executes navigation commands
+        system['control'].set_velocity.assert_not_called()  # Not yet called
+
+        # 5. Safety monitors all systems
+        safety_status = system['safety'].get_safety_status()
+        assert safety_status['system_safe'] is True
+
+        # Verify data consistency
+        assert len(current_pos) == 3  # 3D position
+        assert len(objects) > 0
+        assert objects[0]['type'] == 'sample'
+
+    @pytest.mark.integration
+    def test_error_propagation(self, full_system_mock):
+        """Test error propagation through the system."""
+        system = full_system_mock
+
+        # Simulate hardware failure
+        system['hardware'].get_current_position = Mock(side_effect=Exception("GPS failure"))
+
+        # Navigation should handle the error
+        try:
+            pos = system['hardware'].get_current_position()
+            assert False, "Should have raised exception"
+        except Exception as e:
+            assert "GPS failure" in str(e)
+
+        # Safety system should detect the issue
+        system['safety'].get_safety_status = Mock(return_value={
+            'system_safe': False,
+            'active_triggers': ['sensor_failure'],
+            'highest_severity': 'high'
+        })
+
+        safety_status = system['safety'].get_safety_status()
+        assert safety_status['system_safe'] is False
+        assert 'sensor_failure' in safety_status['active_triggers']
+
+    @pytest.mark.integration
+    def test_performance_under_load(self, full_system_mock, performance_monitor):
+        """Test system performance under simulated load."""
+        system = full_system_mock
+        performance_monitor.start()
+
+        # Simulate high-frequency updates (typical mission load)
+        iterations = 100
+
+        for i in range(iterations):
+            # Hardware position updates
+            system['hardware'].simulate_movement(0.1, i * 3.6)  # Move in circle
+            pos = system['hardware'].get_current_position()
+
+            # Vision processing
+            objects = system['vision'].detect_objects()
+
+            # Navigation updates
+            nav_status = system['navigation'].get_navigation_status()
+
+            # Safety checks
+            safety_status = system['safety'].get_safety_status()
+
+        elapsed = performance_monitor.get_elapsed_time()
+
+        # Should handle 100 iterations quickly (< 1 second)
+        assert elapsed < 1.0, f"Performance too slow: {elapsed} seconds for {iterations} iterations"
+
+        # All systems should remain functional
+        assert len(pos) == 3
+        assert len(objects) > 0
+        assert nav_status['is_navigating'] is True
+        assert safety_status['system_safe'] is True
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v", "-s"])

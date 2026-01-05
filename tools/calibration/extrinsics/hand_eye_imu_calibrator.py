@@ -352,26 +352,97 @@ class MultiCameraCalibrator:
         logger.info(f"Added observation pair (total: {len(self.pose_pairs)})")
 
     def calibrate(self) -> MultiCameraCalibration:
-        """Calibrate stereo configuration"""
+        """Calibrate stereo configuration using OpenCV"""
         if len(self.pose_pairs) < 3:
-            raise ValueError("Need at least 3 observation pairs")
+            raise ValueError("Need at least 3 observation pairs for stereo calibration")
 
         logger.info(f"Calibrating stereo setup with {len(self.pose_pairs)} pairs")
 
-        # TODO: Implement stereo calibration with image points from both cameras
-        # PLACEHOLDER RESULT
+        try:
+            import cv2
+        except ImportError:
+            logger.error("OpenCV not available for stereo calibration")
+            raise ImportError("OpenCV required for stereo calibration")
+
+        # Prepare calibration data
+        objpoints = []  # 3D points in real world space
+        imgpoints1 = []  # 2D points in camera 1 image
+        imgpoints2 = []  # 2D points in camera 2 image
+
+        # Chessboard pattern parameters
+        pattern_size = (9, 6)  # Adjust based on your chessboard
+
+        # Generate 3D object points
+        objp = np.zeros((pattern_size[0] * pattern_size[1], 3), np.float32)
+        objp[:, :2] = np.mgrid[0:pattern_size[0], 0:pattern_size[1]].T.reshape(-1, 2)
+        # Scale by square size (adjust based on your chessboard square size)
+        square_size = 0.025  # 25mm squares
+        objp *= square_size
+
+        # Process each observation pair
+        for pair in self.pose_pairs:
+            corners1 = pair.get("corners1")
+            corners2 = pair.get("corners2")
+
+            if corners1 is not None and corners2 is not None:
+                # Find chessboard corners in both images
+                ret1, corners1_found = cv2.findChessboardCorners(
+                    np.zeros((480, 640, 3), dtype=np.uint8), pattern_size
+                )
+                ret2, corners2_found = cv2.findChessboardCorners(
+                    np.zeros((480, 640, 3), dtype=np.uint8), pattern_size
+                )
+
+                # For now, use the stored corners (assuming they are already detected)
+                # In a real implementation, you'd detect corners from actual images
+                if len(corners1) == pattern_size[0] * pattern_size[1]:
+                    objpoints.append(objp)
+                    imgpoints1.append(np.array(corners1, dtype=np.float32))
+                    imgpoints2.append(np.array(corners2, dtype=np.float32))
+
+        if len(objpoints) < 3:
+            raise ValueError(f"Need at least 3 valid chessboard detections, got {len(objpoints)}")
+
+        # Calibrate individual cameras first
+        logger.info("Calibrating individual cameras...")
+
+        # Camera 1 calibration
+        ret1, mtx1, dist1, rvecs1, tvecs1 = cv2.calibrateCamera(
+            objpoints, imgpoints1, (640, 480), None, None
+        )
+
+        # Camera 2 calibration
+        ret2, mtx2, dist2, rvecs2, tvecs2 = cv2.calibrateCamera(
+            objpoints, imgpoints2, (640, 480), None, None
+        )
+
+        # Stereo calibration
+        logger.info("Performing stereo calibration...")
+        flags = cv2.CALIB_FIX_INTRINSIC  # Use pre-calibrated intrinsics
+
+        ret, mtx1, dist1, mtx2, dist2, R, T, E, F = cv2.stereoCalibrate(
+            objpoints, imgpoints1, imgpoints2,
+            mtx1, dist1, mtx2, dist2,
+            (640, 480), flags=flags
+        )
+
+        # Calculate baseline distance
+        baseline_distance_mm = np.linalg.norm(T) * 1000  # Convert to mm
+
+        # Create result
         result = MultiCameraCalibration(
             camera1_id="cam1",
             camera2_id="cam2",
-            relative_rotation=np.eye(3),
-            relative_translation=np.array([[0.1], [0.0], [0.0]]),
-            baseline_distance_mm=100.0,
-            stereo_error=0.5,
-            essential_matrix=np.eye(3),
-            fundamental_matrix=np.eye(3),
+            relative_rotation=R,
+            relative_translation=T,
+            baseline_distance_mm=baseline_distance_mm,
+            stereo_error=ret,
+            essential_matrix=E,
+            fundamental_matrix=F,
             timestamp=datetime.now().isoformat(),
         )
 
+        logger.info(".2f"
         return result
 
     def save_calibration(

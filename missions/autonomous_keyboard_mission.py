@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Autonomous Keyboard Typing Mission - Complete URC Task Integration
+Autonomous Keyboard Typing Mission - Complete URC Task Integration.
 
 Integrates computer vision, navigation, and arm control for autonomous keyboard
 interaction.
@@ -24,14 +24,13 @@ from geometry_msgs.msg import Point, PoseStamped, Quaternion
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
+from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from tf2_ros import Buffer, TransformListener
 
 from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.arm_controller import (
     ArmController,
 )
-
-# Import existing autonomous typing components
 from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.keyboard_localization import (
     KeyboardLocalizer,
 )
@@ -66,7 +65,8 @@ class AutonomousKeyboardMission(Node):
     - Sequence execution and verification
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the autonomous keyboard mission with ROS2 interfaces and components."""
         super().__init__("autonomous_keyboard_mission")
 
         # Mission parameters
