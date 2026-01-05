@@ -1,1 +1,3 @@
-/home/durian/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces/msg/MonitoringStats.msg
+int32 total_evaluations
+int32 total_violations
+float64 evaluation_rate

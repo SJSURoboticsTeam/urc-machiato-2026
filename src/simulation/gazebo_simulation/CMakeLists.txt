@@ -14,29 +14,30 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(gazebo_ros REQUIRED)
-find_package(gazebo_ros_pkgs REQUIRED)
-find_package(robot_state_publisher REQUIRED)
-find_package(joint_state_publisher REQUIRED)
-find_package(xacro REQUIRED)
+# Optional: gazebo integration (commented out for now)
+# find_package(ros_gz QUIET)
+# find_package(ros_gz_sim QUIET)
+# Optional dependencies - uncomment when needed
+# find_package(robot_state_publisher QUIET)
+# find_package(joint_state_publisher QUIET)
+# find_package(xacro QUIET)
 
-# Install Python modules
-ament_python_install_package(${PROJECT_NAME})
+# Note: This package installs files directly, no Python package to install
 
-# Install launch files
-install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/
-)
+# Install launch files (directory doesn't exist yet)
+# install(DIRECTORY launch
+#   DESTINATION share/${PROJECT_NAME}/
+# )
 
 # Install world files
 install(DIRECTORY worlds
   DESTINATION share/${PROJECT_NAME}/
 )
 
-# Install model files
-install(DIRECTORY models
-  DESTINATION share/${PROJECT_NAME}/
-)
+# Install model files (directory doesn't exist yet)
+# install(DIRECTORY models
+#   DESTINATION share/${PROJECT_NAME}/
+# )
 
 # Install config files
 install(DIRECTORY config
@@ -65,11 +66,11 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# Install URDF files
-install(FILES
-  models/rover2025_gazebo.urdf
-  DESTINATION share/${PROJECT_NAME}/models
-)
+# Install URDF files (files don't exist yet)
+# install(FILES
+#   models/rover2025_gazebo.urdf
+#   DESTINATION share/${PROJECT_NAME}/models
+# )
 
 # Install world files
 install(FILES
@@ -85,11 +86,11 @@ install(FILES
   DESTINATION share/${PROJECT_NAME}/config
 )
 
-# Install launch files
-install(FILES
-  launch/rover_gazebo.launch.py
-  DESTINATION share/${PROJECT_NAME}/launch
-)
+# Install launch files (file doesn't exist yet)
+# install(FILES
+#   launch/rover_gazebo.launch.py
+#   DESTINATION share/${PROJECT_NAME}/launch
+# )
 
 # Install documentation
 install(FILES

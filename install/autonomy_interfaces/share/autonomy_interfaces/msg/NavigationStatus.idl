@@ -1,1 +1,58 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/msg/NavigationStatus.idl
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/NavigationStatus.msg
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/PoseStamped.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "Navigation subsystem status" "\n"
+      "Provides current navigation state and progress")
+    struct NavigationStatus {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "Navigation state machine" "\n"
+        "\"idle\", \"planning\", \"navigating\", \"avoiding_obstacle\", \"precision_approach\", \"arrived\", \"error\"")
+      string state;
+
+      @verbatim (language="comment", text=
+        "Progress indicators" "\n"
+        "0.0 to 1.0, overall mission completion")
+      float mission_progress;
+
+      @verbatim (language="comment", text=
+        "Current waypoint index (0-based)")
+      int32 current_waypoint;
+
+      @verbatim (language="comment", text=
+        "Total waypoints in mission")
+      int32 total_waypoints;
+
+      @verbatim (language="comment", text=
+        "Current position and goal")
+      geometry_msgs::msg::PoseStamped current_pose;
+
+      geometry_msgs::msg::PoseStamped goal_pose;
+
+      @verbatim (language="comment", text=
+        "Performance metrics" "\n"
+        "meters, negative if no active goal")
+      float distance_to_goal;
+
+      @verbatim (language="comment", text=
+        "m/s, current linear speed")
+      float speed;
+
+      @verbatim (language="comment", text=
+        "radians, difference between desired and actual heading")
+      float heading_error;
+
+      @verbatim (language="comment", text=
+        "Status message for operators")
+      string status_message;
+    };
+  };
+};

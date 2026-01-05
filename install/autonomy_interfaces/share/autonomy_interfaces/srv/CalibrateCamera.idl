@@ -1,1 +1,35 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/CalibrateCamera.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/CalibrateCamera.srv
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request camera calibration with image directory")
+    struct CalibrateCamera_Request {
+      string image_directory;
+
+      @verbatim (language="comment", text=
+        "\"charuco\" or \"chessboard\"")
+      string board_type;
+
+      int32 squares_x;
+
+      int32 squares_y;
+
+      float square_size;
+
+      float marker_size;
+    };
+    struct CalibrateCamera_Response {
+      boolean success;
+
+      string result_file;
+
+      string calibration_summary;
+
+      string error_message;
+    };
+  };
+};

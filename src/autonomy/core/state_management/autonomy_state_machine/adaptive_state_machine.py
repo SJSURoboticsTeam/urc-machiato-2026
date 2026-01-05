@@ -11,12 +11,23 @@ import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+import sys
+import os
 import rclpy
 from autonomy_interfaces.msg import AdaptiveAction as AdaptiveActionMsg
-from autonomy_interfaces.msg import ContextState, ContextUpdate, SystemState
+from autonomy_interfaces.msg import ContextState, ContextUpdate, SystemState, StateTransition
 from autonomy_interfaces.srv import ChangeState, GetAdaptationHistory, GetContext
-from rclpy.node import Node
+from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackReturn
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from autonomy_utilities import (
+    StateMachineNode,
+    failure,
+    success,
+    NodeLogger,
+    load_config_file,
+    QoSProfiles
+)
 
 from autonomy_state_machine.adaptive_policy_engine import (
     AdaptiveAction,
@@ -30,32 +41,28 @@ from autonomy_state_machine.states import RoverState
 from autonomy_state_machine.transition_manager import TransitionManager
 
 
-class AdaptiveStateMachine(Node):
+class AdaptiveStateMachine(StateMachineNode):
     """
-    Enhanced state machine with adaptive capabilities.
-
-    Combines the proven 7-state architecture with intelligent context-aware
-    decision making for improved autonomy and safety.
+    Enhanced state machine with adaptive capabilities and Lifecycle management.
     """
 
     def __init__(self):
         """Initialize the adaptive state machine."""
-        super().__init__("adaptive_state_machine")
-
-        # Core state machine components
-        self.current_state = RoverState.BOOT
-        self.previous_state = None
-        self.state_entry_time = self.get_clock().now()
-
-        # Adaptive components
-        self.context_evaluator = ContextEvaluator(self)
-        self.policy_engine = AdaptivePolicyEngine(self)
-        self.transition_manager = TransitionManager(self.get_logger())
+        super().__init__("adaptive_state_machine", initial_state=RoverState.BOOT.value)
 
         # State tracking
         self.transition_history: List[Dict[str, Any]] = []
         self.context_history: List[Dict[str, Any]] = []
         self.active_adaptations: Dict[str, Any] = {}
+
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to configured state."""
+        self.get_logger().info("Configuring Adaptive State Machine...")
+        
+        # Adaptive components
+        self.context_evaluator = ContextEvaluator(self)
+        self.policy_engine = AdaptivePolicyEngine(self)
+        self.transition_manager = TransitionManager(self.get_logger())
 
         # Configuration
         self.declare_parameters(
@@ -78,40 +85,52 @@ class AdaptiveStateMachine(Node):
         self._setup_publishers()
         self._setup_subscribers()
         self._setup_services()
-        self._setup_timers()
 
-        self.get_logger().info("Adaptive State Machine initialized")
-        self.get_logger().info(f"Current state: {self.current_state.value}")
-        if self.enable_adaptive:
-            self.get_logger().info("Adaptive transitions: ENABLED")
-        else:
-            self.get_logger().info(
-                "Adaptive transitions: DISABLED (using basic transitions only)"
-            )
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to active state."""
+        self.get_logger().info("Activating Adaptive State Machine...")
+        self._setup_timers()
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to inactive state."""
+        self.get_logger().info("Deactivating Adaptive State Machine...")
+        # Cancel timers if they exist
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Handle transition to unconfigured state."""
+        self.get_logger().info("Cleaning up Adaptive State Machine...")
+        return TransitionCallbackReturn.SUCCESS
 
     def _setup_publishers(self):
-        """Set up ROS2 publishers."""
-        qos_profile = QoSProfile(
-            reliability=ReliabilityPolicy.RELIABLE,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10,
+        """Set up ROS2 publishers with standardized QoS."""
+        # Core state information - Lifecycle Publishers
+        self.state_pub = self.create_lifecycle_publisher(
+            SystemState, "/state_machine/current_state", QoSProfiles.state_data()
         )
 
-        # Core state information
-        self.state_pub = self.create_publisher(
-            SystemState, "/state_machine/current_state", qos_profile
+        # Backward compatibility publishers for dashboard
+        from std_msgs.msg import String
+        self.legacy_state_pub = self.create_lifecycle_publisher(
+            String, "/state_machine/state_transition", QoSProfiles.diagnostic_data()
+        )
+        self.metadata_pub = self.create_lifecycle_publisher(
+            String, "/state_machine/metadata", QoSProfiles.diagnostic_data()
         )
 
         # Context and adaptation information
-        self.context_pub = self.create_publisher(
-            ContextState, "/state_machine/context", qos_profile
+        self.context_pub = self.create_lifecycle_publisher(
+            ContextState, "/state_machine/context", QoSProfiles.state_data()
         )
 
-        self.adaptation_pub = self.create_publisher(
+        self.adaptation_pub = self.create_lifecycle_publisher(
             AdaptiveActionMsg, "/state_machine/adaptation", qos_profile
         )
 
-        self.dashboard_pub = self.create_publisher(
+        self.dashboard_pub = self.create_lifecycle_publisher(
             ContextUpdate, "/dashboard/context_update", qos_profile
         )
 
@@ -206,6 +225,10 @@ class AdaptiveStateMachine(Node):
                 lambda: self._log_transition_complete(target_state, reason),
             ]
 
+            # Add state-specific actions
+            if target_state == RoverState.AUTO:
+                post_actions.append(lambda: self._trigger_bt_execution())
+
             success, exec_message = self.transition_manager.execute_transition(
                 self.current_state, target_state, reason, pre_actions, post_actions
             )
@@ -216,6 +239,61 @@ class AdaptiveStateMachine(Node):
                 self.state_entry_time = self.get_clock().now()
 
             return success, exec_message
+
+    def _trigger_bt_execution(self) -> None:
+        """Trigger BT mission execution when entering autonomous mode."""
+        try:
+            self.get_logger().info("Entering autonomous mode - triggering BT mission execution")
+
+            # Create action client for BT mission execution
+            from autonomy_interfaces.action import ExecuteMission
+            from rclpy.action import ActionClient
+
+            if not hasattr(self, 'bt_action_client'):
+                self.bt_action_client = ActionClient(self, ExecuteMission, '/bt/execute_mission')
+
+            # Wait for BT action server
+            if not self.bt_action_client.wait_for_server(timeout_sec=5.0):
+                self.get_logger().warning("BT action server not available - autonomous mode entered but no mission started")
+                return
+
+            # Send mission goal
+            goal = ExecuteMission.Goal()
+            goal.mission_type = "sample_collection"
+            goal.mission_id = f"auto_mission_{int(time.time())}"
+            goal.timeout = 300.0  # 5 minutes for mission
+            goal.waypoints = ["waypoint_1", "waypoint_2"]
+
+            self.get_logger().info(f"Starting autonomous mission: {goal.mission_id}")
+
+            def goal_response_callback(future):
+                goal_handle = future.result()
+                if not goal_handle:
+                    self.get_logger().error("BT mission goal was rejected")
+                    return
+
+                self.get_logger().info("BT mission goal accepted - autonomous execution started")
+
+                # Get result
+                result_future = goal_handle.get_result_async()
+                result_future.add_done_callback(self._bt_mission_result_callback)
+
+            future = self.bt_action_client.send_goal_async(goal)
+            future.add_done_callback(goal_response_callback)
+
+        except Exception as e:
+            self.get_logger().error(f"Failed to trigger BT execution: {e}")
+
+    def _bt_mission_result_callback(self, future) -> None:
+        """Handle BT mission completion."""
+        try:
+            result = future.result().result
+            if result.success:
+                self.get_logger().info("BT mission completed successfully")
+            else:
+                self.get_logger().warning(f"BT mission failed: {result.completion_status}")
+        except Exception as e:
+            self.get_logger().error(f"Error in BT mission result callback: {e}")
 
     def _update_transition_history(self, target_state: RoverState, reason: str) -> None:
         """Update transition history with new transition."""

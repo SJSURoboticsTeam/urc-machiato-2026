@@ -1,1 +1,60 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/action/PerformTyping.idl
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from autonomy_interfaces/action/PerformTyping.action
+// generated code does not contain a copyright notice
+
+#include "autonomy_interfaces/msg/TypingGoal.idl"
+#include "geometry_msgs/msg/PoseStamped.idl"
+
+module autonomy_interfaces {
+  module action {
+    @verbatim (language="comment", text=
+      "Perform autonomous typing sequence")
+    struct PerformTyping_Goal {
+      @verbatim (language="comment", text=
+        "Goal: What to type and where")
+      autonomy_interfaces::msg::TypingGoal typing_goal;
+    };
+    @verbatim (language="comment", text=
+      "Feedback: Typing progress")
+    struct PerformTyping_Result {
+      @verbatim (language="comment", text=
+        "0.0 to 1.0 completion")
+      float progress;
+
+      @verbatim (language="comment", text=
+        "Character currently being typed")
+      string current_character;
+
+      @verbatim (language="comment", text=
+        "Number of characters successfully typed")
+      int32 characters_completed;
+
+      @verbatim (language="comment", text=
+        "Current hand/tool position")
+      geometry_msgs::msg::PoseStamped current_hand_pose;
+    };
+    @verbatim (language="comment", text=
+      "Result: Typing outcome")
+    struct PerformTyping_Feedback {
+      boolean success;
+
+      string message;
+
+      @verbatim (language="comment", text=
+        "What was actually typed")
+      string text_typed;
+
+      int32 characters_attempted;
+
+      int32 characters_successful;
+
+      @verbatim (language="comment", text=
+        "characters_successful / characters_attempted")
+      float accuracy;
+
+      @verbatim (language="comment", text=
+        "Seconds taken")
+      float total_time;
+    };
+  };
+};

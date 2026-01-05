@@ -307,7 +307,7 @@ autonomy_interfaces__msg__ArmAlignmentCommand__copy(
 }
 
 autonomy_interfaces__msg__ArmAlignmentCommand *
-autonomy_interfaces__msg__ArmAlignmentCommand__create()
+autonomy_interfaces__msg__ArmAlignmentCommand__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__ArmAlignmentCommand * msg = (autonomy_interfaces__msg__ArmAlignmentCommand *)allocator.allocate(sizeof(autonomy_interfaces__msg__ArmAlignmentCommand), allocator.state);

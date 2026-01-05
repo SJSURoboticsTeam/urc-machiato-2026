@@ -346,7 +346,7 @@ autonomy_interfaces__msg__SafetyStatus__copy(
 }
 
 autonomy_interfaces__msg__SafetyStatus *
-autonomy_interfaces__msg__SafetyStatus__create()
+autonomy_interfaces__msg__SafetyStatus__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__SafetyStatus * msg = (autonomy_interfaces__msg__SafetyStatus *)allocator.allocate(sizeof(autonomy_interfaces__msg__SafetyStatus), allocator.state);

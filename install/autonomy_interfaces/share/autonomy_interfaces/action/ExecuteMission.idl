@@ -1,0 +1,73 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from autonomy_interfaces/action/ExecuteMission.action
+// generated code does not contain a copyright notice
+
+
+module autonomy_interfaces {
+  module action {
+    @verbatim (language="comment", text=
+      "Execute a complete mission sequence")
+    struct ExecuteMission_Goal {
+      @verbatim (language="comment", text=
+        "Goal: Mission parameters" "\n"
+        "Type of mission (e.g., \"sample_collection\", \"scouting\")")
+      string mission_type;
+
+      @verbatim (language="comment", text=
+        "Unique mission identifier")
+      string mission_id;
+
+      @verbatim (language="comment", text=
+        "List of waypoints to visit (optional)")
+      sequence<string> waypoints;
+
+      @verbatim (language="comment", text=
+        "Maximum mission time (seconds, 0 = no limit)")
+      float timeout;
+    };
+    @verbatim (language="comment", text=
+      "Feedback: Mission progress")
+    struct ExecuteMission_Result {
+      @verbatim (language="comment", text=
+        "Current mission phase")
+      string current_phase;
+
+      @verbatim (language="comment", text=
+        "Overall progress (0.0 to 1.0)")
+      float progress;
+
+      @verbatim (language="comment", text=
+        "Human-readable status")
+      string status_message;
+
+      @verbatim (language="comment", text=
+        "Number of waypoints completed")
+      int32 waypoints_completed;
+
+      @verbatim (language="comment", text=
+        "Seconds until completion")
+      float estimated_time_remaining;
+    };
+    @verbatim (language="comment", text=
+      "Result: Mission outcome")
+    struct ExecuteMission_Feedback {
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Detailed completion message")
+      string completion_status;
+
+      @verbatim (language="comment", text=
+        "List of tasks that were completed")
+      sequence<string> completed_tasks;
+
+      @verbatim (language="comment", text=
+        "Total mission time in seconds")
+      float total_time;
+
+      @verbatim (language="comment", text=
+        "Total waypoints visited")
+      int32 waypoints_visited;
+    };
+  };
+};

@@ -157,7 +157,7 @@ autonomy_interfaces__msg__LedCommand__copy(
 }
 
 autonomy_interfaces__msg__LedCommand *
-autonomy_interfaces__msg__LedCommand__create()
+autonomy_interfaces__msg__LedCommand__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__LedCommand * msg = (autonomy_interfaces__msg__LedCommand *)allocator.allocate(sizeof(autonomy_interfaces__msg__LedCommand), allocator.state);

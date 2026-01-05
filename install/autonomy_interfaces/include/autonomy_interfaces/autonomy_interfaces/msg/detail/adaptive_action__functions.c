@@ -170,7 +170,7 @@ autonomy_interfaces__msg__AdaptiveAction__copy(
 }
 
 autonomy_interfaces__msg__AdaptiveAction *
-autonomy_interfaces__msg__AdaptiveAction__create()
+autonomy_interfaces__msg__AdaptiveAction__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__AdaptiveAction * msg = (autonomy_interfaces__msg__AdaptiveAction *)allocator.allocate(sizeof(autonomy_interfaces__msg__AdaptiveAction), allocator.state);

@@ -1,1 +1,66 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_type_description/autonomy_interfaces/msg/QoSTopicProfile.json
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "autonomy_interfaces/msg/QoSTopicProfile",
+      "fields": [
+        {
+          "name": "topic_name",
+          "type": {
+            "type_id": 17,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "avg_latency_ms",
+          "type": {
+            "type_id": 11,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "jitter_ms",
+          "type": {
+            "type_id": 11,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "packet_loss_rate",
+          "type": {
+            "type_id": 11,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "samples_count",
+          "type": {
+            "type_id": 6,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "autonomy_interfaces/msg/QoSTopicProfile",
+      "hash_string": "RIHS01_28de40b11af6e4cd7847820117d838178a1d6947351784fc10d2dcdfda1ac5bf"
+    }
+  ]
+}

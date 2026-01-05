@@ -1,1 +1,99 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/ConfigureMission.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/ConfigureMission.srv
+// generated code does not contain a copyright notice
+
+#include "geometry_msgs/msg/PoseStamped.idl"
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Mission configuration service" "\n"
+      "Sets up mission parameters before autonomous execution")
+    struct ConfigureMission_Request {
+      @verbatim (language="comment", text=
+        "Request: Mission specification")
+      string mission_name;
+
+      @verbatim (language="comment", text=
+        "[\"navigate\", \"typing\", \"sample_collection\", etc.]")
+      sequence<string> objectives;
+
+      @verbatim (language="comment", text=
+        "Waypoint configuration")
+      sequence<geometry_msgs::msg::PoseStamped> waypoints;
+
+      sequence<string> waypoint_names;
+
+      @verbatim (language="comment", text=
+        "Whether precision approach needed")
+      sequence<boolean> precision_required;
+
+      @verbatim (language="comment", text=
+        "Acceptable position error (meters)")
+      sequence<float> waypoint_tolerances;
+
+      @verbatim (language="comment", text=
+        "Timing constraints" "\n"
+        "Maximum mission duration (seconds)")
+      float time_limit;
+
+      @verbatim (language="comment", text=
+        "Timeout per waypoint (seconds)")
+      float waypoint_timeout;
+
+      @verbatim (language="comment", text=
+        "Navigation parameters" "\n"
+        "m/s")
+      float max_linear_velocity;
+
+      @verbatim (language="comment", text=
+        "rad/s")
+      float max_angular_velocity;
+
+      @verbatim (language="comment", text=
+        "meters")
+      float waypoint_approach_tolerance;
+
+      @verbatim (language="comment", text=
+        "Mission-specific parameters" "\n"
+        "Text to type (if typing objective)")
+      string typing_text;
+
+      @verbatim (language="comment", text=
+        "Where to perform typing")
+      geometry_msgs::msg::PoseStamped typing_location;
+
+      @verbatim (language="comment", text=
+        "Environmental parameters" "\n"
+        "\"rough\", \"smooth\", \"mixed\"")
+      string terrain_type;
+
+      @verbatim (language="comment", text=
+        "Maximum allowed terrain incline (degrees)")
+      float max_incline;
+    };
+    @verbatim (language="comment", text=
+      "Response: Configuration result")
+    struct ConfigureMission_Response {
+      boolean success;
+
+      string message;
+
+      @verbatim (language="comment", text=
+        "Unique identifier for configured mission")
+      string mission_id;
+
+      @verbatim (language="comment", text=
+        "Expected mission time (seconds)")
+      float estimated_duration;
+
+      @verbatim (language="comment", text=
+        "Number of waypoints configured")
+      int32 total_waypoints;
+
+      @verbatim (language="comment", text=
+        "Objectives that were successfully configured")
+      sequence<string> configured_objectives;
+    };
+  };
+};

@@ -15,7 +15,7 @@ import math
 from dataclasses import dataclass
 from enum import Enum
 from heapq import heappop, heappush
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class PathPlanningAlgorithm(Enum):

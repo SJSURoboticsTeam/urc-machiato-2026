@@ -1,1 +1,12 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_cpp/autonomy_interfaces/msg/safety_alert.hpp
+// generated from rosidl_generator_cpp/resource/idl.hpp.em
+// generated code does not contain a copyright notice
+
+#ifndef AUTONOMY_INTERFACES__MSG__SAFETY_ALERT_HPP_
+#define AUTONOMY_INTERFACES__MSG__SAFETY_ALERT_HPP_
+
+#include "autonomy_interfaces/msg/detail/safety_alert__struct.hpp"
+#include "autonomy_interfaces/msg/detail/safety_alert__builder.hpp"
+#include "autonomy_interfaces/msg/detail/safety_alert__traits.hpp"
+#include "autonomy_interfaces/msg/detail/safety_alert__type_support.hpp"
+
+#endif  // AUTONOMY_INTERFACES__MSG__SAFETY_ALERT_HPP_

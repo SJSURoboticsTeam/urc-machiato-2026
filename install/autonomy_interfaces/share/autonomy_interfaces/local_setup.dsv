@@ -1,1 +1,4 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/ament_cmake_environment_hooks/local_setup.dsv
+source;share/autonomy_interfaces/environment/ament_prefix_path.sh
+source;share/autonomy_interfaces/environment/library_path.sh
+source;share/autonomy_interfaces/environment/path.sh
+source;share/autonomy_interfaces/environment/pythonpath.sh

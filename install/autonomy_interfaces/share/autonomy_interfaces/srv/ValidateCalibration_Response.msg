@@ -1,6 +1,0 @@
-
-bool success
-float32 reprojection_error
-string quality_assessment
-string recommendations
-string error_message

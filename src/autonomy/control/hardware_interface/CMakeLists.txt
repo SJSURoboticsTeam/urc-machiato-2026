@@ -13,8 +13,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 
-# Install Python modules
-ament_python_install_package(${PROJECT_NAME})
+# Note: This package installs scripts directly, no Python package to install
 
 # Install Python executables
 install(PROGRAMS

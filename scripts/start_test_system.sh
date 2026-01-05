@@ -53,3 +53,4 @@ python3 tests/system/comprehensive_system_test.py
 echo "Cleaning up..."
 kill $STATE_MACHINE_PID $SENSOR_PID $MISSION_PID $SLAM_POSE_PID $MAP_PID 2>/dev/null
 echo "Done."
+

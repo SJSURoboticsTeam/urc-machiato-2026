@@ -207,7 +207,7 @@ autonomy_interfaces__msg__SlamStatus__copy(
 }
 
 autonomy_interfaces__msg__SlamStatus *
-autonomy_interfaces__msg__SlamStatus__create()
+autonomy_interfaces__msg__SlamStatus__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__SlamStatus * msg = (autonomy_interfaces__msg__SlamStatus *)allocator.allocate(sizeof(autonomy_interfaces__msg__SlamStatus), allocator.state);

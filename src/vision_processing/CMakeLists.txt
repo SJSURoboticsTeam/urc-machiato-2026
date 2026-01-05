@@ -19,7 +19,7 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  vision_processing_node.py
+  vision_processing/vision_processing_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

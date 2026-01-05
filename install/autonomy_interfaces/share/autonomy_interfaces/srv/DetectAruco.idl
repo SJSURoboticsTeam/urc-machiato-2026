@@ -1,1 +1,101 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/DetectAruco.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/DetectAruco.srv
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+#include "geometry_msgs/msg/Point.idl"
+#include "geometry_msgs/msg/Quaternion.idl"
+
+module autonomy_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "DetectAruco.srv" "\n"
+      "Service for ArUco tag detection requests")
+    struct DetectAruco_Request {
+      @verbatim (language="comment", text=
+        "Request" "\n"
+        "List of ArUco tag IDs to detect (empty = detect any)")
+      sequence<int32> target_tag_ids;
+
+      @verbatim (language="comment", text=
+        "Timeout in seconds (0.0 = no timeout)")
+      float detection_timeout;
+
+      @verbatim (language="comment", text=
+        "Whether to require distance estimation")
+      boolean require_distance_estimate;
+
+      @verbatim (language="comment", text=
+        "Maximum detection distance in meters (0.0 = no limit)")
+      float max_detection_distance;
+
+      @verbatim (language="comment", text=
+        "Whether to calculate alignment for multi-tag scenarios")
+      boolean calculate_alignment;
+
+      @verbatim (language="comment", text=
+        "Target depth for alignment (meters from tag plane)")
+      float target_depth;
+
+      @verbatim (language="comment", text=
+        "Mission type: \"TYPING\", \"USB\", \"FOLLOW_ME\", \"GENERAL\"")
+      string mission_type;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct DetectAruco_Response {
+      @verbatim (language="comment", text=
+        "Whether detection was successful")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Status message")
+      string message;
+
+      @verbatim (language="comment", text=
+        "IDs of detected tags")
+      sequence<int32> detected_tag_ids;
+
+      @verbatim (language="comment", text=
+        "3D positions of detected tags")
+      sequence<geometry_msgs::msg::Point> tag_positions;
+
+      @verbatim (language="comment", text=
+        "Estimated distances to tags")
+      sequence<float> tag_distances;
+
+      @verbatim (language="comment", text=
+        "Angles to tags (radians)")
+      sequence<float> tag_angles;
+
+      @verbatim (language="comment", text=
+        "When detection occurred")
+      builtin_interfaces::msg::Time detection_time;
+
+      @verbatim (language="comment", text=
+        "Alignment information (only if calculate_alignment=true)" "\n"
+        "Whether alignment calculation is available")
+      boolean alignment_available;
+
+      @verbatim (language="comment", text=
+        "Calculated center point of detected tags")
+      geometry_msgs::msg::Point alignment_center;
+
+      @verbatim (language="comment", text=
+        "Calculated orientation for coplanar alignment")
+      geometry_msgs::msg::Quaternion alignment_orientation;
+
+      @verbatim (language="comment", text=
+        "Recommended arm position for alignment")
+      geometry_msgs::msg::Point arm_target_position;
+
+      @verbatim (language="comment", text=
+        "Quality score of alignment (0.0-1.0)")
+      float alignment_quality;
+
+      @verbatim (language="comment", text=
+        "Warnings about alignment quality or missing tags")
+      sequence<string> alignment_warnings;
+    };
+  };
+};

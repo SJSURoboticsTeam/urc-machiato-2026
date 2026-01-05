@@ -194,7 +194,7 @@ autonomy_interfaces__msg__FollowMeStatus__copy(
 }
 
 autonomy_interfaces__msg__FollowMeStatus *
-autonomy_interfaces__msg__FollowMeStatus__create()
+autonomy_interfaces__msg__FollowMeStatus__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__FollowMeStatus * msg = (autonomy_interfaces__msg__FollowMeStatus *)allocator.allocate(sizeof(autonomy_interfaces__msg__FollowMeStatus), allocator.state);

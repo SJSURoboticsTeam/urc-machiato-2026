@@ -185,7 +185,7 @@ autonomy_interfaces__msg__ContextUpdate__copy(
 }
 
 autonomy_interfaces__msg__ContextUpdate *
-autonomy_interfaces__msg__ContextUpdate__create()
+autonomy_interfaces__msg__ContextUpdate__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__ContextUpdate * msg = (autonomy_interfaces__msg__ContextUpdate *)allocator.allocate(sizeof(autonomy_interfaces__msg__ContextUpdate), allocator.state);

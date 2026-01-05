@@ -1,1 +1,19 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/srv/GetQoSProfile.idl
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from autonomy_interfaces/srv/GetQoSProfile.srv
+// generated code does not contain a copyright notice
+
+#include "autonomy_interfaces/msg/QoSNetworkStats.idl"
+#include "autonomy_interfaces/msg/QoSTopicProfile.idl"
+
+module autonomy_interfaces {
+  module srv {
+    struct GetQoSProfile_Request {
+      uint8 structure_needs_at_least_one_member;
+    };
+    struct GetQoSProfile_Response {
+      sequence<autonomy_interfaces::msg::QoSTopicProfile> topic_profiles;
+
+      autonomy_interfaces::msg::QoSNetworkStats network_stats;
+    };
+  };
+};

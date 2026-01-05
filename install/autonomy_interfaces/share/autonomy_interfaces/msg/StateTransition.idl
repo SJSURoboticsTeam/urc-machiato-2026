@@ -1,1 +1,68 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_adapter/autonomy_interfaces/msg/StateTransition.idl
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from autonomy_interfaces/msg/StateTransition.msg
+// generated code does not contain a copyright notice
+
+#include "builtin_interfaces/msg/Time.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autonomy_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "State Transition Event Message" "\n"
+      "Records state transitions for logging and debugging")
+    struct StateTransition {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        "Transition details" "\n"
+        "State transitioning from")
+      string from_state;
+
+      @verbatim (language="comment", text=
+        "State transitioning to")
+      string to_state;
+
+      @verbatim (language="comment", text=
+        "When transition started")
+      builtin_interfaces::msg::Time start_time;
+
+      @verbatim (language="comment", text=
+        "When transition completed")
+      builtin_interfaces::msg::Time end_time;
+
+      @verbatim (language="comment", text=
+        "Duration in seconds")
+      double transition_duration;
+
+      @verbatim (language="comment", text=
+        "Transition metadata" "\n"
+        "True if transition completed successfully")
+      boolean success;
+
+      @verbatim (language="comment", text=
+        "Reason for transition")
+      string reason;
+
+      @verbatim (language="comment", text=
+        "Source of transition request (frontend, safety, auto)")
+      string initiated_by;
+
+      @verbatim (language="comment", text=
+        "If failed, why it failed")
+      string failure_reason;
+
+      @verbatim (language="comment", text=
+        "Context information" "\n"
+        "List of preconditions that were validated")
+      sequence<string> preconditions_checked;
+
+      @verbatim (language="comment", text=
+        "Actions executed on entering new state")
+      sequence<string> entry_actions_executed;
+
+      @verbatim (language="comment", text=
+        "Actions executed on leaving old state")
+      sequence<string> exit_actions_executed;
+    };
+  };
+};

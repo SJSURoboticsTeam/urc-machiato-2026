@@ -26,6 +26,7 @@
 // Member `mission_phase`
 // Member `operator_id`
 // Member `state_reason`
+// Member `active_adaptations`
 #include "rosidl_runtime_c/string_functions.h"
 // Member `transition_timestamp`
 #include "builtin_interfaces/msg/time.h"
@@ -161,12 +162,68 @@ bool autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__
   return rosidl_runtime_c__String__Sequence__init(member, size);
 }
 
-static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_message_member_array[15] = {
+size_t autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__size_function__SystemState__active_adaptations(
+  const void * untyped_member)
+{
+  const rosidl_runtime_c__String__Sequence * member =
+    (const rosidl_runtime_c__String__Sequence *)(untyped_member);
+  return member->size;
+}
+
+const void * autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__get_const_function__SystemState__active_adaptations(
+  const void * untyped_member, size_t index)
+{
+  const rosidl_runtime_c__String__Sequence * member =
+    (const rosidl_runtime_c__String__Sequence *)(untyped_member);
+  return &member->data[index];
+}
+
+void * autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__get_function__SystemState__active_adaptations(
+  void * untyped_member, size_t index)
+{
+  rosidl_runtime_c__String__Sequence * member =
+    (rosidl_runtime_c__String__Sequence *)(untyped_member);
+  return &member->data[index];
+}
+
+void autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__fetch_function__SystemState__active_adaptations(
+  const void * untyped_member, size_t index, void * untyped_value)
+{
+  const rosidl_runtime_c__String * item =
+    ((const rosidl_runtime_c__String *)
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__get_const_function__SystemState__active_adaptations(untyped_member, index));
+  rosidl_runtime_c__String * value =
+    (rosidl_runtime_c__String *)(untyped_value);
+  *value = *item;
+}
+
+void autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__assign_function__SystemState__active_adaptations(
+  void * untyped_member, size_t index, const void * untyped_value)
+{
+  rosidl_runtime_c__String * item =
+    ((rosidl_runtime_c__String *)
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__get_function__SystemState__active_adaptations(untyped_member, index));
+  const rosidl_runtime_c__String * value =
+    (const rosidl_runtime_c__String *)(untyped_value);
+  *item = *value;
+}
+
+bool autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__resize_function__SystemState__active_adaptations(
+  void * untyped_member, size_t size)
+{
+  rosidl_runtime_c__String__Sequence * member =
+    (rosidl_runtime_c__String__Sequence *)(untyped_member);
+  rosidl_runtime_c__String__Sequence__fini(member);
+  return rosidl_runtime_c__String__Sequence__init(member, size);
+}
+
+static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_message_member_array[17] = {
   {
     "header",  // name
     rosidl_typesupport_introspection_c__ROS_TYPE_MESSAGE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message (initialized later)
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -184,6 +241,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -201,6 +259,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -218,6 +277,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -235,6 +295,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_DOUBLE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -252,6 +313,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_DOUBLE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -269,6 +331,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -286,6 +349,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_MESSAGE,  // type
     0,  // upper bound of string
     NULL,  // members of sub message (initialized later)
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -303,6 +367,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_BOOLEAN,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -320,6 +385,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_BOOLEAN,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -337,6 +403,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     true,  // is array
     0,  // array size
     false,  // is upper bound
@@ -354,6 +421,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     true,  // is array
     0,  // array size
     false,  // is upper bound
@@ -371,6 +439,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -388,6 +457,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -405,6 +475,7 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
     0,  // upper bound of string
     NULL,  // members of sub message
+    false,  // is key
     false,  // is array
     0,  // array size
     false,  // is upper bound
@@ -416,14 +487,51 @@ static rosidl_typesupport_introspection_c__MessageMember autonomy_interfaces__ms
     NULL,  // fetch(index, &value) function pointer
     NULL,  // assign(index, value) function pointer
     NULL  // resize(index) function pointer
+  },
+  {
+    "adaptive_enabled",  // name
+    rosidl_typesupport_introspection_c__ROS_TYPE_BOOLEAN,  // type
+    0,  // upper bound of string
+    NULL,  // members of sub message
+    false,  // is key
+    false,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(autonomy_interfaces__msg__SystemState, adaptive_enabled),  // bytes offset in struct
+    NULL,  // default value
+    NULL,  // size() function pointer
+    NULL,  // get_const(index) function pointer
+    NULL,  // get(index) function pointer
+    NULL,  // fetch(index, &value) function pointer
+    NULL,  // assign(index, value) function pointer
+    NULL  // resize(index) function pointer
+  },
+  {
+    "active_adaptations",  // name
+    rosidl_typesupport_introspection_c__ROS_TYPE_STRING,  // type
+    0,  // upper bound of string
+    NULL,  // members of sub message
+    false,  // is key
+    true,  // is array
+    0,  // array size
+    false,  // is upper bound
+    offsetof(autonomy_interfaces__msg__SystemState, active_adaptations),  // bytes offset in struct
+    NULL,  // default value
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__size_function__SystemState__active_adaptations,  // size() function pointer
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__get_const_function__SystemState__active_adaptations,  // get_const(index) function pointer
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__get_function__SystemState__active_adaptations,  // get(index) function pointer
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__fetch_function__SystemState__active_adaptations,  // fetch(index, &value) function pointer
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__assign_function__SystemState__active_adaptations,  // assign(index, value) function pointer
+    autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__resize_function__SystemState__active_adaptations  // resize(index) function pointer
   }
 };
 
 static const rosidl_typesupport_introspection_c__MessageMembers autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_message_members = {
   "autonomy_interfaces__msg",  // message namespace
   "SystemState",  // message name
-  15,  // number of fields
+  17,  // number of fields
   sizeof(autonomy_interfaces__msg__SystemState),
+  false,  // has_any_key_member_
   autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_message_member_array,  // message members
   autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_init_function,  // function to initialize message memory (memory has to be allocated)
   autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_fini_function  // function to terminate message instance (will not free memory)
@@ -435,6 +543,9 @@ static rosidl_message_type_support_t autonomy_interfaces__msg__SystemState__rosi
   0,
   &autonomy_interfaces__msg__SystemState__rosidl_typesupport_introspection_c__SystemState_message_members,
   get_message_typesupport_handle_function,
+  &autonomy_interfaces__msg__SystemState__get_type_hash,
+  &autonomy_interfaces__msg__SystemState__get_type_description,
+  &autonomy_interfaces__msg__SystemState__get_type_description_sources,
 };
 
 ROSIDL_TYPESUPPORT_INTROSPECTION_C_EXPORT_autonomy_interfaces

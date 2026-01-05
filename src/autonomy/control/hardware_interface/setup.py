@@ -17,9 +17,9 @@ setup(
     description="ROS2 Hardware Interface for STM32 Control Systems",
     license="MIT",
     tests_require=["pytest"],
-    entry_points={
-        "console_scripts": [
-            "hardware_interface_node = hardware_interface.hardware_interface_node:main",
-        ],
-    },
+    # entry_points={
+    #     "console_scripts": [
+    #         "hardware_interface_node = hardware_interface.hardware_interface_node:main",
+    #     ],
+    # },
 )

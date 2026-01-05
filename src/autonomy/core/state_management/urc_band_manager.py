@@ -12,22 +12,18 @@ from typing import Any, Dict, List, Optional
 
 import rclpy
 from autonomy_interfaces.srv import GetSubsystemStatus
-from rclpy.node import Node
+from rclpy.lifecycle import LifecycleState, TransitionCallbackReturn
 from rclpy.timer import Timer
 
+from utilities import StateMachineNode
 
-class URCBandManager(Node):
+class URCBandManager(StateMachineNode):
     """
-    Manages URC band switching and interference monitoring.
-
-    Handles the competition requirements:
-    - 900 MHz band: 8 MHz max bandwidth, sub-band switching
-    - 2.4 GHz band: No restrictions but interference monitoring
-    - Frequency hopping and automatic channel selection
+    Manages URC band switching and interference monitoring with Lifecycle management.
     """
 
     def __init__(self):
-        super().__init__("urc_band_manager")
+        super().__init__("urc_band_manager", initial_state="idle")
 
         # URC Band configuration (from competition rules)
         self.band_config = {
@@ -109,28 +105,32 @@ class URCBandManager(Node):
         self.interference_threshold = self.get_parameter("interference_threshold").value
         self.frequency_hopping_rate = self.get_parameter("frequency_hopping_rate").value
 
-        # Initialize band
-        self.set_band(initial_band, initial_subband)
+    def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Configure the band manager."""
+        self.get_logger().info("Configuring Band Manager...")
+        self.last_band_switch = time.time()
+        return TransitionCallbackReturn.SUCCESS
 
-        # Setup timers
-        self.create_timer(
+    def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Activate timers and services."""
+        self.get_logger().info("Activating Band Manager...")
+        # Timers moved here from __init__
+        self.interference_timer = self.create_timer(
             1.0 / self.interference_check_rate, self._interference_check_callback
         )
         if self.band_config["900mhz"]["frequency_hopping"]:
-            self.create_timer(
+            self.hopping_timer = self.create_timer(
                 1.0 / self.frequency_hopping_rate, self._frequency_hopping_callback
             )
+        return TransitionCallbackReturn.SUCCESS
 
-        # Setup services
-        self.create_service(
-            GetSubsystemStatus, "/urc_band_manager/get_status", self._handle_get_status
-        )
-
-        self.last_band_switch = time.time()
-
-        self.get_logger().info(
-            f"URC Band Manager initialized - Band: {self.current_band}"
-        )
+    def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
+        """Deactivate timers."""
+        self.get_logger().info("Deactivating Band Manager...")
+        self.interference_timer.cancel()
+        if hasattr(self, 'hopping_timer'):
+            self.hopping_timer.cancel()
+        return TransitionCallbackReturn.SUCCESS
 
     def set_band(self, band: str, subband: Optional[str] = None) -> bool:
         """
@@ -391,15 +391,17 @@ class URCBandManager(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
-    band_manager = URCBandManager()
+    node = URCBandManager()
+    
+    executor = rclpy.executors.SingleThreadedExecutor()
+    executor.add_node(node)
 
     try:
-        rclpy.spin(band_manager)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
-        band_manager.destroy_node()
+        node.destroy_node()
         rclpy.shutdown()
 
 

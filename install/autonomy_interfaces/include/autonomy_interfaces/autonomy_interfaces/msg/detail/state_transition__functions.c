@@ -290,7 +290,7 @@ autonomy_interfaces__msg__StateTransition__copy(
 }
 
 autonomy_interfaces__msg__StateTransition *
-autonomy_interfaces__msg__StateTransition__create()
+autonomy_interfaces__msg__StateTransition__create(void)
 {
   rcutils_allocator_t allocator = rcutils_get_default_allocator();
   autonomy_interfaces__msg__StateTransition * msg = (autonomy_interfaces__msg__StateTransition *)allocator.allocate(sizeof(autonomy_interfaces__msg__StateTransition), allocator.state);
