@@ -295,6 +295,7 @@ output/reports/**
 output/metrics/**
 output/benchmarks/**
 output/logs/**
+output/validation/**
 # Keep README files for documentation
 !output/README.md
 !output/reports/README.md

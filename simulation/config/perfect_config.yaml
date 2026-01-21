@@ -1,0 +1,41 @@
+# Perfect Network Configuration
+# No delays, errors, or packet loss - for fast testing
+
+websocket:
+  enabled: true
+  network:
+    latency_ms: 0.0
+    jitter_ms: 0.0
+    packet_loss_rate: 0.0
+    disconnect_rate: 0.0
+    bandwidth_mbps: 1000.0
+    enabled: false  # Disable network simulation
+  validate_messages: true
+  record_messages: true
+  max_history: 1000
+
+slcan:
+  enabled: true
+  simulate_errors: false
+  error_rate: 0.0
+  serial_delay_ms: 0.0
+  buffer_size: 4096
+  max_history: 1000
+
+firmware:
+  enabled: true
+  num_motors: 6
+  simulate_faults: false
+  fault_rate: 0.0
+  control_loop_hz: 100
+  homing_duration: 1.0
+  command_timeout: 10.0
+
+ros2:
+  enabled: true
+  use_real_messages: true
+
+simulation:
+  max_queue_size: 10000
+  enable_logging: false
+  log_level: WARNING

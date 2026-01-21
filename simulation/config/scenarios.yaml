@@ -1,0 +1,62 @@
+# Test Scenario Configurations
+# Predefined test scenarios with specific parameters
+
+scenarios:
+  basic_velocity:
+    duration: 1.0
+    velocity: 0.5
+    angular: 0.0
+    expected_response_time: 0.5
+  
+  emergency_stop:
+    duration: 0.1
+    max_stop_time: 0.1  # 100ms requirement
+    verify_all_motors_stopped: true
+  
+  network_failure:
+    duration: 5.0
+    packet_loss: 0.3
+    latency_ms: 200.0
+    recovery_expected: true
+  
+  firmware_fault:
+    duration: 3.0
+    fault_type: overcurrent
+    fault_motor_id: 0
+    recovery_expected: true
+    recovery_time: 1.0
+  
+  high_load:
+    duration: 10.0
+    message_rate: 100  # messages per second
+    min_success_rate: 0.95
+  
+  recovery:
+    duration: 5.0
+    disconnect_duration: 2.0
+    reconnect_expected: true
+  
+  multi_phase_mission:
+    phases:
+      - name: startup
+        duration: 0.5
+        action: homing
+      - name: low_speed
+        duration: 1.0
+        velocity: 0.2
+      - name: high_speed
+        duration: 2.0
+        velocity: 0.8
+      - name: emergency_stop
+        duration: 0.2
+        action: estop
+      - name: recovery
+        duration: 1.0
+        velocity: 0.3
+
+# Performance targets
+targets:
+  encoding_rate: 10000  # frames per second
+  message_throughput: 500  # messages per second
+  end_to_end_latency: 50  # milliseconds (perfect mode)
+  control_loop_frequency: 100  # Hz

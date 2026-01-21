@@ -1,0 +1,43 @@
+# Hardware-in-the-Loop Configuration
+# Mixed real and simulated components
+
+# Device discovery settings
+discovery:
+  auto_discover: true
+  scan_serial_ports: true
+  identify_devices: true
+  fallback_to_simulation: true
+
+# Component modes: REAL, SIMULATED, AUTO
+components:
+  firmware:
+    mode: AUTO  # Try real, fallback to simulated
+    serial_port: /dev/ttyACM0
+    baudrate: 115200
+    timeout: 1.0
+  
+  slcan:
+    mode: AUTO
+    serial_port: /dev/ttyUSB0
+    baudrate: 921600
+  
+  websocket:
+    mode: SIMULATED  # Always simulate
+    port: 5000
+
+# Comparison settings
+comparison:
+  enabled: true
+  record_data: true
+  output_dir: output/hil_comparisons
+  metrics:
+    - latency
+    - throughput
+    - accuracy
+
+# Performance profiling
+profiling:
+  enabled: true
+  control_loop_frequency: true
+  message_timing: true
+  resource_usage: true
