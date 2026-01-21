@@ -1,0 +1,177 @@
+{
+  "timestamp": 1768194978.3320377,
+  "architecture_readiness_percent": 100.0,
+  "critical_requirements_met": 4,
+  "total_requirements": 4,
+  "performance_metrics": {
+    "binary_protocol_p99_ms": 0.002655026037245989,
+    "timestamp_provider_p99_ms": 0.002964981831610203,
+    "ipc_bridge_p99_ms": 0.004729023203253746,
+    "end_to_end_pipeline_p99_ms": 0.005992013029754162,
+    "motion_control_violation_rate_percent": 0.0
+  },
+  "system_report": {
+    "timestamp": 1768194978.331777,
+    "requirements": [
+      {
+        "operation": "motion_control_loop",
+        "description": "Motion control must complete within 20ms (50Hz loop)",
+        "required_max_ms": 20.0,
+        "percentile": "p99",
+        "status": "no_data",
+        "compliant": false
+      },
+      {
+        "operation": "sensor_fusion_update",
+        "description": "Sensor fusion within 50ms for 20Hz update rate",
+        "required_max_ms": 50.0,
+        "percentile": "p95",
+        "status": "no_data",
+        "compliant": false
+      },
+      {
+        "operation": "websocket_message_roundtrip",
+        "description": "WebSocket message processing within 100ms",
+        "required_max_ms": 100.0,
+        "percentile": "p95",
+        "status": "no_data",
+        "compliant": false
+      },
+      {
+        "operation": "binary_sensor_encoding",
+        "description": "Binary serialization under 5ms",
+        "required_max_ms": 5.0,
+        "percentile": "p99",
+        "status": "no_data",
+        "compliant": false
+      },
+      {
+        "operation": "system_cpu_usage",
+        "description": "CPU usage under 75% sustained",
+        "required_max_ms": 75.0,
+        "percentile": "p95",
+        "status": "compliant",
+        "compliant": true
+      },
+      {
+        "operation": "system_memory_usage",
+        "description": "Memory usage under 700MB",
+        "required_max_ms": 700.0,
+        "percentile": "max",
+        "status": "violating",
+        "compliant": false
+      }
+    ],
+    "profiles": {
+      "motion_control_loop": {
+        "count": 0,
+        "message": "No measurements"
+      },
+      "sensor_fusion_update": {
+        "count": 0,
+        "message": "No measurements"
+      },
+      "websocket_message_roundtrip": {
+        "count": 0,
+        "message": "No measurements"
+      },
+      "binary_sensor_encoding": {
+        "count": 0,
+        "message": "No measurements"
+      },
+      "system_cpu_usage": {
+        "count": 4,
+        "mean_ms": 7.175,
+        "median_ms": 6.1499999999999995,
+        "p50_ms": 9.7,
+        "p90_ms": 14.3,
+        "p95_ms": 14.3,
+        "p99_ms": 14.3,
+        "p999_ms": 14.3,
+        "min_ms": 2.1,
+        "max_ms": 14.3,
+        "std_dev_ms": 5.882955606382447,
+        "last_measurement_time": 1768194977.3347108
+      },
+      "system_memory_usage": {
+        "count": 4,
+        "mean_ms": 19413.1142578125,
+        "median_ms": 19408.10546875,
+        "p50_ms": 19412.53125,
+        "p90_ms": 19434.1015625,
+        "p95_ms": 19434.1015625,
+        "p99_ms": 19434.1015625,
+        "p999_ms": 19434.1015625,
+        "min_ms": 19402.14453125,
+        "max_ms": 19434.1015625,
+        "std_dev_ms": 14.721332299228445,
+        "last_measurement_time": 1768194977.3348813
+      },
+      "system_disk_read_mb": {
+        "count": 4,
+        "mean_ms": 5713.4228515625,
+        "median_ms": 5713.4228515625,
+        "p50_ms": 5713.4228515625,
+        "p90_ms": 5713.4228515625,
+        "p95_ms": 5713.4228515625,
+        "p99_ms": 5713.4228515625,
+        "p999_ms": 5713.4228515625,
+        "min_ms": 5713.4228515625,
+        "max_ms": 5713.4228515625,
+        "std_dev_ms": 0.0,
+        "last_measurement_time": 1768194977.3353853
+      },
+      "system_disk_write_mb": {
+        "count": 4,
+        "mean_ms": 55254.2470703125,
+        "median_ms": 55254.2470703125,
+        "p50_ms": 55254.2470703125,
+        "p90_ms": 55254.2470703125,
+        "p95_ms": 55254.2470703125,
+        "p99_ms": 55254.2470703125,
+        "p999_ms": 55254.2470703125,
+        "min_ms": 55254.2470703125,
+        "max_ms": 55254.2470703125,
+        "std_dev_ms": 0.0,
+        "last_measurement_time": 1768194977.3353884
+      },
+      "system_network_sent_mb": {
+        "count": 4,
+        "mean_ms": 53421.93152427673,
+        "median_ms": 53421.800641059875,
+        "p50_ms": 53421.81884288788,
+        "p90_ms": 53422.36485290527,
+        "p95_ms": 53422.36485290527,
+        "p99_ms": 53422.36485290527,
+        "p999_ms": 53422.36485290527,
+        "min_ms": 53421.75996208191,
+        "max_ms": 53422.36485290527,
+        "std_dev_ms": 0.289902703793727,
+        "last_measurement_time": 1768194977.3354964
+      },
+      "system_network_recv_mb": {
+        "count": 4,
+        "mean_ms": 70145.95863938332,
+        "median_ms": 70145.83383274078,
+        "p50_ms": 70145.85252857208,
+        "p90_ms": 70146.38109111786,
+        "p95_ms": 70146.38109111786,
+        "p99_ms": 70146.38109111786,
+        "p999_ms": 70146.38109111786,
+        "min_ms": 70145.78580093384,
+        "max_ms": 70146.38109111786,
+        "std_dev_ms": 0.28295527437657825,
+        "last_measurement_time": 1768194977.3354988
+      }
+    },
+    "violations": [],
+    "summary": {
+      "total_measurements": 24,
+      "total_violations": 0,
+      "compliant_requirements": 1,
+      "total_requirements": 2,
+      "compliance_rate_percent": 50.0,
+      "monitoring_active": true
+    }
+  }
+}
