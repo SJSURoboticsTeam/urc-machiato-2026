@@ -601,7 +601,7 @@ Transform the URC 2026 codebase into an industry-standard, maintainable, and dev
 3. **Build Optimization**: Continuous performance improvement
 
 ### **Medium Priority (Next Week)**
-1. **Web Dashboard** (`src/frontend/`) - Apply frontend quality standards
+1. **Web Dashboard** (`src/src/dashboard/`) - Apply frontend quality standards
 2. **State Management** (`src/autonomy/core/state_management/`) - Critical refactor needed
 3. **CI/CD Pipeline** - Automated quality gates
 
@@ -672,7 +672,7 @@ New Developer Experience:
 
 ## 🎯 Phase 2: Supporting Systems (Week 3-4)
 
-### 2.1 Web Dashboard (`src/frontend/`)
+### 2.1 Web Dashboard (`src/src/dashboard/`)
 **Status:** ⏳ Pending
 **Owner:** Frontend Team
 **Deadline:** End of Week 3

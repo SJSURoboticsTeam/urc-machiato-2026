@@ -24,7 +24,7 @@ A comprehensive, real-time visual testing dashboard has been implemented to addr
 
 ### Frontend Components
 
-#### 1. **IntegratedTestingDashboard.jsx** (`frontend/src/components/`)
+#### 1. **IntegratedTestingDashboard.jsx** (`src/dashboard/src/components/`)
 
 - **Main Dashboard Component** with real-time visualizations
 - **Features**:
@@ -36,7 +36,7 @@ A comprehensive, real-time visual testing dashboard has been implemented to addr
   - Test Results Summary
   - WebSocket connection to backend
 
-#### 2. **Updated TestingTab.jsx** (`frontend/src/components/tabs/`)
+#### 2. **Updated TestingTab.jsx** (`src/dashboard/src/components/tabs/`)
 
 - Toggle between **Integrated Dashboard** and **Legacy Component View**
 - Seamless switching preserves user preference
@@ -306,7 +306,7 @@ ros2 launch launch/integrated_system.launch.py
 
 ```
 /home/ubuntu/urc-machiato-2026/
-├── frontend/src/components/
+├── src/dashboard/src/components/
 │   ├── IntegratedTestingDashboard.jsx     # Main dashboard component
 │   └── tabs/
 │       └── TestingTab.jsx                  # Updated with view toggle
@@ -458,7 +458,7 @@ ros2 launch launch/integrated_system.launch.py
 
 ### Quick Links
 
-- Frontend: `frontend/src/components/IntegratedTestingDashboard.jsx`
+- Frontend: `src/dashboard/src/components/IntegratedTestingDashboard.jsx`
 - Backend: `scripts/testing/test_dashboard_backend.py`
 - Launch: `scripts/testing/start_dashboard.sh`
 - Docs: `docs/testing/INTEGRATED_TESTING_DASHBOARD.md`

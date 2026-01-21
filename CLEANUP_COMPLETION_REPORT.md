@@ -32,7 +32,7 @@ Successfully completed comprehensive codebase cleanup and consolidation:
 - `tests/unit/test_protocol_adapter.py` (301 lines)
 - `tests/integration/test_bridge_integration_stubs.py` (489 lines)
 - `tests/integration/test_websocket_bridge_stubs.py` (358 lines)
-- `launch/integrated_bridge_system.launch.py` (143 lines)
+- `src/launch/integrated_bridge_system.launch.py` (143 lines)
 - `API_DOCUMENTATION.md` (1,153 lines)
 - `DOCUMENTATION_INDEX.md` (550 lines)
 - `FINAL_STATUS_REPORT.md` (Executive summary)
