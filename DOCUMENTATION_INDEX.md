@@ -99,7 +99,7 @@
 
 **Must Read:**
 1. [API Documentation](API_DOCUMENTATION.md) - WebSocket/Socket.IO API
-2. [Frontend README](src/src/dashboard/README.md) - Frontend setup
+2. [Frontend README](src/dashboard/README.md) - Frontend setup
 3. [Operator Interface Requirements](OPERATOR_INTERFACE_REQUIREMENTS.md) - UI requirements
 
 **Reference:**
