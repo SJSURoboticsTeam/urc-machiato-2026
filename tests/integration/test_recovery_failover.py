@@ -667,3 +667,6 @@ class TestRecoveryFailover:
             "power_management": True,  # Always available
             "basic_monitoring": True   # Always available
         }
+
+
+

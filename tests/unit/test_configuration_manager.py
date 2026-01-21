@@ -379,3 +379,6 @@ class TestConfigurationErrorHandling:
 
         # Should handle timeout gracefully
         assert manager is not None
+
+
+

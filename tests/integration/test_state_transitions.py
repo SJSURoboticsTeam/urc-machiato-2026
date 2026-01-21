@@ -290,3 +290,6 @@ class TestStateTransitions:
         assert result["success"] is False
         assert result["final_state"] == "idle"
         assert result["rolled_back"] is True
+
+
+

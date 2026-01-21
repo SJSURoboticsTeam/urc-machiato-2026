@@ -536,3 +536,6 @@ class TestAuditLogger:
             exported_data = json.load(f)
             assert len(exported_data) == 2
             assert exported_data[0]["event_type"] == "export_test"
+
+
+

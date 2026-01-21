@@ -264,3 +264,6 @@ class TestFrontendIntegration:
         # Test invalid transitions
         assert is_valid_transition("autonomous", "boot") is False
         assert is_valid_transition("error", "autonomous") is False
+
+
+

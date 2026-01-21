@@ -466,3 +466,6 @@ class LightweightSLAMSystem:
                 return False
 
         return True
+
+
+

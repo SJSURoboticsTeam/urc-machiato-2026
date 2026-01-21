@@ -778,3 +778,6 @@ class TestMarsEnvironmentSimulation:
         assert avg_duration < 60     # Average completion time reasonable
 
         print(f"🔄 {mission_type} reliability: {success_rate:.1%} success rate, {avg_duration:.1f}s avg duration")
+
+
+

@@ -728,3 +728,6 @@ class TestHardwareSoftwareIntegration:
         # Check alert types
         alert_types = [alert["type"] for alert in alerts_triggered]
         assert "high_cpu" in alert_types or "high_memory" in alert_types
+
+
+

@@ -606,3 +606,6 @@ if __name__ == "__main__":
         self.test_deployment_automation(temp_project_dir)
 
         print("✅ End-to-end pipeline simulation completed successfully")
+
+
+

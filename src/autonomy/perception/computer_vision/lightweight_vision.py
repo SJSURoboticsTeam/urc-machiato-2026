@@ -428,3 +428,6 @@ class LightweightTerrainAnalyzer:
                     obstacles.append((x, y, grid_size, grid_size))
 
         return obstacles
+
+
+
