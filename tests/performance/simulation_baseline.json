@@ -1,0 +1,158 @@
+{
+  "version": "1.0",
+  "generated": "2026-01-20T23:30:00Z",
+  "test_environment": {
+    "platform": "linux",
+    "python_version": "3.10+",
+    "cpu_model": "Generic x86_64",
+    "memory_gb": 8
+  },
+  "throughput": {
+    "slcan_encoding": {
+      "target": 10000,
+      "unit": "frames/second",
+      "baseline": 12500,
+      "tolerance_percent": 20,
+      "description": "SLCAN protocol encoding throughput"
+    },
+    "slcan_decoding": {
+      "target": 10000,
+      "unit": "frames/second",
+      "baseline": 13000,
+      "tolerance_percent": 20,
+      "description": "SLCAN protocol decoding throughput"
+    },
+    "websocket_messages": {
+      "target": 500,
+      "unit": "messages/second",
+      "baseline": 800,
+      "tolerance_percent": 30,
+      "description": "WebSocket message processing rate"
+    },
+    "firmware_control_loop": {
+      "target": 100,
+      "unit": "Hz",
+      "baseline": 100,
+      "tolerance_percent": 10,
+      "description": "Firmware control loop frequency"
+    },
+    "end_to_end": {
+      "target": 250,
+      "unit": "messages/second",
+      "baseline": 350,
+      "tolerance_percent": 30,
+      "description": "Complete stack message throughput"
+    }
+  },
+  "latency": {
+    "perfect_mode_e2e": {
+      "target": 50.0,
+      "unit": "milliseconds",
+      "baseline": 35.0,
+      "p50": 30.0,
+      "p95": 45.0,
+      "p99": 50.0,
+      "description": "End-to-end latency in perfect mode"
+    },
+    "default_mode_e2e": {
+      "target": 150.0,
+      "unit": "milliseconds",
+      "baseline": 120.0,
+      "p50": 110.0,
+      "p95": 140.0,
+      "p99": 160.0,
+      "description": "End-to-end latency with network simulation"
+    },
+    "slcan_encode": {
+      "target": 1.0,
+      "unit": "milliseconds",
+      "baseline": 0.08,
+      "description": "SLCAN encoding latency"
+    },
+    "slcan_decode": {
+      "target": 1.0,
+      "unit": "milliseconds",
+      "baseline": 0.08,
+      "description": "SLCAN decoding latency"
+    },
+    "firmware_response": {
+      "target": 20.0,
+      "unit": "milliseconds",
+      "baseline": 12.0,
+      "description": "Firmware command response time"
+    },
+    "emergency_stop": {
+      "target": 100.0,
+      "unit": "milliseconds",
+      "baseline": 45.0,
+      "p95": 75.0,
+      "description": "Emergency stop propagation time"
+    }
+  },
+  "resource_usage": {
+    "memory_websocket": {
+      "target": 50,
+      "unit": "MB",
+      "baseline": 25,
+      "description": "WebSocket simulator memory usage"
+    },
+    "memory_slcan": {
+      "target": 20,
+      "unit": "MB",
+      "baseline": 10,
+      "description": "SLCAN simulator memory usage"
+    },
+    "memory_firmware": {
+      "target": 30,
+      "unit": "MB",
+      "baseline": 15,
+      "description": "Firmware simulator memory usage"
+    },
+    "cpu_control_loop": {
+      "target": 10,
+      "unit": "percent",
+      "baseline": 5,
+      "description": "CPU usage for control loop"
+    }
+  },
+  "accuracy": {
+    "slcan_velocity_encoding": {
+      "target": 0.001,
+      "unit": "m/s",
+      "baseline": 0.0002,
+      "description": "Velocity encoding/decoding precision"
+    },
+    "network_delay_accuracy": {
+      "target": 20,
+      "unit": "percent",
+      "baseline": 10,
+      "description": "Network delay simulation accuracy (% error)"
+    }
+  },
+  "scenarios": {
+    "basic_velocity": {
+      "duration_target": 1.0,
+      "duration_baseline": 0.95,
+      "unit": "seconds",
+      "description": "Basic velocity scenario duration"
+    },
+    "emergency_stop": {
+      "duration_target": 0.1,
+      "duration_baseline": 0.08,
+      "unit": "seconds",
+      "description": "Emergency stop scenario duration"
+    },
+    "test_suite": {
+      "duration_target": 10.0,
+      "duration_baseline": 8.5,
+      "unit": "seconds",
+      "description": "Complete test suite execution time"
+    }
+  },
+  "notes": [
+    "Baselines measured on reference system with no load",
+    "Actual performance may vary based on system load",
+    "Targets include safety margin for production use",
+    "Regression tests should fail if >30% slower than baseline"
+  ]
+}

@@ -1,0 +1,46 @@
+# Full Stack Simulator Configuration
+# Complete configuration for all simulation components
+
+websocket:
+  enabled: true
+  network:
+    latency_ms: 50.0
+    jitter_ms: 10.0
+    packet_loss_rate: 0.01
+    disconnect_rate: 0.001
+    bandwidth_mbps: 100.0
+    enabled: true
+  validate_messages: true
+  record_messages: true
+  max_history: 10000
+
+slcan:
+  enabled: true
+  simulate_errors: true
+  error_rate: 0.001
+  serial_delay_ms: 5.0
+  buffer_size: 1024
+  max_history: 1000
+
+firmware:
+  enabled: true
+  num_motors: 6
+  simulate_faults: true
+  fault_rate: 0.0001
+  control_loop_hz: 100
+  homing_duration: 5.0
+  command_timeout: 1.0
+
+ros2:
+  enabled: true
+  use_real_messages: true
+  topics:
+    cmd_vel_teleop: /cmd_vel/teleop
+    cmd_vel_autonomy: /cmd_vel/autonomy
+    cmd_vel_out: /cmd_vel
+    velocity_feedback: /velocity_feedback
+
+simulation:
+  max_queue_size: 1000
+  enable_logging: true
+  log_level: INFO
