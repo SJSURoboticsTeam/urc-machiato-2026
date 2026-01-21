@@ -814,7 +814,7 @@ EOF
 #### **2. Create HTML Dashboard Interface**
 ```html
 <!-- Create operator dashboard HTML -->
-cat > frontend/operator-dashboard.html << 'EOF'
+cat > src/dashboard/operator-dashboard.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>

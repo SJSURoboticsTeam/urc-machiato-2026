@@ -308,7 +308,7 @@ git merge --no-ff testing -m "Merge testing: Bridge integration Phase 1 & 2"
 - `src/bridges/teleop_can_adapter.py` (385 lines)
 - `src/bridges/teleop_websocket_bridge.py` (368 lines)
 - `src/bridges/can_bridge.py` (460 lines, enhanced)
-- `launch/integrated_bridge_system.launch.py` (143 lines)
+- `src/launch/integrated_bridge_system.launch.py` (143 lines)
 
 **Test Code:**
 - `tests/unit/test_protocol_adapter.py` (301 lines)

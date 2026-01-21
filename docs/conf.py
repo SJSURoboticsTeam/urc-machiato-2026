@@ -54,7 +54,7 @@ extensions = [
 # AutoAPI configuration for multi-language support (requires autoapi package)
 # autoapi_dirs = [
 #     '../Autonomy',  # Python code
-#     '../frontend/src',  # JavaScript/TypeScript
+#     '../src/dashboard/src',  # JavaScript/TypeScript (operator dashboard)
 # ]
 # autoapi_type = 'python'
 # autoapi_template_dir = '_templates/autoapi'
@@ -86,7 +86,7 @@ breathe_default_members = (
 )
 
 # sphinx-js configuration for JavaScript/TypeScript (requires sphinx-js package)
-# js_source_path = '../frontend/src'
+# js_source_path = '../src/dashboard/src'
 # jsdoc_config_path = 'jsdoc.json'
 
 # PlantUML configuration (requires sphinxcontrib-plantuml package)

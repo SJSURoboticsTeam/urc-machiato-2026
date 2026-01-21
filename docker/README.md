@@ -132,8 +132,8 @@ All services use default development settings:
 
 #### Development
 
-- `./frontend/src:/app/src` - Frontend source code hot-reload
-- `./frontend/public:/app/public` - Frontend assets
+- `./src/dashboard/src:/app/src` - Frontend source code hot-reload
+- `./src/dashboard/public:/app/public` - Frontend assets
 
 ## 🌐 Networking
 

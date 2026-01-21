@@ -63,7 +63,7 @@ Successfully completed comprehensive bridge integration infrastructure in 2 phas
 1. `src/bridges/protocol_adapter.py` - Base protocol adapter classes
 2. `src/bridges/teleop_can_adapter.py` - Teleoperation SLCAN protocol
 3. `src/bridges/teleop_websocket_bridge.py` - Socket.IO bridge
-4. `launch/integrated_bridge_system.launch.py` - System launch file
+4. `src/launch/integrated_bridge_system.launch.py` - System launch file
 
 **Tests:**
 5. `tests/unit/test_protocol_adapter.py` - Protocol adapter tests
@@ -101,7 +101,7 @@ Successfully completed comprehensive bridge integration infrastructure in 2 phas
 - `tests/unit/test_protocol_adapter.py` - Protocol adapter tests
 
 **For Deployment:**
-- `launch/integrated_bridge_system.launch.py` - System launcher
+- `src/launch/integrated_bridge_system.launch.py` - System launcher
 - [Deployment Next Steps](DEPLOYMENT_NEXT_STEPS.md) - Deployment guide
 
 ---

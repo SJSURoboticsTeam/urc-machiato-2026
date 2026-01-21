@@ -1,97 +1,55 @@
-# 🚀 ROS2 Source Packages
+# Source Code Directory
 
-This directory contains all ROS2 packages and source code for the URC 2026 rover autonomy system.
+Main source code for the URC 2026 Mars Rover project.
 
-## 📁 Package Organization
+## Structure
 
-### 🤖 `autonomy/` - Core Robotics Stack
-The heart of the rover's autonomous capabilities.
+### Core Systems
+- `autonomy/` - ROS2 packages for autonomous operation
+  - `bt/` - Behavior trees
+  - `control/` - Motor control, hardware interfaces
+  - `core/` - Navigation, safety, state management
+  - `perception/` - Computer vision, SLAM, sensors
+  - `utilities/` - Shared utilities
 
-- **`bt/`** - Behavior Tree implementations for mission logic
-- **`control/`** - Hardware control (LED status, motor commands)
-- **`core/`** - Core autonomy (navigation, state management, safety)
-- **`interfaces/`** - ROS2 messages, services, and actions
-- **`perception/`** - Computer vision, SLAM, and sensor processing
-- **`utilities/`** - Shared utilities and helpers
+### Bridges & Communication
+- `bridges/` - Protocol adapters and communication bridges
+  - CAN bridge (SLCAN protocol)
+  - WebSocket/Socket.IO bridge
+  - Protocol adapters
 
-### 🌉 `bridges/` - Communication Layer
-Inter-system communication and data bridging.
+### User Interfaces
+- `dashboard/` - Operator dashboard (teleoperation UI)
+  - HTML/React dashboard for rover control
+  - Connects via WebSocket to teleoperation backend
+- `frontend/` - React web frontend (monitoring/visualization)
+  - General-purpose web UI
+  - Separate from operator dashboard
 
-- WebSocket bridges for dashboard communication
-- Mission orchestration between components
-- Data synchronization across the system
+### Other
+- `cli/` - Command-line interface tools
+- `comms/` - Communication systems
+- `config/` - Configuration management (Dynaconf)
+- `core/` - Core system components
+  - State machines
+  - Data management
+  - Security
+- `launch/` - ROS2 launch files
+  - `integrated_bridge_system.launch.py` - Bridge system launch
+  - `jazzy/` - Jazzy-specific launch files
+- `motion/` - Motion planning and control
+- `sensors/` - Sensor interfaces and drivers
+- `simulation/` - Simulation components
+- `testing/` - Testing utilities
 
-### 💻 `frontend/` - Web Dashboard
-Real-time monitoring and control interface.
+## Related Directories
 
-- React/TypeScript components
-- Real-time data visualization
-- Mission control and teleoperation
+- `../config/` - Configuration files (rover.yaml, etc.)
+- `../missions/` - Mission implementations
+- `../tests/` - Test suites
+- `../output/` - Generated reports, metrics, logs
+- `../vendor/` - Submodules (control-systems, teleoperation)
 
-### 🎮 `simulation/` - Gazebo Integration
-Simulation environment for testing and development.
+## Development
 
-- Robot models and world environments
-- Sensor simulation and physics
-- Testing scenarios and validation
-
-## 🛠️ Development Workflow
-
-### Building ROS2 Packages
-```bash
-# From project root
-colcon build --symlink-install
-source install/setup.bash
-```
-
-### Running Individual Packages
-```bash
-# Launch specific package
-ros2 launch autonomy_navigation navigation.launch.py
-
-# Check package info
-ros2 pkg list | grep autonomy
-```
-
-### Testing Packages
-```bash
-# Test specific package
-colcon test --packages-select autonomy_navigation
-colcon test-result --verbose
-```
-
-## 📋 Key ROS2 Concepts
-
-- **Packages**: Modular units of functionality (like `autonomy_navigation`)
-- **Nodes**: Executable processes within packages
-- **Topics**: Publish/subscribe communication channels
-- **Services**: Request/response communication
-- **Actions**: Long-running tasks with feedback
-
-## 🗺️ Finding Your Way Around
-
-| I need to... | Look in... | Files to check |
-|-------------|------------|----------------|
-| Change navigation behavior | `autonomy/core/navigation/` | `navigation_node.py` |
-| Add new ROS2 message | `autonomy/interfaces/` | `msg/`, `srv/`, `action/` |
-| Modify web dashboard | `frontend/` | `src/components/` |
-| Add communication bridge | `bridges/` | `websocket_bridge.py` |
-| Test in simulation | `simulation/` | `worlds/`, `models/` |
-
-## 🔧 Package Dependencies
-
-Most autonomy packages depend on:
-- `rclpy` or `rclcpp` - ROS2 client libraries
-- `autonomy_interfaces` - Shared message definitions
-- `geometry_msgs`, `sensor_msgs` - Standard ROS2 messages
-
-## 🚨 Important Notes
-
-- **Always source setup files** before running ROS2 commands
-- **Use colcon build** for ROS2 packages, not pip
-- **Check package.xml** for dependencies when adding new packages
-- **Test in simulation first** before hardware testing
-
-
-
-
+See main `README.md` for development setup and guidelines.

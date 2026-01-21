@@ -49,7 +49,7 @@ Code Organization Map
    │   │   ├── perception/    # Vision, SLAM, sensors
    │   │   └── utilities/     # Shared code
    │   ├── bridges/           # 🌉 Communication layer
-   │   ├── frontend/          # 💻 Web dashboard
+   │   ├── src/dashboard/          # 💻 Web dashboard
    │   └── simulation/        # 🎮 Gazebo integration
    ├── missions/              # 🎯 URC Mission implementations
    ├── simulation/            # 🏗️ Additional simulation tools
@@ -69,7 +69,7 @@ Where to Find What You Need
 | Add new        | ``missions/``     | ``sample_collection_mission.py``  |
 | mission        |                  |                                   |
 +----------------+------------------+-----------------------------------+
-| Modify web UI  | ``src/frontend/``| ``Dashboard.jsx``                 |
+| Modify web UI  | ``src/src/dashboard/``| ``Dashboard.jsx``                 |
 |                |                  | ``MissionControl.tsx``            |
 +----------------+------------------+-----------------------------------+
 | Test in        | ``simulation/``   | ``worlds/mars_yard.world``        |
@@ -161,7 +161,7 @@ Modifying Robot Behavior
 Adding Web Dashboard Features
 ------------------------------
 
-1. Modify React components in ``src/frontend/``
+1. Modify React components in ``src/src/dashboard/``
 2. Update WebSocket communication in ``src/bridges/``
 3. Add backend endpoints if needed
 4. Test real-time updates

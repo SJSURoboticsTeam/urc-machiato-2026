@@ -73,7 +73,7 @@ parameters=[{
 
 ### 3. Launch Files ✅
 
-**File:** `launch/integrated_bridge_system.launch.py` (143 lines)
+**File:** `src/launch/integrated_bridge_system.launch.py` (143 lines)
 
 **Features:**
 - Configurable via launch arguments
@@ -261,7 +261,7 @@ Serial → STM32 Firmware
 2. `src/bridges/teleop_can_adapter.py` (385 lines)
 3. `src/bridges/can_bridge.py` (Modified, ~200 lines changed)
 4. `src/bridges/teleop_websocket_bridge.py` (368 lines) ⬅️ Phase 2
-5. `launch/integrated_bridge_system.launch.py` (143 lines) ⬅️ Phase 2
+5. `src/launch/integrated_bridge_system.launch.py` (143 lines) ⬅️ Phase 2
 
 **Tests (3 files):**
 1. `tests/unit/test_protocol_adapter.py` (301 lines)

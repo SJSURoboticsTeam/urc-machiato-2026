@@ -103,10 +103,10 @@ class TestRunner:
             cmd.extend(
                 [
                     "--cov=Autonomy",
-                    "--cov-report=html:tests/reports/coverage_html",
-                    "--cov-report=xml:tests/reports/coverage.xml",
+                    "--cov-report=html:output/reports/coverage_html",
+                    "--cov-report=xml:output/reports/coverage.xml",
                     "--cov-report=term-missing",
-                    "--junitxml=tests/reports/junit.xml",
+                    "--junitxml=output/reports/junit.xml",
                 ]
             )
 
@@ -116,16 +116,14 @@ class TestRunner:
         """Generate test reports."""
         print("[GRAPH] Generating Test Reports...")
 
-        cmd = ["python3", "tests/reports/generate_test_report.py"]
-        result = self._run_command(cmd, "Report Generation")
-
-        if result == 0:
-            print("[PASS] Reports generated in tests/reports/")
-            print("   - test_report.html (HTML report)")
-            print("   - test_report.json (JSON data)")
-            print("   - coverage_html/ (Coverage report)")
-
-        return result
+        # Note: Report generation script has been deprecated
+        # Test reports are now generated directly to output/reports/
+        print("[INFO] Test reports are generated directly to output/reports/")
+        print("   - output/reports/coverage_html/ (HTML coverage)")
+        print("   - output/reports/coverage.xml (XML coverage)")
+        print("   - output/reports/junit.xml (JUnit results)")
+        
+        return 0
 
     def check_test_status(self):
         """Check current test status."""

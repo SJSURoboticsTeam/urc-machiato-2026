@@ -80,7 +80,7 @@ git add src/bridges/*.py
 git add tests/unit/test_protocol_adapter.py
 git add tests/integration/test_bridge_integration_stubs.py
 git add tests/integration/test_websocket_bridge_stubs.py
-git add launch/integrated_bridge_system.launch.py
+git add src/launch/integrated_bridge_system.launch.py
 
 git commit -m "feat: complete bridge integration (Phase 1 & 2)
 
@@ -197,7 +197,7 @@ cd /home/durian/urc-machiato-2026
 git add src/bridges/
 git add tests/unit/test_protocol_adapter.py
 git add tests/integration/test_*_stubs.py
-git add launch/integrated_bridge_system.launch.py
+git add src/launch/integrated_bridge_system.launch.py
 git add API_DOCUMENTATION.md
 git add DOCUMENTATION_INDEX.md
 git add FINAL_STATUS_REPORT.md
@@ -376,7 +376,7 @@ DEMO/EXAMPLES:           ⚠️ PARTIALLY CLEAN
 **Implementation:**
 - Phase 1 & 2 code: `src/bridges/*.py`
 - Tests: `tests/**/test_*_stubs.py`
-- Launch: `launch/integrated_bridge_system.launch.py`
+- Launch: `src/launch/integrated_bridge_system.launch.py`
 
 ---
 

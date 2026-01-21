@@ -49,7 +49,7 @@ A modern web-based interface provides:
 * **System Diagnostics**: Health monitoring and troubleshooting tools
 
 .. seealso::
-   :doc:`../frontend/index`
+   :doc:`../src/dashboard/index`
       Frontend documentation and component reference.
 
 Calibration Systems

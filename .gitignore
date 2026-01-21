@@ -287,8 +287,28 @@ logs/
 # MCP server configurations (may contain sensitive data)
 mcp-servers/mcp-config-local.json
 
-# Test reports (generated)
+# ========================================
+# Output Directory (All Generated Files)
+# ========================================
+# All runtime outputs, reports, metrics, benchmarks go here
+output/reports/**
+output/metrics/**
+output/benchmarks/**
+output/logs/**
+# Keep README files for documentation
+!output/README.md
+!output/reports/README.md
+!output/metrics/README.md
+!output/benchmarks/README.md
+!output/logs/README.md
+
+# Legacy paths (for backward compatibility)
 test_reports/
+test_metrics/
+resource_budgeting_results/
+resource_regression_results/
+perf_results/
+.benchmarks/
 validation_report_*.json
 system_validation_results.json
 

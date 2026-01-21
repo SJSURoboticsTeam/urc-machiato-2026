@@ -8,7 +8,7 @@ This document describes the **real software integration** that connects the dash
 
 - **Before**: Mock ROSLIB with fake connections
 - **After**: Real `roslibjs` connecting to ROS2 WebSocket bridge
-- **Files**: `frontend/src/utils/rosbridge.js`, `bridges/websocket_*_bridge.py`
+- **Files**: `src/dashboard/src/utils/rosbridge.js`, `bridges/websocket_*_bridge.py`
 
 ### 2. **Simulation Framework Integration** ✅
 
@@ -141,10 +141,10 @@ Instead of fake numbers, you get:
 
 ### Frontend Updates
 
-- `frontend/src/context/SystemContext.jsx` - Real simulation data
-- `frontend/src/hooks/useROS.js` - Real ROSLIB (not mock)
-- `frontend/src/hooks/useStateMachine.js` - Real state topics
-- `frontend/src/components/tabs/MissionTab.jsx` - Real mission commands
+- `src/dashboard/src/context/SystemContext.jsx` - Real simulation data
+- `src/dashboard/src/hooks/useROS.js` - Real ROSLIB (not mock)
+- `src/dashboard/src/hooks/useStateMachine.js` - Real state topics
+- `src/dashboard/src/components/tabs/MissionTab.jsx` - Real mission commands
 
 ### Launch Script
 

@@ -99,7 +99,7 @@
 
 **Must Read:**
 1. [API Documentation](API_DOCUMENTATION.md) - WebSocket/Socket.IO API
-2. [Frontend README](src/frontend/README.md) - Frontend setup
+2. [Frontend README](src/src/dashboard/README.md) - Frontend setup
 3. [Operator Interface Requirements](OPERATOR_INTERFACE_REQUIREMENTS.md) - UI requirements
 
 **Reference:**
@@ -275,7 +275,7 @@
 - `autonomy/control/hardware_interface/hardware_interface_node.py` - ROS2 bridge
 
 **Frontend:**
-- `frontend/` - React dashboard
+- `src/dashboard/` - React dashboard
 - `dashboard/` - Enhanced dashboard
 
 ---

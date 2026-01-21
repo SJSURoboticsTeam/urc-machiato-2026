@@ -191,7 +191,7 @@ Access the web interface at `http://localhost:5173` for real-time monitoring and
 
 | Directory | Purpose | Key Contents |
 |-----------|---------|--------------|
-| **`src/`** | ROS2 packages & source code | `autonomy/`, `bridges/`, `frontend/`, `simulation/` |
+| **`src/`** | ROS2 packages & source code | `autonomy/`, `bridges/`, `src/dashboard/`, `simulation/` |
 | **`missions/`** | URC mission implementations | Sample collection, delivery, navigation missions |
 | **`simulation/`** | Gazebo simulation environment | World files, robot models, simulation tools |
 | **`config/`** | Configuration files | `rover.yaml`, environment configs |
@@ -215,7 +215,7 @@ autonomy/
 - **Mission orchestration** between components
 - **Data synchronization** across systems
 
-#### `src/frontend/` - Web Dashboard
+#### `src/src/dashboard/` - Web Dashboard
 - **React/TypeScript** monitoring interface
 - **Real-time visualization** of rover state
 - **Mission control** and teleoperation

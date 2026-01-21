@@ -60,7 +60,7 @@ The 6 Layers of Our Rover
 **💻 User Interface Layer** (How you control the rover)
    - Web dashboard, real-time monitoring
    - Mission planning, system health
-   - **Files**: ``src/frontend/``, ``src/dashboard/``
+   - **Files**: ``src/src/dashboard/``, ``src/dashboard/``
 
 Key Data Flows
 ==============
@@ -98,7 +98,7 @@ Directory Map for New People
    │   ├── control/              # Motors, hardware
    │   └── interfaces/           # ROS2 messages
    ├── 🌐 src/bridges/           # Communication between parts
-   ├── 💻 src/frontend/          # Web dashboard
+   ├── 💻 src/src/dashboard/          # Web dashboard
    ├── 🧪 tests/                 # Making sure it works
    └── ⚙️ config/                # Configuration files
 

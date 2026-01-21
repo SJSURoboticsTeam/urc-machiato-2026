@@ -346,7 +346,7 @@ rm tests/performance/old_performance_test.py  # If obsolete
 git add src/bridges/*.py
 git add tests/unit/test_protocol_adapter.py
 git add tests/integration/test_*_stubs.py
-git add launch/integrated_bridge_system.launch.py
+git add src/launch/integrated_bridge_system.launch.py
 
 git commit -m "feat: implement complete bridge integration infrastructure
 
