@@ -679,3 +679,6 @@ class TestSpinCycles:
         # (Would check actual log files in real implementation)
 
         print("✅ Spin cycle monitoring framework in place")
+
+
+

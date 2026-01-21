@@ -564,3 +564,6 @@ class TestHardwareFailureSimulation:
         # Primary should be marked as failed, but backup should be active
 
         print("🔄 Hardware redundancy activation working correctly")
+
+
+
