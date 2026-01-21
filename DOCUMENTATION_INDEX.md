@@ -54,10 +54,9 @@
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| **[Bridge Implementation Summary](BRIDGE_IMPLEMENTATION_SUMMARY.md)** | **Current implementation status** ⭐ | **All** |
-| [Implementation Progress](IMPLEMENTATION_PROGRESS.md) | Detailed phase 1 progress | Engineers |
-| [Integration Complete Summary](INTEGRATION_COMPLETE_SUMMARY.md) | Initial integration summary | Engineers |
-| [Submodule Integration Summary](SUBMODULE_INTEGRATION_SUMMARY.md) | Submodule compatibility | Engineers |
+| **[Final Status Report](FINAL_STATUS_REPORT.md)** | **Current implementation status** ⭐ | **All** |
+| [Phase 2 Complete Summary](PHASE_2_COMPLETE_SUMMARY.md) | Latest completion status | Engineers |
+| [Bridge Integration History](docs/implementation/BRIDGE_INTEGRATION_HISTORY.md) | Complete implementation history | Engineers |
 
 ### Testing & Validation
 
@@ -72,25 +71,22 @@
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [Deployment Next Steps](DEPLOYMENT_NEXT_STEPS.md) | Deployment checklist | DevOps |
+| [Operations Guide](docs/operations/OPERATIONS_GUIDE.md) | Complete operations reference | Operators, DevOps |
 | [Deployment Validation](docs/DEPLOYMENT_VALIDATION.md) | Pre-deployment checks | DevOps |
-| [Operator Interface Requirements](OPERATOR_INTERFACE_REQUIREMENTS.md) | Operator manual | Operators |
-| [Validation Requirements](VALIDATION_REQUIREMENTS_CHECKLIST.md) | System validation | QA |
+| [Optimization & Deployment](docs/planning/OPTIMIZATION_AND_DEPLOYMENT.md) | Planning documentation | Engineers, DevOps |
 
 ### Optimization & Performance
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [URC 2026 Optimization Executive Summary](URC_2026_OPTIMIZATION_EXECUTIVE_SUMMARY.md) | Optimization overview | Leadership |
-| [Optimization Master Plan](URC_2026_OPTIMIZATION_MASTER_PLAN.md) | Complete optimization strategy | Engineers |
-| [Project Optimization Analysis](PROJECT_OPTIMIZATION_ANALYSIS.md) | Detailed analysis | Engineers |
+| [Optimization & Deployment](docs/planning/OPTIMIZATION_AND_DEPLOYMENT.md) | Complete optimization strategy | Leadership, Engineers |
 | [Performance Reports](reports/performance/) | Performance metrics | Engineers |
 
 ### Quality & Standards
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [Quality Transformation Summary](QUALITY_TRANSFORMATION_SUMMARY.md) | Quality improvements | All |
+| [Quality & Testing](docs/quality/QUALITY_AND_TESTING.md) | Quality metrics and testing | All, QA |
 | [Quality Standards](docs/quality_standards.rst) | Coding standards | Developers |
 | [Code Review Process](docs/code_review_process.rst) | Review procedures | Developers |
 | [Code of Conduct](CODE_OF_CONDUCT.md) | Community guidelines | All |
