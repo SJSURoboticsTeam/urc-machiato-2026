@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URC 2026 Enhanced Operator Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-healthy { background-color: var(--success-color); }
+        .status-warning { background-color: var(--warning-color); }
+        .status-error { background-color: var(--error-color); }
+        .status-active { background-color: var(--primary-color); }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-color), var(--warning-color));
+            transition: width 0.3s ease;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background-color: #f9fafb;
+        }
+
+        .timeline-status {
+            font-size: 0.875rem;
+        }
+
+        .timeline-completed { color: var(--success-color); }
+        .timeline-active { color: var(--primary-color); font-weight: 600; }
+        .timeline-pending { color: var(--text-secondary); }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .alert {
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 4px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-info { background-color: #eff6ff; border-left-color: var(--primary-color); }
+        .alert-warning { background-color: #fffbeb; border-left-color: var(--warning-color); }
+        .alert-error { background-color: #fef2f2; border-left-color: var(--error-color); }
+        .alert-critical { background-color: #fef2f2; border-left-color: var(--error-color); }
+
+        .emergency-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .emergency-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .emergency-stop {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .emergency-stop:hover {
+            background-color: #dc2626;
+        }
+
+        .recovery-button {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .recovery-button:hover {
+            background-color: #059669;
+        }
+
+        .emergency-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 URC 2026 Mars Rover - Enhanced Operator Dashboard</h1>
+    </div>
+
+    <div class="container">
+        <!-- System Health Overview -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">System Health</h2>
+                    <div class="status-indicator">
+                        <span class="status-dot status-healthy"></span>
+                        <span id="overall-status">Healthy</span>
+                    </div>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="overall-health">85</div>
+                        <div class="metric-label">Overall Score</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="cpu-usage">24%</div>
+                        <div class="metric-label">CPU Usage</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="memory-usage">45%</div>
+                        <div class="metric-label">Memory</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="uptime">1.0h</div>
+                        <div class="metric-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Controls -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Emergency Controls</h2>
+                    <div class="status-indicator">
+                        <span class="status-dot" id="emergency-dot"></span>
+                        <span id="emergency-status">Normal</span>
+                    </div>
+                </div>
+                <div class="emergency-controls">
+                    <button class="emergency-button emergency-stop" id="emergency-stop-btn">
+                        🚨 Emergency Stop
+                    </button>
+                    <button class="emergency-button recovery-button" id="recovery-btn">
+                        🔄 Initiate Recovery
+                    </button>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        Last Emergency: <span id="last-emergency">1 hour ago</span>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        Response Time: <span id="response-time">8.5ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Status -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Component Status</h2>
+                </div>
+                <div id="component-status">
+                    <!-- Components populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Behavior Tree Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Behavior Tree</h2>
+                    <div class="status-indicator">
+                        <span class="status-dot status-active"></span>
+                        <span id="bt-status">Running</span>
+                    </div>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="bt-node">Navigation</div>
+                        <div class="metric-label">Current Node</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="bt-branches">3</div>
+                        <div class="metric-label">Active Branches</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="bt-rate">50Hz</div>
+                        <div class="metric-label">Execution Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Status -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Mission Status</h2>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;" id="current-objective">
+                        Navigate to sample site A
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="mission-progress" style="width: 67%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-secondary);">
+                        <span id="progress-percent">67% complete</span>
+                        <span id="time-remaining">12:34 remaining</span>
+                    </div>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="success-prob">89%</div>
+                        <div class="metric-label">Success Probability</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="distance-goal">45m</div>
+                        <div class="metric-label">To Goal</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="efficiency">92%</div>
+                        <div class="metric-label">Efficiency</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mission Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Mission Timeline</h2>
+                </div>
+                <div class="timeline" id="mission-timeline">
+                    <!-- Timeline populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Environmental Awareness -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Terrain & Environment</h2>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Terrain Assessment</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                            <div id="terrain-type">Rocky with 15° incline</div>
+                            <div id="nav-difficulty">Navigation Difficulty: Medium</div>
+                            <div id="obstacle-density">Obstacle Density: Low</div>
+                            <div id="slip-risk">Slip Risk: 23%</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Communication</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                            <div id="comm-status">WiFi: 4/5 bars, 12ms latency</div>
+                            <div id="backup-status">LTE backup available (-85dBm)</div>
+                            <div id="data-rate">Data Rate: 2.4↑ 1.8↓ Mbps</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Performance Metrics</h2>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="motion-latency">0.034ms</div>
+                        <div class="metric-label">Motion Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="comm-latency">12ms</div>
+                        <div class="metric-label">Comm Latency</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="cpu-usage">24%</div>
+                        <div class="metric-label">CPU Usage</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="memory-usage">45%</div>
+                        <div class="metric-label">Memory Usage</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Active Alerts</h2>
+                <div class="status-indicator">
+                    <span id="alert-count">0</span> active
+                </div>
+            </div>
+            <div class="alerts-list" id="alerts-list">
+                <!-- Alerts populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard update functionality
+        let dashboardData = {};
+
+        async function updateDashboard() {
+            try {
+                const response = await fetch('/api/dashboard');
+                dashboardData = await response.json();
+                updateUI();
+            } catch (error) {
+                console.error('Dashboard update error:', error);
+            }
+        }
+
+        function updateUI() {
+            // System Health
+            document.getElementById('overall-health').textContent = Math.round(dashboardData.overall_health);
+            document.getElementById('cpu-usage').textContent = Math.round(dashboardData.system_health.cpu_usage) + '%';
+            document.getElementById('memory-usage').textContent = Math.round(dashboardData.system_health.memory_usage) + '%';
+            document.getElementById('uptime').textContent = (dashboardData.system_health.uptime_seconds / 3600).toFixed(1) + 'h';
+
+            // Overall status
+            const health = dashboardData.overall_health;
+            const statusEl = document.getElementById('overall-status');
+            const statusDot = document.querySelector('.status-indicator .status-dot');
+            if (health > 80) {
+                statusEl.textContent = 'Healthy';
+                statusDot.className = 'status-dot status-healthy';
+            } else if (health > 60) {
+                statusEl.textContent = 'Warning';
+                statusDot.className = 'status-dot status-warning';
+            } else {
+                statusEl.textContent = 'Critical';
+                statusDot.className = 'status-dot status-error';
+            }
+
+            // Emergency Status
+            const emergency = dashboardData.emergency;
+            const emergencyStatus = document.getElementById('emergency-status');
+            const emergencyDot = document.getElementById('emergency-dot');
+            const emergencyBtn = document.getElementById('emergency-stop-btn');
+            const recoveryBtn = document.getElementById('recovery-btn');
+
+            if (emergency.system_active) {
+                emergencyStatus.textContent = 'EMERGENCY';
+                emergencyDot.className = 'status-dot status-error';
+                emergencyBtn.disabled = true;
+                recoveryBtn.disabled = false;
+            } else {
+                emergencyStatus.textContent = 'Normal';
+                emergencyDot.className = 'status-dot status-healthy';
+                emergencyBtn.disabled = false;
+                recoveryBtn.disabled = true;
+            }
+
+            document.getElementById('last-emergency').textContent =
+                Math.round(emergency.last_emergency_seconds / 3600) + ' hours ago';
+            document.getElementById('response-time').textContent = emergency.emergency_stop_response_ms + 'ms';
+
+            // Component Status
+            const componentContainer = document.getElementById('component-status');
+            componentContainer.innerHTML = Object.entries(dashboardData.components)
+                .map(([name, component]) => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="text-transform: capitalize;">${name.replace('_', ' ')}</span>
+                        <div class="status-indicator">
+                            <span class="status-dot status-healthy"></span>
+                            <span>${component.status}</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${component.health}%;"></div>
+                    </div>
+                `).join('');
+
+            // Behavior Tree
+            const bt = dashboardData.components.behavior_tree;
+            document.getElementById('bt-status').textContent = bt.status;
+            document.getElementById('bt-node').textContent = bt.current_node;
+            document.getElementById('bt-branches').textContent = bt.active_branches;
+            document.getElementById('bt-rate').textContent = bt.execution_rate_hz + 'Hz';
+
+            // Mission Status
+            const mission = dashboardData.mission;
+            document.getElementById('current-objective').textContent = mission.current_objective;
+            document.getElementById('mission-progress').style.width = mission.progress_percentage + '%';
+            document.getElementById('progress-percent').textContent = mission.progress_percentage + '% complete';
+            document.getElementById('time-remaining').textContent = formatTime(mission.time_remaining_seconds) + ' remaining';
+            document.getElementById('success-prob').textContent = mission.success_probability + '%';
+            document.getElementById('distance-goal').textContent = mission.distance_to_goal_meters + 'm';
+            document.getElementById('efficiency').textContent = mission.efficiency_score + '%';
+
+            // Mission Timeline
+            const timelineContainer = document.getElementById('mission-timeline');
+            timelineContainer.innerHTML = dashboardData.mission_timeline
+                .map(item => `
+                    <div class="timeline-item">
+                        <span class="timeline-status timeline-${item.status}">${item.status === 'completed' ? '✓' : item.status === 'in_progress' ? '▶' : '○'}</span>
+                        <span>${item.phase}</span>
+                    </div>
+                `).join('');
+
+            // Environment
+            const terrain = dashboardData.environment.terrain;
+            const comm = dashboardData.environment.communication;
+
+            document.getElementById('terrain-type').textContent = terrain.current_terrain;
+            document.getElementById('nav-difficulty').textContent = 'Navigation Difficulty: ' + terrain.navigation_difficulty;
+            document.getElementById('obstacle-density').textContent = 'Obstacle Density: ' + terrain.obstacle_density;
+            document.getElementById('slip-risk').textContent = 'Slip Risk: ' + terrain.slip_risk_percentage + '%';
+
+            document.getElementById('comm-status').textContent = `${comm.primary_network}: ${comm.signal_strength_bars}/5 bars, ${comm.latency_ms}ms latency`;
+            document.getElementById('backup-status').textContent = `${comm.backup_network} backup available (${comm.backup_signal_dbm}dBm)`;
+            document.getElementById('data-rate').textContent = `Data Rate: ${comm.data_rate_up_mbps}↑ ${comm.data_rate_down_mbps}↓ Mbps`;
+
+            // Performance
+            const perf = dashboardData.performance;
+            document.getElementById('motion-latency').textContent = perf.motion_control.latency_p50_ms + 'ms';
+            document.getElementById('comm-latency').textContent = perf.communication.websocket_latency_ms + 'ms';
+            document.getElementById('cpu-usage').textContent = perf.system_resources.cpu_usage_percent + '%';
+            document.getElementById('memory-usage').textContent = perf.system_resources.memory_usage_percent + '%';
+
+            // Alerts
+            const alertsContainer = document.getElementById('alerts-list');
+            const alertCount = document.getElementById('alert-count');
+
+            alertsContainer.innerHTML = dashboardData.alerts.length > 0
+                ? dashboardData.alerts.map((alert, index) => `
+                    <div class="alert alert-${alert.level}">
+                        <div>
+                            <strong>${alert.level.toUpperCase()}:</strong> ${alert.message}
+                            ${alert.action_required ? ' <span style="color: var(--error-color);">(ACTION REQUIRED)</span>' : ''}
+                        </div>
+                        ${!alert.acknowledged ? `<button onclick="acknowledgeAlert(${index})" style="background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 0.875rem;">Acknowledge</button>` : ''}
+                    </div>
+                `).join('')
+                : '<div style="color: var(--text-secondary); font-style: italic;">No active alerts</div>';
+
+            alertCount.textContent = dashboardData.alerts.filter(a => !a.acknowledged).length;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        async function acknowledgeAlert(index) {
+            try {
+                await fetch(`/api/alerts/acknowledge/${index}`, { method: 'GET' });
+                updateDashboard();
+            } catch (error) {
+                console.error('Alert acknowledgment error:', error);
+            }
+        }
+
+        async function triggerEmergencyStop() {
+            if (!confirm('Are you sure you want to trigger an emergency stop?')) return;
+
+            try {
+                const response = await fetch('/api/emergency/stop', { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    updateDashboard();
+                } else {
+                    alert('Emergency stop failed');
+                }
+            } catch (error) {
+                console.error('Emergency stop error:', error);
+                alert('Emergency stop failed');
+            }
+        }
+
+        async function initiateRecovery() {
+            if (!confirm('Are you sure you want to initiate system recovery?')) return;
+
+            try {
+                const response = await fetch('/api/recovery/initiate', { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    updateDashboard();
+                } else {
+                    alert('Recovery initiation failed');
+                }
+            } catch (error) {
+                console.error('Recovery initiation error:', error);
+                alert('Recovery initiation failed');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('emergency-stop-btn').addEventListener('click', triggerEmergencyStop);
+        document.getElementById('recovery-btn').addEventListener('click', initiateRecovery);
+
+        // Update dashboard every 2 seconds
+        setInterval(updateDashboard, 2000);
+        updateDashboard(); // Initial update
+    </script>
+</body>
+</html>

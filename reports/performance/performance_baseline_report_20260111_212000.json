@@ -1,0 +1,176 @@
+{
+  "timestamp": 1768195200.3185751,
+  "test_suite": "URC 2026 Performance Baseline",
+  "results": {
+    "binary_protocol": {
+      "iterations": 5000,
+      "mean_ms": 0.001318653835915029,
+      "median_ms": 0.0012629898265004158,
+      "p50_ms": 0.0012629898265004158,
+      "p90_ms": 0.0013120006769895554,
+      "p95_ms": 0.0016330159269273281,
+      "p99_ms": 0.002234010025858879,
+      "p999_ms": 0.005079957190901041,
+      "min_ms": 0.0011919764801859856,
+      "max_ms": 0.01794402487576008,
+      "std_dev_ms": 0.00036584797736442885,
+      "json_comparison": {
+        "json_p99_ms": 0.007794995326548815,
+        "improvement_factor": 3.489239187076602
+      }
+    },
+    "sensor_timestamps": {
+      "iterations": 3000,
+      "mean_ms": 0.0014754051808267832,
+      "median_ms": 0.0013830140233039856,
+      "p50_ms": 0.0013830140233039856,
+      "p90_ms": 0.001553038600832224,
+      "p95_ms": 0.002054031938314438,
+      "p99_ms": 0.0022139865905046463,
+      "p999_ms": 0.011631986126303673,
+      "min_ms": 0.001241976860910654,
+      "max_ms": 0.022100983187556267,
+      "std_dev_ms": 0.0006133374157195442
+    },
+    "ipc_bridge": {
+      "iterations": 1000,
+      "mean_ms": 0.0015510713565163314,
+      "median_ms": 0.0014730030670762062,
+      "p50_ms": 0.0014730030670762062,
+      "p90_ms": 0.001533015165477991,
+      "p95_ms": 0.0016129924915730953,
+      "p99_ms": 0.0033859978429973125,
+      "p999_ms": 0.014798017218708992,
+      "min_ms": 0.001393025740981102,
+      "max_ms": 0.014798017218708992,
+      "std_dev_ms": 0.0006347958108248523
+    },
+    "motion_control": {
+      "iterations": 500,
+      "mean_ms": 0.01965248549822718,
+      "median_ms": 0.019110972061753273,
+      "p50_ms": 0.01911597792059183,
+      "p90_ms": 0.0251369783654809,
+      "p95_ms": 0.027270987629890442,
+      "p99_ms": 0.03269198350608349,
+      "p999_ms": 0.04507502308115363,
+      "min_ms": 0.00933697447180748,
+      "max_ms": 0.04507502308115363,
+      "std_dev_ms": 0.004376343363218457,
+      "deadline_violations": 0,
+      "violation_rate_percent": 0.0,
+      "target_period_ms": 20.0
+    },
+    "end_to_end": {
+      "iterations": 2000,
+      "mean_ms": 0.0036717155016958714,
+      "median_ms": 0.003405963070690632,
+      "p50_ms": 0.003405963070690632,
+      "p90_ms": 0.004849047400057316,
+      "p95_ms": 0.005309993866831064,
+      "p99_ms": 0.005950976628810167,
+      "p999_ms": 0.02409500302746892,
+      "min_ms": 0.0032060197554528713,
+      "max_ms": 0.02892396878451109,
+      "std_dev_ms": 0.0010241093637688402
+    },
+    "stress_tests": {
+      "ipc_bridge_concurrent": {
+        "concurrent_operations": 2000,
+        "p99_latency_ms": 0.0025650369934737682,
+        "mean_latency_ms": 0.0017204430769197643,
+        "success": true
+      },
+      "memory_stress": {
+        "initial_memory_mb": 32.484375,
+        "final_memory_mb": 32.484375,
+        "memory_increase_mb": 0.0,
+        "acceptable_increase_mb": 50.0,
+        "memory_leak_detected": false
+      },
+      "high_frequency": {
+        "target_frequency_hz": 200.0,
+        "operations_completed": 988,
+        "expected_operations": 1000,
+        "completion_rate_percent": 98.8,
+        "p99_latency_ms": 0.03220100188627839,
+        "success": true
+      }
+    }
+  },
+  "requirements": {
+    "binary_protocol": {
+      "description": "Binary protocol serialization/deserialization",
+      "max_p99_ms": 1.0,
+      "max_violation_rate_percent": 0.0,
+      "result": {
+        "iterations": 5000,
+        "mean_ms": 0.001318653835915029,
+        "median_ms": 0.0012629898265004158,
+        "p50_ms": 0.0012629898265004158,
+        "p90_ms": 0.0013120006769895554,
+        "p95_ms": 0.0016330159269273281,
+        "p99_ms": 0.002234010025858879,
+        "p999_ms": 0.005079957190901041,
+        "min_ms": 0.0011919764801859856,
+        "max_ms": 0.01794402487576008,
+        "std_dev_ms": 0.00036584797736442885,
+        "json_comparison": {
+          "json_p99_ms": 0.007794995326548815,
+          "improvement_factor": 3.489239187076602
+        }
+      },
+      "compliant": true
+    },
+    "sensor_timestamps": {
+      "description": "Sensor timestamp tagging with latency correction",
+      "max_p99_ms": 1.0,
+      "max_violation_rate_percent": 0.0,
+      "result": {
+        "iterations": 3000,
+        "mean_ms": 0.0014754051808267832,
+        "median_ms": 0.0013830140233039856,
+        "p50_ms": 0.0013830140233039856,
+        "p90_ms": 0.001553038600832224,
+        "p95_ms": 0.002054031938314438,
+        "p99_ms": 0.0022139865905046463,
+        "p999_ms": 0.011631986126303673,
+        "min_ms": 0.001241976860910654,
+        "max_ms": 0.022100983187556267,
+        "std_dev_ms": 0.0006133374157195442
+      },
+      "compliant": true
+    },
+    "ipc_motion_bridge": {
+      "description": "IPC motion control bridge roundtrip",
+      "max_p99_ms": 5.0,
+      "max_violation_rate_percent": 0.0,
+      "result": {},
+      "compliant": false
+    },
+    "motion_control_loop": {
+      "description": "Complete motion control loop (50Hz)",
+      "max_p99_ms": 20.0,
+      "max_violation_rate_percent": 1.0,
+      "result": {},
+      "compliant": false
+    },
+    "end_to_end_pipeline": {
+      "description": "Complete sensor pipeline: raw \u2192 timestamped \u2192 binary",
+      "max_p99_ms": 5.0,
+      "max_violation_rate_percent": 0.0,
+      "result": {},
+      "compliant": false
+    }
+  },
+  "compliance": {
+    "compliant_requirements": 2,
+    "total_requirements": 5,
+    "compliance_rate_percent": 40.0,
+    "overall_pass": false
+  },
+  "recommendations": [
+    "Performance requirements not met - investigate bottlenecks",
+    ".1f"
+  ]
+}

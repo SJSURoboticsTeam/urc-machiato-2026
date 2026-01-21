@@ -1,0 +1,350 @@
+================================================================================
+         URC 2026 MARS ROVER - COMPLETE SYSTEM ARCHITECTURE
+================================================================================
+
+                         FRONTEND DASHBOARD
+                    (React + Socket.IO Client)
+                         Port: 5173
+                              |
+                              | Socket.IO
+                              | driveCommands, driveHoming
+                              v
+                    ╔═════════════════════════╗
+                    ║  TELEOPERATION SERVER   ║
+                    ║    (py_server.py)       ║
+                    ║  - Socket.IO handler    ║
+                    ║  - SLCAN encoder        ║
+                    ║  - Port: 4000           ║
+                    ╚═════════════════════════╝
+                              |
+                              | CAN Serial (SLCAN)
+                              | /dev/ttyAMA10
+                              |
+┌─────────────────────────────┴────────────────────────────────┐
+│                                                               │
+│              MAIN ROS2 CODEBASE (MALLEABLE)                   │
+│                                                               │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │         WEBSOCKET BRIDGE (Bidirectional)              │  │
+│  │  - Receives: driveCommands, emergencyStop             │  │
+│  │  - Sends: systemStatus, metrics, diagnostics          │  │
+│  └──────────────────┬───────────────────────────────────┘  │
+│                     │                                         │
+│                     v                                         │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              ROS2 TOPIC LAYER                         │  │
+│  │                                                        │  │
+│  │  Commands (Subscribe):                                │  │
+│  │    /cmd_vel/emergency    (Priority: 1000)            │  │
+│  │    /cmd_vel/safety       (Priority: 900)             │  │
+│  │    /cmd_vel/teleop       (Priority: 500) ◄──WebSocket│  │
+│  │    /cmd_vel/autonomy     (Priority: 100)             │  │
+│  │                                                        │  │
+│  │  Feedback (Publish):                                  │  │
+│  │    /hardware/chassis_velocity  (50 Hz)               │  │
+│  │    /hardware/imu               (100 Hz)              │  │
+│  │    /hardware/battery_state     (10 Hz)               │  │
+│  │    /hardware/joint_states      (50 Hz)               │  │
+│  │    /hardware/system_status     (1 Hz)                │  │
+│  └──────────────────┬───────────────────────────────────┘  │
+│                     │                                         │
+│                     v                                         │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │        HARDWARE INTERFACE NODE (Lifecycle)            │  │
+│  │  - Twist Mux (priority arbitration)                  │  │
+│  │  - Command timeout (0.5s)                            │  │
+│  │  - Emergency stop integration                         │  │
+│  │  - Control loop: 50 Hz                                │  │
+│  └──────────────────┬───────────────────────────────────┘  │
+│                     │                                         │
+│                     v                                         │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │      PROTOCOL ADAPTATION LAYER (NEW - FLEXIBLE)       │  │
+│  │                                                        │  │
+│  │  ROS2 Twist  ──────────►  SLCAN (Teleoperation)      │  │
+│  │  linear.x = 0.5 m/s      0x00C: SET_CHASSIS_VEL      │  │
+│  │  linear.y = 0.0 m/s      x_scaled = 0.5 * 4096       │  │
+│  │  angular.z = 0.26 rad/s  rot_scaled = 15.0 * 64      │  │
+│  │                          't00C60800000003c0\r'        │  │
+│  │                                                        │  │
+│  │  SLCAN Response ────────► ROS2 Messages               │  │
+│  │  0x00D: VEL_RESPONSE     TwistStamped                │  │
+│  │  0x115: ESTIMATED_VEL    Imu, BatteryState           │  │
+│  │  Descale: ÷4096, ÷64     JointState                  │  │
+│  └──────────────────┬───────────────────────────────────┘  │
+│                     │                                         │
+│                     v                                         │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │           CAN BRIDGE (SLCAN Protocol)                 │  │
+│  │  - Device: /dev/ttyACM0 (primary)                    │  │
+│  │           /dev/ttyAMA10 (teleop drive)               │  │
+│  │           /dev/ttyACM1 (teleop arm)                  │  │
+│  │  - Baudrate: 115200                                  │  │
+│  │  - Format: SLCAN ('t<ID><DLC><DATA>\r')             │  │
+│  └──────────────────┬───────────────────────────────────┘  │
+│                     │                                         │
+└─────────────────────┼─────────────────────────────────────┘
+                      │
+                      | Serial UART
+                      v
+         ┌────────────────────────────┐
+         │   STM32 CONTROLLERS        │
+         │   (Control-Systems)        │
+         │                            │
+         │  DRIVE BOARD:              │
+         │  - Swerve drive control    │
+         │  - 4 motor controllers     │
+         │  - Encoder feedback        │
+         │  ⚠️  CAN handlers: STUB    │
+         │                            │
+         │  ARM BOARD:                │
+         │  - 6 DOF arm control       │
+         │  - Joint positions         │
+         │  - Gripper control         │
+         │                            │
+         │  SENSOR BOARDS:            │
+         │  - IMU (accel + gyro)      │
+         │  - GPS                     │
+         │  - Battery monitoring      │
+         └────────────────────────────┘
+
+================================================================================
+                        MESSAGE FLOW EXAMPLES
+================================================================================
+
+COMMAND FLOW (Frontend → Firmware):
+───────────────────────────────────────────────────────────────────────────
+Frontend Gamepad
+    │ User input: Forward stick = 50%, Rotation = 15%
+    ↓ Socket.IO emit('driveCommands', {xVel: 0.5, yVel: 0, rotVel: 15})
+WebSocket Bridge
+    │ Receives Socket.IO event
+    │ Creates ROS2 Twist: linear.x=0.5, angular.z=0.2618 rad/s
+    ↓ Publishes to /cmd_vel/teleop
+ROS2 Twist Mux (Hardware Interface Node)
+    │ Receives command with priority 500 (teleop)
+    │ No higher priority command active
+    │ Command timeout not expired
+    ↓ Selects teleop command for hardware
+Protocol Adapter
+    │ ROS2 Twist → SLCAN encoding
+    │ x: 0.5 * 4096 = 2048 = 0x0800
+    │ y: 0.0 * 4096 = 0 = 0x0000
+    │ rot: 15.0 * 64 = 960 = 0x03C0
+    ↓ Generates: 't00C60800000003c0\r'
+CAN Bridge
+    │ Sends SLCAN frame via serial
+    ↓ Writes to /dev/ttyAMA10
+Teleoperation Server (py_server.py)
+    │ Receives SLCAN frame
+    │ Validates format
+    ↓ Forwards to STM32 (if connected)
+STM32 Drive Controller
+    │ ⚠️ CURRENTLY STUB - NEEDS IMPLEMENTATION
+    │ Should: Parse CAN message
+    │         Extract velocity values
+    │         Control swerve modules
+    └ Execute drive command
+
+
+FEEDBACK FLOW (Firmware → Frontend):
+───────────────────────────────────────────────────────────────────────────
+STM32 Drive Controller
+    │ Reads encoder positions, IMU data, battery voltage
+    │ Creates CAN messages: 0x00D, 0x115, etc.
+    ↓ Sends SLCAN frames
+Teleoperation Server (py_server.py)
+    │ Receives CAN frames from STM32
+    │ Parses message IDs
+    ↓ Forwards to main codebase via serial
+CAN Bridge
+    │ Receives SLCAN: 't00D60800000003c0\r'
+    │ Parses arbitration ID (0x00D = velocity response)
+    │ Extracts data bytes
+    ↓ Routes to Protocol Adapter
+Protocol Adapter
+    │ SLCAN → ROS2 conversion
+    │ x: 0x0800 → 2048 ÷ 4096 = 0.5 m/s
+    │ y: 0x0000 → 0 ÷ 4096 = 0.0 m/s
+    │ rot: 0x03C0 → 960 ÷ 64 = 15.0 deg/s
+    ↓ Creates ROS2 TwistStamped
+ROS2 Publishers
+    │ Publishes to /hardware/chassis_velocity
+    │ Publishes to /hardware/imu
+    │ Publishes to /hardware/battery_state
+    ↓ Topics available for subscribers
+WebSocket Bridge
+    │ Subscribes to /hardware/* topics
+    │ Converts ROS2 messages → JSON
+    │ Packages: {battery: {voltage, current, soc}, motors: {...}}
+    ↓ Socket.IO emit('systemStatus', data)
+Frontend Dashboard
+    │ Receives 'systemStatus' event
+    │ Updates UI displays
+    └ Shows: Battery gauge, velocity indicator, system health
+
+
+EMERGENCY STOP FLOW:
+───────────────────────────────────────────────────────────────────────────
+Frontend E-Stop Button
+    ↓ Socket.IO emit('emergencyStop', {active: true})
+WebSocket Bridge
+    ↓ Publishes to /emergency_stop (Bool: true)
+Hardware Interface Node
+    │ Receives emergency stop (HIGHEST PRIORITY: 1000)
+    │ Overrides all other commands
+    │ Sets all velocities to zero
+    ↓ Publishes Twist(0,0,0) to emergency channel
+Protocol Adapter
+    ↓ Encodes emergency stop: 't0FFF10100000000\r'
+CAN Bridge
+    ↓ Sends immediately to all controllers
+STM32 Controllers
+    └ Stop all motors immediately
+
+
+================================================================================
+                        TELEOPERATION PROTOCOL
+================================================================================
+
+MESSAGE IDs (Hexadecimal):
+──────────────────────────────────────────────────────────────────────────
+SEND (Main Codebase → Firmware):
+  0x00C - SET_CHASSIS_VELOCITIES    Primary drive command
+  0x00E - HEARTBEAT                  System alive check
+  0x110 - HOMING_SEQUENCE            Swerve module homing
+  0x112 - GET_OFFSET                 Request encoder offset
+  0x114 - GET_ESTIMATED_VELOCITIES   Request velocity estimate
+  0x119 - CONFIG                     Configuration command
+  0x301 - SET_MAST_GIMBAL            Mast gimbal control (changed from 0x300)
+
+RECEIVE (Firmware → Main Codebase):
+  0x00D - SET_VELOCITIES_RESPONSE    Command acknowledgment
+  0x00F - HEARTBEAT_REPLY            Heartbeat response
+  0x111 - HOMING_SEQUENCE_RESPONSE   Homing complete
+  0x113 - RETURN_OFFSET              Encoder offset data
+  0x115 - RETURN_ESTIMATED_CHASSIS_VELOCITIES  Velocity feedback
+  0x11A - CONFIG_ACK                 Configuration acknowledged
+
+
+VELOCITY ENCODING:
+──────────────────────────────────────────────────────────────────────────
+SLCAN Frame Format:  t<ID><DLC><DATA>\r
+
+Example: SET_CHASSIS_VELOCITIES (0x00C)
+  Frame: t00C6<x_vel><y_vel><rot_vel>\r
+  
+  Data encoding:
+    x_vel:   16-bit signed integer, ×4096 (m/s → scaled)
+    y_vel:   16-bit signed integer, ×4096 (m/s → scaled)
+    rot_vel: 16-bit signed integer, ×64   (deg/s → scaled)
+  
+  Example calculation (0.5 m/s forward, 15 deg/s rotation):
+    x_vel   = int(0.5 * 4096)  = 2048  = 0x0800
+    y_vel   = int(0.0 * 4096)  = 0     = 0x0000
+    rot_vel = int(15.0 * 64)   = 960   = 0x03C0
+  
+  SLCAN frame: t00C60800000003c0\r
+               │││││└──┬──┘└──┬──┘└──┬──┘
+               ││││└───┴─────┴─────┴───── Data (6 bytes)
+               │││└──────────────────── DLC (6 = 6 data bytes)
+               ││└───────────────────── Message ID (0x00C)
+               │└────────────────────── Frame type ('t' = standard)
+               └─────────────────────── Carriage return
+
+DECODING PROCESS:
+  1. Parse 't00C6' → Message ID 0x00C (SET_CHASSIS_VELOCITIES)
+  2. Extract data bytes: '0800000003c0' → 3 pairs of hex bytes
+  3. Convert hex pairs to 16-bit signed integers:
+     0x0800 → 2048  (if MSB set, subtract 65536 for negative)
+     0x0000 → 0
+     0x03C0 → 960
+  4. Apply inverse scaling:
+     x_vel = 2048 / 4096 = 0.5 m/s
+     y_vel = 0 / 4096 = 0.0 m/s
+     rot_vel = 960 / 64 = 15.0 deg/s
+  5. Convert rotation to rad/s: 15.0 / 57.2958 = 0.2618 rad/s
+
+
+================================================================================
+                        DEVICE CONFIGURATION
+================================================================================
+
+CAN/SERIAL DEVICES:
+──────────────────────────────────────────────────────────────────────────
+  /dev/ttyAMA10  - Teleoperation drive controller (primary for teleop)
+  /dev/ttyACM0   - Main hardware interface (fallback)
+  /dev/ttyACM1   - Teleoperation arm controller
+  /dev/ttyUSB0   - USB serial adapter (fallback)
+
+  Baudrate: 115200
+  Protocol: SLCAN (Serial Line CAN)
+  
+  Auto-discovery: YES (tries devices in order until connection succeeds)
+
+
+WEBSOCKET ENDPOINTS:
+──────────────────────────────────────────────────────────────────────────
+  Teleoperation Server:  http://localhost:4000 (Socket.IO)
+  Frontend Dashboard:    http://localhost:5173 (Vite dev server)
+
+  CORS: Enabled (allow all origins for development)
+
+
+================================================================================
+                        CURRENT STATUS
+================================================================================
+
+✅ WORKING:
+  - Submodules cloned and verified
+  - Teleoperation server receives Socket.IO commands
+  - Frontend dashboard sends gamepad input
+  - ROS2 hardware interface has topic structure
+  - Protocol format verified and tested
+  - Complete documentation created
+
+⚠️  NEEDS IMPLEMENTATION (Main Codebase):
+  - Protocol adaptation layer (Twist ↔ SLCAN)
+  - CAN bridge integration with adapter
+  - WebSocket bidirectional bridge
+  - Automated test suite
+  - Configuration system
+
+❌ BROKEN (Submodules - Not Main Codebase Responsibility):
+  - STM32 firmware CAN handlers (stub only)
+  - Main codebase adapts to this when firmware is ready
+
+
+================================================================================
+                        NEXT STEPS
+================================================================================
+
+1. Create Protocol Adaptation Layer (1-2 days)
+   Files: src/bridges/protocol_adapter.py
+          src/bridges/teleop_can_adapter.py
+
+2. Integrate with CAN Bridge (1 day)
+   Files: src/bridges/can_bridge.py (update)
+          src/autonomy/control/hardware_interface/hardware_interface_node.py
+
+3. Extend WebSocket Bridge (1 day)
+   Files: src/bridges/teleop_websocket_bridge.py
+
+4. Testing (2-3 days)
+   Files: tests/unit/test_protocol_adapter.py
+          tests/integration/test_bridge_integration.py
+
+Total Estimated Time: ~1 week
+
+================================================================================
+                        DOCUMENTATION
+================================================================================
+
+  BRIDGE_INTEGRATION_ARCHITECTURE.md   Complete technical architecture
+  SUBMODULE_INTERFACE_SPECIFICATION.md Protocol specifications
+  SUBMODULE_INTEGRATION_SUMMARY.md     Executive summary
+  BRIDGE_QUICK_REFERENCE.md            Quick reference guide
+  INTEGRATION_COMPLETE_SUMMARY.md      Complete summary
+  SYSTEM_DIAGRAM.txt                   This diagram
+
+================================================================================

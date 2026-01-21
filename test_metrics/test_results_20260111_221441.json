@@ -1,0 +1,19 @@
+{
+  "collection_timestamp": "20260111_221441",
+  "test_results": [
+    {
+      "test_name": "__main__.sample_performance_test",
+      "status": "PASS",
+      "duration": 0.10053777694702148,
+      "error": null,
+      "timestamp": 1768198479.9978173
+    }
+  ],
+  "summary": {
+    "total_tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "total_duration": 0.10053777694702148
+  }
+}

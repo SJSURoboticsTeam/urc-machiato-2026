@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-01-11T21:26:13.253757",
+  "test_summary": {
+    "total_test_categories": 6,
+    "total_measurements": 18,
+    "successful_measurements": 0,
+    "success_rate": 0.0
+  },
+  "performance_highlights": {
+    "best_performing_tests": [
+      [
+        "binary_protocol",
+        0.002113675388197104
+      ],
+      [
+        "sensor_timestamps",
+        0.0018966578257580597
+      ],
+      [
+        "ipc_bridge",
+        0.002708014411230882
+      ]
+    ],
+    "worst_performing_tests": [],
+    "overall_performance_trend": "good"
+  },
+  "compliance_status": {
+    "total_requirements": 4,
+    "compliant_requirements": 12,
+    "compliance_rate": 300.0,
+    "details": {
+      "binary_protocol": {
+        "required": 1.0,
+        "actual": 0.0022440217435359955
+      },
+      "ipc_bridge": {
+        "required": 5.0,
+        "actual": 0.0018730061128735542
+      },
+      "motion_control": {
+        "required": 20.0,
+        "actual": 0.033754040487110615
+      },
+      "end_to_end": {
+        "required": 5.0,
+        "actual": 0.005659996531903744
+      }
+    }
+  },
+  "recommendations": [
+    "\u2705 Excellent performance - system meets most requirements",
+    "\ud83e\uddea Increase test reliability and reduce measurement variability"
+  ]
+}

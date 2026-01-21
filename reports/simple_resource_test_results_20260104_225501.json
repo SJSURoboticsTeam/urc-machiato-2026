@@ -1,0 +1,140 @@
+{
+  "test_summary": {
+    "timestamp": "2026-01-04T22:55:01.627098",
+    "total_tests": 5,
+    "successful_tests": 5,
+    "optimization_range_percent": 14.019594440647065,
+    "fallback_efficiency_percent": 0.0
+  },
+  "detailed_results": [
+    {
+      "test_name": "mission_profile_simulation",
+      "mission_profile": "waypoint_navigation",
+      "duration_seconds": 2.003488063812256,
+      "cpu_mean": 0.0,
+      "cpu_std_dev": 0.0,
+      "cpu_confidence_interval": [
+        0.0,
+        0.0
+      ],
+      "memory_mean": 14.740937500000001,
+      "memory_std_dev": 0.0,
+      "memory_confidence_interval": [
+        14.740937500000001,
+        14.740937500000001
+      ],
+      "components_enabled": [
+        "basic_navigation"
+      ],
+      "success_rate": 1.0,
+      "metadata": {}
+    },
+    {
+      "test_name": "mission_profile_simulation",
+      "mission_profile": "object_search",
+      "duration_seconds": 2.003196954727173,
+      "cpu_mean": 0.0,
+      "cpu_std_dev": 0.0,
+      "cpu_confidence_interval": [
+        0.0,
+        0.0
+      ],
+      "memory_mean": 15.77225,
+      "memory_std_dev": 0.0015152580454974682,
+      "memory_confidence_interval": [
+        15.771310833333333,
+        15.773189166666667
+      ],
+      "components_enabled": [
+        "computer_vision",
+        "slam"
+      ],
+      "success_rate": 1.0,
+      "metadata": {}
+    },
+    {
+      "test_name": "mission_profile_simulation",
+      "mission_profile": "sample_collection",
+      "duration_seconds": 2.0032355785369873,
+      "cpu_mean": 0.0,
+      "cpu_std_dev": 0.0,
+      "cpu_confidence_interval": [
+        0.0,
+        0.0
+      ],
+      "memory_mean": 17.14453125,
+      "memory_std_dev": 0.0,
+      "memory_confidence_interval": [
+        17.14453125,
+        17.14453125
+      ],
+      "components_enabled": [
+        "computer_vision",
+        "slam",
+        "terrain_analysis",
+        "excavation"
+      ],
+      "success_rate": 1.0,
+      "metadata": {}
+    },
+    {
+      "test_name": "fallback_simulation",
+      "mission_profile": "sample_collection_with_fallbacks",
+      "duration_seconds": 2.0,
+      "cpu_mean": 0.0,
+      "cpu_std_dev": 0.0,
+      "cpu_confidence_interval": [
+        0.0,
+        0.0
+      ],
+      "memory_mean": 12.001171874999999,
+      "memory_std_dev": 0.0,
+      "memory_confidence_interval": [
+        12.001171874999999,
+        12.001171874999999
+      ],
+      "components_enabled": [
+        "lightweight_vision",
+        "basic_slam"
+      ],
+      "success_rate": 0.9,
+      "metadata": {
+        "fallback_mode": true,
+        "missing_dependencies": [
+          "torch",
+          "tensorflow"
+        ]
+      }
+    },
+    {
+      "test_name": "recovery_simulation",
+      "mission_profile": "high_load_recovery",
+      "duration_seconds": 3.0,
+      "cpu_mean": 0.0,
+      "cpu_std_dev": 0.0,
+      "cpu_confidence_interval": [
+        0.0,
+        0.0
+      ],
+      "memory_mean": 16.00640625,
+      "memory_std_dev": 0.5924283796671316,
+      "memory_confidence_interval": [
+        15.794408476996718,
+        16.218404023003284
+      ],
+      "components_enabled": [
+        "adaptive_components"
+      ],
+      "success_rate": 0.85,
+      "metadata": {
+        "recovery_events": 2,
+        "pressure_applied": true
+      }
+    }
+  ],
+  "recommendations": [
+    "\u26a0\ufe0f Moderate: Some resource optimization achieved",
+    "\u26a0\ufe0f Fallback efficiency could be improved",
+    "\u2705 Recovery mechanisms activate under load"
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "timestamp": 1768199646.4295616,
+  "summary": {
+    "total_metrics": 32,
+    "total_categories": 7,
+    "active_alerts": 0,
+    "total_alerts": 0
+  },
+  "performance_status": {
+    "motion_control": {
+      "status": "UNKNOWN",
+      "score": 0
+    },
+    "communication": {
+      "status": "FAIL",
+      "score": 0.0
+    },
+    "resources": {
+      "status": "UNKNOWN",
+      "score": 0
+    },
+    "reliability": {
+      "status": "UNKNOWN",
+      "score": 0
+    }
+  },
+  "recent_alerts": [],
+  "system_health": {
+    "cpu_usage": "GOOD",
+    "memory_usage": "GOOD",
+    "network_status": "UNKNOWN",
+    "overall_health": "HEALTHY"
+  },
+  "test_coverage": {
+    "unit_tests": {
+      "covered": 0,
+      "total": 10,
+      "percentage": 0.0
+    },
+    "integration_tests": {
+      "covered": 0,
+      "total": 8,
+      "percentage": 0.0
+    },
+    "performance_tests": {
+      "covered": 0,
+      "total": 6,
+      "percentage": 0.0
+    },
+    "chaos_tests": {
+      "covered": 0,
+      "total": 5,
+      "percentage": 0.0
+    },
+    "overall_coverage": 0.0
+  },
+  "regression_status": {
+    "detected": false,
+    "categories": [],
+    "severity": "NONE",
+    "recommendations": [
+      "No performance regressions detected"
+    ]
+  },
+  "system_integration": {
+    "behavior_trees": {
+      "total_trees": 0,
+      "active_trees": 0,
+      "healthy_trees": 0,
+      "health_percentage": 0.0,
+      "trees": {}
+    },
+    "state_machines": {
+      "total_machines": 0,
+      "active_machines": 0,
+      "valid_transitions": 0,
+      "transition_success_rate": 0.0,
+      "machines": {}
+    },
+    "network": {
+      "total_connections": 0,
+      "active_connections": 0,
+      "healthy_links": 0,
+      "network_health_score": 100,
+      "connections": {}
+    },
+    "simulator": {
+      "total_simulations": 0,
+      "active_simulations": 0,
+      "average_real_time_factor": 0.0,
+      "simulation_stability": "POOR",
+      "simulations": {}
+    },
+    "connections": {
+      "total_expected_connections": 0,
+      "connected_count": 0,
+      "connection_health": 0.0,
+      "connection_status": "HEALTHY"
+    },
+    "uptime": {
+      "system_uptime_seconds": 86400.00000023842,
+      "process_uptime_seconds": 0.0,
+      "system_uptime_hours": 24.000000000066226,
+      "process_uptime_hours": 0.0,
+      "uptime_percentage": 0.0
+    }
+  }
+}
