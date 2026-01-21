@@ -11,6 +11,13 @@ Key Features:
 - Direct CAN safety integration for fail-safe operation
 - Real-time telemetry publishing and health monitoring
 - Hot-swappable command blackboard for priority-based control
+- Protocol adapter support for teleoperation/firmware compatibility
+- Device auto-discovery with fallback paths
+
+Updated: 2026-01-20
+- Added protocol adapter configuration (can_protocol parameter)
+- Added device fallback support (can_fallback_devices parameter)
+- Compatible with new bridge infrastructure in src/bridges/
 """
 
 import json
@@ -112,17 +119,22 @@ class HardwareInterfaceNode(LifecycleNode):
 
         # Declare ROS2 parameters with defaults
         self.declare_parameter("can_port", "/dev/ttyACM0")
+        self.declare_parameter("can_fallback_devices", ["/dev/ttyAMA10", "/dev/ttyUSB0"])
         self.declare_parameter("can_baudrate", 115200)
+        self.declare_parameter("can_protocol", "teleoperation")  # Protocol adapter type
         self.declare_parameter("control_rate_hz", 50.0)      # 20ms control loop
         self.declare_parameter("telemetry_rate_hz", 10.0)    # 100ms telemetry
 
         # Get initial parameter values
         self.can_port = self.get_parameter("can_port").value
+        self.can_fallback_devices = self.get_parameter("can_fallback_devices").value
         self.can_baudrate = self.get_parameter("can_baudrate").value
+        self.can_protocol = self.get_parameter("can_protocol").value
         self.control_rate_hz = self.get_parameter("control_rate_hz").value
         self.telemetry_rate_hz = self.get_parameter("telemetry_rate_hz").value
 
         logger.info("HardwareInterfaceNode initialized with default parameters")
+        logger.info(f"CAN Protocol: {self.can_protocol}, Primary device: {self.can_port}")
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handle transition to configured state."""
