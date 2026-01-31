@@ -2,6 +2,8 @@
 
 Steps to test with real CAN hardware after simulation passes.
 
+**Raspberry Pi 5:** See [CAN Testing on Pi 5](CAN_TESTING_PI5_SETUP.md) for a full setup that uses only the main repo (no submodule changes).
+
 ---
 
 ## 1. One-Time Setup
