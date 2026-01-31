@@ -182,6 +182,14 @@ class CircuitBreakerOpenException(Exception):
     pass
 
 
+# Namespace for missions/robust_behavior_tree: from src.core.error_handling import circuitbreaker
+from types import SimpleNamespace
+circuitbreaker = SimpleNamespace(
+    CircuitBreaker=CircuitBreaker,
+    CircuitBreakerOpenException=CircuitBreakerOpenException,
+)
+
+
 # Pre-configured retry decorators for common scenarios
 def network_retry(max_attempts: int = 3, backoff_factor: float = 0.5):
     """Retry decorator for network operations."""

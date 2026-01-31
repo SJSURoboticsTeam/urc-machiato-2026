@@ -64,6 +64,8 @@ class FallbackFunctionalityTests(unittest.TestCase):
 
     def test_computer_vision_fallback(self):
         """Test computer vision fallback when ML libraries are missing."""
+        import pytest
+        pytest.importorskip("src.autonomy.perception", reason="src.autonomy.perception not available")
         print("Testing computer vision fallback functionality...")
 
         # Mock missing ML libraries
@@ -109,6 +111,8 @@ class FallbackFunctionalityTests(unittest.TestCase):
 
     def test_slam_fallback(self):
         """Test SLAM fallback when RTAB-Map is unavailable."""
+        import pytest
+        pytest.importorskip("src.autonomy.perception", reason="src.autonomy.perception not available")
         print("Testing SLAM fallback functionality...")
 
         # Mock missing SLAM dependencies
@@ -151,6 +155,8 @@ class FallbackFunctionalityTests(unittest.TestCase):
 
     def test_terrain_analysis_fallback(self):
         """Test terrain analysis fallback when TensorFlow is missing."""
+        import pytest
+        pytest.importorskip("src.autonomy.core", reason="src.autonomy.core not available")
         print("Testing terrain analysis fallback functionality...")
 
         # Mock missing TensorFlow

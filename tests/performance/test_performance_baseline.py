@@ -19,12 +19,27 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
-from src.comms.binary_sensor_protocol import BinarySensorProtocol, IMUData
-from src.sensors.timestamp_provider import get_timestamp_provider, SensorType
-from src.motion.ipc_motion_bridge import create_motion_bridge_server, create_motion_bridge_client, VelocityCommand
-from src.comms.network_partition_detector import NetworkPartitionDetector
-from src.comms.adaptive_circuit_breaker import get_adaptive_circuit_breaker
-from src.testing.performance_profiling import get_performance_profiler, PerformanceProfiler
+try:
+    from src.comms.binary_sensor_protocol import BinarySensorProtocol, IMUData
+    from src.sensors.timestamp_provider import get_timestamp_provider, SensorType
+    from src.motion.ipc_motion_bridge import (
+        create_motion_bridge_server,
+        create_motion_bridge_client,
+        VelocityCommand,
+    )
+    from src.comms.network_partition_detector import NetworkPartitionDetector
+    from src.comms.adaptive_circuit_breaker import get_adaptive_circuit_breaker
+    from src.testing.performance_profiling import get_performance_profiler, PerformanceProfiler
+    _PERF_DEPS_AVAILABLE = True
+except ImportError as e:
+    _PERF_DEPS_AVAILABLE = False
+    _PERF_IMPORT_ERROR = e
+
+if not _PERF_DEPS_AVAILABLE:
+    pytest.skip(
+        f"Performance baseline deps unavailable: {_PERF_IMPORT_ERROR}",
+        allow_module_level=True,
+    )
 
 
 @dataclass

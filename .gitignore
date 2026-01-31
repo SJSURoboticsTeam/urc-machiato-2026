@@ -331,3 +331,5 @@ src/autonomy/*/log/
 !tests/reports/
 !tests/reports/**
 !tests/reports/**/*
+test-results/*
+test-reports/*

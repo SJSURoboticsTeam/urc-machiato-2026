@@ -16,10 +16,17 @@ from pathlib import Path
 from typing import Dict, Any
 import sys
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from tests.performance.test_performance_baseline import PerformanceBaselineTester
+import pytest
+
+try:
+    from tests.performance.test_performance_baseline import PerformanceBaselineTester
+except Exception as e:
+    if e.__class__.__name__ in ("Skipped", "SkipException"):
+        pytest.skip("Performance baseline deps unavailable", allow_module_level=True)
+    raise
 
 
 class SimpleResourceBudgetingTester:

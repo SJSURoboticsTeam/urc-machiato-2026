@@ -53,7 +53,11 @@ class HardwareInterfaceSimulator:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize hardware simulator."""
-        self.config = config or self._get_default_config()
+        base = self._get_default_config()
+        self.config = {**base, **(config or {})}
+        # Merge nested rover_config so required keys exist
+        if config and "rover_config" in config:
+            self.config["rover_config"] = {**base.get("rover_config", {}), **config["rover_config"]}
         self.running = False
         self.thread = None
 

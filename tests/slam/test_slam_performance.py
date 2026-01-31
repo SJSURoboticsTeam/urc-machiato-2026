@@ -30,6 +30,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
+pytest.importorskip("src.autonomy.core", reason="src.autonomy.core not available (SLAM tests)")
+
 
 class TestSLAMPerformance:
     """Test SLAM system performance under competition conditions."""

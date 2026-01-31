@@ -263,6 +263,34 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (cross-component)",
+    "system: System-level tests (end-to-end)",
+    "e2e: End-to-end tests (full system)",
+    "critical: Critical system tests (safety, recovery)",
+    "performance: Performance and load tests",
+    "safety: Safety-critical tests",
+    "slow: Slow-running tests (skip in fast mode)",
+    "flaky: Known flaky tests",
+    "ros2: Tests requiring ROS2 environment",
+    "launch_testing: Tests using launch_testing framework",
+    "hardware: Tests requiring physical hardware",
+    "simulation: Tests requiring Gazebo simulation",
+    "network: Tests requiring network connectivity",
+    "autonomy: Autonomous operation tests",
+    "perception: Vision and sensor processing tests",
+    "control: Motor control and hardware interface tests",
+    "navigation: Path planning and localization tests",
+    "mission: Mission execution and coordination tests",
+    "state_machine: State machine and behavior tree tests",
+    "communication: Network and inter-system communication tests",
+    "competition: URC competition specific scenarios",
+    "endurance: Long-duration stability tests",
+    "chaos: Chaos engineering and fault injection tests",
+    "security: Security validation tests",
+    "calibration: Sensor calibration tests",
+]
 
 [tool.coverage.run]
 source = ["src", "simulation", "missions"]

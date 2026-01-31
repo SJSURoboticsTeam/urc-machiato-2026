@@ -14,7 +14,7 @@ import numpy as np
 # Import libraries with fallbacks
 try:
     from faker import Faker
-    from factory import Factory, LazyAttribute, LazyFunction, Sequence, SubFactory, ListFactory
+    from factory import Factory, LazyAttribute, LazyFunction, Sequence, SubFactory
     import factory
     FACTORY_AVAILABLE = True
 except ImportError:
@@ -63,29 +63,29 @@ if FACTORY_AVAILABLE:
         current_mode = LazyFunction(lambda: fake.random_element(elements=['BOOT', 'CALIBRATION', 'IDLE', 'TELEOPERATION', 'AUTONOMOUS', 'SAFETY']))
 
         # Position data
-        position_x = FactoryFaker('pyfloat', min_value=-1000, max_value=1000, precision=2)
-        position_y = FactoryFaker('pyfloat', min_value=-1000, max_value=1000, precision=2)
-        position_z = FactoryFaker('pyfloat', min_value=-10, max_value=10, precision=2)
+        position_x = LazyFunction(lambda: fake.pyfloat(min_value=-1000, max_value=1000, precision=2))
+        position_y = LazyFunction(lambda: fake.pyfloat(min_value=-1000, max_value=1000, precision=2))
+        position_z = LazyFunction(lambda: fake.pyfloat(min_value=-10, max_value=10, precision=2))
 
         # Orientation (quaternion)
-        orientation_w = FactoryFaker('pyfloat', min_value=-1, max_value=1, precision=4)
-        orientation_x = FactoryFaker('pyfloat', min_value=-1, max_value=1, precision=4)
-        orientation_y = FactoryFaker('pyfloat', min_value=-1, max_value=1, precision=4)
-        orientation_z = FactoryFaker('pyfloat', min_value=-1, max_value=1, precision=4)
+        orientation_w = LazyFunction(lambda: fake.pyfloat(min_value=-1, max_value=1, precision=4))
+        orientation_x = LazyFunction(lambda: fake.pyfloat(min_value=-1, max_value=1, precision=4))
+        orientation_y = LazyFunction(lambda: fake.pyfloat(min_value=-1, max_value=1, precision=4))
+        orientation_z = LazyFunction(lambda: fake.pyfloat(min_value=-1, max_value=1, precision=4))
 
         # Velocity data
-        linear_velocity_x = FactoryFaker('pyfloat', min_value=-2, max_value=2, precision=3)
-        linear_velocity_y = FactoryFaker('pyfloat', min_value=-2, max_value=2, precision=3)
-        angular_velocity_z = FactoryFaker('pyfloat', min_value=-3, max_value=3, precision=3)
+        linear_velocity_x = LazyFunction(lambda: fake.pyfloat(min_value=-2, max_value=2, precision=3))
+        linear_velocity_y = LazyFunction(lambda: fake.pyfloat(min_value=-2, max_value=2, precision=3))
+        angular_velocity_z = LazyFunction(lambda: fake.pyfloat(min_value=-3, max_value=3, precision=3))
 
         # Mission data
-        mission_id = FactoryFaker('uuid4')
-        mission_status = FactoryFaker('random_element', elements=['planned', 'active', 'paused', 'completed', 'failed'])
-        waypoints_completed = FactoryFaker('random_int', min=0, max=10)
+        mission_id = LazyFunction(lambda: str(fake.uuid4()))
+        mission_status = LazyFunction(lambda: fake.random_element(elements=['planned', 'active', 'paused', 'completed', 'failed']))
+        waypoints_completed = LazyFunction(lambda: fake.random_int(min=0, max=10))
         waypoints_total = LazyAttribute(lambda o: max(o.waypoints_completed + fake.random_int(min=0, max=5), 1))
 
         # Timestamp
-        timestamp = FactoryFaker('unix_time')
+        timestamp = LazyFunction(lambda: fake.unix_time())
 
         # Computed fields
         progress_percentage = LazyAttribute(lambda o: (o.waypoints_completed / o.waypoints_total * 100) if o.waypoints_total > 0 else 0)
@@ -97,20 +97,20 @@ if FACTORY_AVAILABLE:
         class Meta:
             model = dict
 
-        name = FactoryFaker('word')
-        x = FactoryFaker('pyfloat', min_value=-1000, max_value=1000, precision=2)
-        y = FactoryFaker('pyfloat', min_value=-1000, max_value=1000, precision=2)
-        z = FactoryFaker('pyfloat', min_value=-5, max_value=5, precision=2)
+        name = LazyFunction(lambda: fake.word())
+        x = LazyFunction(lambda: fake.pyfloat(min_value=-1000, max_value=1000, precision=2))
+        y = LazyFunction(lambda: fake.pyfloat(min_value=-1000, max_value=1000, precision=2))
+        z = LazyFunction(lambda: fake.pyfloat(min_value=-5, max_value=5, precision=2))
 
-        heading = FactoryFaker('pyfloat', min_value=-180, max_value=180, precision=1)
-        tolerance = FactoryFaker('pyfloat', min_value=0.1, max_value=2.0, precision=2)
+        heading = LazyFunction(lambda: fake.pyfloat(min_value=-180, max_value=180, precision=1))
+        tolerance = LazyFunction(lambda: fake.pyfloat(min_value=0.1, max_value=2.0, precision=2))
 
-        description = FactoryFaker('sentence', nb_words=6)
-        priority = FactoryFaker('random_int', min=1, max=10)
+        description = LazyFunction(lambda: fake.sentence(nb_words=6))
+        priority = LazyFunction(lambda: fake.random_int(min=1, max=10))
 
         # Optional fields
-        max_speed = FactoryFaker('pyfloat', min_value=0.1, max_value=2.0, precision=2)
-        timeout = FactoryFaker('random_int', min=30, max=300)
+        max_speed = LazyFunction(lambda: fake.pyfloat(min_value=0.1, max_value=2.0, precision=2))
+        timeout = LazyFunction(lambda: fake.random_int(min=30, max=300))
 
         # Computed validation
         is_valid = LazyAttribute(lambda o: -1000 <= o.x <= 1000 and -1000 <= o.y <= 1000)
@@ -123,33 +123,33 @@ if FACTORY_AVAILABLE:
             model = dict
 
         sensor_id = Sequence(lambda n: f"sensor_{n:03d}")
-        sensor_type = FactoryFaker('random_element', elements=['imu', 'gps', 'camera', 'lidar', 'encoder'])
-        timestamp = FactoryFaker('unix_time')
+        sensor_type = LazyFunction(lambda: fake.random_element(elements=['imu', 'gps', 'camera', 'lidar', 'encoder']))
+        timestamp = LazyFunction(lambda: fake.unix_time())
 
         # IMU data
-        accel_x = FactoryFaker('pyfloat', min_value=-19.6, max_value=19.6, precision=3)
-        accel_y = FactoryFaker('pyfloat', min_value=-19.6, max_value=19.6, precision=3)
-        accel_z = FactoryFaker('pyfloat', min_value=-19.6, max_value=19.6, precision=3)
+        accel_x = LazyFunction(lambda: fake.pyfloat(min_value=-19.6, max_value=19.6, precision=3))
+        accel_y = LazyFunction(lambda: fake.pyfloat(min_value=-19.6, max_value=19.6, precision=3))
+        accel_z = LazyFunction(lambda: fake.pyfloat(min_value=-19.6, max_value=19.6, precision=3))
 
-        gyro_x = FactoryFaker('pyfloat', min_value=-500, max_value=500, precision=2)
-        gyro_y = FactoryFaker('pyfloat', min_value=-500, max_value=500, precision=2)
-        gyro_z = FactoryFaker('pyfloat', min_value=-500, max_value=500, precision=2)
+        gyro_x = LazyFunction(lambda: fake.pyfloat(min_value=-500, max_value=500, precision=2))
+        gyro_y = LazyFunction(lambda: fake.pyfloat(min_value=-500, max_value=500, precision=2))
+        gyro_z = LazyFunction(lambda: fake.pyfloat(min_value=-500, max_value=500, precision=2))
 
         # GPS data
-        latitude = FactoryFaker('latitude')
-        longitude = FactoryFaker('longitude')
-        altitude = FactoryFaker('pyfloat', min_value=-100, max_value=5000, precision=1)
-        satellites = FactoryFaker('random_int', min=0, max=20)
+        latitude = LazyFunction(lambda: fake.latitude())
+        longitude = LazyFunction(lambda: fake.longitude())
+        altitude = LazyFunction(lambda: fake.pyfloat(min_value=-100, max_value=5000, precision=1))
+        satellites = LazyFunction(lambda: fake.random_int(min=0, max=20))
 
         # Camera data
-        image_width = FactoryFaker('random_int', min=640, max=1920)
-        image_height = FactoryFaker('random_int', min=480, max=1080)
-        features_detected = FactoryFaker('random_int', min=0, max=1000)
+        image_width = LazyFunction(lambda: fake.random_int(min=640, max=1920))
+        image_height = LazyFunction(lambda: fake.random_int(min=480, max=1080))
+        features_detected = LazyFunction(lambda: fake.random_int(min=0, max=1000))
 
         # Quality metrics
-        signal_strength = FactoryFaker('pyfloat', min_value=0, max_value=1, precision=3)
-        noise_level = FactoryFaker('pyfloat', min_value=0, max_value=0.1, precision=4)
-        data_quality = FactoryFaker('random_element', elements=['excellent', 'good', 'fair', 'poor'])
+        signal_strength = LazyFunction(lambda: fake.pyfloat(min_value=0, max_value=1, precision=3))
+        noise_level = LazyFunction(lambda: fake.pyfloat(min_value=0, max_value=0.1, precision=4))
+        data_quality = LazyFunction(lambda: fake.random_element(elements=['excellent', 'good', 'fair', 'poor']))
 
 
     class MissionFactory(URCBaseFactory):
@@ -158,28 +158,30 @@ if FACTORY_AVAILABLE:
         class Meta:
             model = dict
 
-        id = FactoryFaker('uuid4')
-        name = FactoryFaker('sentence', nb_words=3)
-        type = FactoryFaker('random_element', elements=['autonomous_navigation', 'sample_collection', 'delivery', 'survey'])
+        id = LazyFunction(lambda: str(fake.uuid4()))
+        name = LazyFunction(lambda: fake.sentence(nb_words=3))
+        type = LazyFunction(lambda: fake.random_element(elements=['autonomous_navigation', 'sample_collection', 'delivery', 'survey']))
 
-        description = FactoryFaker('paragraph', nb_sentences=2)
-        priority = FactoryFaker('random_int', min=1, max=10)
+        description = LazyFunction(lambda: fake.paragraph(nb_sentences=2))
+        priority = LazyFunction(lambda: fake.random_int(min=1, max=10))
 
         # Timing
-        created_at = FactoryFaker('date_time_this_year')
+        created_at = LazyFunction(lambda: fake.date_time_this_year())
         started_at = LazyAttribute(lambda o: fake.date_time_between(start_date=o.created_at) if fake.boolean() else None)
         completed_at = LazyAttribute(lambda o: fake.date_time_between(start_date=o.started_at) if o.started_at and fake.boolean() else None)
 
         # Status
         status = LazyAttribute(lambda o: 'completed' if o.completed_at else ('active' if o.started_at else 'planned'))
 
-        # Waypoints
-        waypoints = ListFactory(WaypointFactory, min_size=2, max_size=10)
+        # Waypoints (variable-length list of waypoint dicts)
+        waypoints = LazyFunction(
+            lambda: [WaypointFactory.build() for _ in range(fake.random_int(min=2, max=10))]
+        )
 
         # Mission parameters
-        max_duration = FactoryFaker('random_int', min=300, max=3600)  # 5 min to 1 hour
-        max_speed = FactoryFaker('pyfloat', min_value=0.5, max_value=2.0, precision=2)
-        safety_enabled = FactoryFaker('boolean', chance_of_getting_true=95)
+        max_duration = LazyFunction(lambda: fake.random_int(min=300, max=3600))  # 5 min to 1 hour
+        max_speed = LazyFunction(lambda: fake.pyfloat(min_value=0.5, max_value=2.0, precision=2))
+        safety_enabled = LazyFunction(lambda: fake.boolean(chance_of_getting_true=95))
 
         # Results
         distance_traveled = LazyAttribute(lambda o: sum(
@@ -198,27 +200,27 @@ if FACTORY_AVAILABLE:
             model = dict
 
         type = 'telemetry'
-        timestamp = FactoryFaker('unix_time')
+        timestamp = LazyFunction(lambda: fake.unix_time())
         source = 'rover'
 
         # Rover state
         state = SubFactory(RoverStateFactory)
 
         # Sensor data
-        sensors = Factory.LazyFunction(lambda: {
+        sensors = LazyFunction(lambda: {
             sensor_id: SensorDataFactory() for sensor_id in
             [f"sensor_{i:02d}" for i in range(fake.random_int(min=3, max=8))]
         })
 
         # System metrics
-        cpu_usage = FactoryFaker('pyfloat', min_value=0, max_value=100, precision=1)
-        memory_usage = FactoryFaker('pyfloat', min_value=0, max_value=100, precision=1)
-        temperature = FactoryFaker('pyfloat', min_value=20, max_value=80, precision=1)
+        cpu_usage = LazyFunction(lambda: fake.pyfloat(min_value=0, max_value=100, precision=1))
+        memory_usage = LazyFunction(lambda: fake.pyfloat(min_value=0, max_value=100, precision=1))
+        temperature = LazyFunction(lambda: fake.pyfloat(min_value=20, max_value=80, precision=1))
 
         # Network status
-        network_latency = FactoryFaker('pyfloat', min_value=0, max_value=500, precision=1)
-        packets_sent = FactoryFaker('random_int', min=0, max=1000)
-        packets_received = FactoryFaker('random_int', min=0, max=1000)
+        network_latency = LazyFunction(lambda: fake.pyfloat(min_value=0, max_value=500, precision=1))
+        packets_sent = LazyFunction(lambda: fake.random_int(min=0, max=1000))
+        packets_received = LazyFunction(lambda: fake.random_int(min=0, max=1000))
 
 
     class CommandFactory(URCBaseFactory):
@@ -228,17 +230,17 @@ if FACTORY_AVAILABLE:
             model = dict
 
         type = 'command'
-        timestamp = FactoryFaker('unix_time')
-        source = FactoryFaker('random_element', elements=['ground_station', 'mission_control', 'autonomous_planner'])
-        correlation_id = FactoryFaker('uuid4')
+        timestamp = LazyFunction(lambda: fake.unix_time())
+        source = LazyFunction(lambda: fake.random_element(elements=['ground_station', 'mission_control', 'autonomous_planner']))
+        correlation_id = LazyFunction(lambda: str(fake.uuid4()))
 
-        command = FactoryFaker('random_element', elements=[
+        command = LazyFunction(lambda: fake.random_element(elements=[
             'start_mission', 'pause_mission', 'resume_mission', 'stop_mission',
             'emergency_stop', 'return_home', 'switch_to_teleop', 'calibrate_sensors'
-        ])
+        ]))
 
         # Command parameters
-        parameters = Factory.LazyFunction(lambda: {
+        parameters = LazyFunction(lambda: {
             'priority': fake.random_int(min=1, max=10),
             'timeout': fake.random_int(min=30, max=300),
             'description': fake.sentence()
@@ -271,13 +273,13 @@ if FACTORY_AVAILABLE:
             model = dict
 
         # Critical rover state
-        battery_level = FactoryFaker('pyfloat', min_value=0, max_value=15, precision=1)  # Critical battery
-        communication_status = FactoryFaker('random_element', elements=['lost', 'degraded'])
+        battery_level = LazyFunction(lambda: fake.pyfloat(min_value=0, max_value=15, precision=1))  # Critical battery
+        communication_status = LazyFunction(lambda: fake.random_element(elements=['lost', 'degraded']))
         system_health = 'critical'
 
         # Emergency telemetry
         telemetry = SubFactory(TelemetryFactory)
-        emergency_type = FactoryFaker('random_element', elements=['battery_critical', 'communication_lost', 'motor_failure', 'sensor_failure'])
+        emergency_type = LazyFunction(lambda: fake.random_element(elements=['battery_critical', 'communication_lost', 'motor_failure', 'sensor_failure']))
 
         # Emergency command
         emergency_command = SubFactory(CommandFactory)
@@ -295,18 +297,18 @@ if FACTORY_AVAILABLE:
         frequency_hz = 100
 
         # Generate time series data
-        timestamps = Factory.LazyFunction(lambda: [i / 100.0 for i in range(1000)])  # 10 seconds at 100Hz
+        timestamps = LazyFunction(lambda: [i / 100.0 for i in range(1000)])  # 10 seconds at 100Hz
 
         # Sinusoidal sensor data with noise
-        sensor_values = Factory.LazyFunction(lambda: [
+        sensor_values = LazyFunction(lambda: [
             10.0 + 2.0 * np.sin(2 * np.pi * 0.1 * t) + 0.1 * np.random.normal()
             for t in [i / 100.0 for i in range(1000)]
         ])
 
         # Performance metrics
-        avg_response_time = FactoryFaker('pyfloat', min_value=0.001, max_value=0.1, precision=4)
-        max_memory_usage = FactoryFaker('pyfloat', min_value=50, max_value=200, precision=1)
-        cpu_utilization = FactoryFaker('pyfloat', min_value=10, max_value=95, precision=1)
+        avg_response_time = LazyFunction(lambda: fake.pyfloat(min_value=0.001, max_value=0.1, precision=4))
+        max_memory_usage = LazyFunction(lambda: fake.pyfloat(min_value=50, max_value=200, precision=1))
+        cpu_utilization = LazyFunction(lambda: fake.pyfloat(min_value=10, max_value=95, precision=1))
 
 
     # Utility functions

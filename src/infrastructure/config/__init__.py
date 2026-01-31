@@ -132,7 +132,7 @@ class MissionType:
 
 class RoverConfig:
     """Main rover configuration."""
-    
+
     def __init__(self):
         self.navigation = {}
         self.safety = {}
@@ -143,9 +143,14 @@ class RoverConfig:
         self.sync = {}
         self.network = {}
         self.mission = {}
+        self.mission_profiles = {}
         self.hardware = {}
         self.database = {}
-    
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Dict-like get for config keys (e.g. mission_profiles)."""
+        return getattr(self, key, default)
+
     @classmethod
     def from_settings(cls, settings: URCSettings) -> "RoverConfig":
         """Create config from settings."""

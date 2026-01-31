@@ -367,7 +367,10 @@ class CANBusMockSimulator:
     This replaces physical CAN bus hardware for software development and testing.
     """
 
-    def __init__(self):
+    def __init__(self, port=None, baudrate=None, simulate_delays=False):
+        self.port = port
+        self.baudrate = baudrate
+        self.simulate_delays = simulate_delays
         self.logger = logging.getLogger(__name__)
 
         # Initialize motor controllers (6 wheels)

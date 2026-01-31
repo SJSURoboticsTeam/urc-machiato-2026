@@ -376,7 +376,8 @@ if __name__ == "__main__":
     print(f"Sample collection - enabled features: {get_enabled_features()}")
 
     # Test feature checking
-    print("\n🔍 Feature status checks:")    print(f"  Computer vision enabled: {is_feature_enabled('computer_vision')}")
+    print("\n🔍 Feature status checks:")
+    print(f"  Computer vision enabled: {is_feature_enabled('computer_vision')}")
     print(f"  ML vision enabled: {is_feature_enabled('ml_vision')}")
     print(f"  Terrain analysis enabled: {is_feature_enabled('terrain_analysis')}")
 

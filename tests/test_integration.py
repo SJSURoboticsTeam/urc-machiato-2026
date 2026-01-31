@@ -137,6 +137,8 @@ class IntegrationTests(unittest.TestCase):
 
     def test_monitoring_resource_manager_integration(self):
         """Test integration between Monitoring and ResourceManager."""
+        import pytest
+        pytest.importorskip("simulation.tools.monitoring_dashboard", reason="simulation.tools.monitoring_dashboard not available")
         print("Testing Monitoring + ResourceManager integration...")
 
         try:

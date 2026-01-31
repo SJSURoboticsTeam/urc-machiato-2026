@@ -1,0 +1,214 @@
+# Optimized Docker Compose Configuration for URC 2026
+# Addresses container virtualization performance issues
+
+version: "3.8"
+
+services:
+  # Core ROS2 with performance optimizations
+  ros2-core:
+    image: ros:humble-ros-core
+    container_name: urc2026-ros2-core-optimized
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      - URC_ENV=production
+      - PYTHONHASHSEED=0
+      - PYTHONUNBUFFERED=1
+    command: ["roscore"]
+    # Performance optimizations
+    runtime: runsc  # Use runsc for better performance
+    privileged: true  # Required for real-time performance
+    ulimits:
+      memlock: -1  # Lock memory pages
+      rtprio: 99  # Real-time priority
+    # CPU optimization
+    cpus: 2
+    cpu_period: 100000
+    cpu_quota: 200000  # 2x CPU allocation
+    # Memory optimization
+    memswap_limit: 4g
+    shm_size: 2g
+    healthcheck:
+      test: ["CMD", "ros2", "node", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Sensor Bridge with performance optimizations
+  sensor-bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.universal
+      target: sensor-bridge-optimized
+    container_name: urc2026-sensor-bridge-optimized
+    environment:
+      - PYTHONPATH=/home/urc
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      - PYTHONHASHSEED=0
+      - PYTHONUNBUFFERED=1
+    runtime: runsc
+    privileged: true
+    ulimits:
+      memlock: -1
+      rtprio: 99
+    cpus: 2
+    cpu_period: 100000
+    cpu_quota: 200000
+    volumes:
+      - /dev:/dev:ro
+      - /sys:/sys:ro
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    depends_on:
+      - ros2-core
+    restart: unless-stopped
+
+  # Computer Vision with GPU acceleration
+  computer-vision:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.universal
+      target: computer-vision-optimized
+    container_name: urc2026-computer-vision-optimized
+    environment:
+      - PYTHONPATH=/home/urc
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      - PYTHONHASHSEED=0
+      - PYTHONUNBUFFERED=1
+      - CUDA_VISIBLE_DEVICES=0
+    runtime: runsc
+    privileged: true
+    ulimits:
+      memlock: -1
+      rtprio: 99
+    cpus: 4  # More CPU for vision processing
+    cpu_period: 100000
+    cpu_quota: 400000  # 4x CPU allocation
+    volumes:
+      - /dev:/dev:ro
+      - /sys:/sys:ro
+    devices:
+      - "/dev/video0:/dev/video0"
+    depends_on:
+      - ros2-core
+    restart: unless-stopped
+
+  # Autonomy System with real-time optimizations
+  autonomy-system:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.universal
+      target: autonomy-system-optimized
+    container_name: urc2026-autonomy-optimized
+    environment:
+      - PYTHONPATH=/home/urc
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      - PYTHONHASHSEED=0
+      - PYTHONUNBUFFERED=1
+    runtime: runsc
+    privileged: true
+    ulimits:
+      memlock: -1
+      rtprio: 99
+    cpus: 3
+    cpu_period: 100000
+    cpu_quota: 300000
+    volumes:
+      - ./config:/home/urc/config:ro
+      - ./test_results:/home/urc/test_results
+    depends_on:
+      - ros2-core
+      - sensor-bridge
+    restart: unless-stopped
+
+  # Mission Control with WebSocket optimizations
+  mission-control:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.universal
+      target: mission-control-optimized
+    container_name: urc2026-mission-control-optimized
+    environment:
+      - PYTHONPATH=/home/urc
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      - PYTHONHASHSEED=0
+      - PYTHONUNBUFFERED=1
+    runtime: runsc
+    privileged: true
+    ulimits:
+      memlock: -1
+      rtprio: 99
+    cpus: 2
+    cpu_period: 100000
+    cpu_quota: 200000
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ./test_results:/home/urc/test_results
+    depends_on:
+      - ros2-core
+      - autonomy-system
+    restart: unless-stopped
+
+# Performance optimization profiles
+x-performance: &performance
+  runtime: runsc
+  privileged: true
+  ulimits:
+    memlock: -1
+    rtprio: 99
+  cpu_period: 100000
+  cpu_quota: 200000
+
+x-realtime: &realtime
+  <<: *performance
+  cpus: 4
+  cpu_quota: 400000
+  memswap_limit: 8g
+  shm_size: 4g
+
+# Profiles for different deployment scenarios
+profiles:
+  performance:
+    services:
+      ros2-core:
+        <<: *performance
+      sensor-bridge:
+        <<: *performance
+      computer-vision:
+        <<: *performance
+      autonomy-system:
+        <<: *performance
+      mission-control:
+        <<: *performance
+
+  realtime:
+    services:
+      ros2-core:
+        <<: *realtime
+      sensor-bridge:
+        <<: *realtime
+      computer-vision:
+        <<: *realtime
+      autonomy-system:
+        <<: *realtime
+      mission-control:
+        <<: *realtime
+
+  minimal:
+    services:
+      ros2-core:
+        runtime: runsc
+        privileged: true
+        ulimits:
+          memlock: -1
+          rtprio: 99
+      autonomy-system:
+        runtime: runsc
+        privileged: true
+        ulimits:
+          memlock: -1
+          rtprio: 99
+        depends_on:
+          - ros2-core
