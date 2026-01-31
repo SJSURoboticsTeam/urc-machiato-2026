@@ -1,0 +1,85 @@
+# Dockerfile for URC 2026 Critical Systems Testing
+# Multi-stage build with optimized caching and testing environments
+
+FROM ros:humble as base
+
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-dev \
+    python3-setuptools \
+    python3-venv \
+    python3-psutil \
+    python3-numpy \
+    python3-scipy \
+    python3-matplotlib \
+    build-essential \
+    cmake \
+    git \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python testing dependencies
+RUN pip3 install --no-cache-dir \
+    pytest==7.4.0 \
+    pytest-cov==4.1.0 \
+    pytest-asyncio==0.21.0 \
+    pytest-mock==3.11.0 \
+    pytest-xdist==3.3.0 \
+    pytest-benchmark==4.0.0 \
+    pytest-timeout==2.1.0 \
+    coverage==7.2.0 \
+    black==22.10.0 \
+    isort==5.12.0 \
+    flake8==6.0.0 \
+    mypy==1.5.0
+
+# Mock hardware dependencies for testing
+RUN pip3 install --no-cache-dir \
+    RPi.GPIO==0.7.1 \
+    pyserial==3.5 \
+    python-can==4.3.1 \
+    spidev==3.6
+
+# Additional dependencies for critical systems
+RUN pip3 install --no-cache-dir \
+    aiofiles==23.1.0 \
+    orjson==3.9.1 \
+    structlog==23.1.0 \
+    rich==13.4.0 \
+    typer==0.9.0
+
+# Set working directory
+WORKDIR /urc2026
+
+# Copy source code
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY scripts/ ./scripts/
+COPY config/ ./config/
+COPY requirements.txt ./
+COPY setup.cfg ./
+
+# Create non-root user for security
+RUN useradd -m -s /bin/bash -N -u 1000 urc && \
+    chown -R urc:urc /urc2026
+USER urc
+
+# Create test directories
+RUN mkdir -p /tmp/test_results /tmp/test_reports /tmp/logs
+
+# Set environment variables for testing
+ENV PYTHONPATH=/urc2026/src:$PYTHONPATH
+ENV ROS_DOMAIN_ID=42
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV TEST_RESULTS_DIR=/tmp/test_results
+ENV TEST_REPORTS_DIR=/tmp/test_reports
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 -c "import sys; sys.path.append('/urc2026/src'); from autonomy.control.integrated_critical_systems import create_integrated_critical_systems; print('Critical systems ready')" || exit 1
+
+# Default command - run all critical systems tests
+CMD ["python3", "-m", "pytest", "tests/test_critical_systems/", "-v", "--tb=short", "--junitxml=/tmp/test_results/critical_systems_junit.xml", "--cov=src", "--cov-report=html:/tmp/test_reports/critical_systems_coverage", "--cov-report=term"]

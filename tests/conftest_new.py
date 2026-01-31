@@ -22,7 +22,6 @@ modules_to_clear = [
     "bridges.websocket_manager",
     "bridges.mission_orchestrator",
     "core.dds_domain_redundancy_manager",
-    "core.state_synchronization_manager",
     "core.recovery_coordinator",
     "config.config_manager",
 ]

@@ -385,7 +385,7 @@ class TestStatePersistenceFailures:
     @pytest.mark.critical
     def test_state_save_failure_corruption(self):
         """Test state persistence failure leading to corruption."""
-        class StateManager:
+        class get_state_manager():
             def __init__(self):
                 self.state = {}
 
@@ -398,7 +398,7 @@ class TestStatePersistenceFailures:
             def load_state(self, key):
                 return self.state.get(key)
 
-        state_manager = StateManager()
+        state_manager = get_state_manager().)
 
         # Try to save critical state
         try:

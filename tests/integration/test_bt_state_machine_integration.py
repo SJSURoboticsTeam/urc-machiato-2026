@@ -280,7 +280,7 @@ class TestBTStateMachineIntegration:
                         continue
 
         if not service_exists:
-            missing_components.append("AdaptiveStateMachine ROS2 service implementation")
+            missing_components.append("get_state_manager() ROS2 service implementation")
 
         # Check if service interface is defined
         interface_exists = os.path.exists("src/autonomy/interfaces/autonomy_interfaces/srv/GetSystemState.srv")

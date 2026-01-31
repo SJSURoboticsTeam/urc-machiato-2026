@@ -5,6 +5,10 @@ URC 2026 Configuration Management Module
 Provides type-safe, environment-aware configuration management using pydantic.
 Supports validation, environment-specific settings, and nested configurations.
 
+Unified loading: For environment-based config with merge (rover + env + local),
+use src.config.dynaconf_config.get_urc_config() or get_settings().
+This module remains the canonical API for typed RoverConfig and get_system_config().
+
 Author: URC 2026 Configuration Team
 """
 
@@ -59,6 +63,18 @@ class NetworkConfig(BaseModel):
     connection_timeout: float = Field(default=5.0, gt=0)
     circuit_breaker_threshold: int = Field(default=5, ge=1)
     circuit_breaker_timeout: float = Field(default=30.0, gt=0)
+    websocket_port: int = Field(default=8765, ge=1024, le=65535)
+    http_port: int = Field(default=8080, ge=1024, le=65535)
+    enable_cors: bool = Field(default=True)
+    max_connections: int = Field(default=100, ge=1)
+
+
+class NavigationConfig(BaseModel):
+    """Navigation system configuration."""
+    update_rate_hz: float = Field(default=10.0, ge=1.0, le=100.0)
+    waypoint_tolerance_m: float = Field(default=1.0, ge=0.1)
+    max_linear_velocity_ms: float = Field(default=2.0, ge=0.1)
+    max_angular_velocity_rads: float = Field(default=1.0, ge=0.1)
 
 
 class SafetyConfig(BaseModel):
@@ -105,6 +121,14 @@ class APIConfig(BaseModel):
     api_key_required: bool = Field(default=False)
 
 
+class PerformanceConfig(BaseModel):
+    """Performance configuration."""
+    enable_optimizations: bool = Field(default=True)
+    memory_limit_mb: int = Field(default=512, ge=64)
+    cpu_limit_percent: int = Field(default=80, ge=10, le=100)
+    thread_pool_size: int = Field(default=4, ge=1, le=16)
+
+
 class RoverConfig(BaseSettings):
     """
     Main rover configuration with environment-aware settings.
@@ -122,9 +146,15 @@ class RoverConfig(BaseSettings):
     log_format: str = Field(default="json")
     log_file: str | None = Field(default=None)
 
+    # Dashboard / UI
+    title: str = Field(default="URC 2026 Rover")
+    enable_real_time: bool = Field(default=True)
+    refresh_interval: float = Field(default=1.0, gt=0)
+
     # Core systems
     sync: SyncConfig = Field(default_factory=SyncConfig)
     network: NetworkConfig = Field(default_factory=NetworkConfig)
+    navigation: NavigationConfig = Field(default_factory=NavigationConfig)
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
     mission: MissionConfig = Field(default_factory=MissionConfig)
 
@@ -261,6 +291,64 @@ def get_safety_config() -> SafetyConfig:
 def get_mission_config() -> MissionConfig:
     """Get mission configuration."""
     return get_config().mission
+
+
+def get_system_config() -> RoverConfig:
+    """Get current system configuration (alias for get_config)."""
+    return get_config()
+
+
+def load_system_config(environment: str = "development") -> RoverConfig:
+    """Load system configuration; environment can influence loading. Returns current config."""
+    _ = environment
+    return reload_config()
+
+
+class ConfigurationManager:
+    """
+    Compatibility wrapper for get_config() / update_config().
+    Single canonical implementation delegates to global config.
+    """
+
+    def __init__(self, config_dir: str | Path = "config"):
+        self._config_dir = Path(config_dir)
+
+    @property
+    def current_config(self) -> RoverConfig:
+        """Current configuration (alias for get_config())."""
+        return get_config()
+
+    def get_config(self) -> RoverConfig:
+        """Return current rover configuration."""
+        return get_config()
+
+    def load_config(self, environment: str = "development") -> RoverConfig:
+        """Load config for environment; returns current config."""
+        _ = environment
+        return get_config()
+
+    def update_config(self, updates: dict) -> bool:
+        """Update configuration with a partial dict. Reloads global config from env/file."""
+        try:
+            reload_config()
+            return True
+        except Exception:
+            return False
+
+
+_config_manager_instance: ConfigurationManager | None = None
+
+
+def get_config_manager(config_dir: str | Path = "config") -> ConfigurationManager:
+    """Get global configuration manager (compatibility API)."""
+    global _config_manager_instance
+    if _config_manager_instance is None:
+        _config_manager_instance = ConfigurationManager(config_dir)
+    return _config_manager_instance
+
+
+# Alias for code that expects SystemConfig type
+SystemConfig = RoverConfig
 
 
 # Example usage and validation

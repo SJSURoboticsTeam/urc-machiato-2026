@@ -466,14 +466,13 @@ class JazzyComponentManager(LifecycleNode):
         """Create an instance of the specified component type"""
         try:
             if component.component_type == "safety_system":
-                # Import and create the appropriate component
-                # For now, return a mock - will be replaced with actual components
-                from src.core.jazzy_state_machine_bridge import JazzyStateMachineBridge
-                return JazzyStateMachineBridge()
+                # Use adaptive state machine (production runtime state)
+                from src.core.simplified_state_manager import AdaptiveStateMachine
+                return AdaptiveStateMachine()
 
             elif component.component_type == "state_management":
-                from src.core.jazzy_state_machine_bridge import JazzyStateMachineBridge
-                return JazzyStateMachineBridge()
+                from src.core.simplified_state_manager import AdaptiveStateMachine
+                return AdaptiveStateMachine()
 
             elif component.component_type == "behavior_tree":
                 # Would import JazzyBTOrchestrator, but it's C++

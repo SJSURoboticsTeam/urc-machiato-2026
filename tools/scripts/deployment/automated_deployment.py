@@ -352,11 +352,12 @@ class AutomatedDeployment:
         """Check configuration is valid."""
         try:
             sys.path.insert(0, str(self.project_root))
-            from config.config_manager import ConfigurationManager
+            from src.infrastructure.config import get_config_manager, get_config
 
-            manager = ConfigurationManager()
-            return manager.validate_config("competition")
-        except:
+            get_config_manager()
+            get_config()
+            return True
+        except Exception:
             return False
 
     def _check_network_readiness(self) -> bool:

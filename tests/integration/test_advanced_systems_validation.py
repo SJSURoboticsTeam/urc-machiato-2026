@@ -10,6 +10,12 @@ Validates the key improvements made to the advanced systems:
 Author: URC 2026 Autonomy Team
 """
 
+import pytest
+try:
+    from core import state_synchronization_manager  # noqa: F401
+except ImportError:
+    pytest.skip("state_synchronization_manager removed (archived)", allow_module_level=True)
+
 import os
 import sys
 import time
@@ -23,12 +29,12 @@ def test_enhanced_state_sync_election():
     """Test the enhanced state synchronization election algorithm."""
     print("[REFRESH] Testing Enhanced State Sync Election...")
 
-    from core.state_synchronization_manager import DistributedStateManager
+    from core.state_synchronization_manager import Distributedget_state_manager()
 
     # Create managers
-    mgr1 = DistributedStateManager("node_a")
-    mgr2 = DistributedStateManager("node_b")
-    mgr3 = DistributedStateManager("node_c")
+    mgr1 = Distributedget_state_manager()."node_a")
+    mgr2 = Distributedget_state_manager()."node_b")
+    mgr3 = Distributedget_state_manager()."node_c")
 
     # Register nodes and set up cross-communication
     for mgr in [mgr1, mgr2, mgr3]:
@@ -196,11 +202,11 @@ def test_coordinated_recovery():
     from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
     from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
     from core.recovery_coordinator import RecoveryCoordinator
-    from core.state_synchronization_manager import DistributedStateManager
+    from core.state_synchronization_manager import Distributedget_state_manager()
 
     # Create systems
     recovery_coord = RecoveryCoordinator()
-    state_mgr = DistributedStateManager("test_node")
+    state_mgr = Distributedget_state_manager()."test_node")
     dds_mgr = DDSDomainRedundancyManager()
     ws_mgr = WebSocketRedundancyManager()
 
@@ -282,10 +288,10 @@ def test_performance_improvements():
     print(" Testing Performance Improvements...")
 
     from core.dynamic_config_manager import DynamicConfigManager
-    from core.state_synchronization_manager import DistributedStateManager
+    from core.state_synchronization_manager import Distributedget_state_manager()
 
     # Test state sync performance
-    state_mgr = DistributedStateManager("perf_test")
+    state_mgr = Distributedget_state_manager()."perf_test")
     state_mgr.start()
     state_mgr.register_node("perf_test")
     if "perf_test" in state_mgr.nodes:

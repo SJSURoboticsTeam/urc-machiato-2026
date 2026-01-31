@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/src/simulation/gazebo_simulation/test_scenarios/README.md

@@ -1,0 +1,13 @@
+# GetBlackboardValue.srv
+# Service for reading values from unified BT.CPP blackboard
+
+# Request
+string key              # Blackboard key to retrieve
+string value_type       # Type hint: "bool", "int", "double", "string" (optional, for validation)
+
+---
+# Response
+bool success            # Whether retrieval was successful
+string value            # Serialized value (JSON string for complex types)
+string value_type       # Actual type of the value
+string error_message    # Error message if success=false

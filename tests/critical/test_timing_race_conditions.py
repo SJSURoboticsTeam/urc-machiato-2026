@@ -426,7 +426,9 @@ class TestTimingRaceConditionsFailures:
         stats = timing_analyzer.get_timing_statistics()
 
         print("🎯 State Machine Timing Analysis:")
-        print(".1f"        print(".1f"        print(".1f"        print(f"   Deadline Violations: {stats['deadline_violations']}")
+        print(f"   Average Execution Time: {stats['avg_execution_time_ms']:.1f}ms")
+        print(f"   95th Percentile: {stats['95th_percentile_ms']:.1f}ms")
+        print(f"   Deadline Violations: {stats['deadline_violations']}")
 
         # State machine must meet real-time requirements
         assert stats['avg_execution_time_ms'] < 20.0  # Average < 20ms

@@ -330,13 +330,8 @@
 ✅ **sqlalchemy>=2.0.0** - ORM for data persistence
 ✅ **alembic>=1.12.0** - Database migrations
 ✅ **redis>=4.6.0** - Caching and pub/sub
-✅ **aioredis>=2.0.0** - Async Redis client
 ✅ **fastapi>=0.100.0** - Modern API framework
 ✅ **uvicorn[standard]>=0.23.0** - ASGI server
-✅ **dependency-injector>=4.41.0** - Dependency injection container
-
-### ROS2 Integration Specific
-✅ **asyncio-mqtt>=0.13.0** - MQTT client for sensor networks
 
 ## 🛠️ New Modules Created
 

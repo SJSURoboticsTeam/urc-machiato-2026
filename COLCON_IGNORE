@@ -1,0 +1,64 @@
+# COLCON_IGNORE - Exclude directories from colcon package discovery
+# This prevents colcon from trying to build non-ROS2 packages
+
+# Python virtual environments (CRITICAL - prevents colcon from scanning installed packages)
+venv
+.venv
+env
+.env
+*.egg-info
+__pycache__
+
+# Vendor submodules (handled separately, may have duplicates)
+vendor
+submodules
+
+# Non-ROS2 directories
+docs
+tests
+tools
+scripts
+simulation
+missions
+config
+examples
+output
+reports
+log
+data
+robot_definition
+docker
+.github
+install
+
+# Build artifacts
+build
+install
+log
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and development files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+*.md
+*.rst
+*.txt
+!package.xml
+!CMakeLists.txt
+!setup.py
+!setup.cfg
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Git
+.git/
+.gitignore
+.gitmodules

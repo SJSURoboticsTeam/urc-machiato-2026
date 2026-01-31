@@ -200,7 +200,7 @@ class ComprehensiveTestRunner:
         print("\n⚙️ Running Configuration Validation...")
 
         try:
-            from src.core.configuration_manager import get_config_manager
+            from src.infrastructure.config import get_config_manager
 
             config_mgr = get_config_manager()
 
@@ -289,7 +289,7 @@ class ComprehensiveTestRunner:
         print("\n🔧 Running Component Tests...")
 
         try:
-            from src.core.component_registry import get_component_registry
+            from src.core.simplified_component_registry import get_component_registry
 
             registry = get_component_registry()
 

@@ -61,6 +61,8 @@ set(srv_files
   "srv/GetAOIStatus.srv"
   "srv/GetContext.srv"
   "srv/GetAdaptationHistory.srv"
+  "srv/GetBlackboardValue.srv"
+  "srv/SetBlackboardValue.srv"
 )
 
 set(action_files

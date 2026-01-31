@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_autonomous_typing/ament_cmake_core/autonomy_autonomous_typingConfig.cmake

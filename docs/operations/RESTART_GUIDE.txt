@@ -1,0 +1,72 @@
+╔════════════════════════════════════════════════════════════════╗
+║          RESTART WITH DYNAMIC DATA - QUICK GUIDE               ║
+╚════════════════════════════════════════════════════════════════╝
+
+PROBLEM: Dashboard shows static data (velocity always 0.000)
+REASON: Old hardware_interface process still running
+
+SOLUTION: Restart hardware_interface
+
+═══════════════════════════════════════════════════════════════
+
+METHOD 1: Automatic Restart (Easiest)
+─────────────────────────────────────────────────────────────
+
+In Terminal 17:
+
+./scripts/hardware/restart_dynamic.sh
+
+This will:
+✓ Stop old process
+✓ Start new process with dynamic data
+✓ Show logs in real-time
+
+═══════════════════════════════════════════════════════════════
+
+METHOD 2: Manual Restart
+─────────────────────────────────────────────────────────────
+
+Terminal 17:
+1. Press Ctrl+C to stop current process
+2. Run: ./scripts/hardware/start_hardware_interface.sh
+
+═══════════════════════════════════════════════════════════════
+
+WHAT YOU'LL SEE (Dynamic Data):
+─────────────────────────────────────────────────────────────
+
+Battery:
+  Voltage:    23.82V → 24.15V → 23.91V (varying!)
+  Percentage: 85.0% → 84.9% → 84.8% (discharging)
+
+Velocity:
+  Linear X:   +0.05 → +0.10 → +0.02 → -0.03 (sine wave!)
+  Angular Z:  +0.02 → -0.01 → +0.04 (rotating!)
+
+Position:
+  robot_x: 0.0 → 0.1 → 0.3 → 0.6 (moving!)
+  robot_y: 0.0 → 0.05 → 0.1 (moving!)
+
+═══════════════════════════════════════════════════════════════
+
+LOGS LOCATION:
+─────────────────────────────────────────────────────────────
+
+Real-time logs:
+  /tmp/hw_interface_dynamic.log
+
+View logs:
+  tail -f /tmp/hw_interface_dynamic.log
+
+Look for:
+  [INFO] Hardware Interface Node initialized
+  [INFO] Blackboard client initialized
+  [INFO] Using mock CAN interface for testing
+
+═══════════════════════════════════════════════════════════════
+
+QUICK START:
+./scripts/hardware/restart_dynamic.sh
+
+Then watch Terminal 18 dashboard - velocity should start changing!
+═══════════════════════════════════════════════════════════════

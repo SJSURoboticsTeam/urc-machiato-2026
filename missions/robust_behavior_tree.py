@@ -23,17 +23,33 @@ from dataclasses import dataclass, field
 # Py-trees imports (HIGH PRIORITY REPLACEMENT)
 try:
     import py_trees
-    import py_trees_ros
+    from py_trees.blackboard import Blackboard
     from py_trees.behaviours import Running, Success, Failure
     from py_trees.composites import Sequence, Selector, Parallel
     from py_trees.decorators import Timeout, Retry, Condition
+    from py_trees.trees import BehaviourTree
     PY_TREES_AVAILABLE = True
+    PY_TREES_BLACKBOARD_AVAILABLE = True
 except ImportError:
     PY_TREES_AVAILABLE = False
+    PY_TREES_BLACKBOARD_AVAILABLE = False
     logger.warning("py-trees not available, falling back to basic implementation")
 
+# Py-trees ROS2 integration
+try:
+    import py_trees_ros
+    from py_trees_ros.behaviours import ToBlackboard, FromBlackboard
+    from py_trees_ros.actions import ActionClient
+    from py_trees_ros.trees import BehaviourTree as ROSBehaviourTree
+    PY_TREES_ROS_AVAILABLE = True
+except ImportError:
+    PY_TREES_ROS_AVAILABLE = False
+    # Logger not yet defined, use print or skip warning
+    import warnings
+    warnings.warn("py-trees-ros not available, ROS2 integration limited", ImportWarning)
+
 from src.core.error_handling import circuitbreaker
-from src.core.config_manager import get_config
+from src.infrastructure.config import get_config
 
 # Import mission resource manager
 try:
@@ -215,7 +231,15 @@ class BTExecutionContext:
     retry_count: int = 0
     max_retries: int = 3
     parent_context: Optional['BTExecutionContext'] = None
-    blackboard: Dict[str, Any] = field(default_factory=dict)
+    blackboard: Any = field(default=None)  # py_trees.blackboard.Blackboard or dict
+    
+    def __post_init__(self):
+        """Initialize blackboard based on availability."""
+        if self.blackboard is None:
+            if PY_TREES_BLACKBOARD_AVAILABLE:
+                self.blackboard = Blackboard()
+            else:
+                self.blackboard = {}
 
 
 class BTNode(ABC):
@@ -679,10 +703,13 @@ class BehaviorTree:
         # Recovery
         self.recovery_actions: List[Callable] = []
 
-    def execute(self, blackboard: Optional[Dict[str, Any]] = None) -> BTNodeResult:
+    def execute(self, blackboard: Optional[Any] = None) -> BTNodeResult:
         """Execute the behavior tree with monitoring."""
         if blackboard is None:
-            blackboard = {}
+            if PY_TREES_BLACKBOARD_AVAILABLE:
+                blackboard = Blackboard()
+            else:
+                blackboard = {}
 
         self.is_running = True
 
@@ -1228,42 +1255,53 @@ class EnhancedConditionNode(py_trees.behaviour.Behaviour):
 
 
 # ROS2 Integration Nodes (if py_trees_ros available)
-if PY_TREES_AVAILABLE:
-    try:
-        # ROS2 Action Client Node
-        class ROS2ActionNode(py_trees.behaviour.Behaviour):
-            """ROS2 action client as a behavior tree node."""
+if PY_TREES_ROS_AVAILABLE:
+    class ROS2ActionNode(py_trees_ros.actions.ActionClient):
+        """ROS2 action client as a behavior tree node (proper py_trees_ros integration)."""
+        
+        def __init__(self, name: str, action_type: Any, action_name: str, node: Any = None):
+            """Initialize ROS2 action client node.
+            
+            Args:
+                name: Node name
+                action_type: ROS2 action type (e.g., NavigateToPose)
+                action_name: Action server name
+                node: ROS2 node instance (required for py_trees_ros)
+            """
+            if node is None:
+                raise ValueError("ROS2 node required for py_trees_ros ActionClient")
+            
+            super().__init__(
+                name=name,
+                action_type=action_type,
+                action_name=action_name,
+                node=node
+            )
+    
+    class ROS2ToBlackboard(ToBlackboard):
+        """ROS2 topic to blackboard node (proper py_trees_ros integration)."""
+        pass
+    
+    class ROS2FromBlackboard(FromBlackboard):
+        """Blackboard to ROS2 topic node (proper py_trees_ros integration)."""
+        pass
 
-            def __init__(self, name: str, action_type: Any, action_name: str):
-                super().__init__(name)
-                self.action_type = action_type
-                self.action_name = action_name
-                self.action_client = None
-                self.goal_sent = False
-
-            def setup(self, **kwargs):
-                """Setup ROS2 action client."""
-                try:
-                    node = kwargs.get('node')
-                    if node:
-                        self.action_client = py_trees_ros.actions.ActionClient(
-                            node=node,
-                            action_type=self.action_type,
-                            action_name=self.action_name,
-                            name=self.name
-                        )
-                except Exception as e:
-                    self.logger.error(f"Failed to setup ROS2 action client: {e}")
-
-            def update(self) -> py_trees.common.Status:
-                """Update ROS2 action status."""
-                if not self.action_client:
-                    return py_trees.common.Status.FAILURE
-
-                return self.action_client.status
-
-    except ImportError:
-        pass  # py_trees_ros not available
+elif PY_TREES_AVAILABLE:
+    # Fallback implementation if py_trees_ros not available
+    class ROS2ActionNode(py_trees.behaviour.Behaviour):
+        """Fallback ROS2 action client (limited functionality)."""
+        
+        def __init__(self, name: str, action_type: Any, action_name: str, node: Any = None):
+            super().__init__(name)
+            self.action_type = action_type
+            self.action_name = action_name
+            self.node = node
+            self.logger.warning("py_trees_ros not available, using fallback implementation")
+        
+        def update(self) -> py_trees.common.Status:
+            """Fallback update - always returns RUNNING."""
+            self.logger.warning("ROS2 action not available without py_trees_ros")
+            return py_trees.common.Status.RUNNING
 
 
 # Factory functions for easy tree construction

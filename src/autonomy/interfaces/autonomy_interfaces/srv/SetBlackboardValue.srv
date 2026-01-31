@@ -1,0 +1,12 @@
+# SetBlackboardValue.srv
+# Service for writing values to unified BT.CPP blackboard
+
+# Request
+string key              # Blackboard key to set
+string value            # Serialized value (JSON string for complex types)
+string value_type       # Type: "bool", "int", "double", "string"
+
+---
+# Response
+bool success            # Whether setting was successful
+string error_message    # Error message if success=false

@@ -92,24 +92,21 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', 'info']
     )
 
-    # 2. Jazzy State Machine Bridge (lifecycle-managed)
-    state_machine_bridge = LifecycleNode(
-        package='urc_core',
-        executable='jazzy_state_machine_bridge',
-        name='jazzy_state_machine_bridge',
-        namespace='',
+    # 2. Adaptive State Machine (production runtime state, lifecycle-managed)
+    state_machine_bridge = ExecuteProcess(
+        cmd=[
+            'python3', '-m', 'src.core.adaptive_state_machine'
+        ],
+        name='adaptive_state_machine',
         output='screen',
-        parameters=[{
-            'simulation_mode': LaunchConfiguration('simulation'),
-            'health_check_interval': 1.0
-        }]
+        additional_env={'PYTHONPATH': os.environ.get('PYTHONPATH', '.')}
     )
 
-    # 3. Jazzy BT Orchestrator (C++ lifecycle node)
+    # 3. BT Orchestrator (C++ lifecycle node)
     bt_orchestrator = LifecycleNode(
         package='autonomy_bt',
-        executable='jazzy_bt_orchestrator',  # Our enhanced C++ BT orchestrator
-        name='jazzy_bt_orchestrator',
+        executable='bt_orchestrator',
+        name='bt_orchestrator',
         namespace='',
         output='screen',
         parameters=[{
@@ -139,13 +136,13 @@ def generate_launch_description():
     )
 
     configure_state_machine = ExecuteProcess(
-        cmd=['ros2', 'lifecycle', 'set', '/jazzy_state_machine_bridge', 'configure'],
+        cmd=['ros2', 'lifecycle', 'set', '/adaptive_state_machine', 'configure'],
         name='configure_state_machine',
         output='screen'
     )
 
     configure_bt_orchestrator = ExecuteProcess(
-        cmd=['ros2', 'lifecycle', 'set', '/jazzy_bt_orchestrator', 'configure'],
+        cmd=['ros2', 'lifecycle', 'set', '/bt_orchestrator', 'configure'],
         name='configure_bt_orchestrator',
         output='screen'
     )
@@ -158,13 +155,13 @@ def generate_launch_description():
     )
 
     activate_state_machine = ExecuteProcess(
-        cmd=['ros2', 'lifecycle', 'set', '/jazzy_state_machine_bridge', 'activate'],
+        cmd=['ros2', 'lifecycle', 'set', '/adaptive_state_machine', 'activate'],
         name='activate_state_machine',
         output='screen'
     )
 
     activate_bt_orchestrator = ExecuteProcess(
-        cmd=['ros2', 'lifecycle', 'set', '/jazzy_bt_orchestrator', 'activate'],
+        cmd=['ros2', 'lifecycle', 'set', '/bt_orchestrator', 'activate'],
         name='activate_bt_orchestrator',
         output='screen'
     )
@@ -329,7 +326,7 @@ def generate_launch_description():
         # Status message
         LogInfo(msg='🚀 Jazzy URC 2026 Mars Rover launched successfully!'),
         LogInfo(msg='📊 Monitor system health: ros2 topic echo /jazzy_component_manager/health'),
-        LogInfo(msg='🎮 Control rover: ros2 topic pub /jazzy_state_machine/commands std_msgs/String "data: START_MISSION"'),
+        LogInfo(msg='🎮 Control rover: ros2 topic pub /adaptive_state_machine/commands std_msgs/String "data: START_MISSION"'),
         LogInfo(msg='📈 View performance: ros2 topic echo /performance_profiler/metrics')
     ])
 

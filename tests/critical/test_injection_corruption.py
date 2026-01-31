@@ -462,9 +462,9 @@ class TestInjectionCorruption:
         resilient_scenarios = sum(1 for r in resilience_results.values() if r.get('resilient', False))
 
         resilience_rate = resilient_scenarios / total_scenarios
-        print(".1f"
+        print(f"Resilience Rate: {resilience_rate:.1f}")
         # System should be resilient to most corruption types
-        assert resilience_rate >= 0.7, ".1f"
+        assert resilience_rate >= 0.7, f"Resilience rate {resilience_rate:.1f} below threshold 0.7"
         print("✅ System shows good corruption resilience")
 
     async def _test_corruption_handling(self, corrupted_data: Any, scenario_name: str) -> bool:

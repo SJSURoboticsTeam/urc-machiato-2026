@@ -31,8 +31,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import system components for monitoring
 try:
-    from src.core.config_manager import get_config
-    from src.core.state_management import StateManager
+    from src.infrastructure.config import get_config
+    from src.core.simplified_state_manager import StateManager
     from src.core.monitoring_system import SystemMonitor
     from src.core.safety_system import SafetySystem
     from src.motion.ipc_motion_bridge import get_motion_bridge
@@ -1143,8 +1143,14 @@ def start_enhanced_dashboard_server(port: int = 8081):
     """Start the enhanced dashboard server."""
     dashboard.start_monitoring()
 
-    server = HTTPServer(('localhost', port), EnhancedDashboardHTTPRequestHandler)
-    print(f"🚀 Enhanced Operator Dashboard running on http://localhost:{port}")
+    # Use environment-based configuration
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from infrastructure.config.environment import get_env_manager
+    env = get_env_manager()
+    
+    server = HTTPServer(('0.0.0.0', env.network.dashboard_port), EnhancedDashboardHTTPRequestHandler)
+    print(f"🚀 Enhanced Operator Dashboard running on {env.get_dashboard_url()}")
     print("📊 Real-time monitoring of:")
     print("  • System health & component status")
     print("  • Behavior tree execution & state")

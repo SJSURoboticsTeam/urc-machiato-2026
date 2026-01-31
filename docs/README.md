@@ -2,7 +2,14 @@
 
 This directory contains the complete Sphinx-based documentation system for the URC 2026 Mars Rover Autonomy System.
 
-## 📚 Documentation Overview
+## Key guides (Markdown)
+
+- **Build and test**: [docs/development/BUILD_AND_TEST.md](development/BUILD_AND_TEST.md) - ROS2 build and CAN testing
+- **Hardware testing**: [docs/hardware/HOW_TO_TEST_ON_HARDWARE.md](hardware/HOW_TO_TEST_ON_HARDWARE.md) - CAN-to-blackboard on real hardware
+- **Deployment**: [docs/operations/DEPLOYMENT_GUIDE.md](operations/DEPLOYMENT_GUIDE.md) - Swerve drive deployment
+- **Integration test results**: [docs/testing/INTEGRATION_TEST_RESULTS.md](testing/INTEGRATION_TEST_RESULTS.md)
+
+## Documentation Overview
 
 The documentation is organized into multiple sections covering all aspects of the project:
 

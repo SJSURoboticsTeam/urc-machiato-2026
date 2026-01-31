@@ -12,6 +12,12 @@ Tests the integration between Competition Bridge and all advanced systems:
 Author: URC 2026 Autonomy Team
 """
 
+import pytest
+try:
+    from core import state_synchronization_manager  # noqa: F401
+except ImportError:
+    pytest.skip("state_synchronization_manager removed (archived)", allow_module_level=True)
+
 import os
 import sys
 import time
@@ -40,9 +46,9 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         print("[REFRESH] Testing Competition Bridge + State Sync Integration...")
 
         # Create state manager
-        from core.state_synchronization_manager import DistributedStateManager
+        from core.state_synchronization_manager import Distributedget_state_manager()
 
-        state_mgr = DistributedStateManager("competition_bridge_test")
+        state_mgr = Distributedget_state_manager()."competition_bridge_test")
         state_mgr.start()
         state_mgr.register_node("competition_bridge_test")
 
@@ -253,11 +259,11 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
         from core.recovery_coordinator import RecoveryCoordinator
-        from core.state_synchronization_manager import DistributedStateManager
+        from core.state_synchronization_manager import Distributedget_state_manager()
 
         # Create all system managers
         recovery_coord = RecoveryCoordinator()
-        state_mgr = DistributedStateManager("recovery_test")
+        state_mgr = Distributedget_state_manager()."recovery_test")
         dds_mgr = DDSDomainRedundancyManager()
         config_mgr = DynamicConfigManager()
         ws_mgr = WebSocketRedundancyManager()
@@ -330,7 +336,7 @@ class CompetitionBridgeAdvancedSystemsIntegrationTest(unittest.TestCase):
         systems = {}
 
         # State synchronization
-        systems["state"] = DistributedStateManager("competition_scenario")
+        systems["state"] = Distributedget_state_manager()."competition_scenario")
         systems["state"].start()
         systems["state"].register_node("competition_scenario")
         systems["state"]._trigger_election()

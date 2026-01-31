@@ -345,7 +345,8 @@ class TestRecoverySystems:
         assert recovery["result"]["success"] is True
         assert "data_integrity" in recovery["result"]
 
-        print(".1f"
+        print(f"Recovery success rate: {success_rate:.1f}")
+    
     def test_state_reconstruction_after_failure(self, recovery_simulator):
         """Test system state reconstruction."""
         print("🔄 Testing state reconstruction...")

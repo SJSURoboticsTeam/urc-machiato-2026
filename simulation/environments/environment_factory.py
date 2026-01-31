@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional, Type
 
 from simulation.environments.base_environment import BaseEnvironment
 from simulation.environments.extreme_environment import ExtremeEnvironment
+from simulation.environments.mdrs_environment import MDRSEnvironment
 from simulation.environments.perfect_environment import PerfectEnvironment
 from simulation.environments.real_life_environment import RealLifeEnvironment
 
@@ -27,6 +28,7 @@ class EnvironmentFactory:
         "perfect": PerfectEnvironment,
         "real_life": RealLifeEnvironment,
         "extreme": ExtremeEnvironment,
+        "mdrs_competition": MDRSEnvironment,
         # Add more environment types as needed
         # "mars": MarsEnvironment,
         # "lunar": LunarEnvironment,
@@ -135,6 +137,8 @@ class EnvironmentFactory:
             cls._validate_real_life_config(config)
         elif tier_name == "extreme":
             cls._validate_extreme_config(config)
+        elif tier_name == "mdrs_competition":
+            cls._validate_mdrs_config(config)
 
     @classmethod
     def _validate_perfect_config(cls, config: Dict[str, Any]) -> None:
@@ -166,3 +170,24 @@ class EnvironmentFactory:
             raise ValueError(
                 "Extreme environment temperature should differ from 25°C by ≥ 20°C"
             )
+
+    @classmethod
+    def _validate_mdrs_config(cls, config: Dict[str, Any]) -> None:
+        """Validate MDRS competition environment configuration."""
+        # MDRS should have realistic Utah desert parameters
+        if "base_temperature" in config and not (
+            -10 <= config["base_temperature"] <= 45
+        ):
+            raise ValueError("MDRS base temperature must be between -10°C and 45°C")
+
+        if "daily_temp_range" in config and not (
+            15 <= config["daily_temp_range"] <= 35
+        ):
+            raise ValueError(
+                "MDRS daily temperature range must be between 15°C and 35°C"
+            )
+
+        if "dust_storm_probability" in config and not (
+            0.0 <= config["dust_storm_probability"] <= 0.5
+        ):
+            raise ValueError("MDRS dust storm probability must be between 0.0 and 0.5")

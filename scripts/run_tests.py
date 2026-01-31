@@ -58,9 +58,11 @@ class TestRunner:
             duration = time.time() - start
 
             if result.returncode == 0:
-                print(".1f"                return True
+                print(f"   ✅ SUCCESS: Command completed in {duration:.1f}s")
+                return True
             else:
-                print(".1f"                return False
+                print(f"   ❌ FAILED: Command failed after {duration:.1f}s")
+                return False
 
         except subprocess.TimeoutExpired:
             print(f"   ❌ TIMEOUT: Command took longer than {timeout}s")
@@ -307,11 +309,14 @@ Examples:
 
     # Report results
     total_time = time.time() - runner.start_time
-    print(".1f"
+    print(f"\n⏱️  Total execution time: {total_time:.1f}s")
+    
     if success:
-        print("🎉 All tests passed!"        sys.exit(0)
+        print("🎉 All tests passed!")
+        sys.exit(0)
     else:
-        print("❌ Some tests failed. Check output above."        sys.exit(1)
+        print("❌ Some tests failed. Check output above.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

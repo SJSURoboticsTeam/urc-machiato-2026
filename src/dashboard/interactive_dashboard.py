@@ -20,9 +20,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Import unified systems
-from src.core.configuration import get_config_manager, SystemConfig
+from src.infrastructure.config import get_config_manager, RoverConfig as SystemConfig
 from src.core.observability import get_observability_system
-from src.core.component_registry import get_component_registry
+from src.core.simplified_component_registry import get_component_registry
 from src.core.data_manager import get_data_manager
 
 # Dashboard libraries with fallbacks

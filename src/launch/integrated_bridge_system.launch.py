@@ -47,7 +47,10 @@ def generate_launch_description():
     
     teleop_server_url_arg = DeclareLaunchArgument(
         'teleop_server_url',
-        default_value='http://localhost:5000',
+        # Use environment-based API URL
+        from infrastructure.config.environment import get_env_manager
+        env = get_env_manager()
+        default_value=env.get_api_url(),
         description='Teleoperation Socket.IO server URL'
     )
     

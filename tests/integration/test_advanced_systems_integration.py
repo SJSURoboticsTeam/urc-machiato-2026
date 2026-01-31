@@ -258,37 +258,37 @@ class AdvancedSystemsIntegrationTest:
         return results
 
     def test_state_synchronization(self) -> Dict[str, Any]:
-        """Test state synchronization across bridges."""
+        """Test unified state manager (simplified single-node state)."""
         print("  [REFRESH] Testing state synchronization...")
 
         try:
-            from src.core.state_synchronization_manager import get_state_manager
+            from src.core.simplified_state_manager import (
+                get_state_manager,
+                SystemState,
+            )
 
-            # Test with competition bridge node
-            state_manager = get_state_manager("competition_bridge")
+            state_manager = get_state_manager()
 
-            # Test state updates
-            state_manager.update_state("test_key", "test_value")
-            retrieved_value = state_manager.get_state("test_key")
-
-            state_sync_working = retrieved_value == "test_value"
+            # Test state transition and state dict (replaces legacy key-value sync)
+            ok = state_manager.transition_to(SystemState.IDLE, "test")
+            state_sync_working = ok and state_manager.current_state == SystemState.IDLE
 
             if state_sync_working:
                 print("    [PASS] State synchronization working")
             else:
                 print("    [FAIL] State synchronization failed")
 
-            # Test system status
-            status = state_manager.get_system_status()
+            state_dict = state_manager.get_state_dict()
             print(
-                f"    State version: {status['state_version']}, keys: {len(status['state_keys'])}"
+                f"    State: {state_dict.get('current_state')}, "
+                f"transitions: {len(state_dict.get('recent_transitions', []))}"
             )
 
             return {
                 "state_sync_working": state_sync_working,
-                "state_version": status["state_version"],
-                "state_keys": status["state_keys"],
-                "nodes": list(status["nodes"].keys()),
+                "state_version": state_dict.get("timestamp", 0),
+                "state_keys": list(state_dict.keys()),
+                "nodes": ["unified"],
             }
 
         except Exception as e:

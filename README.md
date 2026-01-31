@@ -51,11 +51,9 @@ The system consists of 6 interconnected layers:
 
 📖 **[Read the Big Picture Guide](docs/big_picture.rst)** for a detailed overview
 
-**Team Member?** Jump to your role:
-- [Network Team Guide](docs/network_guide.rst)
-- [SLAM/NAV Team Guide](docs/slam_nav_guide.rst)
-- [ARM Team Guide](docs/arm_guide.rst)
-- [Testing Team Guide](docs/testing_guide.rst)
+**Team Member?** Jump to your specialization (see [Documentation](#-documentation) below):
+- [Onboarding overview](docs/onboarding/README.md) and pillar guides (Perception, Cognition, Motion Control, Communication)
+- [Network Guide](docs/network_guide.rst) | [SLAM/NAV Guide](docs/slam_nav_guide.rst) | [ARM Guide](docs/arm_guide.rst) | [Testing Guide](docs/testing_guide.rst)
 
 ## 🚀 Quick Start
 
@@ -77,7 +75,7 @@ The system consists of 6 interconnected layers:
 
 ### For Production Deployment
 
-See [`DEPLOYMENT.md`](DEPLOYMENT.md) for production deployment instructions.
+See [Deployment Guide](docs/operations/DEPLOYMENT_GUIDE.md) for production deployment instructions.
 
 ## 📋 Requirements
 
@@ -287,8 +285,12 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development guidelines and contribu
 
 This project is licensed under the MIT License - see the [`LICENSE`](LICENSE) file for details.
 
-## 📚 Documentation
+## Documentation
 
-- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
-- **[API Documentation](docs/)** - Complete technical documentation
-- **[Development Guide](autonomy/QUICKSTART.md)** - Getting started with development
+- **[Getting Started](docs/getting_started.rst)** - Setup and codebase orientation
+- **[Quick Start](docs/quickstart.rst)** - Run the system in minutes
+- **[Onboarding by role](docs/onboarding/README.md)** - Perception, Cognition, Motion Control, Communication
+- **[Build and test](docs/development/BUILD_AND_TEST.md)** - ROS2 build and CAN testing
+- **[How to test on hardware](docs/hardware/HOW_TO_TEST_ON_HARDWARE.md)** - CAN-to-blackboard hardware testing
+- **[Operations](docs/operations/)** - Deployment, troubleshooting, [deployment guide](docs/operations/DEPLOYMENT_GUIDE.md)
+- **[API Reference](docs/api/index.rst)** - Python, C++, JavaScript APIs

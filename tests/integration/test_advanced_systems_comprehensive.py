@@ -13,6 +13,12 @@ This test suite simulates ROS2 environment and validates real-world scenarios.
 Author: URC 2026 Autonomy Team
 """
 
+import pytest
+try:
+    from core import state_synchronization_manager  # noqa: F401
+except ImportError:
+    pytest.skip("state_synchronization_manager removed (archived)", allow_module_level=True)
+
 import asyncio
 import json
 import os
@@ -121,12 +127,12 @@ class AdvancedSystemsComprehensiveTest(unittest.TestCase):
         from bridges.websocket_redundancy_manager import WebSocketRedundancyManager
         from core.dds_domain_redundancy_manager import DDSDomainRedundancyManager
         from core.dynamic_config_manager import DynamicConfigManager
-        from core.state_synchronization_manager import DistributedStateManager
+        from core.state_synchronization_manager import Distributedget_state_manager()
 
         # Create state managers
-        self.state_mgr_primary = DistributedStateManager("competition_bridge")
-        self.state_mgr_secondary = DistributedStateManager("secondary_bridge")
-        self.state_mgr_tertiary = DistributedStateManager("tertiary_bridge")
+        self.state_mgr_primary = Distributedget_state_manager()."competition_bridge")
+        self.state_mgr_secondary = Distributedget_state_manager()."secondary_bridge")
+        self.state_mgr_tertiary = Distributedget_state_manager()."tertiary_bridge")
 
         # Register cross-references for testing
         self.state_mgr_primary.register_slave_manager(self.state_mgr_secondary)

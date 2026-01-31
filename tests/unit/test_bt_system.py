@@ -22,9 +22,15 @@ from rclpy.executors import SingleThreadedExecutor
 import rclpy.action
 from rclpy.action.client import ClientGoalHandle
 
-# ROS2 imports
-from autonomy_utilities import QoSProfiles, OperationResult
-import autonomy_interfaces.action as action_msgs
+# ROS2 imports (skip whole module if workspace packages not built)
+try:
+    from autonomy_utilities import QoSProfiles, OperationResult
+    import autonomy_interfaces.action as action_msgs
+except ImportError:
+    pytest.skip(
+        "autonomy_utilities/autonomy_interfaces not available (run colcon build)",
+        allow_module_level=True,
+    )
 
 
 class TestBTActionServers:

@@ -369,7 +369,12 @@ class TestSpinCycles:
         assert total_time < 30.0
         assert startup_result["total_time"] < 30.0
 
-        print(".1f"        print(f"   Phases completed: {len(startup_result['phases'])}")
+        # Calculate completion rate based on successful phases
+        phases_completed = len(startup_result['phases'])
+        completion_rate = (phases_completed / 5.0) * 100  # Assume 5 expected phases
+        
+        print(f"Spin cycle completion rate: {completion_rate:.1f}%")
+        print(f"   Phases completed: {len(startup_result['phases'])}")
         print("✅ Cold start sequence successful")
 
     @pytest.mark.asyncio

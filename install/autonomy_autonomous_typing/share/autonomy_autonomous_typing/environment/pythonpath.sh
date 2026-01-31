@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_autonomous_typing/ament_cmake_environment_hooks/pythonpath.sh

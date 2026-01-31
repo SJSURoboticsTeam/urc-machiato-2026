@@ -23,7 +23,7 @@ from typing import Dict, List, Any, Optional, Callable, Set
 from enum import Enum
 from dataclasses import dataclass, field
 
-from src.core.config_manager import get_config
+from src.infrastructure.config import get_config
 
 logger = logging.getLogger(__name__)
 

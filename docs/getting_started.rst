@@ -25,7 +25,7 @@ Quick Start Checklist
    [ ] Clone repository: ``git clone --recurse-submodules <repo-url>``
    [ ] Install dependencies: ``pip install -e .``
    [ ] Setup ROS2 workspace: ``source /opt/ros/humble/setup.bash``
-   [ ] Build packages: ``colcon build``
+   [ ] Build packages: ``./scripts/build.sh dev`` (or ``prod`` / ``clean``; see :doc:`operations/build_system`)
    [ ] Launch development environment: ``./start.py dev dashboard``
    [ ] Run basic tests: ``python -m pytest tests/unit/ -v``
 
@@ -40,36 +40,41 @@ Code Organization Map
 .. code-block:: text
 
    urc-machiato-2026/
-   ├── src/                    # 🚀 ROS2 Source Packages
-   │   ├── autonomy/          # 🤖 Core Robotics Stack
-   │   │   ├── bt/            # Behavior Tree logic
-   │   │   ├── control/       # Hardware control (LEDs, motors)
-   │   │   ├── core/          # Navigation, state, safety
-   │   │   ├── interfaces/    # ROS2 messages/services
-   │   │   ├── perception/    # Vision, SLAM, sensors
-   │   │   └── utilities/     # Shared code
-   │   ├── bridges/           # 🌉 Communication layer
-   │   ├── src/dashboard/          # 💻 Web dashboard
-   │   └── simulation/        # 🎮 Gazebo integration
-   ├── missions/              # 🎯 URC Mission implementations
-   ├── simulation/            # 🏗️ Additional simulation tools
-   ├── config/                # ⚙️ Configuration files
-   ├── tests/                 # 🧪 Test suites
-   └── tools/                 # 🔧 Development utilities
+   ├── src/
+   │   ├── infrastructure/       # Unified config, bridges, monitoring
+   │   │   ├── config/           # Single source of truth (Pydantic + Dynaconf)
+   │   │   ├── bridges/          # CAN, WebSocket, circuit breakers
+   │   │   └── monitoring/       # Health and performance
+   │   ├── autonomy/
+   │   │   ├── autonomy_core/    # Consolidated ROS2 package
+   │   │   │   ├── autonomy_core/  # Python package
+   │   │   │   │   ├── navigation/  # Path planning, motion
+   │   │   │   │   ├── safety/     # Emergency stop, watchdog
+   │   │   │   │   ├── control/    # Hardware interfaces
+   │   │   │   │   └── perception/ # Vision, SLAM
+   │   │   │   └── launch/        # Unified launch files
+   │   │   ├── interfaces/       # ROS2 messages/services
+   │   │   └── bt/               # Behavior trees
+   │   ├── dashboard/            # Web dashboard (React)
+   │   └── simulation/          # Gazebo integration
+   ├── missions/                # URC mission implementations
+   ├── config/                  # Rover/config YAML (loaded by infrastructure/config)
+   ├── tests/                   # Test suites
+   └── tools/                   # Development utilities
 
 Where to Find What You Need
 ---------------------------
 
-+----------------+------------------+-----------------------------------+
-| I want to...   | Look in...       | Example files                     |
-+================+==================+===================================+
-| Change robot   | ``src/autonomy/``| ``navigation_node.py``            |
-| behavior       |                  | ``state_machine.py``              |
-+----------------+------------------+-----------------------------------+
++----------------+----------------------------------+-----------------------------------+
+| I want to...   | Look in...                        | Example files                     |
++================+==================================+===================================+
+| Change robot   | ``src/autonomy/autonomy_core/``   | ``navigation_node.py``            |
+| behavior       |                                   | ``state_machine.py``             |
++----------------+----------------------------------+-----------------------------------+
 | Add new        | ``missions/``     | ``sample_collection_mission.py``  |
 | mission        |                  |                                   |
 +----------------+------------------+-----------------------------------+
-| Modify web UI  | ``src/src/dashboard/``| ``Dashboard.jsx``                 |
+| Modify web UI  | ``src/dashboard/``    | ``Dashboard.jsx``                 |
 |                |                  | ``MissionControl.tsx``            |
 +----------------+------------------+-----------------------------------+
 | Test in        | ``simulation/``   | ``worlds/mars_yard.world``        |
@@ -161,8 +166,8 @@ Modifying Robot Behavior
 Adding Web Dashboard Features
 ------------------------------
 
-1. Modify React components in ``src/src/dashboard/``
-2. Update WebSocket communication in ``src/bridges/``
+1. Modify React components in ``src/dashboard/``
+2. Update WebSocket communication in ``src/infrastructure/bridges/``
 3. Add backend endpoints if needed
 4. Test real-time updates
 
@@ -190,10 +195,10 @@ Common Issues
 Getting Help
 =============
 
-- **📖 Documentation**: ``docs/`` directory (run ``make html``)
-- **🧪 Testing Guide**: ``docs/testing/``
-- **🚀 Deployment**: ``DEPLOYMENT.md``
-- **💬 Team Chat**: Ask questions in development channels
-- **📋 Issues**: Check existing GitHub issues first
+- **Documentation**: ``docs/`` (build with ``cd docs && make html``); see :doc:`quickstart`, :doc:`operations/build_system`, :doc:`operations/troubleshooting`
+- **Onboarding**: ``docs/onboarding/`` for pillar guides (Perception, Cognition, Motion Control, Communication)
+- **Deployment**: ``DEPLOYMENT.md``
+- **Team Chat**: Ask questions in development channels
+- **Issues**: Check existing GitHub issues first
 
 Remember: This is a complex robotics system. Don't hesitate to ask questions - the codebase has evolved over time and some complexity is inherent to the domain!

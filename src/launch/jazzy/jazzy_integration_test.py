@@ -27,7 +27,6 @@ from rclpy.qos import QoSHistoryPolicy
 # Import Jazzy components
 from src.core.jazzy_qos_profiles import get_autonomy_status_qos, get_telemetry_qos
 from src.core.jazzy_component_manager import JazzyComponentManager, ComponentHealth
-from src.core.jazzy_state_machine_bridge import JazzyStateMachineBridge
 
 # ROS2 message types
 from std_msgs.msg import String
@@ -65,7 +64,7 @@ class JazzyIntegrationTest(Node):
 
         self.state_sub = self.create_subscription(
             String,
-            '/jazzy_state_machine_bridge/telemetry',
+            '/adaptive_state_machine/state',
             self._state_callback,
             get_telemetry_qos()
         )
@@ -73,7 +72,7 @@ class JazzyIntegrationTest(Node):
         # Publishers for control
         self.command_pub = self.create_publisher(
             String,
-            '/jazzy_state_machine/commands',
+            '/adaptive_state_machine/commands',
             get_autonomy_status_qos()
         )
 

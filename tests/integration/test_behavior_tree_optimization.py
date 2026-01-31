@@ -23,7 +23,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.core.config_manager import get_config
+from src.infrastructure.config import get_config
 
 
 class BehaviorTreeOptimizationTester:

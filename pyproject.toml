@@ -42,23 +42,20 @@ dependencies = [
 
     # Behavior Tree (HIGH PRIORITY REPLACEMENT)
     "py-trees>=2.1.0",           # Mature behavior tree library
-    "py-trees-ros>=2.0.0",       # ROS2 integration for BT
+    # Note: py-trees-ros is not available via pip, install via ROS2 packages instead
+    # "py-trees-ros>=2.0.0",       # ROS2 integration for BT (install via apt: ros-humble-py-trees-ros)
 
     # Circuit Breaker Enhancement
     "circuitbreaker>=1.3.0",     # Mature circuit breaker library
 
     # Robotics-Specific Libraries (HIGH PRIORITY)
-    "pinocchio>=2.6.0",          # Rigid body dynamics (C++ with Python bindings)
-    "hpp-fcl>=2.3.0",           # Collision detection
-    "rtree>=1.0.0",             # Spatial indexing for fast queries
-    "shapely>=2.0.0",           # Geometric operations
-    "geopandas>=0.13.0",        # Geographic data handling
+    "rtree>=1.0.0",             # Spatial indexing for fast queries (used in demos)
+    "shapely>=2.0.0",           # Geometric operations (used in demos)
 
     # Computer Vision ML Enhancement
     "torch>=2.0.0",             # PyTorch for ML-based vision
     "torchvision>=0.15.0",      # Computer vision models
-    "detectron2>=0.6.0",        # Facebook's CV library
-    "albumentations>=1.3.0",    # Image augmentation
+    "detectron2>=0.6.0",        # Facebook's CV library (feature-flagged in computer_vision_node)
 
     # Time Series & Telemetry (HIGH PRIORITY)
     "polars>=0.19.0",           # Fast DataFrame library (Rust-based)
@@ -100,13 +97,13 @@ dependencies = [
     "sqlalchemy>=2.0.0",         # ORM for data persistence
     "alembic>=1.12.0",           # Database migrations
     "redis>=4.6.0",              # Caching and pub/sub
-    "aioredis>=2.0.0",           # Async Redis client
     "fastapi>=0.100.0",          # Modern API framework
     "uvicorn[standard]>=0.23.0", # ASGI server
-    "dependency-injector>=4.41.0", # Dependency injection container
-
-    # ROS2 Integration specific
-    "asyncio-mqtt>=0.13.0",      # MQTT client for sensor networks
+    # ROS2 Python packages (when installed via pip, typically from system packages)
+    # Note: Most ROS2 packages come from system installation, but some Python-only packages can be pip-installed
+    "websockets>=11.0.0",        # WebSocket support for bridges
+    "python-socketio>=5.8.0",   # Socket.IO support
+    "aiohttp>=3.9.0",           # Async HTTP client/server
 ]
 
 [project.optional-dependencies]
@@ -140,6 +137,11 @@ dev = [
     "freezegun>=1.2.0",          # Time mocking for deterministic tests
     "hypothesis>=6.80.0",        # Property-based testing
     "coverage[toml]>=7.2.0",     # Enhanced coverage reporting
+    
+    # ROS2 Jazzy Testing (install via apt: ros-jazzy-launch-testing ros-jazzy-launch-testing-ros)
+    # Note: launch_testing and launch_testing_ros are ROS2 system packages
+    # Install with: sudo apt install ros-jazzy-launch-testing ros-jazzy-launch-testing-ros
+    # These enable launch file testing and ROS2-native test infrastructure
 
     # Performance Testing
     "pytest-benchmark>=4.0.0",   # Performance benchmarking
@@ -175,7 +177,8 @@ Repository = "https://github.com/SJSURoboticsTeam/urc-machiato-2026"
 Issues = "https://github.com/SJSURoboticsTeam/urc-machiato-2026/issues"
 
 [tool.setuptools]
-packages = ["scripts"]
+# Note: Package structure is handled by ROS2 colcon, not setuptools
+# packages = ["scripts"]  # Disabled for Docker compatibility
 
 [tool.ruff]
 # Replace flake8, isort, and provide additional capabilities
@@ -255,14 +258,14 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --cov=scripts --cov-report=html --cov-report=term-missing"
+addopts = "-ra -q --cov=src --cov=simulation --cov=missions --cov-report=html --cov-report=term-missing"
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 
 [tool.coverage.run]
-source = ["scripts"]
+source = ["src", "simulation", "missions"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -276,9 +279,9 @@ exclude_lines = [
     "if self.debug:",
     "if settings.DEBUG",
     "raise AssertionError",
-    "raise NotImplementedError",
+    "raise NotImplementedError", 
     "if 0:",
     "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
+    "class .*\\\\bProtocol\\\\):",  # Exclude Protocol classes from coverage
     "@(abc\\.)?abstractmethod",
 ]

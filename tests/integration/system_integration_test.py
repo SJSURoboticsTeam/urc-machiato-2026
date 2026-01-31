@@ -121,7 +121,7 @@ class SystemIntegrationTester:
 
         try:
             # Import and initialize component registry
-            from src.core.component_registry import get_component_registry
+            from src.core.simplified_component_registry import get_component_registry
             registry = get_component_registry()
 
             # Test basic registry functionality instead of auto-discovery
@@ -177,7 +177,7 @@ class SystemIntegrationTester:
 
         try:
             # Load configuration
-            from src.core.configuration_manager import load_system_config
+            from src.infrastructure.config import load_system_config
             config = load_system_config('development')
 
             # Start monitoring system
@@ -215,7 +215,7 @@ class SystemIntegrationTester:
 
         try:
             # Test configuration manager communication
-            from src.core.configuration_manager import get_config_manager
+            from src.infrastructure.config import get_config_manager
             config_mgr = get_config_manager()
 
             # Test monitoring system
@@ -311,7 +311,7 @@ class SystemIntegrationTester:
 
         try:
             # Test configuration validation
-            from src.core.configuration_manager import get_config_manager
+            from src.infrastructure.config import get_config_manager
             config_mgr = get_config_manager()
 
             # Test invalid configuration
@@ -319,7 +319,7 @@ class SystemIntegrationTester:
             errors = config_mgr.validate_config(invalid_config)
 
             # Test component error recovery
-            from src.core.component_registry import get_component_registry
+            from src.core.simplified_component_registry import get_component_registry
             registry = get_component_registry()
 
             # Try to get non-existent component
@@ -367,7 +367,7 @@ class SystemIntegrationTester:
 
             # Configuration operations
             async def config_operations():
-                from src.core.configuration_manager import get_config_manager
+                from src.infrastructure.config import get_config_manager
                 config_mgr = get_config_manager()
 
                 for i in range(50):
@@ -506,7 +506,7 @@ class SystemIntegrationTester:
             monitor.stop_monitoring()
 
             # Shutdown components
-            from src.core.component_registry import get_component_registry
+            from src.core.simplified_component_registry import get_component_registry
             registry = get_component_registry()
             shutdown_components = registry.shutdown_all_components()
 
@@ -632,7 +632,7 @@ if HYPOTHESIS_AVAILABLE:
     async def test_configuration_resilience(config_updates):
         """Test configuration system resilience with random updates."""
         try:
-            from src.core.configuration_manager import get_config_manager
+            from src.infrastructure.config import get_config_manager
             config_mgr = get_config_manager()
 
             # Apply random configuration updates

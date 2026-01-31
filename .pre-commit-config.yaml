@@ -31,6 +31,15 @@ repos:
         args: [--ignore-missing-imports, --no-strict-optional]
         exclude: ^(examples/demos|missions|src/install|scripts|tools|tests)/
 
+  # Prevent backup files from being committed
+  - repo: local
+    hooks:
+      - id: no-backup-files
+        name: Prevent backup files
+        language: fail
+        entry: Backup files should not be committed. Remove *.backup from staging.
+        files: \.backup$
+
   # Check for merge conflicts
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

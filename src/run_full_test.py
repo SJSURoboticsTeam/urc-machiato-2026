@@ -20,41 +20,41 @@ def test_unified_systems():
     
     results = {}
     
-    # Test state management
+    # Test state management (simplified)
     try:
-        from core.state_management import create_state_machine
-        state_machine = create_state_machine("test_machine", "idle")
-        results["state_management"] = {"status": "passed", "details": "State machine created successfully"}
+        from src.core.simplified_state_manager import get_state_manager
+        state_mgr = get_state_manager()
+        results["state_management"] = {"status": "passed", "details": "Unified state manager available"}
     except Exception as e:
         results["state_management"] = {"status": "failed", "error": str(e)}
-    
+
     # Test observability
     try:
-        from core.observability import get_observability_system
+        from src.core.observability import get_observability_system
         obs_mgr = get_observability_system()
         results["observability"] = {"status": "passed", "details": "Observability manager initialized"}
     except Exception as e:
         results["observability"] = {"status": "failed", "error": str(e)}
-    
+
     # Test communication
     try:
-        from bridges.simple_bridge import get_simple_bridge
+        from src.infrastructure.bridges.simple_bridge import get_simple_bridge
         bridge = get_simple_bridge()
         results["communication"] = {"status": "passed", "details": "Simple bridge initialized"}
     except Exception as e:
         results["communication"] = {"status": "failed", "error": str(e)}
-    
+
     # Test data manager
     try:
-        from core.data_manager import get_data_manager
+        from src.core.data_manager import get_data_manager
         data_mgr = get_data_manager()
         results["data_manager"] = {"status": "passed", "details": "Data manager initialized"}
     except Exception as e:
         results["data_manager"] = {"status": "failed", "error": str(e)}
-    
+
     # Test utilities
     try:
-        from core.utilities import get_safety_manager
+        from src.core.utilities import get_safety_manager
         safety_mgr = get_safety_manager()
         results["utilities"] = {"status": "passed", "details": "Safety manager initialized"}
     except Exception as e:

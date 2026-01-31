@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  - job_name: 'urc-rover-metrics'
+    static_configs:
+      - targets: ['localhost:8080']  # Metrics endpoint from observability system
+    scrape_interval: 5s
+    metrics_path: /metrics
+    
+  - job_name: 'ros2-nodes'
+    static_configs:
+      - targets: ['localhost:8081']  # ROS2 metrics endpoint
+    scrape_interval: 10s
+    
+  - job_name: 'system-monitoring'
+    static_configs:
+      - targets: ['localhost:8082']  # System metrics endpoint
+    scrape_interval: 5s
+    
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093

@@ -4,10 +4,19 @@ API Reference
 
 This section contains the complete API reference for all components of the URC Machiato 2026 system.
 
+Webapp Integration Guide
+========================
+
+For frontend/webapp developers looking to interface with the ROS2 system, see the comprehensive
+**Webapp Integration API Specification**:
+
+- :doc:`ROS2_WEBAPP_API` - Complete guide with topics, services, actions, blackboard access, and code examples
+
 .. toctree::
    :maxdepth: 2
    :caption: API Reference:
 
+   ROS2_WEBAPP_API
    ros2_interfaces/index
    python/index
    javascript/index
@@ -17,8 +26,9 @@ ROS2 Interfaces
 
 The ROS2 interfaces define the communication contracts between system components.
 
-.. doxygenindex::
-   :project: autonomy
+# Note: Uncomment when Doxygen XML is available
+# .. doxygenindex::
+#    :project: autonomy
 
 Python API
 ==========
@@ -28,8 +38,9 @@ Python modules and utilities used throughout the autonomy stack.
 .. autosummary::
    :toctree: python/
 
-   scripts.extract_todos_to_issues
-   Autonomy.calibration.camera.calibrate_from_markers
+   # Note: Update these when corresponding modules are available
+   # scripts.extract_todos_to_issues
+   # src.core.adaptive_state_machine
 
 JavaScript/TypeScript API
 =========================

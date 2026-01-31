@@ -22,9 +22,11 @@ from typing import List, Dict, Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from geometry_msgs.msg import Twist
-from bridges.can_bridge import CANBridge
-from bridges.unified_bridge_interface import BridgeMessage, BridgeType
-from bridges.teleop_can_adapter import TeleopCANAdapter
+
+try:
+    from bridges.can_bridge import CANBridge, BridgeMessage
+except ModuleNotFoundError:
+    pytest.skip("bridges package not available", allow_module_level=True)
 
 
 class StubSerialPort:
@@ -317,32 +319,31 @@ class TestBridgeIntegrationWithStubs:
     
     @pytest.mark.asyncio
     async def test_protocol_adapter_roundtrip(self):
-        """Test: Protocol adapter encode/decode round-trip"""
-        adapter = TeleopCANAdapter()
-        
+        """Test: CAN bridge encode/decode round-trip (inline protocol)"""
+        bridge = CANBridge({})
+
         # Original twist
         twist_orig = Twist()
         twist_orig.linear.x = 0.5
         twist_orig.linear.y = 0.25
         twist_orig.angular.z = 0.2618
-        
+
         # Encode
-        protocol_msg = adapter.encode_velocity_command(twist_orig)
-        assert protocol_msg is not None
-        
+        frame = bridge._encode_velocity_command(twist_orig)
+        assert frame is not None
+
         # Simulate firmware response (change ID to 0x00D)
-        slcan_send = protocol_msg.data.decode('ascii')
-        slcan_response = slcan_send.replace('t00C', 't00D').encode('ascii')
-        
+        slcan_response = frame.replace(b't00C', b't00D')
+
         # Decode
-        twist_decoded = adapter.decode_velocity_feedback(slcan_response)
-        
+        twist_decoded = bridge._decode_velocity_feedback(slcan_response)
+
         assert twist_decoded is not None
         assert abs(twist_decoded.linear.x - twist_orig.linear.x) < 0.001
         assert abs(twist_decoded.linear.y - twist_orig.linear.y) < 0.001
         assert abs(twist_decoded.angular.z - twist_orig.angular.z) < 0.01
-        
-        print("✓ Protocol adapter round-trip test passed")
+
+        print("✓ CAN bridge encode/decode round-trip test passed")
     
     @pytest.mark.asyncio
     async def test_emergency_stop_flow(self):

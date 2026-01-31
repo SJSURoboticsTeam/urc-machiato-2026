@@ -39,8 +39,8 @@ extensions = [
     "sphinx.ext.graphviz",
     "sphinx.ext.inheritance_diagram",
     "sphinxcontrib.plantuml",
-    # C++ documentation with Doxygen
-    "breathe",
+    # C++ documentation with Doxygen (optional - requires Doxygen XML)
+    # "breathe",  # Uncomment when Doxygen XML is available
     # Custom extensions
     "_extensions.ros2_graphs",
     "_extensions.code_analysis",
@@ -50,11 +50,11 @@ extensions = [
     # 'sphinx.ext.coverage',
 ]
 
-# Note: AutoAPI, Breathe, and sphinx-js require additional packages
-# AutoAPI configuration for multi-language support (requires autoapi package)
+# AutoAPI configuration for multi-language support (requires: pip install sphinx-autoapi)
+# Uncomment when sphinx-autoapi is installed:
 # autoapi_dirs = [
-#     '../Autonomy',  # Python code
-#     '../src/dashboard/src',  # JavaScript/TypeScript (operator dashboard)
+#     '../src',  # Python code
+#     '../missions',  # Mission modules
 # ]
 # autoapi_type = 'python'
 # autoapi_template_dir = '_templates/autoapi'

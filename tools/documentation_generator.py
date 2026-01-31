@@ -96,7 +96,7 @@ class DocumentationGenerator:
 
         # Core modules to analyze
         modules_to_analyze = [
-            'src.core.configuration_manager',
+            'src.core.config_manager',
             'src.core.monitoring_system',
             'src.core.component_registry',
             'src.bridges.simple_bridge',
@@ -114,7 +114,7 @@ class DocumentationGenerator:
 
         # Analyze component registry if available
         try:
-            from src.core.component_registry import get_component_registry
+            from src.core.simplified_component_registry import get_component_registry
             registry = get_component_registry()
             self.architecture_data['component_registry'] = registry.get_system_status()
         except ImportError:
@@ -548,7 +548,7 @@ class DocumentationGenerator:
         print("⚙️ Generating configuration documentation...")
 
         try:
-            from src.core.configuration_manager import SystemConfig
+            from src.infrastructure.config import RoverConfig as SystemConfig
 
             config_content = self._generate_config_markdown()
             self._write_file("configuration_reference.md", config_content)
@@ -638,9 +638,9 @@ class DocumentationGenerator:
         content.append("## Getting Started\n\n")
         content.append("### Basic System Startup\n\n")
         content.append("```python\n")
-        content.append("from src.core.configuration_manager import load_system_config\n")
+        content.append("from src.infrastructure.config import load_system_config\n")
         content.append("from src.core.monitoring_system import start_system_monitoring\n")
-        content.append("from src.core.component_registry import get_component_registry\n\n")
+        content.append("from src.core.simplified_component_registry import get_component_registry\n\n")
         content.append("# Load configuration\n")
         content.append("config = load_system_config('development')\n\n")
         content.append("# Start monitoring\n")
@@ -673,7 +673,7 @@ class DocumentationGenerator:
 
         content.append("### Configuration Management\n\n")
         content.append("```python\n")
-        content.append("from src.core.configuration_manager import get_config_manager\n\n")
+        content.append("from src.infrastructure.config import get_config_manager\n\n")
         content.append("# Get configuration manager\n")
         content.append("config_mgr = get_config_manager()\n\n")
         content.append("# Update navigation settings\n")

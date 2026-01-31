@@ -457,5 +457,32 @@ def validate_current_config() -> List[str]:
     return config.validate_config()
 
 
+# Unified settings entry point (primary for new code)
+# Loading hierarchy: rover.yaml (base) -> {URC_ENV}.yaml (overrides) -> local.yaml -> env vars
+_settings_instance = None
 
 
+def get_settings():
+    """Return unified Dynaconf settings. Primary config entry for environment-based loading."""
+    global _settings_instance
+    if _settings_instance is None and DYNAONF_AVAILABLE:
+        config_dir = Path(__file__).parent.parent.parent / "config"
+        env = os.environ.get("URC_ENV", "development")
+        files = [
+            str(config_dir / "rover.yaml"),
+            str(config_dir / f"{env}.yaml"),
+            str(config_dir / "local.yaml"),
+        ]
+        existing = [f for f in files if Path(f).exists()]
+        _settings_instance = Dynaconf(
+            settings_files=existing,
+            envvar_prefix="URC",
+            environments=True,
+            env_switcher="URC_ENV",
+            load_dotenv=True,
+            merge_enabled=True,
+        )
+    return _settings_instance
+
+
+# Use get_settings() for unified Dynaconf settings; avoids import-time failures

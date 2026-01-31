@@ -43,7 +43,7 @@ class TestSystemArchitecture:
 
     def test_component_registry_architecture(self, system_config):
         """Test component registry system architecture."""
-        from src.core.component_registry import get_component_registry
+        from src.core.simplified_component_registry import get_component_registry
 
         registry = get_component_registry()
 
@@ -195,7 +195,7 @@ class TestSystemArchitecture:
 
     def test_configuration_management_architecture(self, system_config):
         """Test configuration management system architecture."""
-        from src.core.configuration_manager import get_config_manager
+        from src.infrastructure.config import get_config_manager
 
         config_mgr = get_config_manager()
 

@@ -13,8 +13,9 @@ from typing import Any, Dict
 import pytest
 import yaml
 
-# Import from autonomy utilities
+# Ensure autonomy package is on path, then skip if ROS2 utilities not available
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+pytest.importorskip("autonomy.utilities.autonomy_utilities")
 from autonomy.utilities.autonomy_utilities import safe_execute, load_config_file
 
 

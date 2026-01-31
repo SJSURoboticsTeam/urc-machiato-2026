@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: urc-prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./output/metrics:/prometheus_metrics
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: urc-grafana
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=urc2026
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-storage:/var/lib/grafana
+    profiles:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-storage:

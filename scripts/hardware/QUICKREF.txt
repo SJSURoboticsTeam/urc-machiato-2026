@@ -1,0 +1,134 @@
+╔════════════════════════════════════════════════════════════════╗
+║                 CAN TESTING - QUICK REFERENCE                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────┐
+│ START HERE                                                     │
+└────────────────────────────────────────────────────────────────┘
+
+./scripts/hardware/run_can_tests.sh
+
+  Option 1: Software Test (Simulated CAN - No Hardware)
+  Option 2: Hardware Test (Real CAN Device)
+  Option 3: Monitor Only (existing hardware_interface)
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ SOFTWARE TEST (Do This First)                                 │
+└────────────────────────────────────────────────────────────────┘
+
+./scripts/hardware/run_can_tests.sh
+  → Select option 1
+
+Expected:
+  ✓ Battery: 24.0V, 85%
+  ✓ Velocity: 0.0 m/s (mock)
+  ✓ Message rate: 10 Hz
+  ✓ Blackboard: AVAILABLE
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ HARDWARE TEST (Tomorrow)                                      │
+└────────────────────────────────────────────────────────────────┘
+
+# 1. Setup (one-time)
+./scripts/hardware/setup_usbcan_pi5.sh
+
+# 2. Connect STM32 to /dev/ttyACM0
+
+# 3. Run test
+./scripts/hardware/run_can_tests.sh
+  → Select option 2
+
+Expected:
+  ✓ Hardware: CONNECTED
+  ✓ Real voltage/current
+  ✓ Motor feedback
+  ✓ Message rate: 10-50 Hz
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ MANUAL COMMANDS                                                │
+└────────────────────────────────────────────────────────────────┘
+
+# Start hardware interface (simulation)
+ros2 run autonomy_core hardware_interface
+
+# Start hardware interface (real CAN)
+ros2 run autonomy_core hardware_interface \
+  --ros-args -p can_port:=/dev/ttyACM0
+
+# Monitor messages
+python3 scripts/hardware/can_testing_dashboard.py
+python3 scripts/hardware/can_testing_dashboard.py --hardware
+
+# Validate code
+python3 scripts/hardware/validate_can_blackboard_direct.py
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ TROUBLESHOOTING                                                │
+└────────────────────────────────────────────────────────────────┘
+
+No messages?
+  → ros2 node list | grep hardware_interface
+  → tail -f /tmp/hw_interface.log
+
+No device?
+  → ls -l /dev/ttyACM*
+  → ./scripts/hardware/setup_usbcan_pi5.sh
+
+Build errors?
+  → rm -rf build/ install/ log/
+  → colcon build --packages-select autonomy_interfaces autonomy_core
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ DOCUMENTATION                                                  │
+└────────────────────────────────────────────────────────────────┘
+
+Full Testing Guide:
+  scripts/hardware/README_TESTING.md
+
+Implementation Details:
+  docs/hardware/OPTION1_IMPLEMENTATION.md
+
+Hardware Guide:
+  docs/hardware/HARDWARE_TESTING_GUIDE.md
+
+Consolidation Summary:
+  docs/hardware/TESTING_CONSOLIDATION.md
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ DATA FLOW                                                      │
+└────────────────────────────────────────────────────────────────┘
+
+CAN Hardware → hardware_interface_node → /hardware/* topics
+                                      └→ blackboard.set()
+                                            (direct, <1ms)
+
+Dashboard sees: /hardware/* topics (real-time)
+Behavior Trees use: Blackboard (direct writes)
+
+
+┌────────────────────────────────────────────────────────────────┐
+│ SUCCESS CRITERIA                                               │
+└────────────────────────────────────────────────────────────────┘
+
+Software:
+  ✓ Dashboard shows 10 Hz message rate
+  ✓ Battery: 24.0V, 85%
+  ✓ "Blackboard client initialized" in logs
+  ✓ No errors
+
+Hardware:
+  ✓ Hardware: CONNECTED
+  ✓ Real voltage/current from CAN
+  ✓ Motor feedback present
+  ✓ No serial errors
+
+
+═══════════════════════════════════════════════════════════════
+
+Ready to test! Run: ./scripts/hardware/run_can_tests.sh

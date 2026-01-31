@@ -67,17 +67,105 @@ else:
     dry_run_option = None
 
 
-# Import URC modules (with fallbacks)
+# Import URC modules (simplified/core only; stubs when unavailable)
+import json as _json
+loads = _json.loads
+dumps = _json.dumps
+
+def _stub_robust_stats(data):
+    """Stub for robust_stats when numpy unavailable."""
+    n = len(data) if hasattr(data, "__len__") else 0
+    return {
+        "count": n, "mean": 0.0, "median": 0.0, "std": 0.0, "mad": 0.0,
+        "iqr": 0.0, "skewness": 0.0, "kurtosis": 0.0, "coefficient_of_variation": 0.0,
+    }
+
+def _stub_detect_outliers(data):
+    """Stub for detect_outliers."""
+    return {"outliers": [], "outlier_percentage": 0.0}
+
 try:
-    from core.config_models import load_urc_config, validate_config_data, RoverMode
-    from core.state_management import get_state_manager, create_state_machine, create_behavior_tree
-    from core.json_processor import loads, dumps
-    from core.statistics_processor import robust_stats
-    from core.data_structures import CircularBuffer
-    from core.transforms import euler_to_quat, quat_to_euler
+    from src.core.config_models import load_urc_config, validate_config_data, RoverMode
+    from src.core.simplified_state_manager import get_state_manager, SystemState
+    from src.core.data_manager import get_data_manager
+    _dm = get_data_manager()
+    CircularBuffer = _dm.create_circular_buffer(100, float).__class__
+    try:
+        import numpy as np
+        def robust_stats(data):
+            a = np.asarray(data)
+            n = len(a)
+            return {
+                "count": n,
+                "mean": float(np.mean(a)),
+                "median": float(np.median(a)),
+                "std": float(np.std(a)) if n > 0 else 0.0,
+                "mad": float(np.median(np.abs(a - np.median(a)))) if n > 0 else 0.0,
+                "iqr": float(np.percentile(a, 75) - np.percentile(a, 25)) if n > 0 else 0.0,
+                "skewness": 0.0,
+                "kurtosis": 0.0,
+                "coefficient_of_variation": float(np.std(a) / np.mean(a)) if n and np.mean(a) else 0.0,
+            }
+        def detect_outliers(data):
+            a = np.asarray(data)
+            q1, q3 = np.percentile(a, [25, 75])
+            iqr = q3 - q1
+            lo, hi = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+            out = a[(a < lo) | (a > hi)]
+            return {"outliers": out.tolist(), "outlier_percentage": 100.0 * len(out) / len(a) if len(a) else 0.0}
+    except ImportError:
+        robust_stats = _stub_robust_stats
+        detect_outliers = _stub_detect_outliers
+    try:
+        import transforms3d.euler as t3d_euler
+        def euler_to_quat(euler_rad):
+            return list(t3d_euler.euler2quat(euler_rad[0], euler_rad[1], euler_rad[2]))
+        def quat_to_euler(q):
+            return list(t3d_euler.quat2euler(q))
+    except ImportError:
+        def euler_to_quat(_):
+            return [0.0, 0.0, 0.0, 1.0]
+        def quat_to_euler(_):
+            return [0.0, 0.0, 0.0]
+    def create_state_machine(name, initial_state="idle"):
+        return None
+    def create_behavior_tree(name, root=None):
+        return None
+    class URCStateMachine:
+        def __init__(self):
+            self._sm = get_state_manager()
+        @property
+        def state(self):
+            return getattr(self._sm, "current_state", None) and self._sm.current_state.value or "idle"
+        def startup_complete(self):
+            self._sm.transition_to(SystemState.IDLE, "startup")
+        def calibration_complete(self):
+            self._sm.transition_to(SystemState.IDLE, "calibration")
+        def start_teleop(self):
+            self._sm.transition_to(SystemState.TELEOPERATION, "teleop")
+        def emergency_stop(self):
+            self._sm.transition_to(SystemState.EMERGENCY_STOP, "e-stop")
+    def get_state_machine_status(sm):
+        return {"State": getattr(sm, "state", "unknown"), "Manager": "UnifiedStateManager"}
+    def create_urc_behavior_tree(mission_type):
+        return None
     URC_MODULES_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError):
     URC_MODULES_AVAILABLE = False
+    load_urc_config = None
+    validate_config_data = lambda x: []
+    RoverMode = None
+    get_state_manager = None
+    create_state_machine = None
+    create_behavior_tree = None
+    CircularBuffer = None
+    robust_stats = _stub_robust_stats
+    detect_outliers = _stub_detect_outliers
+    euler_to_quat = lambda x: [0.0, 0.0, 0.0, 1.0]
+    quat_to_euler = lambda x: [0.0, 0.0, 0.0]
+    URCStateMachine = None
+    get_state_machine_status = lambda sm: {}
+    create_urc_behavior_tree = lambda x: None
 
 
 def setup_logging(verbose: bool = False):

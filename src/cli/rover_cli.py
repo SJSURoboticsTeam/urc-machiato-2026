@@ -29,7 +29,7 @@ from rich.text import Text
 from rich.live import Live
 import questionary
 
-from src.core.config_manager import (
+from src.infrastructure.config import (
     get_config, reload_config, create_default_config,
     RoverConfig, Environment
 )

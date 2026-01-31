@@ -13,7 +13,7 @@ from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass
 
 # Import unified configuration
-from src.core.configuration import SystemConfig, PerformanceConfig
+from src.infrastructure.config import RoverConfig as SystemConfig, PerformanceConfig
 
 
 class LightweightCore:
@@ -44,7 +44,7 @@ class LightweightCore:
         """Register lazy loaders for heavy components."""
 
         def load_state_machine():
-            from src.core.state_management import get_state_manager
+            from src.core.simplified_state_manager import get_state_manager
             state_mgr = get_state_manager()
             return state_mgr.create_state_machine("lightweight_core", "idle")
 
@@ -61,7 +61,7 @@ class LightweightCore:
             return get_data_manager()
 
         def load_bridge():
-            from src.bridges.simple_bridge import get_simple_bridge
+            from infrastructure.bridges.simple_bridge import get_simple_bridge
             return get_simple_bridge()
 
         def load_api():

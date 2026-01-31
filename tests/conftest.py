@@ -22,7 +22,6 @@ modules_to_clear = [
     "bridges.websocket_manager",
     "bridges.mission_orchestrator",
     "core.dds_domain_redundancy_manager",
-    "core.state_synchronization_manager",
     "core.recovery_coordinator",
     "config.config_manager",
 ]
@@ -34,12 +33,15 @@ for module in modules_to_clear:
 # Set up project paths to ensure latest code
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SRC_ROOT = os.path.join(PROJECT_ROOT, "src")
+SIMULATION_ROOT = os.path.join(PROJECT_ROOT, "simulation")
+CONFIG_ROOT = os.path.join(PROJECT_ROOT, "config")
 
 # Clear and reset Python path for clean imports
 original_path = sys.path[:]
 sys.path.clear()
 sys.path.append(PROJECT_ROOT)
 sys.path.append(SRC_ROOT)
+sys.path.append(SIMULATION_ROOT)
 sys.path.extend(original_path)
 
 # ROS2 testing imports and setup
@@ -99,3 +101,187 @@ def mock_config():
             "ros_domain_id": 42
         }
     }
+
+
+def _load_rover_config():
+    """Load real rover config from config/rover.yaml if available."""
+    config_path = os.path.join(CONFIG_ROOT, "rover.yaml")
+    if not os.path.isfile(config_path):
+        return {}
+    try:
+        import yaml
+        with open(config_path) as f:
+            return yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+
+
+def _minimal_simulation_config():
+    """Build minimal config satisfying SimulationManager._validate_config."""
+    return {
+        "environment": {"tier": "perfect"},
+        "sensors": [
+            {"name": "gps", "type": "gps"},
+            {"name": "imu", "type": "imu"},
+        ],
+        "network": {"profile": "perfect"},
+        "rover": {"model": "urc_rover"},
+        "logging": {"enabled": False},
+        "monitoring": {"enabled": False},
+        "time": {"step_size": 0.01},
+        "recording": {},
+        "tracing": {"enabled": False},
+    }
+
+
+@pytest.fixture(scope="session")
+def rover_config():
+    """Load real rover config for tests that need production-like data."""
+    return _load_rover_config()
+
+
+@pytest.fixture
+def simulation_manager(rover_config):
+    """Pre-configured SimulationManager from minimal sim config (no rover.yaml merge needed for init)."""
+    try:
+        from simulation.core.simulation_manager import SimulationManager
+    except (ImportError, ModuleNotFoundError):
+        pytest.skip("SimulationManager not available")
+    config = _minimal_simulation_config()
+    manager = SimulationManager()
+    if not manager.initialize(config):
+        pytest.skip("SimulationManager failed to initialize")
+    yield manager
+    if manager.is_running:
+        manager.stop()
+
+
+class MockBlackboard:
+    """In-memory blackboard with UnifiedBlackboardClient-like API for tests without ROS2/BT."""
+
+    def __init__(self, initial_data=None):
+        self._data = dict(initial_data or {})
+        self._cache = {}
+
+    def get(self, key, default=None, value_type=""):
+        return self._data.get(key, default)
+
+    def get_bool(self, key, default=False):
+        v = self._data.get(key, default)
+        return bool(v) if v is not None else default
+
+    def get_int(self, key, default=0):
+        v = self._data.get(key, default)
+        return int(v) if v is not None else default
+
+    def get_double(self, key, default=0.0):
+        v = self._data.get(key, default)
+        return float(v) if v is not None else default
+
+    def get_string(self, key, default=""):
+        v = self._data.get(key, default)
+        return str(v) if v is not None else default
+
+    def set(self, key, value):
+        self._data[key] = value
+        return True
+
+    def clear_cache(self):
+        self._cache.clear()
+
+
+@pytest.fixture
+def mock_blackboard():
+    """Blackboard with test data pre-populated (in-memory mock, no ROS2 required)."""
+    initial = {
+        "robot_x": 0.0,
+        "robot_y": 0.0,
+        "mission_active": False,
+        "sensors_ok": True,
+        "perception_confidence": 0.0,
+        "map_quality": 0.0,
+        "closest_obstacle_distance": 999.0,
+        "samples_collected": 0,
+        "waypoints_completed": 0,
+    }
+    return MockBlackboard(initial)
+
+
+class MockStateMachine:
+    """In-memory state machine with UnifiedStateManager-like API for tests without ROS2."""
+
+    def __init__(self, initial_state="boot"):
+        from enum import Enum
+        states = Enum("SystemState", [
+            "BOOT", "IDLE", "AUTONOMOUS", "TELEOPERATION",
+            "EMERGENCY_STOP", "ERROR", "SHUTDOWN"
+        ], type=str)
+        self._state_map = {s.name.lower().replace("_", ""): s for s in states}
+        self._current = getattr(states, initial_state.upper().replace("-", "_"), states.BOOT)
+        self._previous = None
+        self._history = []
+        self._listeners = set()
+
+    @property
+    def current_state(self):
+        return self._current
+
+    @property
+    def previous_state(self):
+        return self._previous
+
+    def transition_to(self, new_state, reason=""):
+        if isinstance(new_state, str):
+            key = new_state.lower().replace("_", "").replace("-", "")
+            new_state = self._state_map.get(key, self._current)
+        self._previous = self._current
+        self._current = new_state
+        self._history.append((self._previous, self._current, reason))
+        for cb in self._listeners:
+            try:
+                cb(None)
+            except Exception:
+                pass
+        return True
+
+    def add_state_listener(self, callback):
+        self._listeners.add(callback)
+
+    def get_state_history(self):
+        return self._history
+
+
+@pytest.fixture
+def mock_state_machine():
+    """State machine initialized to known state (in-memory mock, no ROS2 required)."""
+    return MockStateMachine(initial_state="idle")
+
+
+@pytest.fixture
+def ros2_mock_environment():
+    """Full ROS2 mock node with topics and services (no real ROS2 required)."""
+    try:
+        from core.ros2_mock import ROS2Node, QoSProfile, qos_profiles
+    except ImportError:
+        from src.core.ros2_mock import ROS2Node, QoSProfile, qos_profiles
+    node = ROS2Node("test_mock_node")
+    yield node
+    node.shutdown()
+
+
+@pytest.fixture
+def full_stack_simulator():
+    """End-to-end simulation (WebSocket -> ROS2 -> CAN -> Firmware) with test config."""
+    try:
+        from simulation.integration.full_stack_simulator import FullStackSimulator
+    except (ImportError, ModuleNotFoundError):
+        pytest.skip("FullStackSimulator not available")
+    config = {
+        "websocket": {"enabled": True, "network": {"enabled": False}},
+        "slcan": {"enabled": True, "simulate_errors": False},
+        "firmware": {"enabled": True, "num_motors": 6, "simulate_faults": False},
+    }
+    sim = FullStackSimulator(config)
+    yield sim
+    if hasattr(sim, "shutdown") and callable(sim.shutdown):
+        sim.shutdown()

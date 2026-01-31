@@ -1,9 +1,0 @@
-
-# Response with subsystem status
-
-bool success
-string error_message
-string[] subsystem_names
-string[] subsystem_states
-float32[] subsystem_health  # 0.0 to 1.0 for each subsystem
-string[] status_messages

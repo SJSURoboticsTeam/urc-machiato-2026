@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_safety_system/ament_cmake_environment_hooks/local_setup.bash

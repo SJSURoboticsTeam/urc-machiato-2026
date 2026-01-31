@@ -338,13 +338,13 @@ class TestDeploymentReadiness:
 
         try:
             # Test configuration recovery
-            import src.core.configuration_manager
-            config_manager = src.core.configuration_manager.get_config_manager()
+            import src.infrastructure.config
+            config_manager = src.core.config_manager.get_config_manager()
             recovery_successful &= config_manager is not None
 
             # Test component registry recovery
-            import src.core.component_registry
-            registry = src.core.component_registry.ComponentRegistry()
+            from src.core.simplified_component_registry import get_component_registry
+            registry = get_component_registry()
             recovery_successful &= registry is not None
 
         except Exception as e:
@@ -448,8 +448,9 @@ class TestDeploymentReadiness:
         start_time = time.time()
 
         try:
-            import src.core.configuration_manager
-            import src.core.component_registry
+            import src.infrastructure.config
+            from src.core.simplified_component_registry import get_component_registry
+            get_component_registry()
             import src.core.observability
 
             load_time = time.time() - start_time

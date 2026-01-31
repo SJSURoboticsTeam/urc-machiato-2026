@@ -417,8 +417,10 @@ class MainCodebaseProtocolTester:
         result = InterfaceTestResult("Hardware Interface Node Configuration")
         
         try:
-            # Check if hardware interface node exists
-            hw_interface_path = Path("/home/durian/urc-machiato-2026/src/autonomy/control/hardware_interface/hardware_interface_node.py")
+            # Check if hardware interface node exists (autonomy_core package path)
+            script_dir = Path(__file__).resolve().parent
+            workspace_root = script_dir.parent.parent
+            hw_interface_path = workspace_root / "src/autonomy/autonomy_core/autonomy_core/control/hardware_interface_node.py"
             
             # #region agent log
             log_debug("test_submodule_interfaces.py:417", "Checking hardware interface node", 

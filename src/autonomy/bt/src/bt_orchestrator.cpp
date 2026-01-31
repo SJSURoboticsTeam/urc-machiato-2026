@@ -11,14 +11,24 @@
 #include "behaviortree_cpp/loggers/bt_cout_logger.h"
 #include "behaviortree_cpp/loggers/bt_file_logger_v2.h"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/callback_group.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "rclcpp/qos.hpp"
+#include "rmw/qos_profiles.h"
 #include "ament_index_cpp/get_package_share_directory.hpp"
+
+// Jazzy: Events Executor (if available)
+#ifdef RCLCPP__EXECUTORS__EVENTS_EXECUTOR_HPP_
+#include "rclcpp/executors/events_executor.hpp"
+#define EVENTS_EXECUTOR_AVAILABLE
+#endif
 #include "std_srvs/srv/trigger.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
@@ -26,12 +36,17 @@
 #include "autonomy_interfaces/srv/get_system_state.hpp"
 #include "autonomy_interfaces/srv/detect_aruco.hpp"
 #include "autonomy_interfaces/srv/detect_mission_aruco.hpp"
+#include "autonomy_interfaces/srv/get_blackboard_value.hpp"
+#include "autonomy_interfaces/srv/set_blackboard_value.hpp"
 #include "autonomy_interfaces/msg/led_command.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
 // Action interfaces for BT
 #include "autonomy_interfaces/action/navigate_to_pose.hpp"
 #include "autonomy_interfaces/action/execute_mission.hpp"
+
+// Blackboard key constants
+#include "autonomy_bt/blackboard_keys.hpp"
 
 using namespace BT;
 using namespace std::chrono_literals;
@@ -1221,47 +1236,165 @@ private:
     rclcpp::Node::SharedPtr node_;
 };
 
-class BTOrchestrator : public rclcpp::Node
+// Jazzy QoS Profiles for BT Orchestrator
+rclcpp::QoS get_autonomy_status_qos() {
+    rclcpp::QoS qos(5);
+    qos.reliable();
+    qos.durability(rclcpp::DurabilityPolicy::TransientLocal);
+    qos.deadline(std::chrono::milliseconds(100));
+    return qos;
+}
+
+rclcpp::QoS get_telemetry_qos() {
+    rclcpp::QoS qos(50);
+    qos.best_effort();
+    qos.durability(rclcpp::DurabilityPolicy::Volatile);
+    qos.deadline(std::chrono::seconds(1));
+    return qos;
+}
+
+class BTOrchestrator : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-    BTOrchestrator() : rclcpp::Node("bt_orchestrator")
+    BTOrchestrator() : rclcpp_lifecycle::LifecycleNode("bt_orchestrator")
     {
-        RCLCPP_INFO(get_logger(), "BT Orchestrator initialized (BT.CPP 4.x Standard)");
-
-        // Initialize immediately for regular node operation
-        initialize_bt_orchestrator();
-
-        // Create and start timers after node is fully constructed
+        RCLCPP_INFO(get_logger(), "BT Orchestrator initialized (BT.CPP 4.x with LifecycleNode)");
+        
+        // Create callback groups for priority scheduling
+        realtime_callback_group_ = create_callback_group(
+            rclcpp::CallbackGroupType::MutuallyExclusive);
+        
+        telemetry_callback_group_ = create_callback_group(
+            rclcpp::CallbackGroupType::MutuallyExclusive);
+    }
+    
+    // Lifecycle callbacks
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_configure(const rclcpp_lifecycle::State & state) override
+    {
+        RCLCPP_INFO(get_logger(), "Configuring BT Orchestrator...");
+        
+        // Initialize BT orchestrator
+        if (!initialize_bt_orchestrator()) {
+            return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::FAILURE;
+        }
+        
+        RCLCPP_INFO(get_logger(), "BT Orchestrator configured successfully");
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+    }
+    
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_activate(const rclcpp_lifecycle::State & state) override
+    {
+        RCLCPP_INFO(get_logger(), "Activating BT Orchestrator...");
+        
+        // Activate lifecycle publishers
+        if (telemetry_publisher_) {
+            telemetry_publisher_->on_activate();
+        }
+        
+        // Create and start timers with callback groups
         execution_timer_ = create_wall_timer(
             std::chrono::milliseconds(100),
-            std::bind(&BTOrchestrator::execute_tree, this));
+            std::bind(&BTOrchestrator::execute_tree, this),
+            realtime_callback_group_);
 
         telemetry_timer_ = create_wall_timer(
             std::chrono::seconds(1),
-            std::bind(&BTOrchestrator::publish_telemetry_status, this));
+            std::bind(&BTOrchestrator::publish_telemetry_status, this),
+            telemetry_callback_group_);
 
-        RCLCPP_INFO(get_logger(), "BT timers started");
+        RCLCPP_INFO(get_logger(), "BT Orchestrator activated");
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+    }
+    
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_deactivate(const rclcpp_lifecycle::State & state) override
+    {
+        RCLCPP_INFO(get_logger(), "Deactivating BT Orchestrator...");
+        
+        // Cancel timers
+        if (execution_timer_) {
+            execution_timer_->cancel();
+        }
+        if (telemetry_timer_) {
+            telemetry_timer_->cancel();
+        }
+        
+        // Deactivate publishers
+        if (telemetry_publisher_) {
+            telemetry_publisher_->on_deactivate();
+        }
+        
+        RCLCPP_INFO(get_logger(), "BT Orchestrator deactivated");
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+    }
+    
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_cleanup(const rclcpp_lifecycle::State & state) override
+    {
+        RCLCPP_INFO(get_logger(), "Cleaning up BT Orchestrator...");
+        
+        // Clean up resources
+        execution_timer_.reset();
+        telemetry_timer_.reset();
+        telemetry_publisher_.reset();
+        file_logger_.reset();
+        console_logger_.reset();
+        
+        RCLCPP_INFO(get_logger(), "BT Orchestrator cleaned up");
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
 private:
-    void initialize_bt_orchestrator()
+    bool initialize_bt_orchestrator()
     {
         // Initialize blackboard for inter-node communication
         blackboard_ = BT::Blackboard::create();
 
-        // Initialize with validated default values
-        set_blackboard_value("mission_active", false);
-        set_blackboard_value("robot_x", 0.0);
-        set_blackboard_value("robot_y", 0.0);
-        set_blackboard_value("robot_yaw", 0.0);
-        set_blackboard_value("slam_x", 0.0);
-        set_blackboard_value("slam_y", 0.0);
-        set_blackboard_value("slam_confidence", 0.0);
-        set_blackboard_value("samples_collected", 0);
-        set_blackboard_value("waypoints_completed", 0);
-        set_blackboard_value("sensors_ok", true);
-        set_blackboard_value("navigation_ok", true);
-        set_blackboard_value("last_error", std::string(""));
+        // Initialize with validated default values using schema constants
+        // Mission state
+        set_blackboard_value(BlackboardKeys::MISSION_ACTIVE, false);
+        set_blackboard_value(BlackboardKeys::SAMPLES_COLLECTED, 0);
+        set_blackboard_value(BlackboardKeys::WAYPOINTS_COMPLETED, 0);
+        set_blackboard_value(BlackboardKeys::CURRENT_WAYPOINT_INDEX, 0);
+        set_blackboard_value(BlackboardKeys::CURRENT_MISSION_PHASE, std::string("idle"));
+        
+        // Robot state (from odometry)
+        set_blackboard_value(BlackboardKeys::ROBOT_X, 0.0);
+        set_blackboard_value(BlackboardKeys::ROBOT_Y, 0.0);
+        set_blackboard_value(BlackboardKeys::ROBOT_YAW, 0.0);
+        
+        // SLAM state
+        set_blackboard_value(BlackboardKeys::SLAM_X, 0.0);
+        set_blackboard_value(BlackboardKeys::SLAM_Y, 0.0);
+        set_blackboard_value(BlackboardKeys::SLAM_CONFIDENCE, 0.0);
+        
+        // Navigation state (for autonomous navigation)
+        set_blackboard_value(BlackboardKeys::NAVIGATION_STATUS, std::string("idle"));
+        set_blackboard_value(BlackboardKeys::PATH_CLEAR, true);
+        set_blackboard_value(BlackboardKeys::DISTANCE_TO_TARGET, 999.0);
+        
+        // Perception state
+        set_blackboard_value(BlackboardKeys::PERCEPTION_CONFIDENCE, 0.0);
+        set_blackboard_value(BlackboardKeys::MAP_QUALITY, 0.0);
+        set_blackboard_value(BlackboardKeys::FEATURE_COUNT, 0);
+        set_blackboard_value(BlackboardKeys::OBSTACLE_DETECTION_CONFIDENCE, 0.0);
+        
+        // Obstacle detection
+        set_blackboard_value(BlackboardKeys::CLOSEST_OBSTACLE_DISTANCE, 999.0);
+        set_blackboard_value(BlackboardKeys::OBSTACLE_DETECTED, false);
+        
+        // Safety state
+        set_blackboard_value(BlackboardKeys::SAFETY_STOP_ACTIVE, false);
+        set_blackboard_value(BlackboardKeys::EMERGENCY_STOP_ACTIVE, false);
+        set_blackboard_value(BlackboardKeys::PROXIMITY_VIOLATION_DISTANCE, 999.0);
+        set_blackboard_value(BlackboardKeys::BATTERY_LEVEL, 100.0);
+        
+        // System health
+        set_blackboard_value(BlackboardKeys::SENSORS_OK, true);
+        set_blackboard_value(BlackboardKeys::NAVIGATION_OK, true);
+        set_blackboard_value(BlackboardKeys::LAST_ERROR, std::string(""));
 
         // Register standardized nodes
         factory_.registerNodeType<CallService>("CallService");
@@ -1299,38 +1432,67 @@ private:
             RCLCPP_INFO(get_logger(), "Behavior tree loaded successfully");
         } catch (const std::exception& e) {
             RCLCPP_ERROR(get_logger(), "Failed to load behavior tree: %s", e.what());
-            return;
+            return false;
         }
 
-        // Set up ROS2 subscribers for blackboard updates
+        // Set up ROS2 subscribers for blackboard updates with Jazzy QoS
+        rclcpp::SubscriptionOptions sub_options;
+        sub_options.callback_group = realtime_callback_group_;
+        
         odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-            "/odom", 10, std::bind(&BTOrchestrator::odom_callback, this, std::placeholders::_1));
+            "/odom", get_autonomy_status_qos(),
+            std::bind(&BTOrchestrator::odom_callback, this, std::placeholders::_1),
+            sub_options);
 
+        // Try PoseWithCovarianceStamped first (for confidence calculation), fallback to PoseStamped
         slam_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/slam/pose", 10, std::bind(&BTOrchestrator::slam_pose_callback, this, std::placeholders::_1));
+            "/slam/pose", get_autonomy_status_qos(),
+            std::bind(&BTOrchestrator::slam_pose_callback, this, std::placeholders::_1),
+            sub_options);
+        
+        // Also subscribe to PoseWithCovarianceStamped if available (for better confidence)
+        slam_pose_cov_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            "/slam/pose_with_covariance", get_autonomy_status_qos(),
+            std::bind(&BTOrchestrator::slam_pose_cov_callback, this, std::placeholders::_1),
+            sub_options);
 
         // Set up file logger for debugging
         file_logger_ = std::make_unique<BT::FileLogger2>(tree_, "/tmp/bt_execution.btlog");
+        console_logger_ = std::make_unique<BT::StdCoutLogger>(tree_);
 
-        // Set up telemetry publisher
-        telemetry_publisher_ = create_publisher<std_msgs::msg::String>("/bt/telemetry", 10);
+        // Set up telemetry publisher with lifecycle support
+        telemetry_publisher_ = create_publisher<std_msgs::msg::String>("/bt/telemetry", get_telemetry_qos());
 
-        // Set up action servers
+        // Set up action servers with callback groups
         navigate_to_pose_server_ = rclcpp_action::create_server<autonomy_interfaces::action::NavigateToPose>(
             this,
             "/bt/navigate_to_pose",
             std::bind(&BTOrchestrator::handle_navigate_to_pose_goal, this, std::placeholders::_1, std::placeholders::_2),
             std::bind(&BTOrchestrator::handle_navigate_to_pose_cancel, this, std::placeholders::_1),
-            std::bind(&BTOrchestrator::handle_navigate_to_pose_accepted, this, std::placeholders::_1));
+            std::bind(&BTOrchestrator::handle_navigate_to_pose_accepted, this, std::placeholders::_1),
+            rcl_action_server_get_default_options(), realtime_callback_group_);
 
         execute_mission_server_ = rclcpp_action::create_server<autonomy_interfaces::action::ExecuteMission>(
             this,
             "/bt/execute_mission",
             std::bind(&BTOrchestrator::handle_execute_mission_goal, this, std::placeholders::_1, std::placeholders::_2),
             std::bind(&BTOrchestrator::handle_execute_mission_cancel, this, std::placeholders::_1),
-            std::bind(&BTOrchestrator::handle_execute_mission_accepted, this, std::placeholders::_1));
+            std::bind(&BTOrchestrator::handle_execute_mission_accepted, this, std::placeholders::_1),
+            rcl_action_server_get_default_options(), realtime_callback_group_);
 
-        RCLCPP_INFO(get_logger(), "BT Orchestrator fully initialized and running");
+        // Set up blackboard services for unified access
+        blackboard_get_srv_ = create_service<autonomy_interfaces::srv::GetBlackboardValue>(
+            "/blackboard/get_value",
+            std::bind(&BTOrchestrator::get_blackboard_value_callback, this, std::placeholders::_1, std::placeholders::_2),
+            rclcpp::QoS(10), telemetry_callback_group_);
+
+        blackboard_set_srv_ = create_service<autonomy_interfaces::srv::SetBlackboardValue>(
+            "/blackboard/set_value",
+            std::bind(&BTOrchestrator::set_blackboard_value_callback, this, std::placeholders::_1, std::placeholders::_2),
+            rclcpp::QoS(10), telemetry_callback_group_);
+
+        RCLCPP_INFO(get_logger(), "BT Orchestrator fully initialized with unified blackboard services");
+        return true;
     }
 
 public:
@@ -1339,16 +1501,25 @@ private:
     // Blackboard for inter-node communication
     BT::Blackboard::Ptr blackboard_;
 
+    // Callback groups for priority scheduling
+    rclcpp::CallbackGroup::SharedPtr realtime_callback_group_;
+    rclcpp::CallbackGroup::SharedPtr telemetry_callback_group_;
+
     // ROS2 subscribers for blackboard updates
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr slam_pose_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr slam_pose_cov_sub_;
 
-    // ROS2 publisher for telemetry
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr telemetry_publisher_;
+    // ROS2 publisher for telemetry (lifecycle)
+    rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>::SharedPtr telemetry_publisher_;
 
     // Action servers for BT-driven operations
     rclcpp_action::Server<autonomy_interfaces::action::NavigateToPose>::SharedPtr navigate_to_pose_server_;
     rclcpp_action::Server<autonomy_interfaces::action::ExecuteMission>::SharedPtr execute_mission_server_;
+
+    // Blackboard services for unified access
+    rclcpp::Service<autonomy_interfaces::srv::GetBlackboardValue>::SharedPtr blackboard_get_srv_;
+    rclcpp::Service<autonomy_interfaces::srv::SetBlackboardValue>::SharedPtr blackboard_set_srv_;
 
     BehaviorTreeFactory factory_;
     Tree tree_;
@@ -1359,9 +1530,10 @@ private:
 
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
-        // Update blackboard with current position
-        blackboard_->set("robot_x", msg->pose.pose.position.x);
-        blackboard_->set("robot_y", msg->pose.pose.position.y);
+        // Update blackboard with current position using schema constants
+        blackboard_->set(BlackboardKeys::ROBOT_X, msg->pose.pose.position.x);
+        blackboard_->set(BlackboardKeys::ROBOT_Y, msg->pose.pose.position.y);
+        
         // Convert quaternion to yaw using tf2_geometry_msgs
         double roll, pitch, yaw;
         tf2::Quaternion q(
@@ -1371,15 +1543,43 @@ private:
             msg->pose.pose.orientation.w
         );
         tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
-        blackboard_->set("robot_yaw", yaw);
+        blackboard_->set(BlackboardKeys::ROBOT_YAW, yaw);
+        
+        // Also update velocity
+        blackboard_->set(BlackboardKeys::ROBOT_VELOCITY_X, msg->twist.twist.linear.x);
+        blackboard_->set(BlackboardKeys::ROBOT_VELOCITY_Y, msg->twist.twist.linear.y);
     }
 
     void slam_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
-        // Update blackboard with SLAM pose
-        blackboard_->set("slam_x", msg->pose.position.x);
-        blackboard_->set("slam_y", msg->pose.position.y);
-        blackboard_->set("slam_confidence", 0.9);  // TODO: Get from covariance
+        // Update blackboard with SLAM pose (no covariance available)
+        blackboard_->set(BlackboardKeys::SLAM_X, msg->pose.position.x);
+        blackboard_->set(BlackboardKeys::SLAM_Y, msg->pose.position.y);
+        
+        // Default confidence (will be updated by covariance callback if available)
+        blackboard_->set(BlackboardKeys::SLAM_CONFIDENCE, 0.9);
+        blackboard_->set(BlackboardKeys::PERCEPTION_CONFIDENCE, 0.9);
+    }
+
+    void slam_pose_cov_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+    {
+        // Update blackboard with SLAM pose using schema constants
+        blackboard_->set(BlackboardKeys::SLAM_X, msg->pose.pose.position.x);
+        blackboard_->set(BlackboardKeys::SLAM_Y, msg->pose.pose.position.y);
+        
+        // Calculate confidence from covariance
+        double confidence = 0.9;  // Default
+        if (msg->pose.covariance.size() >= 1) {
+            // Use position variance (xx element) to calculate confidence
+            double position_variance = msg->pose.covariance[0];
+            // Inverse relationship: higher variance = lower confidence
+            confidence = 1.0 / (1.0 + position_variance);
+            confidence = std::max(0.0, std::min(1.0, confidence));  // Clamp to [0, 1]
+        }
+        blackboard_->set(BlackboardKeys::SLAM_CONFIDENCE, confidence);
+        
+        // Also set as perception_confidence for navigation purposes
+        blackboard_->set(BlackboardKeys::PERCEPTION_CONFIDENCE, confidence);
     }
 
 
@@ -1394,23 +1594,34 @@ private:
            << "\"event_type\":\"" << event_type << "\","
            << "\"tree_status\":\"" << (tree_.rootNode() ? BT::toStr(tree_.rootNode()->status()) : "no_tree") << "\","
            << "\"mission_progress\":{"
-           << "\"mission_active\":" << (get_blackboard_value<bool>("mission_active", false) ? "true" : "false") << ","
+           << "\"mission_active\":" << (get_blackboard_value<bool>(BlackboardKeys::MISSION_ACTIVE, false) ? "true" : "false") << ","
            << "\"current_mission\":\"sample_collection\","
-           << "\"samples_collected\":" << get_blackboard_value<int>("samples_collected", 0) << ","
-           << "\"waypoints_completed\":" << get_blackboard_value<int>("waypoints_completed", 0)
+           << "\"samples_collected\":" << get_blackboard_value<int>(BlackboardKeys::SAMPLES_COLLECTED, 0) << ","
+           << "\"waypoints_completed\":" << get_blackboard_value<int>(BlackboardKeys::WAYPOINTS_COMPLETED, 0)
            << "},"
            << "\"robot_state\":{"
-           << "\"robot_x\":" << get_blackboard_value<double>("robot_x", 0.0) << ","
-           << "\"robot_y\":" << get_blackboard_value<double>("robot_y", 0.0) << ","
-           << "\"robot_yaw\":" << get_blackboard_value<double>("robot_yaw", 0.0) << ","
-           << "\"slam_x\":" << get_blackboard_value<double>("slam_x", 0.0) << ","
-           << "\"slam_y\":" << get_blackboard_value<double>("slam_y", 0.0) << ","
-           << "\"slam_confidence\":" << get_blackboard_value<double>("slam_confidence", 0.0)
+           << "\"robot_x\":" << get_blackboard_value<double>(BlackboardKeys::ROBOT_X, 0.0) << ","
+           << "\"robot_y\":" << get_blackboard_value<double>(BlackboardKeys::ROBOT_Y, 0.0) << ","
+           << "\"robot_yaw\":" << get_blackboard_value<double>(BlackboardKeys::ROBOT_YAW, 0.0) << ","
+           << "\"slam_x\":" << get_blackboard_value<double>(BlackboardKeys::SLAM_X, 0.0) << ","
+           << "\"slam_y\":" << get_blackboard_value<double>(BlackboardKeys::SLAM_Y, 0.0) << ","
+           << "\"slam_confidence\":" << get_blackboard_value<double>(BlackboardKeys::SLAM_CONFIDENCE, 0.0)
+           << "},"
+           << "\"navigation_state\":{"
+           << "\"navigation_status\":\"" << get_blackboard_value<std::string>(BlackboardKeys::NAVIGATION_STATUS, "idle") << "\","
+           << "\"path_clear\":" << (get_blackboard_value<bool>(BlackboardKeys::PATH_CLEAR, true) ? "true" : "false") << ","
+           << "\"perception_confidence\":" << get_blackboard_value<double>(BlackboardKeys::PERCEPTION_CONFIDENCE, 0.0) << ","
+           << "\"map_quality\":" << get_blackboard_value<double>(BlackboardKeys::MAP_QUALITY, 0.0)
+           << "},"
+           << "\"safety_state\":{"
+           << "\"safety_stop_active\":" << (get_blackboard_value<bool>(BlackboardKeys::SAFETY_STOP_ACTIVE, false) ? "true" : "false") << ","
+           << "\"battery_level\":" << get_blackboard_value<double>(BlackboardKeys::BATTERY_LEVEL, 100.0) << ","
+           << "\"closest_obstacle_distance\":" << get_blackboard_value<double>(BlackboardKeys::CLOSEST_OBSTACLE_DISTANCE, 999.0)
            << "},"
            << "\"system_health\":{"
-           << "\"sensors_ok\":" << (get_blackboard_value<bool>("sensors_ok", true) ? "true" : "false") << ","
-           << "\"navigation_ok\":" << (get_blackboard_value<bool>("navigation_ok", true) ? "true" : "false") << ","
-           << "\"last_error\":\"" << get_blackboard_value<std::string>("last_error", "") << "\""
+           << "\"sensors_ok\":" << (get_blackboard_value<bool>(BlackboardKeys::SENSORS_OK, true) ? "true" : "false") << ","
+           << "\"navigation_ok\":" << (get_blackboard_value<bool>(BlackboardKeys::NAVIGATION_OK, true) ? "true" : "false") << ","
+           << "\"last_error\":\"" << get_blackboard_value<std::string>(BlackboardKeys::LAST_ERROR, "") << "\""
            << "}}";
         telemetry_msg.data = ss.str();
         telemetry_publisher_->publish(telemetry_msg);
@@ -1508,6 +1719,108 @@ private:
         }
 
         return true;
+    }
+
+    // Blackboard service callbacks
+    void get_blackboard_value_callback(
+        const std::shared_ptr<autonomy_interfaces::srv::GetBlackboardValue::Request> request,
+        std::shared_ptr<autonomy_interfaces::srv::GetBlackboardValue::Response> response)
+    {
+        try {
+            std::string key = request->key;
+            std::string value_type = request->value_type;
+            
+            // Try to get value based on type hint
+            if (value_type == "bool") {
+                bool value = get_blackboard_value<bool>(key, false);
+                response->value = value ? "true" : "false";
+                response->value_type = "bool";
+                response->success = true;
+            }
+            else if (value_type == "int") {
+                int value = get_blackboard_value<int>(key, 0);
+                response->value = std::to_string(value);
+                response->value_type = "int";
+                response->success = true;
+            }
+            else if (value_type == "double") {
+                double value = get_blackboard_value<double>(key, 0.0);
+                response->value = std::to_string(value);
+                response->value_type = "double";
+                response->success = true;
+            }
+            else if (value_type == "string" || value_type.empty()) {
+                // Try string first, then fall back to other types
+                try {
+                    std::string value = get_blackboard_value<std::string>(key, "");
+                    response->value = value;
+                    response->value_type = "string";
+                    response->success = true;
+                } catch (...) {
+                    // Try double as fallback
+                    try {
+                        double value = get_blackboard_value<double>(key, 0.0);
+                        response->value = std::to_string(value);
+                        response->value_type = "double";
+                        response->success = true;
+                    } catch (...) {
+                        response->success = false;
+                        response->error_message = "Key not found or type mismatch: " + key;
+                    }
+                }
+            }
+            else {
+                response->success = false;
+                response->error_message = "Unsupported value type: " + value_type;
+            }
+        } catch (const std::exception& e) {
+            response->success = false;
+            response->error_message = std::string("Exception: ") + e.what();
+            RCLCPP_ERROR(get_logger(), "GetBlackboardValue service error: %s", e.what());
+        }
+    }
+
+    void set_blackboard_value_callback(
+        const std::shared_ptr<autonomy_interfaces::srv::SetBlackboardValue::Request> request,
+        std::shared_ptr<autonomy_interfaces::srv::SetBlackboardValue::Response> response)
+    {
+        try {
+            std::string key = request->key;
+            std::string value_str = request->value;
+            std::string value_type = request->value_type;
+            
+            bool success = false;
+            
+            if (value_type == "bool") {
+                bool value = (value_str == "true" || value_str == "1");
+                success = set_blackboard_value(key, value);
+            }
+            else if (value_type == "int") {
+                int value = std::stoi(value_str);
+                success = set_blackboard_value(key, value);
+            }
+            else if (value_type == "double") {
+                double value = std::stod(value_str);
+                success = set_blackboard_value(key, value);
+            }
+            else if (value_type == "string") {
+                success = set_blackboard_value(key, value_str);
+            }
+            else {
+                response->success = false;
+                response->error_message = "Unsupported value type: " + value_type;
+                return;
+            }
+            
+            response->success = success;
+            if (!success) {
+                response->error_message = "Failed to set blackboard value (validation may have failed)";
+            }
+        } catch (const std::exception& e) {
+            response->success = false;
+            response->error_message = std::string("Exception: ") + e.what();
+            RCLCPP_ERROR(get_logger(), "SetBlackboardValue service error: %s", e.what());
+        }
     }
 
 private:

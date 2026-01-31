@@ -9,6 +9,12 @@ system logic and integration.
 Author: URC 2026 Autonomy Team
 """
 
+import pytest
+try:
+    from core import state_synchronization_manager  # noqa: F401
+except ImportError:
+    pytest.skip("state_synchronization_manager removed (archived)", allow_module_level=True)
+
 import os
 import sys
 import time
@@ -64,11 +70,11 @@ class AdvancedSystemsLogicTest:
     def test_state_sync_logic(self) -> dict:
         """Test state synchronization logic."""
         try:
-            from core.state_synchronization_manager import DistributedStateManager
+            from core.state_synchronization_manager import Distributedget_state_manager()
 
             # Create test managers
-            manager1 = DistributedStateManager("bridge1")
-            manager2 = DistributedStateManager("bridge2")
+            manager1 = Distributedget_state_manager()."bridge1")
+            manager2 = Distributedget_state_manager()."bridge2")
 
             # Register nodes
             manager1.register_node("bridge1")

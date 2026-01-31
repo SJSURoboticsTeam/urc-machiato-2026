@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/hardware_interface/ament_cmake_core/hardware_interfaceConfig-version.cmake
