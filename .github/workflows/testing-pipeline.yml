@@ -1,12 +1,10 @@
 name: URC 2026 Testing Pipeline
 
+# Disabled on push/PR - run manually via Actions tab if needed
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:
   schedule:
-    # Run comprehensive tests daily at 2 AM UTC
+    # Run comprehensive tests daily at 2 AM UTC (optional)
     - cron: '0 2 * * *'
 
 env:

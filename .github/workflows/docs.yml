@@ -1,19 +1,8 @@
 name: Build and Deploy Documentation
 
+# Disabled on push/PR - run manually via Actions tab if needed
 on:
-  push:
-    branches: [main, develop]
-    paths:
-      - "docs/**"
-      - "autonomy/**"
-      - "frontend/**"
-      - ".github/workflows/docs.yml"
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - "docs/**"
-      - "autonomy/**"
-      - "frontend/**"
+  workflow_dispatch:
 
 jobs:
   build-docs:
