@@ -1,6 +1,6 @@
-# URC 2026 Robotics Platform
+# URC Machiato 2026 - University Rover Challenge
 
-A complete autonomous robotics system for the University Rover Challenge 2026, featuring ROS2-based autonomy, computer vision, SLAM, and mission execution capabilities.
+An autonomous Mars rover system for the University Rover Challenge 2026, featuring ROS2-based navigation, computer vision, SLAM, and mission execution with enterprise-grade unified systems architecture.
 
 ## 🗺️ System Overview
 
@@ -57,6 +57,11 @@ The system consists of 6 interconnected layers:
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- Python 3.10+
+- ROS2 Humble/Jazzy
+- Ubuntu 22.04 LTS (recommended)
+
 ### One-Command Launch
 
 ```bash
@@ -69,30 +74,49 @@ The system consists of 6 interconnected layers:
 # Full autonomy system
 ./start.py prod autonomy
 
-# Simulation environment
+# Gazebo simulation
 ./start.py dev simulation
 ```
 
-### For Production Deployment
+### Build & Test
+```bash
+# Development build
+./scripts/build.sh dev --test
 
-See [Deployment Guide](docs/operations/DEPLOYMENT_GUIDE.md) for production deployment instructions.
+# Quality check (format + lint + test)
+./scripts/check_quality.sh
+
+# Run specific tests
+python -m pytest tests/unit/ -v
+python -m pytest path/to/test_file.py::test_name
+```
 
 ## 📋 Requirements
 
 - **Python**: 3.10+
-- **ROS2**: Humble Hawksbill
-- **Docker**: 24.0+ (recommended)
+- **ROS2**: Humble/Jazzy
+- **Node.js**: 18+ (for dashboard)
+- **Docker**: 24.0+ (optional, recommended)
 - **System**: Ubuntu 22.04 LTS or equivalent
 
 ## 🏗️ Architecture
 
-- **Autonomy System**: ROS2-based navigation and control
-- **Computer Vision**: Object detection and scene understanding
+### Core Components
+- **Autonomy System**: ROS2-based navigation and control with safety layers
+- **Computer Vision**: Object detection, ArUco tracking, scene understanding
 - **SLAM**: Real-time localization and mapping
-- **Mission Control**: Task execution and coordination
-- **Web Interface**: Real-time monitoring and control
-- **Teleoperation**: Web-based remote control interface (submodule)
-- **Control Systems**: STM32-based drive and arm control (submodule)
+- **Mission Control**: Behavior trees for task execution and coordination
+- **Web Dashboard**: React/TypeScript interface for monitoring and control
+- **Safety Systems**: Multi-layer redundant safety monitoring
+- **Hardware Interfaces**: STM32-based control systems (via submodules)
+
+### Unified Systems
+56% code reduction through enterprise-grade unified components:
+- 🧪 **Unified Test Suite** - 140+ tests consolidated
+- 📊 **Unified Data Manager** - High-performance data processing
+- 🛠️ **Unified Utilities** - Safety, hardware validation, recovery
+- 🤖 **Unified State Management** - Hierarchical state machines
+- 📈 **Unified Observability** - Structured logging and metrics
 
 ## 📦 Installation
 
@@ -100,7 +124,7 @@ See [Deployment Guide](docs/operations/DEPLOYMENT_GUIDE.md) for production deplo
 
 ```bash
 # Clone repository with submodules
-git clone --recurse-submodules https://github.com/your-org/urc-machiato-2026.git
+git clone --recurse-submodules https://github.com/SJSURoboticsTeam/urc-machiato-2026.git
 cd urc-machiato-2026
 
 # If not cloned with --recurse-submodules, initialize submodules
@@ -109,23 +133,32 @@ git submodule update --init --recursive
 # Install Python dependencies
 pip install -e .
 
-# For development
+# For development (includes testing tools)
 pip install -e ".[dev]"
 
 # For documentation
 pip install -e ".[docs]"
 
-# Setup submodules (optional)
+# Build ROS2 packages
+./scripts/build.sh dev
+
+# Setup submodules
 ./scripts/manage_submodules.sh update
 ```
 
-### Docker Deployment
+### Development Commands
 
 ```bash
-# Build and start services
-docker-compose -f docker-compose.prod.yml up -d
+# Format and lint code
+black . && ruff check --fix . && mypy .
 
-# Check status
+# Frontend development (in src/dashboard/)
+npm run dev      # Development server
+npm run test     # Run tests
+npm run build    # Production build
+
+# Docker deployment
+docker-compose -f docker-compose.prod.yml up -d
 docker-compose ps
 ```
 
@@ -213,10 +246,11 @@ autonomy/
 - **Mission orchestration** between components
 - **Data synchronization** across systems
 
-#### `src/src/dashboard/` - Web Dashboard
+#### `src/dashboard/` - Web Dashboard
 - **React/TypeScript** monitoring interface
 - **Real-time visualization** of rover state
 - **Mission control** and teleoperation
+- **Vite** build system with fast development
 
 #### `src/simulation/` - Gazebo Integration
 - **Robot models** and world environments
@@ -279,18 +313,34 @@ Git submodules for external components:
 
 ## 🤝 Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development guidelines and contribution process.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development guidelines. For AI assistants, see [`AGENTS.md`](AGENTS.md) for detailed development commands and code style guidelines.
+
+### Development Workflow
+1. Run `./scripts/check_quality.sh` before committing
+2. Ensure >80% test coverage for new code
+3. Follow ROS2 best practices and safety protocols
+4. Update documentation for API changes
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [`LICENSE`](LICENSE) file for details.
 
-## Documentation
+## 📚 Documentation
 
+### Essential Reading
 - **[Getting Started](docs/getting_started.rst)** - Setup and codebase orientation
 - **[Quick Start](docs/quickstart.rst)** - Run the system in minutes
+- **[Development Guide](AGENTS.md)** - Commands, code style, and workflows (for AI agents)
+- **[Unified Systems](docs/unified_systems.rst)** - Enterprise architecture components
+
+### Specialized Guides
 - **[Onboarding by role](docs/onboarding/README.md)** - Perception, Cognition, Motion Control, Communication
-- **[Build and test](docs/development/BUILD_AND_TEST.md)** - ROS2 build and CAN testing
-- **[How to test on hardware](docs/hardware/HOW_TO_TEST_ON_HARDWARE.md)** - CAN-to-blackboard hardware testing
+- **[Build and test](docs/development/BUILD_AND_TEST.md)** - ROS2 build and testing
+- **[Hardware Testing](docs/hardware/HOW_TO_TEST_ON_HARDWARE.md)** - CAN and hardware validation
 - **[Operations](docs/operations/)** - Deployment, troubleshooting, [deployment guide](docs/operations/DEPLOYMENT_GUIDE.md)
 - **[API Reference](docs/api/index.rst)** - Python, C++, JavaScript APIs
+
+### Competition Context
+- **URC 2026 Challenges**: Sample collection, equipment service, navigation, autonomous traversal
+- **Safety Requirements**: Multi-layer redundant safety systems
+- **Performance Targets**: Real-time processing under resource constraints

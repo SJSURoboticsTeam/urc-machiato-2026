@@ -1,44 +1,52 @@
 # AGENTS.md - URC Machiato 2026 Development Guide
 
-This file contains development guidelines and commands for agentic coding assistants working on the URC 2026 robotics platform.
+Development guidelines and commands for agentic coding assistants on URC 2026 robotics platform.
 
-## Quick Commands
+## Essential Commands
 
-### Build & Test Commands
+### Build System
 ```bash
-# Primary build system
 ./scripts/build.sh dev           # Development build (fast)
-./scripts/build.sh prod          # Production build (optimized)
+./scripts/build.sh prod          # Production build (optimized)  
 ./scripts/build.sh comp          # Competition build (safety-first)
 ./scripts/build.sh clean         # Clean all artifacts
+./scripts/build.sh dev --test    # Build + run tests
+./scripts/build.sh prod --deploy # Build + deploy
+```
 
-# Testing
+### Testing (pytest + markers)
+```bash
 python -m pytest tests/unit/ -v                    # Unit tests only
-python -m pytest tests/integration/ -v             # Integration tests
-python -m pytest tests/ --cov=src --cov-report=html # Full test suite with coverage
+python -m pytest tests/integration/ -v             # Integration tests  
+python -m pytest tests/ --cov=src --cov-report=html # Full suite + coverage
 python -m pytest path/to/test_file.py::test_name    # Run single test
-python -m pytest -k "test_pattern"                 # Run tests by name pattern
+python -m pytest -k "test_pattern"                 # Name pattern match
+python -m pytest -m "unit"                         # By marker
+python -m pytest -m "not slow"                     # Exclude slow tests
+```
 
-# Frontend (in src/dashboard/)
+### Code Quality (Primary: ruff)
+```bash
+./scripts/check_quality.sh    # Complete check (format, lint, test)
+black .                       # Format Python code  
+ruff check .                  # Lint (replaces flake8+isort)
+ruff check --fix .           # Auto-fix linting issues
+mypy .                        # Type checking
+```
+
+### Frontend (src/dashboard/)
+```bash
 npm run dev                   # Development server
-npm run build                 # Production build
+npm run build                 # Production build  
 npm run lint                  # ESLint
 npm run test                  # Vitest
 npm run test:coverage        # Coverage report
 ```
 
-### Quality Assurance
-```bash
-./scripts/check_quality.sh    # Complete quality check (format, lint, test)
-black .                       # Format Python code
-ruff check .                  # Lint Python code
-mypy .                        # Type checking
-```
-
 ### System Launch
 ```bash
 ./start.py dev frontend       # Frontend development server
-./start.py dev dashboard      # Testing dashboard (backend + frontend)
+./start.py dev dashboard      # Testing dashboard (backend + frontend)  
 ./start.py prod autonomy      # Full autonomy system
 ./start.py dev simulation     # Gazebo simulation
 ```
@@ -165,16 +173,10 @@ class NavigationNode(rclpy.lifecycle.LifecycleNode):
         
     def on_configure(self, state: rclpy.lifecycle.State) -> rclpy.lifecycle.CallbackReturn:
         """Configuration phase - setup publishers/subscribers."""
-        # Setup QoS-aware topics
         self.cmd_pub = self.create_publisher(
-            Twist, 
-            '/cmd_vel', 
+            Twist, '/cmd_vel', 
             qos_profile=QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
         )
-        return rclpy.lifecycle.CallbackReturn.SUCCESS
-        
-    def on_activate(self, state: rclpy.lifecycle.State) -> rclpy.lifecycle.CallbackReturn:
-        """Activation phase - start processing."""
         return rclpy.lifecycle.CallbackReturn.SUCCESS
 ```
 
@@ -189,19 +191,12 @@ All safety-critical code must:
 class SafetyMonitor:
     """Multi-layer safety monitoring system."""
     
-    def __init__(self):
-        self.primary_safety = PrimarySafetyLayer()
-        self.secondary_safety = SecondarySafetyLayer()
-        self.emergency_handler = EmergencyCoordinator()
-        
     def check_system_health(self) -> SafetyStatus:
         """Comprehensive safety check."""
         primary_result = self.primary_safety.check()
         if not primary_result.is_safe:
             return self.emergency_handler.handle(primary_result)
-            
-        secondary_result = self.secondary_safety.check()
-        return SafetyStatus.from_results(primary_result, secondary_result)
+        return SafetyStatus.from_results(primary_result, self.secondary_safety.check())
 ```
 
 ## Testing Guidelines
@@ -209,55 +204,31 @@ class SafetyMonitor:
 ### Python Test Structure
 ```python
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from autonomy.navigation import NavigationNode
 
 class TestNavigationNode:
-    """Test suite for NavigationNode."""
-    
     @pytest.fixture
     def navigation_node(self):
-        """Create navigation node for testing."""
         return NavigationNode()
         
     def test_navigation_success(self, navigation_node):
-        """Test successful navigation scenario."""
-        # Arrange
         mock_twist = Twist()
         mock_twist.linear.x = 1.0
-        
-        # Act
         result = navigation_node.process_command(mock_twist)
-        
-        # Assert
         assert result.success is True
-        assert navigation_node.get_current_velocity().x == 1.0
-        
-    def test_navigation_failure_invalid_input(self, navigation_node):
-        """Test navigation failure with invalid input."""
-        with pytest.raises(ValidationError):
-            navigation_node.process_command(None)
 ```
 
 ### Frontend Test Structure
 ```typescript
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { SensorDashboard } from './SensorDashboard';
 
 describe('SensorDashboard', () => {
   it('renders sensor data correctly', async () => {
     const mockData = [{ id: 1, value: 100 }];
     render(<SensorDashboard data={mockData} />);
-    
     expect(screen.getByText('100')).toBeInTheDocument();
-  });
-  
-  it('handles action callbacks', async () => {
-    const onAction = vi.fn();
-    render(<SensorDashboard data={[]} onAction={onAction} />);
-    
-    fireEvent.click(screen.getByRole('button'));
-    await waitFor(() => expect(onAction).toHaveBeenCalledWith('test-action'));
   });
 });
 ```
@@ -271,7 +242,7 @@ describe('SensorDashboard', () => {
 4. **Type check**: `mypy .`
 
 ### File Organization
-- **ROS2 packages**: `src/autonomy/` (functional organization, not layered)
+- **ROS2 packages**: `src/autonomy/` (functional organization)
 - **Mission logic**: `missions/` (separate from core autonomy)
 - **Web dashboard**: `src/dashboard/` (React/TypeScript)
 - **Configuration**: `config/rover.yaml` (centralized config)
@@ -279,17 +250,17 @@ describe('SensorDashboard', () => {
 
 ### Key Requirements
 - **Test coverage**: >80% for new code
-- **Documentation**: Update docs for any API changes
+- **Documentation**: Update docs for API changes
 - **Safety**: All robotics code must have safety checks
 - **Performance**: Consider resource constraints in robotics environment
 
 ## Project Context
 
-This is a University Rover Challenge autonomous Mars rover system with:
+University Rover Challenge autonomous Mars rover system with:
 - **ROS2 Humble/Jazzy** backend for robotics
 - **React 18 + TypeScript** frontend for dashboard
 - **Gazebo** simulation environment
 - **STM32** hardware interfaces (via submodules)
 - **Behavior Trees** for mission logic
 
-The codebase emphasizes safety, reliability, and comprehensive testing suitable for competition robotics.
+Emphasizes safety, reliability, and comprehensive testing for competition robotics.
