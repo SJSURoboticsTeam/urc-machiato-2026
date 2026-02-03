@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class TestType(Enum):
     """Types of tests."""
+
     UNIT = "unit"
     INTEGRATION = "integration"
     SYSTEM = "system"
@@ -51,6 +52,7 @@ class TestType(Enum):
 
 class TestStatus(Enum):
     """Test execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     PASSED = "passed"
@@ -61,6 +63,7 @@ class TestStatus(Enum):
 
 class TestPriority(Enum):
     """Test execution priority."""
+
     CRITICAL = 1
     HIGH = 2
     MEDIUM = 3
@@ -70,6 +73,7 @@ class TestPriority(Enum):
 @dataclass
 class TestResult:
     """Result of a test execution."""
+
     test_name: str
     test_type: TestType
     status: TestStatus
@@ -85,6 +89,7 @@ class TestResult:
 @dataclass
 class TestSuite:
     """Test suite definition."""
+
     name: str
     description: str
     test_type: TestType
@@ -100,6 +105,7 @@ class TestSuite:
 @dataclass
 class TestRun:
     """Test run configuration."""
+
     run_id: str
     suites: List[str]
     parallel_execution: bool = False
@@ -114,6 +120,7 @@ class TestRun:
 @dataclass
 class TestReport:
     """Comprehensive test report."""
+
     run_id: str
     timestamp: float = field(default_factory=time.time)
     duration: float = 0.0
@@ -156,9 +163,10 @@ class TestDataFactory:
                     {
                         "x": random.uniform(-10, 10),
                         "y": random.uniform(-10, 10),
-                        "z": 0.0
-                    } for _ in range(random.randint(3, 8))
-                ]
+                        "z": 0.0,
+                    }
+                    for _ in range(random.randint(3, 8))
+                ],
             }
 
         # Sensor data factory
@@ -169,7 +177,7 @@ class TestDataFactory:
                 "sensor_type": random.choice(["imu", "gps", "lidar", "camera"]),
                 "value": random.uniform(0, 100),
                 "unit": random.choice(["m", "m/s", "degrees", "pixels"]),
-                "quality": random.uniform(0.5, 1.0)
+                "quality": random.uniform(0.5, 1.0),
             }
 
         # Robot state factory
@@ -178,19 +186,19 @@ class TestDataFactory:
                 "position": {
                     "x": random.uniform(-5, 5),
                     "y": random.uniform(-5, 5),
-                    "z": 0.0
+                    "z": 0.0,
                 },
                 "orientation": {
                     "roll": random.uniform(-3.14, 3.14),
                     "pitch": random.uniform(-1.57, 1.57),
-                    "yaw": random.uniform(-3.14, 3.14)
+                    "yaw": random.uniform(-3.14, 3.14),
                 },
                 "velocity": {
                     "linear": random.uniform(0, 2.0),
-                    "angular": random.uniform(-1.0, 1.0)
+                    "angular": random.uniform(-1.0, 1.0),
                 },
                 "battery_level": random.uniform(0.1, 1.0),
-                "status": random.choice(["idle", "moving", "error", "charging"])
+                "status": random.choice(["idle", "moving", "error", "charging"]),
             }
 
         self.register_factory("mission", create_mission_data)
@@ -223,7 +231,9 @@ class TestDataFactory:
         data.update(overrides)
         return data
 
-    def create_batch(self, factory_name: str, count: int, **overrides) -> List[Dict[str, Any]]:
+    def create_batch(
+        self, factory_name: str, count: int, **overrides
+    ) -> List[Dict[str, Any]]:
         """Create a batch of test data."""
         return [self.create_data(factory_name, **overrides) for _ in range(count)]
 
@@ -264,10 +274,12 @@ class MockManager:
                 return MockService()
 
         class MockPublisher:
-            def publish(self, msg): pass
+            def publish(self, msg):
+                pass
 
         class MockSubscription:
-            def __init__(self): self.callback = None
+            def __init__(self):
+                self.callback = None
 
         class MockService:
             pass
@@ -291,10 +303,11 @@ class MockManager:
 
             def read(self):
                 import random
+
                 return {
                     "value": random.uniform(0, 100),
                     "timestamp": time.time(),
-                    "quality": random.uniform(0.8, 1.0)
+                    "quality": random.uniform(0.8, 1.0),
                 }
 
         self.register_mock("ros2_node", MockROS2Node)
@@ -328,7 +341,7 @@ class PerformanceBenchmark:
         self.benchmarks[name] = {
             "start_time": time.time(),
             "start_memory": self._get_memory_usage(),
-            "measurements": []
+            "measurements": [],
         }
 
     def end_benchmark(self, name: str) -> Dict[str, Any]:
@@ -344,7 +357,7 @@ class PerformanceBenchmark:
             "duration": end_time - benchmark["start_time"],
             "memory_delta": end_memory - benchmark["start_memory"],
             "start_time": benchmark["start_time"],
-            "end_time": end_time
+            "end_time": end_time,
         }
 
         # Check against baseline
@@ -353,7 +366,8 @@ class PerformanceBenchmark:
             result["baseline_comparison"] = {
                 "baseline_duration": baseline,
                 "performance_ratio": result["duration"] / baseline,
-                "within_tolerance": abs(result["duration"] - baseline) / baseline < 0.1  # 10% tolerance
+                "within_tolerance": abs(result["duration"] - baseline) / baseline
+                < 0.1,  # 10% tolerance
             }
 
         del self.benchmarks[name]
@@ -366,6 +380,7 @@ class PerformanceBenchmark:
     def _get_memory_usage(self) -> float:
         """Get current memory usage."""
         import psutil
+
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024  # MB
 
@@ -399,10 +414,13 @@ class UnifiedTestSuite:
         self.test_suites[suite.name] = suite
         logger.info(f"Registered test suite: {suite.name} ({suite.test_type.value})")
 
-    def create_test_suite(self, name: str, description: str, test_type: TestType,
-                         **kwargs) -> TestSuite:
+    def create_test_suite(
+        self, name: str, description: str, test_type: TestType, **kwargs
+    ) -> TestSuite:
         """Create and register a test suite."""
-        suite = TestSuite(name=name, description=description, test_type=test_type, **kwargs)
+        suite = TestSuite(
+            name=name, description=description, test_type=test_type, **kwargs
+        )
         self.register_test_suite(suite)
         return suite
 
@@ -468,10 +486,18 @@ class UnifiedTestSuite:
 
             # Calculate summary
             report.total_tests = len(report.results)
-            report.passed_tests = len([r for r in report.results if r.status == TestStatus.PASSED])
-            report.failed_tests = len([r for r in report.results if r.status == TestStatus.FAILED])
-            report.error_tests = len([r for r in report.results if r.status == TestStatus.ERROR])
-            report.skipped_tests = len([r for r in report.results if r.status == TestStatus.SKIPPED])
+            report.passed_tests = len(
+                [r for r in report.results if r.status == TestStatus.PASSED]
+            )
+            report.failed_tests = len(
+                [r for r in report.results if r.status == TestStatus.FAILED]
+            )
+            report.error_tests = len(
+                [r for r in report.results if r.status == TestStatus.ERROR]
+            )
+            report.skipped_tests = len(
+                [r for r in report.results if r.status == TestStatus.SKIPPED]
+            )
             report.duration = time.time() - start_time
 
             # Performance metrics
@@ -482,20 +508,24 @@ class UnifiedTestSuite:
                         "avg_test_duration": sum(durations) / len(durations),
                         "max_test_duration": max(durations),
                         "min_test_duration": min(durations),
-                        "total_duration": report.duration
+                        "total_duration": report.duration,
                     }
 
-            logger.info(f"Test run {test_run.run_id} completed: "
-                       f"{report.passed_tests}/{report.total_tests} passed")
+            logger.info(
+                f"Test run {test_run.run_id} completed: "
+                f"{report.passed_tests}/{report.total_tests} passed"
+            )
 
         except Exception as e:
             logger.error(f"Test run failed: {e}")
-            report.results.append(TestResult(
-                test_name="test_run",
-                test_type=TestType.SYSTEM,
-                status=TestStatus.ERROR,
-                error_message=str(e)
-            ))
+            report.results.append(
+                TestResult(
+                    test_name="test_run",
+                    test_type=TestType.SYSTEM,
+                    status=TestStatus.ERROR,
+                    error_message=str(e),
+                )
+            )
 
         return report
 
@@ -520,33 +550,41 @@ class UnifiedTestSuite:
         results = []
 
         # Find test methods
-        test_methods = [method for method in dir(test_class)
-                       if method.startswith('test_') and callable(getattr(test_class, method))]
+        test_methods = [
+            method
+            for method in dir(test_class)
+            if method.startswith("test_") and callable(getattr(test_class, method))
+        ]
 
         for method_name in test_methods:
             method = getattr(test_class, method_name)
-            result = self._run_test_function(method, suite, class_name=test_class.__name__)
+            result = self._run_test_function(
+                method, suite, class_name=test_class.__name__
+            )
             result.test_name = f"{test_class.__name__}.{method_name}"
             results.append(result)
 
         return results
 
-    def _run_test_function(self, test_function: Callable, suite: TestSuite,
-                          class_name: str = None) -> TestResult:
+    def _run_test_function(
+        self, test_function: Callable, suite: TestSuite, class_name: str = None
+    ) -> TestResult:
         """Run a single test function."""
-        test_name = f"{class_name}.{test_function.__name__}" if class_name else test_function.__name__
+        test_name = (
+            f"{class_name}.{test_function.__name__}"
+            if class_name
+            else test_function.__name__
+        )
 
         result = TestResult(
-            test_name=test_name,
-            test_type=suite.test_type,
-            status=TestStatus.RUNNING
+            test_name=test_name, test_type=suite.test_type, status=TestStatus.RUNNING
         )
 
         start_time = time.time()
 
         try:
             # Create test instance if it's a method
-            if hasattr(test_function, '__self__'):
+            if hasattr(test_function, "__self__"):
                 test_function()
             else:
                 test_function()
@@ -563,6 +601,7 @@ class UnifiedTestSuite:
             result.status = TestStatus.ERROR
             result.error_message = str(e)
             import traceback
+
             result.stack_trace = traceback.format_exc()
 
         except unittest.SkipTest as e:
@@ -595,28 +634,33 @@ class UnifiedTestSuite:
     def generate_test_report(self, report: TestReport, format: str = "json") -> str:
         """Generate test report in specified format."""
         if format == "json":
-            return json.dumps({
-                "run_id": report.run_id,
-                "timestamp": report.timestamp,
-                "duration": report.duration,
-                "summary": {
-                    "total": report.total_tests,
-                    "passed": report.passed_tests,
-                    "failed": report.failed_tests,
-                    "errors": report.error_tests,
-                    "skipped": report.skipped_tests
+            return json.dumps(
+                {
+                    "run_id": report.run_id,
+                    "timestamp": report.timestamp,
+                    "duration": report.duration,
+                    "summary": {
+                        "total": report.total_tests,
+                        "passed": report.passed_tests,
+                        "failed": report.failed_tests,
+                        "errors": report.error_tests,
+                        "skipped": report.skipped_tests,
+                    },
+                    "coverage": report.coverage_percentage,
+                    "performance": report.performance_metrics,
+                    "results": [
+                        {
+                            "name": r.test_name,
+                            "status": r.status.value,
+                            "duration": r.duration,
+                            "error": r.error_message,
+                        }
+                        for r in report.results
+                    ],
                 },
-                "coverage": report.coverage_percentage,
-                "performance": report.performance_metrics,
-                "results": [
-                    {
-                        "name": r.test_name,
-                        "status": r.status.value,
-                        "duration": r.duration,
-                        "error": r.error_message
-                    } for r in report.results
-                ]
-            }, indent=2, default=str)
+                indent=2,
+                default=str,
+            )
 
         elif format == "text":
             lines = [
@@ -627,7 +671,7 @@ class UnifiedTestSuite:
                 f"{report.failed_tests} failed, "
                 f"{report.error_tests} errors, "
                 f"{report.skipped_tests} skipped",
-                ""
+                "",
             ]
 
             for result in report.results:
@@ -635,10 +679,12 @@ class UnifiedTestSuite:
                     TestStatus.PASSED: "✓",
                     TestStatus.FAILED: "✗",
                     TestStatus.ERROR: "!",
-                    TestStatus.SKIPPED: "○"
+                    TestStatus.SKIPPED: "○",
                 }.get(result.status, "?")
 
-                lines.append(f"{status_icon} {result.test_name} ({result.duration:.3f}s)")
+                lines.append(
+                    f"{status_icon} {result.test_name} ({result.duration:.3f}s)"
+                )
 
                 if result.error_message:
                     lines.append(f"    Error: {result.error_message}")
@@ -651,20 +697,30 @@ class UnifiedTestSuite:
         """Get overall test suite status."""
         return {
             "registered_suites": len(self.test_suites),
-            "suite_types": {suite.test_type.value: len([s for s in self.test_suites.values()
-                                                       if s.test_type == suite.test_type])
-                           for suite in self.test_suites.values()},
-            "total_tests": sum(len(suite.test_classes) + len(suite.test_functions)
-                             for suite in self.test_suites.values()),
+            "suite_types": {
+                suite.test_type.value: len(
+                    [
+                        s
+                        for s in self.test_suites.values()
+                        if s.test_type == suite.test_type
+                    ]
+                )
+                for suite in self.test_suites.values()
+            },
+            "total_tests": sum(
+                len(suite.test_classes) + len(suite.test_functions)
+                for suite in self.test_suites.values()
+            ),
             "running_tests": len(self.running_tests),
             "factories_available": len(self.data_factory.factories),
             "mocks_available": len(self.mock_manager.mocks),
-            "performance_baselines": len(self.performance_benchmark.baselines)
+            "performance_baselines": len(self.performance_benchmark.baselines),
         }
 
 
 # Global test suite instance
 _test_suite = None
+
 
 def get_test_suite() -> UnifiedTestSuite:
     """Get global test suite instance."""
@@ -673,43 +729,46 @@ def get_test_suite() -> UnifiedTestSuite:
         _test_suite = UnifiedTestSuite()
     return _test_suite
 
+
 # Convenience functions
-def create_test_suite(name: str, description: str, test_type: TestType, **kwargs) -> TestSuite:
+def create_test_suite(
+    name: str, description: str, test_type: TestType, **kwargs
+) -> TestSuite:
     """Create a test suite."""
     return get_test_suite().create_test_suite(name, description, test_type, **kwargs)
+
 
 def run_test_suite(suite_name: str, **config) -> TestReport:
     """Run a test suite."""
     return get_test_suite().run_test_suite(suite_name, **config)
 
+
 def get_test_data(factory_name: str, **overrides) -> Dict[str, Any]:
     """Get test data."""
     return get_test_suite().get_test_data(factory_name, **overrides)
+
 
 def create_mock(mock_name: str, **kwargs):
     """Create a mock."""
     return get_test_suite().create_mock(mock_name, **kwargs)
 
+
 # Export key components
 __all__ = [
-    'UnifiedTestSuite',
-    'TestDataFactory',
-    'MockManager',
-    'PerformanceBenchmark',
-    'TestType',
-    'TestStatus',
-    'TestPriority',
-    'TestResult',
-    'TestSuite',
-    'TestRun',
-    'TestReport',
-    'get_test_suite',
-    'create_test_suite',
-    'run_test_suite',
-    'get_test_data',
-    'create_mock'
+    "UnifiedTestSuite",
+    "TestDataFactory",
+    "MockManager",
+    "PerformanceBenchmark",
+    "TestType",
+    "TestStatus",
+    "TestPriority",
+    "TestResult",
+    "TestSuite",
+    "TestRun",
+    "TestReport",
+    "get_test_suite",
+    "create_test_suite",
+    "run_test_suite",
+    "get_test_data",
+    "create_mock",
 ]
-
-
-
-

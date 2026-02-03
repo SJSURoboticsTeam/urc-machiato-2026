@@ -183,6 +183,7 @@ class WebSocketSensorBridgeNode(Node):
         try:
             # Use environment-based WebSocket URL
             from infrastructure.config.environment import get_env_manager
+
             env = get_env_manager()
             self.declare_parameter("websocket_url", env.get_websocket_url())
             self.declare_parameter("reconnect_interval", 3.0)

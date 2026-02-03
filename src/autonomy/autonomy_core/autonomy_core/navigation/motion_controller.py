@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''
+"""
 Motion Controller - Low-level motion control for rover navigation.
 
 Handles:
@@ -9,7 +9,7 @@ Handles:
 - Odometry integration
 
 Author: URC 2026 Autonomy Team
-'''
+"""
 
 import logging
 from typing import Optional, Tuple
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class MotionController:
-    '''
+    """
     Low-level motion control for autonomous navigation.
 
     Provides:
@@ -36,15 +36,15 @@ class MotionController:
     3. Acceleration/deceleration ramping
     4. Motor command generation
     5. Feedback monitoring and correction
-    '''
+    """
 
     def __init__(self) -> None:
-        '''
+        """
         Initialize the motion controller with default parameters.
 
         Sets up control limits, motor parameters, and initializes control state.
         Hardware interfaces are not initialized until initialize() is called.
-        '''
+        """
         # Velocity limits (m/s, rad/s)
         self.max_linear_speed = 2.0
         self.max_angular_speed = 1.0
@@ -70,10 +70,10 @@ class MotionController:
         self.right_motor = None
         self.pid_controller = None
 
-        logger.info('MotionController initialized with default parameters')
+        logger.info("MotionController initialized with default parameters")
 
     def initialize(self) -> bool:
-        '''
+        """
         Initialize motion controller hardware interfaces.
 
         Returns:
@@ -81,9 +81,9 @@ class MotionController:
 
         This method should be called before using the controller.
         It sets up motor controllers, encoders, and tests basic functionality.
-        '''
+        """
         try:
-            logger.info('Initializing motion controller hardware...')
+            logger.info("Initializing motion controller hardware...")
 
             # Initialize professional PID controllers using simple-pid library
             try:
@@ -91,28 +91,34 @@ class MotionController:
 
                 # Linear velocity PID controller
                 self.pid_linear = PID(
-                    Kp=1.5, Ki=0.1, Kd=0.05,  # Tuned for smooth linear motion
+                    Kp=1.5,
+                    Ki=0.1,
+                    Kd=0.05,  # Tuned for smooth linear motion
                     setpoint=0.0,
                     sample_time=0.1,
                     output_limits=(-self.max_linear_speed, self.max_linear_speed),
                     auto_mode=True,
-                    proportional_on_measurement=False
+                    proportional_on_measurement=False,
                 )
 
                 # Angular velocity PID controller
                 self.pid_angular = PID(
-                    Kp=2.0, Ki=0.2, Kd=0.1,  # More aggressive for rotation
+                    Kp=2.0,
+                    Ki=0.2,
+                    Kd=0.1,  # More aggressive for rotation
                     setpoint=0.0,
                     sample_time=0.1,
                     output_limits=(-self.max_angular_speed, self.max_angular_speed),
                     auto_mode=True,
-                    proportional_on_measurement=False
+                    proportional_on_measurement=False,
                 )
 
-                logger.info('Professional PID controllers initialized with simple-pid library')
+                logger.info(
+                    "Professional PID controllers initialized with simple-pid library"
+                )
 
             except ImportError:
-                logger.warning('simple-pid not available, PID control will be limited')
+                logger.warning("simple-pid not available, PID control will be limited")
                 self.pid_linear = None
                 self.pid_angular = None
 
@@ -126,16 +132,16 @@ class MotionController:
             # self.right_motor = MotorController(pin=RIGHT_MOTOR_PIN)
 
             self.is_initialized = True
-            logger.info('Motion controller hardware initialized successfully')
+            logger.info("Motion controller hardware initialized successfully")
             return True
 
         except Exception as e:
-            logger.error(f'Failed to initialize motion controller: {e}')
+            logger.error(f"Failed to initialize motion controller: {e}")
             self.is_initialized = False
             return False
 
     def set_velocity(self, linear_x: float, angular_z: float) -> bool:
-        '''
+        """
         Set target velocity with validation and safety limits.
 
         Args:
@@ -147,36 +153,44 @@ class MotionController:
 
         The method applies safety limits and validates inputs before accepting
         the velocity command. Emergency stop takes precedence over velocity commands.
-        '''
+        """
         if not self.is_initialized:
-            logger.warning('Motion controller not initialized, '
-                          'ignoring velocity command')
-            angular_vel = (right_wheel_velocity - left_wheel_velocity) / self.wheel_separation
+            logger.warning(
+                "Motion controller not initialized, " "ignoring velocity command"
+            )
+            angular_vel = (
+                right_wheel_velocity - left_wheel_velocity
+            ) / self.wheel_separation
 
         if self.emergency_stop_active:
-            logger.warning('Emergency stop active, ignoring velocity command')
+            logger.warning("Emergency stop active, ignoring velocity command")
             return False
 
         # Validate and limit velocities to safe ranges
         try:
             linear_x = max(self.min_linear_speed, min(self.max_linear_speed, linear_x))
-            angular_z = max(self.min_angular_speed,
-                           min(self.max_angular_speed, angular_z))
+            angular_z = max(
+                self.min_angular_speed, min(self.max_angular_speed, angular_z)
+            )
 
             self.target_velocity.linear.x = linear_x
             self.target_velocity.angular.z = angular_z
 
-            logger.debug(f'Velocity command set: linear={linear_x:.2f}, '
-                        f'angular={angular_z:.2f}')
+            logger.debug(
+                f"Velocity command set: linear={linear_x:.2f}, "
+                f"angular={angular_z:.2f}"
+            )
             return True
 
         except (ValueError, TypeError) as e:
-            logger.error(f'Invalid velocity parameters: linear_x={linear_x}, '
-                        f'angular_z={angular_z}, error={e}')
+            logger.error(
+                f"Invalid velocity parameters: linear_x={linear_x}, "
+                f"angular_z={angular_z}, error={e}"
+            )
             return False
 
     def execute_velocity_command(self) -> bool:
-        '''
+        """
         Execute the current velocity command with acceleration limiting.
 
         Returns:
@@ -184,9 +198,9 @@ class MotionController:
 
         This method calculates wheel velocities, applies acceleration limits,
         sends commands to motors, and monitors execution feedback.
-        '''
+        """
         if not self.is_initialized:
-            logger.warning('Motion controller not initialized')
+            logger.warning("Motion controller not initialized")
             return False
 
         if self.emergency_stop_active:
@@ -221,18 +235,26 @@ class MotionController:
 
                 # Apply acceleration limiting
                 corrected_linear = self._apply_acceleration_limit(corrected_linear)
-                corrected_angular = self._apply_acceleration_limit(corrected_angular, is_angular=True)
+                corrected_angular = self._apply_acceleration_limit(
+                    corrected_angular, is_angular=True
+                )
 
-                logger.debug(f'PID correction: linear={pid_linear_output:.3f}, angular={pid_angular_output:.3f}')
+                logger.debug(
+                    f"PID correction: linear={pid_linear_output:.3f}, angular={pid_angular_output:.3f}"
+                )
             else:
                 # Fallback without PID
                 corrected_linear = linear_vel
                 corrected_angular = angular_vel
-                logger.debug('PID controllers not available, using direct control')
+                logger.debug("PID controllers not available, using direct control")
 
             # Recalculate wheel velocities with PID corrections
-            left_wheel_vel = corrected_linear + (corrected_angular * self.wheel_separation / 2.0)
-            right_wheel_vel = corrected_linear - (corrected_angular * self.wheel_separation / 2.0)
+            left_wheel_vel = corrected_linear + (
+                corrected_angular * self.wheel_separation / 2.0
+            )
+            right_wheel_vel = corrected_linear - (
+                corrected_angular * self.wheel_separation / 2.0
+            )
 
             # TODO: Send commands to actual motor controllers
             # TODO: Monitor encoder feedback and correct for slippage
@@ -241,15 +263,19 @@ class MotionController:
             self.current_velocity.linear.x = corrected_linear
             self.current_velocity.angular.z = corrected_angular
 
-            logger.debug(f'Executed velocity command: linear={linear_vel:.2f}, angular={angular_vel:.2f}')
+            logger.debug(
+                f"Executed velocity command: linear={linear_vel:.2f}, angular={angular_vel:.2f}"
+            )
             return True
 
         except Exception as e:
-            logger.error(f'Failed to execute velocity command: {e}')
+            logger.error(f"Failed to execute velocity command: {e}")
             self.emergency_stop()
             return False
 
-    def _apply_acceleration_limit(self, target_velocity: float, is_angular: bool = False) -> float:
+    def _apply_acceleration_limit(
+        self, target_velocity: float, is_angular: bool = False
+    ) -> float:
         """
         Apply acceleration/deceleration limits to prevent jerky motion.
 
@@ -260,8 +286,11 @@ class MotionController:
         Returns:
             Limited velocity respecting acceleration constraints
         """
-        current_vel = (self.current_velocity.angular.z if is_angular
-                      else self.current_velocity.linear.x)
+        current_vel = (
+            self.current_velocity.angular.z
+            if is_angular
+            else self.current_velocity.linear.x
+        )
 
         velocity_diff = target_velocity - current_vel
         dt = 1.0 / self.update_rate  # Assume 10Hz update rate
@@ -283,14 +312,18 @@ class MotionController:
 
         # Limit the velocity change
         if abs(velocity_diff) > max_delta:
-            limited_velocity = current_vel + (max_delta if velocity_diff > 0 else -max_delta)
-            logger.debug(f'Acceleration limited: {current_vel:.2f} -> {limited_velocity:.2f}')
+            limited_velocity = current_vel + (
+                max_delta if velocity_diff > 0 else -max_delta
+            )
+            logger.debug(
+                f"Acceleration limited: {current_vel:.2f} -> {limited_velocity:.2f}"
+            )
             return limited_velocity
 
         return target_velocity
 
     def stop_motors(self) -> bool:
-        '''
+        """
         Emergency stop all motors immediately.
 
         Returns:
@@ -298,9 +331,9 @@ class MotionController:
 
         This method provides immediate motor shutdown for safety.
         It takes precedence over all other velocity commands.
-        '''
+        """
         try:
-            logger.warning('Executing emergency motor stop')
+            logger.warning("Executing emergency motor stop")
 
             # Set emergency stop flag
             self.emergency_stop_active = True
@@ -322,15 +355,17 @@ class MotionController:
             self._notify_safety_system_emergency_stop()
 
             success = motor_stop_success and braking_applied
-            logger.warning(f'Emergency stop completed - Motors: {motor_stop_success}, Braking: {braking_applied}')
+            logger.warning(
+                f"Emergency stop completed - Motors: {motor_stop_success}, Braking: {braking_applied}"
+            )
             return success
 
         except Exception as e:
-            logger.critical(f'Failed to execute emergency stop: {e}')
+            logger.critical(f"Failed to execute emergency stop: {e}")
             return False
 
     def emergency_stop(self) -> bool:
-        '''
+        """
         Activate emergency stop mode.
 
         Returns:
@@ -338,25 +373,25 @@ class MotionController:
 
         Emergency stop disables all velocity commands until manually reset.
         This is a safety-critical function that must work even if hardware fails.
-        '''
-        logger.critical('EMERGENCY STOP ACTIVATED')
+        """
+        logger.critical("EMERGENCY STOP ACTIVATED")
         self.emergency_stop_active = True
         return self.stop_motors()
 
     def reset_emergency_stop(self) -> bool:
-        '''
+        """
         Reset emergency stop and restore normal operation.
 
         Returns:
             bool: True if reset successful, False otherwise
 
         This should only be called after confirming the emergency condition is resolved.
-        '''
+        """
         if not self.is_initialized:
-            logger.warning('Cannot reset emergency stop: controller not initialized')
+            logger.warning("Cannot reset emergency stop: controller not initialized")
             return False
 
-        logger.info('Resetting emergency stop - restoring normal operation')
+        logger.info("Resetting emergency stop - restoring normal operation")
         self.emergency_stop_active = False
         return True
 
@@ -371,7 +406,7 @@ class MotionController:
             # Send stop commands to motor controllers
             # In a real implementation, this would communicate with actual motor drivers
 
-            logger.debug('Sending stop commands to all motor controllers')
+            logger.debug("Sending stop commands to all motor controllers")
 
             # Set all motor speeds to zero
             self.left_motor_speed = 0.0
@@ -386,7 +421,7 @@ class MotionController:
             return True
 
         except Exception as e:
-            logger.error(f'Failed to stop motors: {e}')
+            logger.error(f"Failed to stop motors: {e}")
             return False
 
     def _apply_mechanical_braking(self) -> bool:
@@ -400,7 +435,7 @@ class MotionController:
             # Apply regenerative braking or mechanical brakes
             # In a real implementation, this would engage braking systems
 
-            logger.debug('Applying mechanical braking')
+            logger.debug("Applying mechanical braking")
 
             # For now, simulate braking application
             # In practice, this might involve:
@@ -411,7 +446,7 @@ class MotionController:
             return True
 
         except Exception as e:
-            logger.error(f'Failed to apply mechanical braking: {e}')
+            logger.error(f"Failed to apply mechanical braking: {e}")
             return False
 
     def _update_emergency_status(self) -> bool:
@@ -423,7 +458,7 @@ class MotionController:
         """
         try:
             # Update LEDs, dashboard, and other status indicators
-            logger.debug('Updating emergency status indicators')
+            logger.debug("Updating emergency status indicators")
 
             # In a real implementation, this might involve:
             # - Setting emergency LED patterns
@@ -434,7 +469,7 @@ class MotionController:
             return True
 
         except Exception as e:
-            logger.error(f'Failed to update emergency status: {e}')
+            logger.error(f"Failed to update emergency status: {e}")
             return False
 
     def _notify_safety_system_emergency_stop(self) -> bool:
@@ -448,22 +483,23 @@ class MotionController:
             # Import safety monitor if available
             try:
                 from autonomy_safety_system.safety_monitor import get_safety_monitor
+
                 safety_monitor = get_safety_monitor()
                 # Safety monitor would already know about the emergency stop
                 # since it triggered this callback
             except ImportError:
-                logger.debug('Safety system not available for notification')
+                logger.debug("Safety system not available for notification")
 
             return True
 
         except Exception as e:
-            logger.error(f'Failed to notify safety system: {e}')
+            logger.error(f"Failed to notify safety system: {e}")
             return False
 
     def calculate_wheel_velocities(
         self, linear_x: float, angular_z: float
     ) -> Tuple[float, float]:
-        '''Calculate individual wheel velocities for differential drive'''
+        """Calculate individual wheel velocities for differential drive"""
         # Differential drive kinematics
         v_left = linear_x - (angular_z * self.wheel_separation / 2.0)
         v_right = linear_x + (angular_z * self.wheel_separation / 2.0)
@@ -473,7 +509,7 @@ class MotionController:
     def update_odometry(
         self, left_wheel_velocity: float, right_wheel_velocity: float, dt: float
     ) -> bool:
-        '''
+        """
         Update odometry from wheel encoder feedback.
 
         Args:
@@ -486,9 +522,9 @@ class MotionController:
 
         This method calculates the rover's position and orientation from wheel encoders.
         It accounts for wheel slip and provides dead reckoning when GPS is unavailable.
-        '''
+        """
         if not self.is_initialized:
-            logger.warning('Cannot update odometry: controller not initialized')
+            logger.warning("Cannot update odometry: controller not initialized")
             return False
 
         try:
@@ -500,20 +536,24 @@ class MotionController:
 
             # Differential drive odometry
             linear_vel = (left_wheel_velocity + right_wheel_velocity) / 2.0
-            angular_vel = (right_wheel_velocity - left_wheel_velocity) / self.wheel_separation
+            angular_vel = (
+                right_wheel_velocity - left_wheel_velocity
+            ) / self.wheel_separation
 
             # Integrate position (basic Euler integration)
             # This is a placeholder - real implementation would use proper odometry
 
-            logger.debug(f'Odometry update: linear_vel={linear_vel:.2f}, angular_vel={angular_vel:.2f}')
+            logger.debug(
+                f"Odometry update: linear_vel={linear_vel:.2f}, angular_vel={angular_vel:.2f}"
+            )
             return True
 
         except Exception as e:
-            logger.error(f'Failed to update odometry: {e}')
+            logger.error(f"Failed to update odometry: {e}")
             return False
 
     def get_current_velocity(self) -> Twist:
-        '''
+        """
         Get the currently executing velocity command.
 
         Returns:
@@ -521,52 +561,52 @@ class MotionController:
 
         This returns the velocity that should be currently executing,
         which may differ from the target velocity due to acceleration limiting.
-        '''
+        """
         return self.current_velocity
 
     def get_target_velocity(self) -> Twist:
-        '''
+        """
         Get the target velocity command.
 
         Returns:
             Twist: Target velocity as ROS Twist message
 
         This is the desired velocity that may still be ramping to due to acceleration limits.
-        '''
+        """
         return self.target_velocity
 
     def is_emergency_stop_active(self) -> bool:
-        '''
+        """
         Check if emergency stop is currently active.
 
         Returns:
             bool: True if emergency stop is active, False otherwise
-        '''
+        """
         return self.emergency_stop_active
 
     def get_status(self) -> dict:
-        '''
+        """
         Get comprehensive status of the motion controller.
 
         Returns:
             dict: Status information including initialization state,
                   emergency stop status, and current velocities
-        '''
+        """
         return {
-            'initialized': self.is_initialized,
-            'emergency_stop_active': self.emergency_stop_active,
-            'current_linear_velocity': self.current_velocity.linear.x,
-            'current_angular_velocity': self.current_velocity.angular.z,
-            'target_linear_velocity': self.target_velocity.linear.x,
-            'target_angular_velocity': self.target_velocity.angular.z,
+            "initialized": self.is_initialized,
+            "emergency_stop_active": self.emergency_stop_active,
+            "current_linear_velocity": self.current_velocity.linear.x,
+            "current_angular_velocity": self.current_velocity.angular.z,
+            "target_linear_velocity": self.target_velocity.linear.x,
+            "target_angular_velocity": self.target_velocity.angular.z,
         }
 
     def get_target_velocity(self) -> Twist:
-        '''Get target velocity'''
+        """Get target velocity"""
         return self.target_velocity
 
     def is_at_target_velocity(self, tolerance: float = 0.1) -> bool:
-        '''Check if current velocity matches target'''
+        """Check if current velocity matches target"""
         linear_diff = abs(
             self.current_velocity.linear.x - self.target_velocity.linear.x
         )
@@ -577,13 +617,13 @@ class MotionController:
         return linear_diff < tolerance and angular_diff < tolerance
 
     def set_emergency_stop(self, active: bool):
-        '''Set emergency stop state'''
+        """Set emergency stop state"""
         self.emergency_stop_active = active
         if active:
             self.stop_motors()
 
     def get_motor_status(self) -> dict:
-        '''Get motor status information'''
+        """Get motor status information"""
         # TODO: Implement motor status monitoring
         # - Current draw
         # - Temperature
@@ -591,12 +631,12 @@ class MotionController:
         # - Encoder values
 
         return {
-            'left_motor': {'current': 0.0, 'temperature': 25.0, 'status': 'ok'},
-            'right_motor': {'current': 0.0, 'temperature': 25.0, 'status': 'ok'},
+            "left_motor": {"current": 0.0, "temperature": 25.0, "status": "ok"},
+            "right_motor": {"current": 0.0, "temperature": 25.0, "status": "ok"},
         }
 
     def calibrate_motors(self):
-        '''Calibrate motor controllers'''
+        """Calibrate motor controllers"""
         # TODO: Implement motor calibration
         # - Find zero positions
         # - Calibrate PID gains
@@ -604,7 +644,7 @@ class MotionController:
         # - Validate encoder accuracy
 
     def reset_controller(self):
-        '''Reset controller state'''
+        """Reset controller state"""
         # TODO: Reset internal state
         # Clear velocity commands
         # Reset PID integrators
@@ -613,7 +653,7 @@ class MotionController:
         self.emergency_stop_active = False
 
     def shutdown(self):
-        '''Shutdown motion controller'''
+        """Shutdown motion controller"""
         # TODO: Clean shutdown
         # Stop all motors
         # Save calibration data

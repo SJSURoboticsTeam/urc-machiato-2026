@@ -214,12 +214,14 @@ class MovementStressController:
             "emergency_stops": self.emergency_stops_triggered,
             "command_conflicts": self.command_conflicts,
             "overspeed_events": self.overspeed_events,
-            "avg_response_latency_ms": statistics.mean(self.response_latencies)
-            if self.response_latencies
-            else 0,
-            "max_response_latency_ms": max(self.response_latencies)
-            if self.response_latencies
-            else 0,
+            "avg_response_latency_ms": (
+                statistics.mean(self.response_latencies)
+                if self.response_latencies
+                else 0
+            ),
+            "max_response_latency_ms": (
+                max(self.response_latencies) if self.response_latencies else 0
+            ),
             "command_success_rate": (
                 self.commands_processed
                 / max(self.commands_processed + self.commands_rejected, 1)

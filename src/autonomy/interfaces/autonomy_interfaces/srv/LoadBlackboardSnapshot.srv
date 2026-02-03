@@ -1,0 +1,9 @@
+# Load blackboard state from a JSON file. Does not clear system.emergency_stop with stale false.
+
+# Request
+string path             # File path to load from
+
+---
+# Response
+bool success
+string message          # Error message if success=false

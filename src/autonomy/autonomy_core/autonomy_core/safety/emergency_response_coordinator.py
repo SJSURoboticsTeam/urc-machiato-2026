@@ -369,9 +369,9 @@ class EmergencyResponseCoordinator(Node):
 
                     # Update safety event status
                     if self.active_safety_event:
-                        self.active_safety_event.response_status[
-                            subsystem_name
-                        ] = "SUCCESS"
+                        self.active_safety_event.response_status[subsystem_name] = (
+                            "SUCCESS"
+                        )
 
                     self.logger.info(f"Safety command acknowledged by {subsystem_name}")
                     return True
@@ -382,9 +382,9 @@ class EmergencyResponseCoordinator(Node):
                     )
                     client.error_count += 1
                     if self.active_safety_event:
-                        self.active_safety_event.response_status[
-                            subsystem_name
-                        ] = f"ERROR: {str(e)}"
+                        self.active_safety_event.response_status[subsystem_name] = (
+                            f"ERROR: {str(e)}"
+                        )
                     return False
             else:
                 self.logger.error(f"Safety command timeout for {subsystem_name}")
@@ -397,9 +397,9 @@ class EmergencyResponseCoordinator(Node):
             self.logger.error(f"Failed to send safety command to {subsystem_name}: {e}")
             client.error_count += 1
             if self.active_safety_event:
-                self.active_safety_event.response_status[
-                    subsystem_name
-                ] = f"EXCEPTION: {str(e)}"
+                self.active_safety_event.response_status[subsystem_name] = (
+                    f"EXCEPTION: {str(e)}"
+                )
             return False
 
     def initiate_recovery(

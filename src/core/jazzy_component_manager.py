@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 class ComponentState(Enum):
     """Component lifecycle states"""
+
     UNINITIALIZED = "uninitialized"
     CONFIGURING = "configuring"
     INACTIVE = "inactive"
@@ -49,6 +50,7 @@ class ComponentState(Enum):
 
 class ComponentHealth(Enum):
     """Component health status"""
+
     UNKNOWN = "unknown"
     HEALTHY = "healthy"
     DEGRADED = "degraded"
@@ -59,6 +61,7 @@ class ComponentHealth(Enum):
 @dataclass
 class ComponentDependency:
     """Dependency relationship between components"""
+
     component_name: str
     dependency_type: str  # "requires", "optional", "conflicts"
     startup_order: int = 0  # Lower numbers start first
@@ -68,6 +71,7 @@ class ComponentDependency:
 @dataclass
 class ComponentInfo:
     """Information about a managed component"""
+
     name: str
     component_type: str  # "bt_orchestrator", "state_machine", "motion_control", etc.
     lifecycle_node: Optional[LifecycleNode] = None
@@ -84,6 +88,7 @@ class ComponentInfo:
 @dataclass
 class SystemHealth:
     """Overall system health status"""
+
     overall_health: ComponentHealth
     component_count: int
     healthy_components: int
@@ -106,7 +111,7 @@ class JazzyComponentManager(LifecycleNode):
     """
 
     def __init__(self):
-        super().__init__('jazzy_component_manager')
+        super().__init__("jazzy_component_manager")
 
         # Component registry
         self.components: Dict[str, ComponentInfo] = {}
@@ -118,7 +123,7 @@ class JazzyComponentManager(LifecycleNode):
             healthy_components=0,
             degraded_components=0,
             failed_components=0,
-            last_updated=time.time()
+            last_updated=time.time(),
         )
 
         # Lifecycle management
@@ -150,7 +155,9 @@ class JazzyComponentManager(LifecycleNode):
             # Configure health monitoring
             self._setup_health_monitoring()
 
-            logger.info(f"✅ Component Manager configured with {len(self.components)} components")
+            logger.info(
+                f"✅ Component Manager configured with {len(self.components)} components"
+            )
             return TransitionCallbackReturn.SUCCESS
 
         except Exception as e:
@@ -236,81 +243,99 @@ class JazzyComponentManager(LifecycleNode):
         """Register all system components with their dependencies"""
 
         # Safety Layer (starts first, highest priority)
-        self._register_component(ComponentInfo(
-            name="reflex_layer",
-            component_type="safety_system",
-            dependencies=[],
-            health_check_interval=0.1  # 10Hz for safety monitoring
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="reflex_layer",
+                component_type="safety_system",
+                dependencies=[],
+                health_check_interval=0.1,  # 10Hz for safety monitoring
+            )
+        )
 
         # Core Infrastructure
-        self._register_component(ComponentInfo(
-            name="state_machine",
-            component_type="state_management",
-            dependencies=[
-                ComponentDependency("reflex_layer", "requires", startup_order=1)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="state_machine",
+                component_type="state_management",
+                dependencies=[
+                    ComponentDependency("reflex_layer", "requires", startup_order=1)
+                ],
+            )
+        )
 
         # Autonomy Stack
-        self._register_component(ComponentInfo(
-            name="bt_orchestrator",
-            component_type="behavior_tree",
-            dependencies=[
-                ComponentDependency("state_machine", "requires", startup_order=2),
-                ComponentDependency("reflex_layer", "requires", startup_order=1)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="bt_orchestrator",
+                component_type="behavior_tree",
+                dependencies=[
+                    ComponentDependency("state_machine", "requires", startup_order=2),
+                    ComponentDependency("reflex_layer", "requires", startup_order=1),
+                ],
+            )
+        )
 
         # Motion Control (depends on autonomy for commands)
-        self._register_component(ComponentInfo(
-            name="motion_control",
-            component_type="control_system",
-            dependencies=[
-                ComponentDependency("bt_orchestrator", "requires", startup_order=3),
-                ComponentDependency("reflex_layer", "requires", startup_order=1)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="motion_control",
+                component_type="control_system",
+                dependencies=[
+                    ComponentDependency("bt_orchestrator", "requires", startup_order=3),
+                    ComponentDependency("reflex_layer", "requires", startup_order=1),
+                ],
+            )
+        )
 
         # Perception Systems
-        self._register_component(ComponentInfo(
-            name="computer_vision",
-            component_type="perception",
-            dependencies=[
-                ComponentDependency("motion_control", "optional", startup_order=4)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="computer_vision",
+                component_type="perception",
+                dependencies=[
+                    ComponentDependency("motion_control", "optional", startup_order=4)
+                ],
+            )
+        )
 
-        self._register_component(ComponentInfo(
-            name="slam_system",
-            component_type="perception",
-            dependencies=[
-                ComponentDependency("computer_vision", "optional", startup_order=4),
-                ComponentDependency("motion_control", "optional", startup_order=3)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="slam_system",
+                component_type="perception",
+                dependencies=[
+                    ComponentDependency("computer_vision", "optional", startup_order=4),
+                    ComponentDependency("motion_control", "optional", startup_order=3),
+                ],
+            )
+        )
 
         # Communication Bridges
-        self._register_component(ComponentInfo(
-            name="websocket_bridge",
-            component_type="communication",
-            dependencies=[
-                ComponentDependency("bt_orchestrator", "optional", startup_order=5)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="websocket_bridge",
+                component_type="communication",
+                dependencies=[
+                    ComponentDependency("bt_orchestrator", "optional", startup_order=5)
+                ],
+            )
+        )
 
-        self._register_component(ComponentInfo(
-            name="can_bridge",
-            component_type="communication",
-            dependencies=[
-                ComponentDependency("motion_control", "requires", startup_order=4)
-            ]
-        ))
+        self._register_component(
+            ComponentInfo(
+                name="can_bridge",
+                component_type="communication",
+                dependencies=[
+                    ComponentDependency("motion_control", "requires", startup_order=4)
+                ],
+            )
+        )
 
     def _register_component(self, component_info: ComponentInfo):
         """Register a component with the manager"""
         self.components[component_info.name] = component_info
-        logger.info(f"📝 Registered component: {component_info.name} ({component_info.component_type})")
+        logger.info(
+            f"📝 Registered component: {component_info.name} ({component_info.component_type})"
+        )
 
     # ===== DEPENDENCY MANAGEMENT =====
 
@@ -320,11 +345,15 @@ class JazzyComponentManager(LifecycleNode):
             for dependency in component.dependencies:
                 if dependency.dependency_type == "requires":
                     if dependency.component_name not in self.components:
-                        logger.error(f"❌ Missing required dependency: {component_name} -> {dependency.component_name}")
+                        logger.error(
+                            f"❌ Missing required dependency: {component_name} -> {dependency.component_name}"
+                        )
                         return False
                 elif dependency.dependency_type == "conflicts":
                     if dependency.component_name in self.components:
-                        logger.error(f"❌ Conflicting dependency: {component_name} conflicts with {dependency.component_name}")
+                        logger.error(
+                            f"❌ Conflicting dependency: {component_name} conflicts with {dependency.component_name}"
+                        )
                         return False
 
         logger.info("✅ Component dependencies validated")
@@ -462,37 +491,49 @@ class JazzyComponentManager(LifecycleNode):
             logger.error(f"❌ Exception deactivating component {component_name}: {e}")
             component.state = ComponentState.ERROR
 
-    def _create_component_instance(self, component: ComponentInfo) -> Optional[LifecycleNode]:
+    def _create_component_instance(
+        self, component: ComponentInfo
+    ) -> Optional[LifecycleNode]:
         """Create an instance of the specified component type"""
         try:
             if component.component_type == "safety_system":
                 # Use adaptive state machine (production runtime state)
                 from src.core.simplified_state_manager import AdaptiveStateMachine
+
                 return AdaptiveStateMachine()
 
             elif component.component_type == "state_management":
                 from src.core.simplified_state_manager import AdaptiveStateMachine
+
                 return AdaptiveStateMachine()
 
             elif component.component_type == "behavior_tree":
                 # Would import JazzyBTOrchestrator, but it's C++
                 # For now, return a mock
-                logger.warning(f"⚠️ BT Orchestrator is C++ component, using mock for {component.name}")
+                logger.warning(
+                    f"⚠️ BT Orchestrator is C++ component, using mock for {component.name}"
+                )
                 return None
 
             elif component.component_type == "control_system":
                 # Would import motion control component
-                logger.warning(f"⚠️ Motion control is hardware component, using mock for {component.name}")
+                logger.warning(
+                    f"⚠️ Motion control is hardware component, using mock for {component.name}"
+                )
                 return None
 
             elif component.component_type == "perception":
                 # Would import perception components
-                logger.warning(f"⚠️ Perception components require hardware, using mock for {component.name}")
+                logger.warning(
+                    f"⚠️ Perception components require hardware, using mock for {component.name}"
+                )
                 return None
 
             elif component.component_type == "communication":
                 # Would import bridge components
-                logger.warning(f"⚠️ Bridge components require external interfaces, using mock for {component.name}")
+                logger.warning(
+                    f"⚠️ Bridge components require external interfaces, using mock for {component.name}"
+                )
                 return None
 
             else:
@@ -509,9 +550,7 @@ class JazzyComponentManager(LifecycleNode):
         """Set up system health monitoring"""
         # Create health monitoring publisher
         self.health_publisher = self.create_publisher(
-            std_msgs.msg.String,
-            '/jazzy_component_manager/health',
-            10
+            std_msgs.msg.String, "/jazzy_component_manager/health", 10
         )
 
         logger.info("✅ Health monitoring configured")
@@ -563,7 +602,10 @@ class JazzyComponentManager(LifecycleNode):
                 healthy += 1
             elif component.health == ComponentHealth.DEGRADED:
                 degraded += 1
-            elif component.health in [ComponentHealth.UNHEALTHY, ComponentHealth.FAILED]:
+            elif component.health in [
+                ComponentHealth.UNHEALTHY,
+                ComponentHealth.FAILED,
+            ]:
                 failed += 1
 
         # Determine overall health
@@ -582,7 +624,7 @@ class JazzyComponentManager(LifecycleNode):
             healthy_components=healthy,
             degraded_components=degraded,
             failed_components=failed,
-            last_updated=time.time()
+            last_updated=time.time(),
         )
 
     async def _check_component_health(self, component: ComponentInfo):
@@ -628,10 +670,10 @@ class JazzyComponentManager(LifecycleNode):
                     "state": comp.state.value,
                     "health": comp.health.value,
                     "uptime": time.time() - (comp.startup_time or time.time()),
-                    "restart_count": comp.restart_count
+                    "restart_count": comp.restart_count,
                 }
                 for name, comp in self.components.items()
-            }
+            },
         }
 
         msg = std_msgs.msg.String()
@@ -647,7 +689,9 @@ class JazzyComponentManager(LifecycleNode):
                 try:
                     component.lifecycle_node.destroy_node()
                 except Exception as e:
-                    logger.error(f"❌ Error cleaning up component {component.name}: {e}")
+                    logger.error(
+                        f"❌ Error cleaning up component {component.name}: {e}"
+                    )
 
         self.components.clear()
 
@@ -713,5 +757,5 @@ def main():
         logger.info("✅ Jazzy Component Manager shut down")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

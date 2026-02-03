@@ -8,9 +8,4 @@ from .gps_simulator import GPSSimulator
 from .imu_simulator import IMUSimulator
 from .sensor_factory import SensorFactory
 
-__all__ = [
-    'BaseSensor',
-    'GPSSimulator', 
-    'IMUSimulator',
-    'SensorFactory'
-]
+__all__ = ["BaseSensor", "GPSSimulator", "IMUSimulator", "SensorFactory"]

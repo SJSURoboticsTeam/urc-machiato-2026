@@ -96,7 +96,9 @@ def run_pytest(
         return -1, str(e)
 
 
-def run_by_marker(marker: str, verbose: bool = True, timeout: int = 120) -> Tuple[int, str]:
+def run_by_marker(
+    marker: str, verbose: bool = True, timeout: int = 120
+) -> Tuple[int, str]:
     """Run tests by pytest marker (e.g. critical, integration)."""
     cmd = [
         sys.executable,
@@ -209,9 +211,7 @@ def main() -> int:
     if not targets:
         return 0
 
-    exit_code, out = run_pytest(
-        targets, verbose=not args.quiet, timeout=args.timeout
-    )
+    exit_code, out = run_pytest(targets, verbose=not args.quiet, timeout=args.timeout)
     print(out)
     return exit_code
 

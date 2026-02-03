@@ -31,6 +31,7 @@ try:
     from simulation.network.websocket_server_simulator import WebSocketServerSimulator
     from simulation.can.slcan_protocol_simulator import SLCANProtocolSimulator
     from simulation.firmware.stm32_firmware_simulator import STM32FirmwareSimulator
+
     BRIDGE_SIMULATION_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Bridge simulation components not available: {e}")
@@ -61,7 +62,7 @@ class SimulationManager:
         self.sensors: Dict[str, Any] = {}
         self.network = None
         self.rover = None
-        
+
         # Bridge simulation components (new)
         self.websocket_sim = None
         self.slcan_sim = None
@@ -156,7 +157,7 @@ class SimulationManager:
                 self.logger.info(
                     "Rover initialized", model=rover_config.get("model", "default")
                 )
-                
+
                 # Initialize bridge simulation components (Phase 1)
                 bridges_config = config.get("bridges", {})
                 if bridges_config and BRIDGE_SIMULATION_AVAILABLE:
@@ -515,62 +516,63 @@ class SimulationManager:
                 return False
 
         return True
-    
+
     def _initialize_bridges(self, bridges_config: Dict[str, Any]):
         """Initialize bridge simulation components.
-        
+
         Args:
             bridges_config: Bridge configuration dictionary
         """
         try:
             # Initialize WebSocket server simulator
-            websocket_config = bridges_config.get('websocket', {})
-            if websocket_config.get('enabled', True):
+            websocket_config = bridges_config.get("websocket", {})
+            if websocket_config.get("enabled", True):
                 self.websocket_sim = WebSocketServerSimulator(websocket_config)
                 self.logger.info("WebSocket server simulator initialized")
-            
+
             # Initialize SLCAN protocol simulator
-            slcan_config = bridges_config.get('slcan', {})
-            if slcan_config.get('enabled', True):
+            slcan_config = bridges_config.get("slcan", {})
+            if slcan_config.get("enabled", True):
                 self.slcan_sim = SLCANProtocolSimulator(slcan_config)
                 self.logger.info("SLCAN protocol simulator initialized")
-            
+
             # Initialize firmware simulator
-            firmware_config = bridges_config.get('firmware', {})
-            if firmware_config.get('enabled', True):
+            firmware_config = bridges_config.get("firmware", {})
+            if firmware_config.get("enabled", True):
                 self.firmware_sim = STM32FirmwareSimulator(firmware_config)
                 # Start firmware control loop
                 self.firmware_sim.start()
                 self.logger.info("STM32 firmware simulator initialized and started")
-            
+
             # Connect the simulation pipeline
             if self.websocket_sim and self.slcan_sim and self.firmware_sim:
                 self._connect_bridge_pipeline()
                 self.bridges_enabled = True
                 self.logger.info("Bridge simulation pipeline connected")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to initialize bridges: {e}")
             raise
-    
+
     def _connect_bridge_pipeline(self):
         """Connect bridge simulators into end-to-end pipeline."""
         # Register handlers to connect the simulation components
-        
+
         # WebSocket → SLCAN → Firmware
         if self.websocket_sim:
+
             async def handle_drive_command(data):
                 """Handle drive commands from WebSocket."""
                 try:
-                    linear = data.get('linear', 0.0)
-                    angular = data.get('angular', 0.0)
-                    
+                    linear = data.get("linear", 0.0)
+                    angular = data.get("angular", 0.0)
+
                     # Encode to SLCAN
                     if self.slcan_sim:
                         slcan_frame = self.slcan_sim.encode_velocity_command(
                             linear, 0.0, angular
                         )
-                        
+
                         # Send to firmware
                         if self.firmware_sim:
                             cmd = self.slcan_sim.decode_velocity_command(slcan_frame)
@@ -580,20 +582,24 @@ class SimulationManager:
                                 )
                 except Exception as e:
                     self.logger.error(f"Error in drive command handler: {e}")
-            
-            self.websocket_sim.on('driveCommands', handle_drive_command)
-        
+
+            self.websocket_sim.on("driveCommands", handle_drive_command)
+
         self.logger.debug("Bridge pipeline handlers registered")
-    
+
     def get_bridge_status(self) -> Dict[str, Any]:
         """Get status of bridge simulation components.
-        
+
         Returns:
             Dict with bridge simulation status
         """
         return {
-            'bridges_enabled': self.bridges_enabled,
-            'websocket_sim': self.websocket_sim.get_statistics() if self.websocket_sim else None,
-            'slcan_sim': self.slcan_sim.get_statistics() if self.slcan_sim else None,
-            'firmware_sim': self.firmware_sim.get_system_status() if self.firmware_sim else None
+            "bridges_enabled": self.bridges_enabled,
+            "websocket_sim": (
+                self.websocket_sim.get_statistics() if self.websocket_sim else None
+            ),
+            "slcan_sim": self.slcan_sim.get_statistics() if self.slcan_sim else None,
+            "firmware_sim": (
+                self.firmware_sim.get_system_status() if self.firmware_sim else None
+            ),
         }

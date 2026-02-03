@@ -515,6 +515,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
 
     def _calculate_message_size(self, message: Dict[str, Any]) -> int:
         """Calculate the serialized size of a message."""
+
         # Use JSON serialization as representative of ROS message size
         # Handle bytes objects by converting to strings
         def handle_bytes(obj):
@@ -554,6 +555,7 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
 
     def _compress_message(self, message: Dict[str, Any]) -> int:
         """Compress a message and return compressed size."""
+
         # Handle bytes objects for serialization
         def handle_bytes(obj):
             if isinstance(obj, bytes):
@@ -744,9 +746,9 @@ class NetworkBandwidthPerformanceTest(unittest.TestCase):
                 "messages_recovered": recovered_messages,
                 "recovery_time_ms": recovery_time,
                 "avg_recovery_time_ms": avg_recovery_time,
-                "recovery_rate": recovered_messages / messages_lost
-                if messages_lost > 0
-                else 1.0,
+                "recovery_rate": (
+                    recovered_messages / messages_lost if messages_lost > 0 else 1.0
+                ),
             }
 
         # Analyze recovery performance

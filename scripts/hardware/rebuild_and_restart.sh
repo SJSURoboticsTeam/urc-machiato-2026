@@ -1,11 +1,21 @@
 #!/bin/bash
 # Rebuild and restart hardware_interface with dynamic simulator data
 
-cd /home/durian/urc-machiato-2026
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
 
-echo "Rebuilding hardware_interface with dynamic simulator..."
-source /opt/ros/jazzy/setup.bash
-colcon build --base-paths src/autonomy/autonomy_core --symlink-install 2>&1 | tail -5
+echo "Rebuilding ROS2 packages..."
+if [ -z "${ROS_DISTRO:-}" ]; then
+    source /opt/ros/jazzy/setup.bash 2>/dev/null || source /opt/ros/humble/setup.bash
+fi
+colcon build --base-paths \
+    src/autonomy/interfaces/autonomy_interfaces \
+    src/autonomy/autonomy_core \
+    src/autonomy/bt \
+    src/simulation/gazebo_simulation \
+    src/vision_processing \
+    --symlink-install 2>&1 | tail -5
 
 if [ $? -eq 0 ]; then
     echo "✓ Build successful"

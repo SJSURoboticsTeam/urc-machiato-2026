@@ -281,9 +281,9 @@ class CompetitionSystemStressTester(Node):
             "summary": {
                 "total_tests": total_tests,
                 "successful_tests": successful_tests,
-                "success_rate_percent": (successful_tests / total_tests) * 100
-                if total_tests > 0
-                else 0,
+                "success_rate_percent": (
+                    (successful_tests / total_tests) * 100 if total_tests > 0 else 0
+                ),
                 "average_throughput_ops_per_sec": avg_throughput,
                 "average_latency_ms": avg_latency,
                 "average_cpu_usage_percent": avg_cpu,

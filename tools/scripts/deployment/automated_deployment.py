@@ -477,9 +477,9 @@ class AutomatedDeployment:
             "services_running": len(
                 [s for s in self.services_started if s["process"].poll() is None]
             ),
-            "deployment_time_s": time.time() - self.start_time
-            if self.start_time
-            else 0,
+            "deployment_time_s": (
+                time.time() - self.start_time if self.start_time else 0
+            ),
             "log": self.deployment_log,
         }
 

@@ -408,9 +408,9 @@ class ROS2NetworkStressTester(Node):
         """Publish current test status."""
         status = {
             "active": self.test_active,
-            "current_scenario": self.current_scenario.name
-            if self.current_scenario
-            else None,
+            "current_scenario": (
+                self.current_scenario.name if self.current_scenario else None
+            ),
             "total_tests_run": len(self.test_results),
             "network_emulator_active": self.network_emulator is not None,
         }

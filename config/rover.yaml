@@ -22,6 +22,11 @@ mission_auto_recovery_enabled: true # Auto-recover from failures
 slam_pose_logging_interval: 10 # Log position every N poses
 slam_map_publish_interval: 10 # Update map every N poses
 slam_path_history_limit: 50 # Keep last N positions in memory
+# Navigation-SLAM integration (navigation_node)
+navigation_slam_pose_topic: "slam/pose"
+navigation_slam_fused_topic: "slam/pose/fused"
+navigation_slam_pose_max_age_sec: 1.0 # Fall back to odom if SLAM older than this
+navigation_slam_confidence_min: 0.3 # Use SLAM only when confidence >= this
 
 # === NETWORK & COMMUNICATION ===
 network_qos_depth_sensor: 1 # Keep last N sensor messages
@@ -58,6 +63,13 @@ testing_performance_monitor_interval: 0.2 # Performance check frequency
 # === MONITORING ===
 enable_monitoring: true # Collect performance data
 log_level: "INFO" # DEBUG, INFO, WARN, ERROR
+
+# === COMPUTER VISION ===
+# Competition object detection (mallet, hammer, water bottle, keyboard)
+vision_model_path: ""  # Path to YOLO or other model weights (optional)
+vision_aruco_dict: "DICT_4X4_50"
+vision_aruco_adaptive_outdoor: true  # Adaptive thresholds for outdoor lighting
+vision_d435_resolution_typing: "640x480"  # Resolution for keyboard typing mission
 
 # === MISSION PROFILES ===
 # Resource optimization profiles for different mission types

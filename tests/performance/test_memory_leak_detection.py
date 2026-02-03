@@ -101,6 +101,7 @@ class TestMemoryLeakDetection(unittest.TestCase):
 
     def test_dashboard_component_memory_leak(self):
         """Test dashboard components don't leak memory."""
+
         # This would require React testing environment
         # For now, test the underlying logic
         def create_destroy_components():

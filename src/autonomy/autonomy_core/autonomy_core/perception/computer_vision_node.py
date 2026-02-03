@@ -21,7 +21,13 @@ from std_msgs.msg import Header, String
 
 # Import feature flag system
 try:
-    from src.core.feature_flags import get_feature_flag_manager, is_feature_enabled, require_feature, with_feature
+    from src.core.feature_flags import (
+        get_feature_flag_manager,
+        is_feature_enabled,
+        require_feature,
+        with_feature,
+    )
+
     FEATURE_FLAGS_AVAILABLE = True
 except ImportError:
     FEATURE_FLAGS_AVAILABLE = False
@@ -29,6 +35,7 @@ except ImportError:
 # Conditional imports for heavy dependencies
 try:
     from src.core.mission_resource_manager import get_mission_resource_manager
+
     RESOURCE_MANAGER_AVAILABLE = True
 except ImportError:
     RESOURCE_MANAGER_AVAILABLE = False
@@ -38,6 +45,7 @@ TORCH_AVAILABLE = False
 DETECTRON_AVAILABLE = False
 TENSORFLOW_AVAILABLE = False
 
+
 def _load_ml_dependencies():
     """Conditionally load heavy ML dependencies based on mission requirements."""
     global TORCH_AVAILABLE, DETECTRON_AVAILABLE, TENSORFLOW_AVAILABLE
@@ -46,18 +54,21 @@ def _load_ml_dependencies():
         # Load all dependencies if no resource manager (backward compatibility)
         try:
             import torch
+
             TORCH_AVAILABLE = True
         except ImportError:
             pass
 
         try:
             import detectron2
+
             DETECTRON_AVAILABLE = True
         except ImportError:
             pass
 
         try:
             import tensorflow as tf
+
             TENSORFLOW_AVAILABLE = True
         except ImportError:
             pass
@@ -74,13 +85,14 @@ def _load_ml_dependencies():
 
     # Load dependencies based on mission requirements
     config = resource_manager.config
-    mission_config = config.get('mission_profiles', {}).get(mission_profile, {})
+    mission_config = config.get("mission_profiles", {}).get(mission_profile, {})
 
-    if mission_config.get('computer_vision_enabled', False):
+    if mission_config.get("computer_vision_enabled", False):
         # Load PyTorch/TorchVision for ML-based vision
         try:
             import torch
             import torchvision
+
             TORCH_AVAILABLE = True
         except ImportError:
             pass
@@ -88,6 +100,7 @@ def _load_ml_dependencies():
         # Load Detectron2 for advanced object detection
         try:
             import detectron2
+
             DETECTRON_AVAILABLE = True
         except ImportError:
             pass
@@ -95,9 +108,11 @@ def _load_ml_dependencies():
         # Load TensorFlow for terrain analysis
         try:
             import tensorflow as tf
+
             TENSORFLOW_AVAILABLE = True
         except ImportError:
             pass
+
 
 # Load dependencies on module import
 _load_ml_dependencies()
@@ -154,9 +169,15 @@ class ComputerVisionNode(Node):
         # CV Bridge for ROS/OpenCV conversion
         self.bridge = CvBridge()
 
-        # ArUco marker detection setup
+        # ArUco marker detection setup (outdoor: use adaptive thresholds for lighting)
+        self.declare_parameter("aruco_adaptive_threshold", True)
+        self.declare_parameter("aruco_dict_id", "DICT_4X4_50")
+        aruco_adaptive = self.get_parameter("aruco_adaptive_threshold").value
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         self.aruco_params = cv2.aruco.DetectorParameters()
+        self.aruco_params.adaptiveThreshWinSizeMin = 3
+        self.aruco_params.adaptiveThreshWinSizeMax = 23 if aruco_adaptive else 23
+        self.aruco_params.adaptiveThreshWinSizeStep = 10
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.aruco_params)
 
         # Camera parameters (placeholder - would be calibrated)
@@ -165,10 +186,12 @@ class ComputerVisionNode(Node):
         )
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float32)
 
-        # Competition targets
+        # Competition targets (URC: mallet, hammer, water bottle)
         self.target_objects = {
-            "mallet": {"color": "orange", "shape": "cylindrical"},
-            "water_bottle": {"color": "various", "shape": "cylindrical"},
+            "mallet": {"color": "orange", "shape": "cylindrical", "class_id": 1},
+            "hammer": {"color": "gray", "shape": "elongated", "class_id": 2},
+            "water_bottle": {"color": "various", "shape": "cylindrical", "class_id": 3},
+            "keyboard": {"color": "various", "shape": "rectangular", "class_id": 4},
         }
 
         # Processing state
@@ -186,11 +209,11 @@ class ComputerVisionNode(Node):
 
         # Track available capabilities
         self.capabilities = {
-            'basic_cv': True,  # OpenCV always available
-            'aruco_detection': True,  # Basic ArUco detection
-            'ml_vision': TORCH_AVAILABLE,
-            'object_detection': DETECTRON_AVAILABLE,
-            'terrain_analysis': TENSORFLOW_AVAILABLE,
+            "basic_cv": True,  # OpenCV always available
+            "aruco_detection": True,  # Basic ArUco detection
+            "ml_vision": TORCH_AVAILABLE,
+            "object_detection": DETECTRON_AVAILABLE,
+            "terrain_analysis": TENSORFLOW_AVAILABLE,
         }
 
         # Initialize ML models if available
@@ -207,21 +230,29 @@ class ComputerVisionNode(Node):
                 self._initialize_detectron_models()
                 self.get_logger().info("Detectron2 models initialized")
             except Exception as e:
-                self.get_logger().warning(f"Failed to initialize Detectron2 models: {e}")
+                self.get_logger().warning(
+                    f"Failed to initialize Detectron2 models: {e}"
+                )
 
         if TENSORFLOW_AVAILABLE:
             try:
                 self._initialize_tensorflow_models()
                 self.get_logger().info("TensorFlow models initialized")
             except Exception as e:
-                self.get_logger().warning(f"Failed to initialize TensorFlow models: {e}")
+                self.get_logger().warning(
+                    f"Failed to initialize TensorFlow models: {e}"
+                )
 
         # Set processing rate based on capabilities and mission profile
         self._configure_processing_rate()
 
         # Log available capabilities
-        available_caps = [cap for cap, available in self.capabilities.items() if available]
-        self.get_logger().info(f"Vision capabilities initialized: {', '.join(available_caps)}")
+        available_caps = [
+            cap for cap, available in self.capabilities.items() if available
+        ]
+        self.get_logger().info(
+            f"Vision capabilities initialized: {', '.join(available_caps)}"
+        )
 
     def _initialize_torch_models(self):
         """Initialize PyTorch models for computer vision."""
@@ -233,7 +264,7 @@ class ComputerVisionNode(Node):
 
         # Placeholder for model initialization
         # In real implementation, load pre-trained models for object detection
-        self.ml_models['torch_object_detector'] = None  # Placeholder
+        self.ml_models["torch_object_detector"] = None  # Placeholder
 
     def _initialize_detectron_models(self):
         """Initialize Detectron2 models."""
@@ -241,7 +272,7 @@ class ComputerVisionNode(Node):
             return
 
         # Placeholder for Detectron2 model initialization
-        self.ml_models['detectron_detector'] = None  # Placeholder
+        self.ml_models["detectron_detector"] = None  # Placeholder
 
     def _initialize_tensorflow_models(self):
         """Initialize TensorFlow models for terrain analysis."""
@@ -251,7 +282,7 @@ class ComputerVisionNode(Node):
         import tensorflow as tf
 
         # Placeholder for TensorFlow model initialization
-        self.ml_models['terrain_analyzer'] = None  # Placeholder
+        self.ml_models["terrain_analyzer"] = None  # Placeholder
 
     def _configure_processing_rate(self):
         """Configure processing rate based on mission requirements."""
@@ -261,16 +292,22 @@ class ComputerVisionNode(Node):
 
             if mission_profile:
                 config = resource_manager.config
-                mission_config = config.get('mission_profiles', {}).get(mission_profile, {})
-                fps = mission_config.get('vision_fps', 10)
+                mission_config = config.get("mission_profiles", {}).get(
+                    mission_profile, {}
+                )
+                fps = mission_config.get("vision_fps", 10)
 
                 # Update timer rate
-                if hasattr(self, 'processing_timer'):
+                if hasattr(self, "processing_timer"):
                     # Cancel existing timer and create new one with updated rate
                     self.processing_timer.cancel()
                     interval = 1.0 / fps
-                    self.processing_timer = self.create_timer(interval, self.process_image)
-                    self.get_logger().info(f"Vision processing rate set to {fps} FPS for mission {mission_profile}")
+                    self.processing_timer = self.create_timer(
+                        interval, self.process_image
+                    )
+                    self.get_logger().info(
+                        f"Vision processing rate set to {fps} FPS for mission {mission_profile}"
+                    )
 
     def image_callback(self, msg: Image):
         """Handle incoming camera images."""
@@ -339,14 +376,14 @@ class ComputerVisionNode(Node):
         # Republish camera info for other nodes
         self.camera_info_republisher.publish(msg)
 
-    @with_feature('computer_vision')
+    @with_feature("computer_vision")
     def process_image(self):
         """Main vision processing loop."""
         if self.last_image is None:
             return
 
         # Check if computer vision is enabled for current mission
-        if FEATURE_FLAGS_AVAILABLE and not is_feature_enabled('computer_vision'):
+        if FEATURE_FLAGS_AVAILABLE and not is_feature_enabled("computer_vision"):
             self.get_logger().debug("Computer vision disabled for current mission")
             return
 
@@ -357,7 +394,7 @@ class ComputerVisionNode(Node):
         self.detect_aruco_markers()
 
         # Process competition objects (only if ML vision is enabled)
-        if not FEATURE_FLAGS_AVAILABLE or is_feature_enabled('ml_vision'):
+        if not FEATURE_FLAGS_AVAILABLE or is_feature_enabled("ml_vision"):
             self.detect_competition_objects()
         else:
             # Use lightweight object detection
@@ -485,7 +522,10 @@ class ComputerVisionNode(Node):
 
         # Import lightweight vision processor
         try:
-            from src.autonomy.perception.computer_vision.lightweight_vision import LightweightVisionProcessor
+            from src.autonomy.perception.computer_vision.lightweight_vision import (
+                LightweightVisionProcessor,
+            )
+
             processor = LightweightVisionProcessor()
         except ImportError:
             self.get_logger().warning("Lightweight vision processor not available")
@@ -495,14 +535,14 @@ class ComputerVisionNode(Node):
         results = processor.process_frame_lightweight(self.last_image)
 
         # Convert results to ROS messages
-        for obj in results.get('objects', []):
+        for obj in results.get("objects", []):
             detection = VisionDetection()
             detection.header = self.create_header()
-            detection.object_type = obj.get('color', 'unknown') + "_object"
-            detection.confidence = obj.get('confidence', 0.5)
+            detection.object_type = obj.get("color", "unknown") + "_object"
+            detection.confidence = obj.get("confidence", 0.5)
 
             # Convert centroid to rough position estimate
-            cx, cy = obj.get('centroid', (320, 240))
+            cx, cy = obj.get("centroid", (320, 240))
             distance = 2.0  # Placeholder distance
             angle = (cx - self.last_image.shape[1] / 2) * 0.002
 
@@ -514,9 +554,14 @@ class ComputerVisionNode(Node):
             self.current_detections.append(detection)
 
             # Draw bounding box on debug image
-            bbox = obj.get('bbox', (0, 0, 10, 10))
-            cv2.rectangle(self.last_image, (bbox[0], bbox[1]),
-                         (bbox[0] + bbox[2], bbox[1] + bbox[3]), (255, 0, 0), 2)
+            bbox = obj.get("bbox", (0, 0, 10, 10))
+            cv2.rectangle(
+                self.last_image,
+                (bbox[0], bbox[1]),
+                (bbox[0] + bbox[2], bbox[1] + bbox[3]),
+                (255, 0, 0),
+                2,
+            )
             cv2.putText(
                 self.last_image,
                 f"{detection.object_type}",

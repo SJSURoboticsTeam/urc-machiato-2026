@@ -15,6 +15,13 @@ from typing import Any, Dict, Optional
 
 import rclpy
 import serial
+
+try:
+    from core.blackboard_keys import BlackboardKeys
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+except ImportError:
+    UnifiedBlackboardClient = None
+    BlackboardKeys = None
 from geometry_msgs.msg import Twist, TwistStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
@@ -127,6 +134,27 @@ class HardwareInterfaceNode(Node):
         self.emergency_stop_active = False
         self.system_healthy = False
 
+        # Batch blackboard updates (collected in read_*, flushed at end of telemetry_loop)
+        self._blackboard_updates: Dict[str, Any] = {}
+        self._last_sent_blackboard: Dict[str, Any] = (
+            {}
+        )  # for optional change-based throttling
+
+        # Optional direct blackboard writes (low-latency path)
+        if UnifiedBlackboardClient is not None and BlackboardKeys is not None:
+            try:
+                self.blackboard = UnifiedBlackboardClient(self)
+                self.get_logger().info(
+                    "Unified blackboard client initialized for hardware interface"
+                )
+            except Exception as e:
+                self.get_logger().warning(
+                    f"Failed to initialize blackboard client: {e}"
+                )
+                self.blackboard = None
+        else:
+            self.blackboard = None
+
         self.get_logger().info("Hardware Interface Node initialized")
 
     def connect_can_serial(self):
@@ -184,6 +212,11 @@ class HardwareInterfaceNode(Node):
     def emergency_stop_callback(self, msg: Bool):
         """Handle emergency stop commands."""
         self.emergency_stop_active = msg.data
+
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(BlackboardKeys.EMERGENCY_STOP_ACTIVE, bool(msg.data))
+            self.blackboard.set(BlackboardKeys.SAFETY_STOP_ACTIVE, bool(msg.data))
+            self.blackboard.set(BlackboardKeys.System.EMERGENCY_STOP, bool(msg.data))
 
         if self.can_connected and self.can_serial:
             if msg.data:
@@ -265,6 +298,21 @@ class HardwareInterfaceNode(Node):
         # Could add additional control logic here if needed
         pass
 
+    def _update_blackboard_batch(self, updates: Dict[str, Any]) -> None:
+        """Apply a batch of key-value updates to the blackboard (fire-and-forget). Optionally skip unchanged values."""
+        if not self.blackboard or not updates:
+            return
+        for key, value in updates.items():
+            prev = self._last_sent_blackboard.get(key)
+            if prev is not None:
+                if isinstance(value, (int, float)) and isinstance(prev, (int, float)):
+                    if abs(value - prev) < 0.01:
+                        continue
+                elif value == prev:
+                    continue
+            self.blackboard.set(key, value)
+            self._last_sent_blackboard[key] = value
+
     def telemetry_loop(self):
         """Telemetry loop - read sensor data from hardware."""
         if not self.can_connected:
@@ -273,6 +321,7 @@ class HardwareInterfaceNode(Node):
             return
 
         try:
+            self._blackboard_updates.clear()
             # Read sensor data from CAN serial
             # Based on teleoperation ROS2 publisher format
             self.read_joint_states()
@@ -281,6 +330,9 @@ class HardwareInterfaceNode(Node):
             self.read_battery_state()
             self.read_imu_data()
             self.read_gps_data()
+
+            if self.blackboard and self._blackboard_updates:
+                self._update_blackboard_batch(self._blackboard_updates)
 
         except Exception as e:
             self.get_logger().error(f"Telemetry read error: {e}")
@@ -325,6 +377,14 @@ class HardwareInterfaceNode(Node):
 
             self.chassis_velocity_pub.publish(twist_stamped)
 
+            if self.blackboard and BlackboardKeys:
+                self._blackboard_updates[BlackboardKeys.ROBOT_VELOCITY_X] = float(
+                    twist_stamped.twist.linear.x
+                )
+                self._blackboard_updates[BlackboardKeys.ROBOT_VELOCITY_Y] = float(
+                    twist_stamped.twist.linear.y
+                )
+
         except Exception as e:
             self.get_logger().error(f"Chassis velocity read error: {e}")
 
@@ -335,6 +395,10 @@ class HardwareInterfaceNode(Node):
             temp_array.data = [25.0, 25.0, 25.0, 25.0]  # Mock temperatures in Celsius
 
             self.motor_temperatures_pub.publish(temp_array)
+
+            if self.blackboard and BlackboardKeys:
+                max_temp = float(max(temp_array.data)) if temp_array.data else 0.0
+                self._blackboard_updates[BlackboardKeys.MOTOR_TEMP_MAX] = max_temp
 
         except Exception as e:
             self.get_logger().error(f"Motor temperature read error: {e}")
@@ -349,6 +413,11 @@ class HardwareInterfaceNode(Node):
             battery_state.percentage = 85.0  # 85% charged
 
             self.battery_state_pub.publish(battery_state)
+
+            if self.blackboard and BlackboardKeys:
+                pct = float(battery_state.percentage)
+                self._blackboard_updates[BlackboardKeys.BATTERY_LEVEL] = pct
+                self._blackboard_updates[BlackboardKeys.System.BATTERY_PERCENT] = pct
 
         except Exception as e:
             self.get_logger().error(f"Battery state read error: {e}")
@@ -371,6 +440,26 @@ class HardwareInterfaceNode(Node):
 
             self.imu_pub.publish(imu_msg)
 
+            if self.blackboard and BlackboardKeys:
+                self._blackboard_updates[BlackboardKeys.IMU_LINEAR_ACCEL_X] = float(
+                    imu_msg.linear_acceleration.x
+                )
+                self._blackboard_updates[BlackboardKeys.IMU_LINEAR_ACCEL_Y] = float(
+                    imu_msg.linear_acceleration.y
+                )
+                self._blackboard_updates[BlackboardKeys.IMU_LINEAR_ACCEL_Z] = float(
+                    imu_msg.linear_acceleration.z
+                )
+                self._blackboard_updates[BlackboardKeys.IMU_ANGULAR_VEL_X] = float(
+                    imu_msg.angular_velocity.x
+                )
+                self._blackboard_updates[BlackboardKeys.IMU_ANGULAR_VEL_Y] = float(
+                    imu_msg.angular_velocity.y
+                )
+                self._blackboard_updates[BlackboardKeys.IMU_ANGULAR_VEL_Z] = float(
+                    imu_msg.angular_velocity.z
+                )
+
         except Exception as e:
             self.get_logger().error(f"IMU read error: {e}")
 
@@ -385,17 +474,31 @@ class HardwareInterfaceNode(Node):
 
             self.gps_pub.publish(gps_msg)
 
+            if self.blackboard and BlackboardKeys:
+                self._blackboard_updates[BlackboardKeys.GPS_LATITUDE] = float(
+                    gps_msg.latitude
+                )
+                self._blackboard_updates[BlackboardKeys.GPS_LONGITUDE] = float(
+                    gps_msg.longitude
+                )
+                self._blackboard_updates[BlackboardKeys.GPS_ALTITUDE] = float(
+                    gps_msg.altitude
+                )
+
         except Exception as e:
             self.get_logger().error(f"GPS read error: {e}")
 
     def publish_mock_telemetry(self):
         """Publish mock telemetry data for testing without hardware."""
+        self._blackboard_updates.clear()
         self.read_joint_states()
         self.read_chassis_velocity()
         self.read_motor_temperatures()
         self.read_battery_state()
         self.read_imu_data()
         self.read_gps_data()
+        if self.blackboard and self._blackboard_updates:
+            self._update_blackboard_batch(self._blackboard_updates)
 
         # Publish system status
         status_msg = String()

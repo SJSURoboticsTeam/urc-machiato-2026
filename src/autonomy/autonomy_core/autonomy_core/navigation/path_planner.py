@@ -11,11 +11,19 @@ Implements:
 Author: URC 2026 Autonomy Team
 """
 
+import logging
 import math
 from dataclasses import dataclass
 from enum import Enum
 from heapq import heappop, heappush
 from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    import networkx as nx
+except ImportError:
+    nx = None  # type: ignore[assignment]
+
+logger = logging.getLogger(__name__)
 
 
 class PathPlanningAlgorithm(Enum):
@@ -78,10 +86,16 @@ class PathPlanner:
         self.terrain_weight = 2.0
         self.safety_weight = 1.5
 
-        # TODO: Initialize path planning parameters
-        # - Map loading
-        # - Cost map generation
-        # - Algorithm parameters
+        # Cost/occupancy from obstacles (grid cell -> cost; 0 = free, inf = obstacle)
+        self._costmap: Dict[Tuple[int, int], float] = {}
+        self._grid_resolution = 0.5  # meters per cell
+
+    def _world_to_grid(self, world_pos: Tuple[float, float]) -> Tuple[int, int]:
+        """World (x, y) to grid cell indices."""
+        return (
+            int(world_pos[0] / self._grid_resolution),
+            int(world_pos[1] / self._grid_resolution),
+        )
 
     def initialize(self):
         """Initialize path planner"""
@@ -121,10 +135,7 @@ class PathPlanner:
         constraints: Optional[dict] = None,
     ) -> List[Tuple[float, float]]:
         """A* path planning implementation using NetworkX"""
-        try:
-            import networkx as nx
-            import heapq
-        except ImportError:
+        if nx is None:
             logger.warning("NetworkX not available, falling back to simple path")
             return self._simple_path(start, goal)
 
@@ -148,7 +159,7 @@ class PathPlanner:
                 start_node,
                 goal_node,
                 heuristic=self._euclidean_heuristic,
-                weight='weight'
+                weight="weight",
             )
 
             # Convert back to coordinates
@@ -165,9 +176,7 @@ class PathPlanner:
         constraints: Optional[dict] = None,
     ) -> List[Tuple[float, float]]:
         """Dijkstra path planning implementation using NetworkX"""
-        try:
-            import networkx as nx
-        except ImportError:
+        if nx is None:
             logger.warning("NetworkX not available, falling back to simple path")
             return self._simple_path(start, goal)
 
@@ -186,7 +195,7 @@ class PathPlanner:
 
         try:
             # Use NetworkX Dijkstra implementation
-            path = nx.dijkstra_path(graph, start_node, goal_node, weight='weight')
+            path = nx.dijkstra_path(graph, start_node, goal_node, weight="weight")
 
             # Convert back to coordinates
             return [self._node_to_coord(node) for node in path]
@@ -196,20 +205,24 @@ class PathPlanner:
             return self._simple_path(start, goal)
 
     def get_terrain_cost(self, position: Tuple[float, float]) -> float:
-        """Get terrain cost at position"""
-        # TODO: Implement terrain cost lookup
-        # - Query cost map
-        # - Consider terrain type
-        # - Factor in traversability
-        return 1.0  # Placeholder
+        """Get terrain cost at position from costmap (1.0 free, higher near obstacles)."""
+        cell = self._world_to_grid(position)
+        c = self._costmap.get(cell, 0.0)
+        if c >= 1e9:  # obstacle
+            return float("inf")
+        return 1.0 + c * 0.1  # scale for weight
 
     def is_position_valid(self, position: Tuple[float, float]) -> bool:
-        """Check if position is valid (no obstacles)"""
-        # TODO: Implement obstacle checking
-        # - Check against obstacle map
-        # - Consider inflation radius
-        # - Validate bounds
-        return True  # Placeholder
+        """Check if position is valid (no obstacles within inflation radius)."""
+        cell = self._world_to_grid(position)
+        # Check this cell and neighbors within inflation radius (in grid cells)
+        r = max(1, int(self.obstacle_inflation_radius / self._grid_resolution))
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                c = (cell[0] + dx, cell[1] + dy)
+                if self._costmap.get(c, 0.0) >= 1e9:
+                    return False
+        return True
 
     def smooth_path(self, path: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
         """Smooth path to reduce sharp turns using SciPy B-splines"""
@@ -244,7 +257,9 @@ class PathPlanner:
             smoothed_path[0] = path[0]
             smoothed_path[-1] = path[-1]
 
-            logger.debug(f"Smoothed path from {len(path)} to {len(smoothed_path)} points")
+            logger.debug(
+                f"Smoothed path from {len(path)} to {len(smoothed_path)} points"
+            )
             return smoothed_path
 
         except Exception as e:
@@ -291,24 +306,107 @@ class PathPlanner:
         avg_speed = speed_profile.get("average", 1.0) if speed_profile else 1.0
         return length / avg_speed
 
-    def update_costmap(self, new_obstacles: List[Tuple[float, float, float]]):
-        """Update costmap with new obstacle information"""
-        # TODO: Implement costmap updates
-        # - Add new obstacles
-        # - Update inflation zones
-        # - Replan affected paths if needed
+    def update_costmap(self, new_obstacles: List[Tuple[float, float, float]]) -> None:
+        """Update costmap with obstacle positions (x, y, radius in meters). Inflate by obstacle_inflation_radius. Replaces previous obstacle-derived costs."""
+        self._costmap.clear()
+        for x, y, radius in new_obstacles:
+            r_total = radius + self.obstacle_inflation_radius
+            n_cells = max(1, int(r_total / self._grid_resolution))
+            cx, cy = self._world_to_grid((x, y))
+            for dx in range(-n_cells, n_cells + 1):
+                for dy in range(-n_cells, n_cells + 1):
+                    gx, gy = cx + dx, cy + dy
+                    wx = gx * self._grid_resolution
+                    wy = gy * self._grid_resolution
+                    dist = math.sqrt((wx - x) ** 2 + (wy - y) ** 2)
+                    if dist <= r_total:
+                        self._costmap[(gx, gy)] = float("inf")
+
+    def get_costmap_for_replan(self) -> Dict[Tuple[int, int], float]:
+        """Return costmap as grid cell -> cost for D* Lite replanning."""
+        return dict(self._costmap)
 
     def reset_planner(self):
-        """Reset planner state"""
-        # TODO: Clear internal state
-        # Reset costmaps
-        # Clear cached paths
+        """Reset planner state and costmap."""
+        self._costmap.clear()
 
     def shutdown(self):
         """Shutdown path planner"""
         # TODO: Clean shutdown
         # Save state if needed
         # Release resources
+
+    def _create_navigation_graph(
+        self,
+        start: Tuple[float, float],
+        goal: Tuple[float, float],
+        constraints: Optional[dict] = None,
+    ) -> Optional[object]:
+        """Create NetworkX graph for path planning."""
+        if nx is None:
+            return None
+        graph = nx.Graph()
+        margin = 10.0
+        min_x = min(start[0], goal[0]) - margin
+        max_x = max(start[0], goal[0]) + margin
+        min_y = min(start[1], goal[1]) - margin
+        max_y = max(start[1], goal[1]) + margin
+        resolution = 1.0
+        nodes = []
+        x = min_x
+        while x <= max_x:
+            y = min_y
+            while y <= max_y:
+                if self.is_position_valid((x, y)):
+                    nodes.append((x, y))
+                y += resolution
+            x += resolution
+        for node in nodes:
+            node_id = self._coord_to_node(node)
+            graph.add_node(node_id, pos=node)
+        for node in nodes:
+            node_id = self._coord_to_node(node)
+            for dx, dy in [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (1, -1),
+                (1, 1),
+            ]:
+                neighbor = (node[0] + dx * resolution, node[1] + dy * resolution)
+                if neighbor in nodes:
+                    neighbor_id = self._coord_to_node(neighbor)
+                    distance = ((dx * resolution) ** 2 + (dy * resolution) ** 2) ** 0.5
+                    terrain_cost = (
+                        self.get_terrain_cost(node) + self.get_terrain_cost(neighbor)
+                    ) / 2.0
+                    weight = distance * terrain_cost
+                    graph.add_edge(node_id, neighbor_id, weight=weight)
+        return graph
+
+    def _coord_to_node(self, coord: Tuple[float, float]) -> str:
+        """Convert coordinate to node ID."""
+        return f"{coord[0]:.1f},{coord[1]:.1f}"
+
+    def _node_to_coord(self, node_id: str) -> Tuple[float, float]:
+        """Convert node ID to coordinate."""
+        x, y = node_id.split(",")
+        return (float(x), float(y))
+
+    def _euclidean_heuristic(self, node1: str, node2: str) -> float:
+        """Euclidean distance heuristic for A*."""
+        coord1 = self._node_to_coord(node1)
+        coord2 = self._node_to_coord(node2)
+        return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
+
+    def _simple_path(
+        self, start: Tuple[float, float], goal: Tuple[float, float]
+    ) -> List[Tuple[float, float]]:
+        """Fallback simple straight-line path."""
+        return [start, goal]
 
 
 # =============================================================================
@@ -356,6 +454,8 @@ class DStarLite:
 
         # Costmap (will be updated from SLAM)
         self.costmap: Dict[Tuple[int, int], float] = {}
+        self._previous_costmap: Dict[Tuple[int, int], float] = {}
+        self._changed_cells: List[Tuple[int, int]] = []
 
         # Movement cost (diagonal moves allowed)
         self.sqrt2 = math.sqrt(2)
@@ -382,6 +482,11 @@ class DStarLite:
 
         self._compute_shortest_path()
 
+    def update_start(self, start: Tuple[float, float]) -> None:
+        """Update current start position (e.g. after robot moved) for next replan."""
+        self.s_last = self.s_start
+        self.s_start = self._world_to_grid(start)
+
     def replan(
         self, new_costmap: Dict[Tuple[int, int], float]
     ) -> List[Tuple[float, float]]:
@@ -394,32 +499,46 @@ class DStarLite:
         Returns:
             Updated path from current position to goal
         """
-        # Update costmap
-        self.costmap = new_costmap
+        self._previous_costmap = dict(self.costmap)
+        self.costmap = dict(new_costmap)
 
-        # Check for significant changes and replan
         if self._costmap_changed():
             self._update_changed_vertices()
-            self._compute_shortest_path()
+            try:
+                self._compute_shortest_path()
+            except (KeyError, IndexError):
+                pass  # No path or invalid state
 
         return self._extract_path()
 
     def _costmap_changed(self) -> bool:
-        """Check if costmap has significant changes requiring replan"""
-        # TODO: Implement change detection logic
-        # For now, assume changes require replan
-        return True
+        """Check if costmap has significant changes requiring replan."""
+        all_cells = set(self._previous_costmap.keys()) | set(self.costmap.keys())
+        self._changed_cells = [
+            c
+            for c in all_cells
+            if self._previous_costmap.get(c, 0.0) != self.costmap.get(c, 0.0)
+        ]
+        return len(self._changed_cells) > 0
 
-    def _update_changed_vertices(self):
-        """Update vertices affected by costmap changes"""
-        # TODO: Implement vertex update logic based on SLAM changes
-        # This would identify which grid cells changed and update their costs
+    def _update_changed_vertices(self) -> None:
+        """Update vertices affected by costmap changes (rhs and queue)."""
+        for cell in self._changed_cells:
+            self._update_vertex(cell)
+            for neighbor in self._get_neighbors(cell):
+                self._update_vertex(neighbor)
 
     def _compute_shortest_path(self):
-        """Main D* Lite algorithm - compute shortest path"""
-        while self.U and (
-            self.U[0].key < self._calculate_key(self.s_start)
-            or self.rhs[self.s_start] != self.g[self.s_start]
+        """Main D* Lite algorithm - compute shortest path."""
+        while (
+            self.U
+            and self.s_start is not None
+            and self.s_goal is not None
+            and (
+                self.U[0].key < self._calculate_key(self.s_start)
+                or self.rhs.get(self.s_start, float("inf"))
+                != self.g.get(self.s_start, float("inf"))
+            )
         ):
 
             # Get node with lowest priority
@@ -431,7 +550,9 @@ class DStarLite:
                 # Node priority increased, reinsert
                 u.key = k_new
                 heappush(self.U, u)
-            elif self.g[u.position] > self.rhs[u.position]:
+            elif self.g.get(u.position, float("inf")) > self.rhs.get(
+                u.position, float("inf")
+            ):
                 # Locally overconsistent (rhs is better)
                 self.g[u.position] = self.rhs[u.position]
                 # Update all neighbors
@@ -553,73 +674,3 @@ class DStarLite:
 
         path.append(self._grid_to_world(self.s_goal))
         return path
-
-    def _create_navigation_graph(self, start: Tuple[float, float], goal: Tuple[float, float],
-                                constraints: Optional[dict] = None) -> Optional[object]:
-        """Create NetworkX graph for path planning"""
-        try:
-            import networkx as nx
-        except ImportError:
-            return None
-
-        # Create directed graph
-        graph = nx.Graph()
-
-        # Define search bounds around start and goal
-        margin = 10.0  # meters
-        min_x = min(start[0], goal[0]) - margin
-        max_x = max(start[0], goal[0]) + margin
-        min_y = min(start[1], goal[1]) - margin
-        max_y = max(start[1], goal[1]) + margin
-
-        # Create grid nodes (resolution of 1 meter)
-        resolution = 1.0
-        nodes = []
-
-        x = min_x
-        while x <= max_x:
-            y = min_y
-            while y <= max_y:
-                if self.is_position_valid((x, y)):
-                    nodes.append((x, y))
-                y += resolution
-            x += resolution
-
-        # Add nodes to graph
-        for node in nodes:
-            node_id = self._coord_to_node(node)
-            graph.add_node(node_id, pos=node)
-
-        # Add edges between adjacent nodes
-        for node in nodes:
-            node_id = self._coord_to_node(node)
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
-                neighbor = (node[0] + dx * resolution, node[1] + dy * resolution)
-                if neighbor in nodes:
-                    neighbor_id = self._coord_to_node(neighbor)
-                    # Calculate edge weight based on terrain cost and distance
-                    distance = ((dx * resolution) ** 2 + (dy * resolution) ** 2) ** 0.5
-                    terrain_cost = (self.get_terrain_cost(node) + self.get_terrain_cost(neighbor)) / 2.0
-                    weight = distance * terrain_cost
-                    graph.add_edge(node_id, neighbor_id, weight=weight)
-
-        return graph
-
-    def _coord_to_node(self, coord: Tuple[float, float]) -> str:
-        """Convert coordinate to node ID"""
-        return f"{coord[0]:.1f},{coord[1]:.1f}"
-
-    def _node_to_coord(self, node_id: str) -> Tuple[float, float]:
-        """Convert node ID to coordinate"""
-        x, y = node_id.split(',')
-        return (float(x), float(y))
-
-    def _euclidean_heuristic(self, node1: str, node2: str) -> float:
-        """Euclidean distance heuristic for A*"""
-        coord1 = self._node_to_coord(node1)
-        coord2 = self._node_to_coord(node2)
-        return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
-
-    def _simple_path(self, start: Tuple[float, float], goal: Tuple[float, float]) -> List[Tuple[float, float]]:
-        """Fallback simple straight-line path"""
-        return [start, goal]

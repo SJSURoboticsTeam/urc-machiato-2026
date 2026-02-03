@@ -223,9 +223,9 @@ class MissionTestSuite:
             result=result,
             metrics=metrics,
             duration_s=duration,
-            environment_state=self.mdrs_environment.get_state()
-            if self.mdrs_environment
-            else {},
+            environment_state=(
+                self.mdrs_environment.get_state() if self.mdrs_environment else {}
+            ),
             network_profile=self.network_emulator.profile,
             errors=errors,
             warnings=warnings,
@@ -309,9 +309,9 @@ class MissionTestSuite:
             result=result,
             metrics=metrics,
             duration_s=duration,
-            environment_state=self.mdrs_environment.get_state()
-            if self.mdrs_environment
-            else {},
+            environment_state=(
+                self.mdrs_environment.get_state() if self.mdrs_environment else {}
+            ),
             network_profile=self.network_emulator.profile,
             errors=errors,
             warnings=warnings,
@@ -399,9 +399,9 @@ class MissionTestSuite:
             result=result,
             metrics=metrics,
             duration_s=duration,
-            environment_state=self.mdrs_environment.get_state()
-            if self.mdrs_environment
-            else {},
+            environment_state=(
+                self.mdrs_environment.get_state() if self.mdrs_environment else {}
+            ),
             network_profile=self.network_emulator.profile,
             errors=errors,
             warnings=warnings,
@@ -500,9 +500,9 @@ class MissionTestSuite:
             result=result,
             metrics=metrics,
             duration_s=duration,
-            environment_state=self.mdrs_environment.get_state()
-            if self.mdrs_environment
-            else {},
+            environment_state=(
+                self.mdrs_environment.get_state() if self.mdrs_environment else {}
+            ),
             network_profile=self.network_emulator.profile,
             errors=errors,
             warnings=warnings,
@@ -603,9 +603,9 @@ class MissionTestSuite:
             "passed": passed_tests,
             "failed": failed_tests,
             "errors": error_tests,
-            "success_rate_percent": (passed_tests / total_tests * 100)
-            if total_tests > 0
-            else 0.0,
+            "success_rate_percent": (
+                (passed_tests / total_tests * 100) if total_tests > 0 else 0.0
+            ),
             "total_messages_sent": total_messages,
             "total_messages_received": total_received,
             "average_success_rate": avg_success_rate,

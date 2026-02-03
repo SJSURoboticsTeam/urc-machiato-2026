@@ -36,6 +36,7 @@ import urllib.parse
 import mimetypes
 import statistics
 
+
 # Metrics storage
 class MetricsStore:
     """Thread-safe metrics storage and analysis with full system integration."""
@@ -45,47 +46,53 @@ class MetricsStore:
         self._lock = threading.RLock()
         self._alerts = []
         self._system_status = {
-            'behavior_trees': {},
-            'state_machines': {},
-            'network_connections': {},
-            'simulator_status': {},
-            'uptime': {}
+            "behavior_trees": {},
+            "state_machines": {},
+            "network_connections": {},
+            "simulator_status": {},
+            "uptime": {},
         }
         self._thresholds = self._load_default_thresholds()
 
     def _load_default_thresholds(self) -> Dict[str, Dict[str, float]]:
         """Load default performance thresholds."""
         return {
-            'motion_control': {
-                'p99_latency_ms': 20.0,
-                'p95_latency_ms': 15.0,
-                'p50_latency_ms': 10.0,
-                'deadline_violations_percent': 1.0
+            "motion_control": {
+                "p99_latency_ms": 20.0,
+                "p95_latency_ms": 15.0,
+                "p50_latency_ms": 10.0,
+                "deadline_violations_percent": 1.0,
             },
-            'binary_protocol': {
-                'p99_latency_ms': 5.0,
-                'p95_latency_ms': 2.0,
-                'p50_latency_ms': 1.0,
-                'throughput_msgs_per_sec': 1000.0
+            "binary_protocol": {
+                "p99_latency_ms": 5.0,
+                "p95_latency_ms": 2.0,
+                "p50_latency_ms": 1.0,
+                "throughput_msgs_per_sec": 1000.0,
             },
-            'ipc_bridge': {
-                'p99_latency_ms': 10.0,
-                'connection_success_rate': 0.99,
-                'memory_leak_mb_per_hour': 10.0
+            "ipc_bridge": {
+                "p99_latency_ms": 10.0,
+                "connection_success_rate": 0.99,
+                "memory_leak_mb_per_hour": 10.0,
             },
-            'sensor_fusion': {
-                'rmse_m': 0.5,
-                'drift_rate_cm_per_min': 5.0,
-                'convergence_time_sec': 30.0
+            "sensor_fusion": {
+                "rmse_m": 0.5,
+                "drift_rate_cm_per_min": 5.0,
+                "convergence_time_sec": 30.0,
             },
-            'system_resources': {
-                'cpu_usage_percent': 85.0,
-                'memory_usage_percent': 90.0,
-                'network_bandwidth_utilization': 0.8
-            }
+            "system_resources": {
+                "cpu_usage_percent": 85.0,
+                "memory_usage_percent": 90.0,
+                "network_bandwidth_utilization": 0.8,
+            },
         }
 
-    def update_metric(self, category: str, metric: str, value: float, timestamp: Optional[float] = None):
+    def update_metric(
+        self,
+        category: str,
+        metric: str,
+        value: float,
+        timestamp: Optional[float] = None,
+    ):
         """Update a metric value."""
         if timestamp is None:
             timestamp = time.time()
@@ -98,13 +105,14 @@ class MetricsStore:
                 self._metrics[category][metric] = []
 
             # Keep last 1000 data points per metric
-            self._metrics[category][metric].append({
-                'value': value,
-                'timestamp': timestamp
-            })
+            self._metrics[category][metric].append(
+                {"value": value, "timestamp": timestamp}
+            )
 
             if len(self._metrics[category][metric]) > 1000:
-                self._metrics[category][metric] = self._metrics[category][metric][-1000:]
+                self._metrics[category][metric] = self._metrics[category][metric][
+                    -1000:
+                ]
 
             # Check thresholds and generate alerts
             self._check_thresholds(category, metric, value)
@@ -116,25 +124,30 @@ class MetricsStore:
             violation = False
 
             # Determine if this is a "lower is better" or "higher is better" metric
-            if 'latency' in metric or 'rmse' in metric or 'drift' in metric or 'time' in metric:
+            if (
+                "latency" in metric
+                or "rmse" in metric
+                or "drift" in metric
+                or "time" in metric
+            ):
                 # Lower is better
                 violation = value > threshold
-            elif 'success' in metric or 'rate' in metric or 'throughput' in metric:
+            elif "success" in metric or "rate" in metric or "throughput" in metric:
                 # Higher is better
                 violation = value < threshold
-            elif 'usage' in metric or 'utilization' in metric:
+            elif "usage" in metric or "utilization" in metric:
                 # Check upper bound
                 violation = value > threshold
 
             if violation:
                 alert = {
-                    'timestamp': time.time(),
-                    'category': category,
-                    'metric': metric,
-                    'value': value,
-                    'threshold': threshold,
-                    'severity': 'CRITICAL' if value > threshold * 1.5 else 'WARNING',
-                    'message': f"{category}.{metric} = {value:.2f}, threshold = {threshold:.2f}"
+                    "timestamp": time.time(),
+                    "category": category,
+                    "metric": metric,
+                    "value": value,
+                    "threshold": threshold,
+                    "severity": "CRITICAL" if value > threshold * 1.5 else "WARNING",
+                    "message": f"{category}.{metric} = {value:.2f}, threshold = {threshold:.2f}",
                 }
                 self._alerts.append(alert)
 
@@ -142,59 +155,68 @@ class MetricsStore:
                 if len(self._alerts) > 100:
                     self._alerts = self._alerts[-100:]
 
-    def get_metric_stats(self, category: str, metric: str, hours: int = 24) -> Dict[str, Any]:
+    def get_metric_stats(
+        self, category: str, metric: str, hours: int = 24
+    ) -> Dict[str, Any]:
         """Get statistical summary for a metric."""
         cutoff_time = time.time() - (hours * 3600)
 
         with self._lock:
             if category not in self._metrics or metric not in self._metrics[category]:
-                return {'error': 'Metric not found'}
+                return {"error": "Metric not found"}
 
             data_points = [
-                point for point in self._metrics[category][metric]
-                if point['timestamp'] > cutoff_time
+                point
+                for point in self._metrics[category][metric]
+                if point["timestamp"] > cutoff_time
             ]
 
             if not data_points:
-                return {'error': 'No data in time range'}
+                return {"error": "No data in time range"}
 
-            values = [point['value'] for point in data_points]
+            values = [point["value"] for point in data_points]
 
             return {
-                'count': len(values),
-                'mean': statistics.mean(values),
-                'median': statistics.median(values),
-                'min': min(values),
-                'max': max(values),
-                'p95': sorted(values)[int(len(values) * 0.95)] if values else None,
-                'p99': sorted(values)[int(len(values) * 0.99)] if values else None,
-                'std_dev': statistics.stdev(values) if len(values) > 1 else 0,
-                'latest': values[-1] if values else None,
-                'time_range_hours': hours
+                "count": len(values),
+                "mean": statistics.mean(values),
+                "median": statistics.median(values),
+                "min": min(values),
+                "max": max(values),
+                "p95": sorted(values)[int(len(values) * 0.95)] if values else None,
+                "p99": sorted(values)[int(len(values) * 0.99)] if values else None,
+                "std_dev": statistics.stdev(values) if len(values) > 1 else 0,
+                "latest": values[-1] if values else None,
+                "time_range_hours": hours,
             }
 
     def get_dashboard_data(self) -> Dict[str, Any]:
         """Get comprehensive dashboard data with full system integration."""
         with self._lock:
             dashboard = {
-                'timestamp': time.time(),
-                'summary': {
-                    'total_metrics': sum(len(metrics) for metrics in self._metrics.values()),
-                    'total_categories': len(self._metrics),
-                    'active_alerts': len([a for a in self._alerts if time.time() - a['timestamp'] < 3600]),  # Last hour
-                    'total_alerts': len(self._alerts)
+                "timestamp": time.time(),
+                "summary": {
+                    "total_metrics": sum(
+                        len(metrics) for metrics in self._metrics.values()
+                    ),
+                    "total_categories": len(self._metrics),
+                    "active_alerts": len(
+                        [a for a in self._alerts if time.time() - a["timestamp"] < 3600]
+                    ),  # Last hour
+                    "total_alerts": len(self._alerts),
                 },
-                'performance_status': self._calculate_performance_status(),
-                'recent_alerts': self._alerts[-10:],  # Last 10 alerts
-                'system_health': self._calculate_system_health(),
-                'test_coverage': self._calculate_test_coverage(),
-                'regression_status': self._detect_regressions(),
-                'system_integration': self.get_system_integration_status()
+                "performance_status": self._calculate_performance_status(),
+                "recent_alerts": self._alerts[-10:],  # Last 10 alerts
+                "system_health": self._calculate_system_health(),
+                "test_coverage": self._calculate_test_coverage(),
+                "regression_status": self._detect_regressions(),
+                "system_integration": self.get_system_integration_status(),
             }
 
             return dashboard
 
-    def update_system_status(self, component: str, subsystem: str, status: Dict[str, Any]):
+    def update_system_status(
+        self, component: str, subsystem: str, status: Dict[str, Any]
+    ):
         """Update system component status."""
         with self._lock:
             if component not in self._system_status:
@@ -204,93 +226,110 @@ class MetricsStore:
             # Update metrics for monitoring
             for key, value in status.items():
                 if isinstance(value, (int, float)):
-                    self.update_metric(f"system_{component}", f"{subsystem}_{key}", value)
+                    self.update_metric(
+                        f"system_{component}", f"{subsystem}_{key}", value
+                    )
 
     def get_system_integration_status(self) -> Dict[str, Any]:
         """Get comprehensive system integration status."""
         with self._lock:
             return {
-                'behavior_trees': self._check_behavior_tree_status(),
-                'state_machines': self._check_state_machine_status(),
-                'network': self._check_network_status(),
-                'simulator': self._check_simulator_status(),
-                'connections': self._check_connections_status(),
-                'uptime': self._calculate_system_uptime()
+                "behavior_trees": self._check_behavior_tree_status(),
+                "state_machines": self._check_state_machine_status(),
+                "network": self._check_network_status(),
+                "simulator": self._check_simulator_status(),
+                "connections": self._check_connections_status(),
+                "uptime": self._calculate_system_uptime(),
             }
 
     def _check_behavior_tree_status(self) -> Dict[str, Any]:
         """Check behavior tree system status."""
-        bt_status = self._system_status.get('behavior_trees', {})
+        bt_status = self._system_status.get("behavior_trees", {})
 
-        active_trees = len([t for t in bt_status.values() if t.get('active', False)])
-        healthy_trees = len([t for t in bt_status.values() if t.get('status') == 'RUNNING'])
+        active_trees = len([t for t in bt_status.values() if t.get("active", False)])
+        healthy_trees = len(
+            [t for t in bt_status.values() if t.get("status") == "RUNNING"]
+        )
 
         return {
-            'total_trees': len(bt_status),
-            'active_trees': active_trees,
-            'healthy_trees': healthy_trees,
-            'health_percentage': (healthy_trees / max(len(bt_status), 1)) * 100,
-            'trees': bt_status
+            "total_trees": len(bt_status),
+            "active_trees": active_trees,
+            "healthy_trees": healthy_trees,
+            "health_percentage": (healthy_trees / max(len(bt_status), 1)) * 100,
+            "trees": bt_status,
         }
 
     def _check_state_machine_status(self) -> Dict[str, Any]:
         """Check state machine system status."""
-        sm_status = self._system_status.get('state_machines', {})
+        sm_status = self._system_status.get("state_machines", {})
 
-        active_machines = len([m for m in sm_status.values() if m.get('active', False)])
-        valid_transitions = len([m for m in sm_status.values() if m.get('last_transition_valid', True)])
+        active_machines = len([m for m in sm_status.values() if m.get("active", False)])
+        valid_transitions = len(
+            [m for m in sm_status.values() if m.get("last_transition_valid", True)]
+        )
 
         return {
-            'total_machines': len(sm_status),
-            'active_machines': active_machines,
-            'valid_transitions': valid_transitions,
-            'transition_success_rate': (valid_transitions / max(len(sm_status), 1)) * 100,
-            'machines': sm_status
+            "total_machines": len(sm_status),
+            "active_machines": active_machines,
+            "valid_transitions": valid_transitions,
+            "transition_success_rate": (valid_transitions / max(len(sm_status), 1))
+            * 100,
+            "machines": sm_status,
         }
 
     def _check_network_status(self) -> Dict[str, Any]:
         """Check network system status."""
-        net_status = self._system_status.get('network_connections', {})
+        net_status = self._system_status.get("network_connections", {})
 
-        active_connections = len([c for c in net_status.values() if c.get('connected', False)])
-        healthy_links = len([c for c in net_status.values() if c.get('latency_ms', 999) < 100])
+        active_connections = len(
+            [c for c in net_status.values() if c.get("connected", False)]
+        )
+        healthy_links = len(
+            [c for c in net_status.values() if c.get("latency_ms", 999) < 100]
+        )
 
         # Calculate network health score
         total_connections = len(net_status)
         if total_connections == 0:
             health_score = 100  # No connections expected
         else:
-            health_score = ((active_connections + healthy_links) / (2 * total_connections)) * 100
+            health_score = (
+                (active_connections + healthy_links) / (2 * total_connections)
+            ) * 100
 
         return {
-            'total_connections': total_connections,
-            'active_connections': active_connections,
-            'healthy_links': healthy_links,
-            'network_health_score': health_score,
-            'connections': net_status
+            "total_connections": total_connections,
+            "active_connections": active_connections,
+            "healthy_links": healthy_links,
+            "network_health_score": health_score,
+            "connections": net_status,
         }
 
     def _check_simulator_status(self) -> Dict[str, Any]:
         """Check simulator system status."""
-        sim_status = self._system_status.get('simulator_status', {})
+        sim_status = self._system_status.get("simulator_status", {})
 
-        active_simulations = len([s for s in sim_status.values() if s.get('running', False)])
-        real_time_factor = sum([s.get('real_time_factor', 1.0) for s in sim_status.values()]) / max(len(sim_status), 1)
+        active_simulations = len(
+            [s for s in sim_status.values() if s.get("running", False)]
+        )
+        real_time_factor = sum(
+            [s.get("real_time_factor", 1.0) for s in sim_status.values()]
+        ) / max(len(sim_status), 1)
 
         return {
-            'total_simulations': len(sim_status),
-            'active_simulations': active_simulations,
-            'average_real_time_factor': real_time_factor,
-            'simulation_stability': 'GOOD' if real_time_factor > 0.8 else 'POOR',
-            'simulations': sim_status
+            "total_simulations": len(sim_status),
+            "active_simulations": active_simulations,
+            "average_real_time_factor": real_time_factor,
+            "simulation_stability": "GOOD" if real_time_factor > 0.8 else "POOR",
+            "simulations": sim_status,
         }
 
     def _check_connections_status(self) -> Dict[str, Any]:
         """Check system connections status."""
         # Aggregate connection status from all subsystems
-        bt_connections = len(self._system_status.get('behavior_trees', {}))
-        sm_connections = len(self._system_status.get('state_machines', {}))
-        net_connections = len(self._system_status.get('network_connections', {}))
+        bt_connections = len(self._system_status.get("behavior_trees", {}))
+        sm_connections = len(self._system_status.get("state_machines", {}))
+        net_connections = len(self._system_status.get("network_connections", {}))
 
         total_expected_connections = bt_connections + sm_connections + net_connections
 
@@ -298,67 +337,85 @@ class MetricsStore:
         connected_count = total_expected_connections
 
         return {
-            'total_expected_connections': total_expected_connections,
-            'connected_count': connected_count,
-            'connection_health': (connected_count / max(total_expected_connections, 1)) * 100,
-            'connection_status': 'HEALTHY' if connected_count == total_expected_connections else 'DEGRADED'
+            "total_expected_connections": total_expected_connections,
+            "connected_count": connected_count,
+            "connection_health": (connected_count / max(total_expected_connections, 1))
+            * 100,
+            "connection_status": (
+                "HEALTHY"
+                if connected_count == total_expected_connections
+                else "DEGRADED"
+            ),
         }
 
     def _calculate_system_uptime(self) -> Dict[str, Any]:
         """Calculate system uptime statistics."""
-        uptime_data = self._system_status.get('uptime', {})
+        uptime_data = self._system_status.get("uptime", {})
 
         if not uptime_data:
             # Estimate from process start time
             import time
+
             boot_time = time.time() - (60 * 60 * 24)  # Assume 24 hours for demo
-            uptime_data = {'system_boot': boot_time, 'process_start': time.time()}
+            uptime_data = {"system_boot": boot_time, "process_start": time.time()}
 
         current_time = time.time()
-        system_uptime = current_time - uptime_data.get('system_boot', current_time - 3600)
-        process_uptime = current_time - uptime_data.get('process_start', current_time - 3600)
+        system_uptime = current_time - uptime_data.get(
+            "system_boot", current_time - 3600
+        )
+        process_uptime = current_time - uptime_data.get(
+            "process_start", current_time - 3600
+        )
 
         return {
-            'system_uptime_seconds': system_uptime,
-            'process_uptime_seconds': process_uptime,
-            'system_uptime_hours': system_uptime / 3600,
-            'process_uptime_hours': process_uptime / 3600,
-            'uptime_percentage': min(100, (process_uptime / max(system_uptime, 1)) * 100)
+            "system_uptime_seconds": system_uptime,
+            "process_uptime_seconds": process_uptime,
+            "system_uptime_hours": system_uptime / 3600,
+            "process_uptime_hours": process_uptime / 3600,
+            "uptime_percentage": min(
+                100, (process_uptime / max(system_uptime, 1)) * 100
+            ),
         }
 
     def _calculate_performance_status(self) -> Dict[str, Any]:
         """Calculate overall performance status."""
         status = {
-            'motion_control': {'status': 'UNKNOWN', 'score': 0},
-            'communication': {'status': 'UNKNOWN', 'score': 0},
-            'resources': {'status': 'UNKNOWN', 'score': 0},
-            'reliability': {'status': 'UNKNOWN', 'score': 0}
+            "motion_control": {"status": "UNKNOWN", "score": 0},
+            "communication": {"status": "UNKNOWN", "score": 0},
+            "resources": {"status": "UNKNOWN", "score": 0},
+            "reliability": {"status": "UNKNOWN", "score": 0},
         }
 
         # Motion control status
-        if 'motion_control' in self._metrics:
-            motion_metrics = self._metrics['motion_control']
+        if "motion_control" in self._metrics:
+            motion_metrics = self._metrics["motion_control"]
             score = 0
             total_checks = 0
 
-            if 'p99_latency_ms' in motion_metrics:
-                latest = motion_metrics['p99_latency_ms'][-1]['value'] if motion_metrics['p99_latency_ms'] else None
+            if "p99_latency_ms" in motion_metrics:
+                latest = (
+                    motion_metrics["p99_latency_ms"][-1]["value"]
+                    if motion_metrics["p99_latency_ms"]
+                    else None
+                )
                 if latest and latest <= 20.0:
                     score += 1
                 total_checks += 1
 
-            status['motion_control']['score'] = score / max(total_checks, 1)
-            status['motion_control']['status'] = 'PASS' if status['motion_control']['score'] >= 0.8 else 'FAIL'
+            status["motion_control"]["score"] = score / max(total_checks, 1)
+            status["motion_control"]["status"] = (
+                "PASS" if status["motion_control"]["score"] >= 0.8 else "FAIL"
+            )
 
         # Communication status
         comm_score = 0
         comm_checks = 0
 
-        for category in ['binary_protocol', 'ipc_bridge']:
+        for category in ["binary_protocol", "ipc_bridge"]:
             if category in self._metrics:
                 # Simplified check - has recent data
                 has_recent_data = any(
-                    time.time() - point['timestamp'] < 3600  # Last hour
+                    time.time() - point["timestamp"] < 3600  # Last hour
                     for metric_data in self._metrics[category].values()
                     for point in metric_data[-1:]  # Check last point
                 )
@@ -366,102 +423,116 @@ class MetricsStore:
                     comm_score += 1
                 comm_checks += 1
 
-        status['communication']['score'] = comm_score / max(comm_checks, 1)
-        status['communication']['status'] = 'PASS' if status['communication']['score'] >= 0.8 else 'FAIL'
+        status["communication"]["score"] = comm_score / max(comm_checks, 1)
+        status["communication"]["status"] = (
+            "PASS" if status["communication"]["score"] >= 0.8 else "FAIL"
+        )
 
         return status
 
     def _calculate_system_health(self) -> Dict[str, Any]:
         """Calculate system health metrics."""
         health = {
-            'cpu_usage': 'UNKNOWN',
-            'memory_usage': 'UNKNOWN',
-            'network_status': 'UNKNOWN',
-            'overall_health': 'UNKNOWN'
+            "cpu_usage": "UNKNOWN",
+            "memory_usage": "UNKNOWN",
+            "network_status": "UNKNOWN",
+            "overall_health": "UNKNOWN",
         }
 
         # CPU health
-        cpu_stats = self.get_metric_stats('system', 'cpu_percent', hours=1)
-        if 'mean' in cpu_stats:
-            cpu_usage = cpu_stats['mean']
+        cpu_stats = self.get_metric_stats("system", "cpu_percent", hours=1)
+        if "mean" in cpu_stats:
+            cpu_usage = cpu_stats["mean"]
             if cpu_usage < 50:
-                health['cpu_usage'] = 'GOOD'
+                health["cpu_usage"] = "GOOD"
             elif cpu_usage < 80:
-                health['cpu_usage'] = 'WARNING'
+                health["cpu_usage"] = "WARNING"
             else:
-                health['cpu_usage'] = 'CRITICAL'
+                health["cpu_usage"] = "CRITICAL"
 
         # Memory health
-        mem_stats = self.get_metric_stats('system', 'memory_percent', hours=1)
-        if 'mean' in mem_stats:
-            mem_usage = mem_stats['mean']
+        mem_stats = self.get_metric_stats("system", "memory_percent", hours=1)
+        if "mean" in mem_stats:
+            mem_usage = mem_stats["mean"]
             if mem_usage < 70:
-                health['memory_usage'] = 'GOOD'
+                health["memory_usage"] = "GOOD"
             elif mem_usage < 85:
-                health['memory_usage'] = 'WARNING'
+                health["memory_usage"] = "WARNING"
             else:
-                health['memory_usage'] = 'CRITICAL'
+                health["memory_usage"] = "CRITICAL"
 
         # Overall health
         health_scores = []
-        for component in ['cpu_usage', 'memory_usage']:
-            if health[component] == 'GOOD':
+        for component in ["cpu_usage", "memory_usage"]:
+            if health[component] == "GOOD":
                 health_scores.append(1.0)
-            elif health[component] == 'WARNING':
+            elif health[component] == "WARNING":
                 health_scores.append(0.5)
-            elif health[component] == 'CRITICAL':
+            elif health[component] == "CRITICAL":
                 health_scores.append(0.0)
 
         if health_scores:
             avg_health = sum(health_scores) / len(health_scores)
             if avg_health >= 0.8:
-                health['overall_health'] = 'HEALTHY'
+                health["overall_health"] = "HEALTHY"
             elif avg_health >= 0.5:
-                health['overall_health'] = 'WARNING'
+                health["overall_health"] = "WARNING"
             else:
-                health['overall_health'] = 'CRITICAL'
+                health["overall_health"] = "CRITICAL"
 
         return health
 
     def _calculate_test_coverage(self) -> Dict[str, Any]:
         """Calculate test coverage status."""
         coverage = {
-            'unit_tests': {'covered': 0, 'total': 10, 'percentage': 0},
-            'integration_tests': {'covered': 0, 'total': 8, 'percentage': 0},
-            'performance_tests': {'covered': 0, 'total': 6, 'percentage': 0},
-            'chaos_tests': {'covered': 0, 'total': 5, 'percentage': 0},
-            'overall_coverage': 0
+            "unit_tests": {"covered": 0, "total": 10, "percentage": 0},
+            "integration_tests": {"covered": 0, "total": 8, "percentage": 0},
+            "performance_tests": {"covered": 0, "total": 6, "percentage": 0},
+            "chaos_tests": {"covered": 0, "total": 5, "percentage": 0},
+            "overall_coverage": 0,
         }
 
         # Estimate coverage based on metrics presence
-        if 'motion_control' in self._metrics:
-            coverage['performance_tests']['covered'] += 1
-        if 'binary_protocol' in self._metrics:
-            coverage['performance_tests']['covered'] += 1
-        if 'ipc_bridge' in self._metrics:
-            coverage['integration_tests']['covered'] += 1
+        if "motion_control" in self._metrics:
+            coverage["performance_tests"]["covered"] += 1
+        if "binary_protocol" in self._metrics:
+            coverage["performance_tests"]["covered"] += 1
+        if "ipc_bridge" in self._metrics:
+            coverage["integration_tests"]["covered"] += 1
 
         # Calculate percentages
         for category in coverage:
-            if category != 'overall_coverage' and 'covered' in coverage[category]:
-                covered = coverage[category]['covered']
-                total = coverage[category]['total']
-                coverage[category]['percentage'] = (covered / total) * 100 if total > 0 else 0
+            if category != "overall_coverage" and "covered" in coverage[category]:
+                covered = coverage[category]["covered"]
+                total = coverage[category]["total"]
+                coverage[category]["percentage"] = (
+                    (covered / total) * 100 if total > 0 else 0
+                )
 
         # Overall coverage
-        total_covered = sum(cat['covered'] for cat in coverage.values() if isinstance(cat, dict) and 'covered' in cat)
-        total_tests = sum(cat['total'] for cat in coverage.values() if isinstance(cat, dict) and 'total' in cat)
-        coverage['overall_coverage'] = (total_covered / total_tests) * 100 if total_tests > 0 else 0
+        total_covered = sum(
+            cat["covered"]
+            for cat in coverage.values()
+            if isinstance(cat, dict) and "covered" in cat
+        )
+        total_tests = sum(
+            cat["total"]
+            for cat in coverage.values()
+            if isinstance(cat, dict) and "total" in cat
+        )
+        coverage["overall_coverage"] = (
+            (total_covered / total_tests) * 100 if total_tests > 0 else 0
+        )
 
         return coverage
 
     def _detect_regressions(self) -> Dict[str, Any]:
         """Detect performance regressions."""
         regressions = {
-            'detected': False,
-            'categories': [],
-            'severity': 'NONE',
-            'recommendations': []
+            "detected": False,
+            "categories": [],
+            "severity": "NONE",
+            "recommendations": [],
         }
 
         # Simple regression detection: compare recent vs historical performance
@@ -471,24 +542,28 @@ class MetricsStore:
                     metric_data = self._metrics[category][metric]
                     if len(metric_data) >= 20:  # Need enough data
                         # Compare recent 10 points vs previous 10 points
-                        recent = [p['value'] for p in metric_data[-10:]]
-                        historical = [p['value'] for p in metric_data[-20:-10]]
+                        recent = [p["value"] for p in metric_data[-10:]]
+                        historical = [p["value"] for p in metric_data[-20:-10]]
 
                         if recent and historical:
                             recent_avg = statistics.mean(recent)
                             historical_avg = statistics.mean(historical)
 
                             # For latency metrics, increase is regression
-                            if 'latency' in metric or 'time' in metric:
+                            if "latency" in metric or "time" in metric:
                                 if recent_avg > historical_avg * 1.1:  # 10% degradation
-                                    regressions['detected'] = True
-                                    regressions['categories'].append(f"{category}.{metric}")
-                                    regressions['severity'] = 'WARNING'
+                                    regressions["detected"] = True
+                                    regressions["categories"].append(
+                                        f"{category}.{metric}"
+                                    )
+                                    regressions["severity"] = "WARNING"
 
-        if regressions['detected']:
-            regressions['recommendations'].append("Performance regression detected - investigate recent changes")
+        if regressions["detected"]:
+            regressions["recommendations"].append(
+                "Performance regression detected - investigate recent changes"
+            )
         else:
-            regressions['recommendations'].append("No performance regressions detected")
+            regressions["recommendations"].append("No performance regressions detected")
 
         return regressions
 
@@ -505,22 +580,22 @@ class MetricsDashboardHandler(BaseHTTPRequestHandler):
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
 
-        if path == '/':
+        if path == "/":
             self._serve_dashboard()
-        elif path == '/api/metrics':
+        elif path == "/api/metrics":
             self._serve_metrics_api()
-        elif path == '/api/alerts':
+        elif path == "/api/alerts":
             self._serve_alerts_api()
-        elif path == '/api/health':
+        elif path == "/api/health":
             self._serve_health_api()
-        elif path.startswith('/static/'):
+        elif path.startswith("/static/"):
             self._serve_static_file(path)
         else:
             self._serve_404()
 
     def do_POST(self):
         """Handle POST requests for metrics updates."""
-        if self.path == '/api/metrics':
+        if self.path == "/api/metrics":
             self._handle_metrics_update()
         else:
             self._serve_404()
@@ -528,12 +603,14 @@ class MetricsDashboardHandler(BaseHTTPRequestHandler):
     def _serve_dashboard(self):
         """Serve the main dashboard HTML."""
         html_content = self._generate_dashboard_html()
-        self._send_response(200, 'text/html', html_content)
+        self._send_response(200, "text/html", html_content)
 
     def _serve_metrics_api(self):
         """Serve metrics data as JSON."""
         dashboard_data = metrics_store.get_dashboard_data()
-        self._send_response(200, 'application/json', json.dumps(dashboard_data, indent=2))
+        self._send_response(
+            200, "application/json", json.dumps(dashboard_data, indent=2)
+        )
 
     def _serve_alerts_api(self):
         """Serve alerts data as JSON."""
@@ -541,37 +618,41 @@ class MetricsDashboardHandler(BaseHTTPRequestHandler):
         with metrics_store._lock:
             alerts = metrics_store._alerts[-50:]  # Last 50 alerts
 
-        self._send_response(200, 'application/json', json.dumps(alerts, indent=2))
+        self._send_response(200, "application/json", json.dumps(alerts, indent=2))
 
     def _serve_health_api(self):
         """Serve health check."""
         health_data = {
-            'status': 'healthy',
-            'timestamp': time.time(),
-            'uptime': time.time() - getattr(self.server, 'start_time', time.time()),
-            'metrics_count': sum(len(metrics) for metrics in metrics_store._metrics.values())
+            "status": "healthy",
+            "timestamp": time.time(),
+            "uptime": time.time() - getattr(self.server, "start_time", time.time()),
+            "metrics_count": sum(
+                len(metrics) for metrics in metrics_store._metrics.values()
+            ),
         }
-        self._send_response(200, 'application/json', json.dumps(health_data))
+        self._send_response(200, "application/json", json.dumps(health_data))
 
     def _handle_metrics_update(self):
         """Handle metrics update POST requests."""
         try:
-            content_length = int(self.headers['Content-Length'])
+            content_length = int(self.headers["Content-Length"])
             post_data = self.rfile.read(content_length)
-            data = json.loads(post_data.decode('utf-8'))
+            data = json.loads(post_data.decode("utf-8"))
 
             # Update metrics
-            category = data.get('category', 'unknown')
-            metric = data.get('metric', 'unknown')
-            value = data.get('value', 0)
-            timestamp = data.get('timestamp', time.time())
+            category = data.get("category", "unknown")
+            metric = data.get("metric", "unknown")
+            value = data.get("value", 0)
+            timestamp = data.get("timestamp", time.time())
 
             metrics_store.update_metric(category, metric, value, timestamp)
 
-            self._send_response(200, 'application/json', json.dumps({'status': 'success'}))
+            self._send_response(
+                200, "application/json", json.dumps({"status": "success"})
+            )
 
         except Exception as e:
-            self._send_response(400, 'application/json', json.dumps({'error': str(e)}))
+            self._send_response(400, "application/json", json.dumps({"error": str(e)}))
 
     def _serve_static_file(self, path):
         """Serve static files."""
@@ -580,17 +661,17 @@ class MetricsDashboardHandler(BaseHTTPRequestHandler):
 
     def _serve_404(self):
         """Serve 404 error."""
-        self._send_response(404, 'text/plain', 'Not Found')
+        self._send_response(404, "text/plain", "Not Found")
 
     def _send_response(self, status_code: int, content_type: str, content: str):
         """Send HTTP response."""
         self.send_response(status_code)
-        self.send_header('Content-Type', content_type)
-        self.send_header('Access-Control-Allow-Origin', '*')  # CORS
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header("Content-Type", content_type)
+        self.send_header("Access-Control-Allow-Origin", "*")  # CORS
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
-        self.wfile.write(content.encode('utf-8'))
+        self.wfile.write(content.encode("utf-8"))
 
     def _generate_dashboard_html(self) -> str:
         """Generate the dashboard HTML."""
@@ -869,8 +950,10 @@ class MetricsDashboardHandler(BaseHTTPRequestHandler):
 
         html = ""
         for alert in alerts[-5:]:  # Show last 5 alerts
-            timestamp = datetime.fromtimestamp(alert['timestamp']).strftime('%H:%M:%S')
-            severity_class = 'critical' if alert.get('severity') == 'CRITICAL' else 'warning'
+            timestamp = datetime.fromtimestamp(alert["timestamp"]).strftime("%H:%M:%S")
+            severity_class = (
+                "critical" if alert.get("severity") == "CRITICAL" else "warning"
+            )
             html += f"""
             <div class="alert-item">
                 <strong>{timestamp}</strong> - <span class="status-{severity_class}">{alert.get('severity', 'UNKNOWN')}</span><br>
@@ -882,7 +965,7 @@ class MetricsDashboardHandler(BaseHTTPRequestHandler):
 
 def run_server(port: int = 8080):
     """Run the metrics dashboard server."""
-    server_address = ('', port)
+    server_address = ("", port)
     httpd = HTTPServer(server_address, MetricsDashboardHandler)
     httpd.start_time = time.time()
 
@@ -910,11 +993,11 @@ def simulate_test_data():
 
     # Simulate performance metrics
     test_scenarios = [
-        ('motion_control', 'p99_latency_ms', lambda: 15 + (time.time() % 10)),
-        ('binary_protocol', 'p99_latency_ms', lambda: 2 + (time.time() % 2)),
-        ('ipc_bridge', 'p99_latency_ms', lambda: 5 + (time.time() % 3)),
-        ('system', 'cpu_percent', lambda: 45 + (time.time() % 20)),
-        ('system', 'memory_percent', lambda: 60 + (time.time() % 15)),
+        ("motion_control", "p99_latency_ms", lambda: 15 + (time.time() % 10)),
+        ("binary_protocol", "p99_latency_ms", lambda: 2 + (time.time() % 2)),
+        ("ipc_bridge", "p99_latency_ms", lambda: 5 + (time.time() % 3)),
+        ("system", "cpu_percent", lambda: 45 + (time.time() % 20)),
+        ("system", "memory_percent", lambda: 60 + (time.time() % 15)),
     ]
 
     # Generate 10 minutes of simulated data
@@ -933,13 +1016,24 @@ def simulate_test_data():
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description='URC 2026 Testing Metrics Dashboard')
-    parser.add_argument('--port', type=int, default=8080,
-                       help='Port to run dashboard server (default: 8080)')
-    parser.add_argument('--simulate-data', action='store_true',
-                       help='Simulate test data for demonstration')
-    parser.add_argument('--data-dir', type=str, default='./test_results',
-                       help='Directory to load historical test data from')
+    parser = argparse.ArgumentParser(description="URC 2026 Testing Metrics Dashboard")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        help="Port to run dashboard server (default: 8080)",
+    )
+    parser.add_argument(
+        "--simulate-data",
+        action="store_true",
+        help="Simulate test data for demonstration",
+    )
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default="./test_results",
+        help="Directory to load historical test data from",
+    )
 
     args = parser.parse_args()
 

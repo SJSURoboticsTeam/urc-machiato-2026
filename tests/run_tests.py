@@ -122,7 +122,7 @@ class TestRunner:
         print("   - output/reports/coverage_html/ (HTML coverage)")
         print("   - output/reports/coverage.xml (XML coverage)")
         print("   - output/reports/junit.xml (JUnit results)")
-        
+
         return 0
 
     def check_test_status(self):

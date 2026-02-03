@@ -23,13 +23,16 @@ from dataclasses import dataclass, field
 from concurrent.futures import ThreadPoolExecutor
 import statistics
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class StressTestResult:
     """Results from a stress test"""
+
     test_name: str
     duration_seconds: float
     success: bool
@@ -41,6 +44,7 @@ class StressTestResult:
 @dataclass
 class SystemMetrics:
     """System performance metrics"""
+
     cpu_percent: float = 0.0
     memory_percent: float = 0.0
     memory_mb: float = 0.0
@@ -78,12 +82,12 @@ class JazzyStressTester:
     def _collect_system_info(self) -> Dict[str, Any]:
         """Collect baseline system information"""
         return {
-            'cpu_count': psutil.cpu_count(),
-            'cpu_freq': psutil.cpu_freq().current if psutil.cpu_freq() else 'N/A',
-            'memory_total_mb': psutil.virtual_memory().total / 1024 / 1024,
-            'python_version': f"{os.sys.version_info.major}.{os.sys.version_info.minor}",
-            'platform': os.sys.platform,
-            'pid': os.getpid()
+            "cpu_count": psutil.cpu_count(),
+            "cpu_freq": psutil.cpu_freq().current if psutil.cpu_freq() else "N/A",
+            "memory_total_mb": psutil.virtual_memory().total / 1024 / 1024,
+            "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}",
+            "platform": os.sys.platform,
+            "pid": os.getpid(),
         }
 
     def _collect_metrics(self) -> SystemMetrics:
@@ -97,7 +101,7 @@ class JazzyStressTester:
             memory_mb=memory_info.rss / 1024 / 1024,
             network_connections=len(psutil.net_connections()),
             thread_count=process.num_threads(),
-            open_files=len(process.open_files())
+            open_files=len(process.open_files()),
         )
 
     async def run_all_tests(self) -> Dict[str, Any]:
@@ -144,9 +148,13 @@ class JazzyStressTester:
 
                     # Check resource limits
                     if metrics.memory_mb > self.max_memory_mb:
-                        errors.append(f"Memory usage exceeded limit: {metrics.memory_mb:.1f}MB")
+                        errors.append(
+                            f"Memory usage exceeded limit: {metrics.memory_mb:.1f}MB"
+                        )
                     if metrics.cpu_percent > self.max_cpu_percent:
-                        errors.append(f"CPU usage exceeded limit: {metrics.cpu_percent:.1f}%")
+                        errors.append(
+                            f"CPU usage exceeded limit: {metrics.cpu_percent:.1f}%"
+                        )
 
                 # Small delay to prevent overwhelming system
                 await asyncio.sleep(0.001)  # 1ms between checks
@@ -157,27 +165,39 @@ class JazzyStressTester:
         duration = time.time() - start_time
 
         # Calculate metrics
-        avg_cpu = statistics.mean([m.cpu_percent for m in metrics_samples]) if metrics_samples else 0
-        avg_memory = statistics.mean([m.memory_mb for m in metrics_samples]) if metrics_samples else 0
-        max_memory = max([m.memory_mb for m in metrics_samples]) if metrics_samples else 0
+        avg_cpu = (
+            statistics.mean([m.cpu_percent for m in metrics_samples])
+            if metrics_samples
+            else 0
+        )
+        avg_memory = (
+            statistics.mean([m.memory_mb for m in metrics_samples])
+            if metrics_samples
+            else 0
+        )
+        max_memory = (
+            max([m.memory_mb for m in metrics_samples]) if metrics_samples else 0
+        )
 
         result = StressTestResult(
             test_name="safety_system_stress",
             duration_seconds=duration,
             success=len(errors) == 0,
             metrics={
-                'checks_performed': 1000,
-                'avg_cpu_percent': avg_cpu,
-                'avg_memory_mb': avg_memory,
-                'max_memory_mb': max_memory,
-                'throughput_hz': 1000 / duration if duration > 0 else 0,
-                'latency_ms': (duration / 1000) * 1000  # Average latency per check
+                "checks_performed": 1000,
+                "avg_cpu_percent": avg_cpu,
+                "avg_memory_mb": avg_memory,
+                "max_memory_mb": max_memory,
+                "throughput_hz": 1000 / duration if duration > 0 else 0,
+                "latency_ms": (duration / 1000) * 1000,  # Average latency per check
             },
-            errors=errors
+            errors=errors,
         )
 
         self.results.append(result)
-        logger.info(f"✅ Safety system stress test completed: {'PASS' if result.success else 'FAIL'}")
+        logger.info(
+            f"✅ Safety system stress test completed: {'PASS' if result.success else 'FAIL'}"
+        )
 
     async def _test_recovery_mechanisms(self):
         """Test system recovery from various failure conditions"""
@@ -190,54 +210,66 @@ class JazzyStressTester:
         # Scenario 1: Component crash recovery
         try:
             recovery_time = await self._simulate_component_crash_recovery()
-            recovery_scenarios.append({
-                'scenario': 'component_crash',
-                'recovery_time_ms': recovery_time,
-                'success': recovery_time < 5000  # 5 second recovery limit
-            })
+            recovery_scenarios.append(
+                {
+                    "scenario": "component_crash",
+                    "recovery_time_ms": recovery_time,
+                    "success": recovery_time < 5000,  # 5 second recovery limit
+                }
+            )
         except Exception as e:
             errors.append(f"Component crash recovery failed: {e}")
 
         # Scenario 2: Network partition recovery
         try:
             recovery_time = await self._simulate_network_partition_recovery()
-            recovery_scenarios.append({
-                'scenario': 'network_partition',
-                'recovery_time_ms': recovery_time,
-                'success': recovery_time < 10000  # 10 second recovery limit
-            })
+            recovery_scenarios.append(
+                {
+                    "scenario": "network_partition",
+                    "recovery_time_ms": recovery_time,
+                    "success": recovery_time < 10000,  # 10 second recovery limit
+                }
+            )
         except Exception as e:
             errors.append(f"Network partition recovery failed: {e}")
 
         # Scenario 3: High load recovery
         try:
             recovery_time = await self._simulate_high_load_recovery()
-            recovery_scenarios.append({
-                'scenario': 'high_load',
-                'recovery_time_ms': recovery_time,
-                'success': recovery_time < 30000  # 30 second recovery limit
-            })
+            recovery_scenarios.append(
+                {
+                    "scenario": "high_load",
+                    "recovery_time_ms": recovery_time,
+                    "success": recovery_time < 30000,  # 30 second recovery limit
+                }
+            )
         except Exception as e:
             errors.append(f"High load recovery failed: {e}")
 
         duration = time.time() - start_time
-        successful_recoveries = sum(1 for s in recovery_scenarios if s['success'])
+        successful_recoveries = sum(1 for s in recovery_scenarios if s["success"])
 
         result = StressTestResult(
             test_name="recovery_mechanisms",
             duration_seconds=duration,
             success=len(errors) == 0 and successful_recoveries >= 2,
             metrics={
-                'scenarios_tested': len(recovery_scenarios),
-                'successful_recoveries': successful_recoveries,
-                'recovery_details': recovery_scenarios,
-                'avg_recovery_time_ms': statistics.mean([s['recovery_time_ms'] for s in recovery_scenarios]) if recovery_scenarios else 0
+                "scenarios_tested": len(recovery_scenarios),
+                "successful_recoveries": successful_recoveries,
+                "recovery_details": recovery_scenarios,
+                "avg_recovery_time_ms": (
+                    statistics.mean([s["recovery_time_ms"] for s in recovery_scenarios])
+                    if recovery_scenarios
+                    else 0
+                ),
             },
-            errors=errors
+            errors=errors,
         )
 
         self.results.append(result)
-        logger.info(f"✅ Recovery mechanisms test completed: {'PASS' if result.success else 'FAIL'}")
+        logger.info(
+            f"✅ Recovery mechanisms test completed: {'PASS' if result.success else 'FAIL'}"
+        )
 
     async def _test_performance_benchmarking(self):
         """Comprehensive performance benchmarking"""
@@ -250,7 +282,7 @@ class JazzyStressTester:
         # Benchmark 1: Message throughput
         try:
             throughput = await self._benchmark_message_throughput()
-            benchmark_results['message_throughput_hz'] = throughput
+            benchmark_results["message_throughput_hz"] = throughput
         except Exception as e:
             errors.append(f"Message throughput benchmark failed: {e}")
 
@@ -282,11 +314,13 @@ class JazzyStressTester:
             duration_seconds=duration,
             success=len(errors) == 0,
             metrics=benchmark_results,
-            errors=errors
+            errors=errors,
         )
 
         self.results.append(result)
-        logger.info(f"✅ Performance benchmarking completed: {'PASS' if result.success else 'FAIL'}")
+        logger.info(
+            f"✅ Performance benchmarking completed: {'PASS' if result.success else 'FAIL'}"
+        )
 
     async def _test_fault_injection(self):
         """Chaos engineering - inject faults and test resilience"""
@@ -299,53 +333,65 @@ class JazzyStressTester:
         # Fault 1: Memory leak simulation
         try:
             leak_detected = await self._inject_memory_leak_fault()
-            fault_scenarios.append({
-                'fault_type': 'memory_leak',
-                'detected': leak_detected,
-                'severity': 'high' if leak_detected else 'low'
-            })
+            fault_scenarios.append(
+                {
+                    "fault_type": "memory_leak",
+                    "detected": leak_detected,
+                    "severity": "high" if leak_detected else "low",
+                }
+            )
         except Exception as e:
             errors.append(f"Memory leak fault injection failed: {e}")
 
         # Fault 2: CPU spike simulation
         try:
             spike_handled = await self._inject_cpu_spike_fault()
-            fault_scenarios.append({
-                'fault_type': 'cpu_spike',
-                'handled': spike_handled,
-                'severity': 'medium'
-            })
+            fault_scenarios.append(
+                {
+                    "fault_type": "cpu_spike",
+                    "handled": spike_handled,
+                    "severity": "medium",
+                }
+            )
         except Exception as e:
             errors.append(f"CPU spike fault injection failed: {e}")
 
         # Fault 3: Communication failure
         try:
             comm_recovery = await self._inject_communication_fault()
-            fault_scenarios.append({
-                'fault_type': 'communication_failure',
-                'recovered': comm_recovery,
-                'severity': 'critical'
-            })
+            fault_scenarios.append(
+                {
+                    "fault_type": "communication_failure",
+                    "recovered": comm_recovery,
+                    "severity": "critical",
+                }
+            )
         except Exception as e:
             errors.append(f"Communication fault injection failed: {e}")
 
         duration = time.time() - start_time
-        detected_faults = sum(1 for f in fault_scenarios if f.get('detected', False) or f.get('handled', False))
+        detected_faults = sum(
+            1
+            for f in fault_scenarios
+            if f.get("detected", False) or f.get("handled", False)
+        )
 
         result = StressTestResult(
             test_name="fault_injection",
             duration_seconds=duration,
             success=len(errors) == 0 and detected_faults >= 2,
             metrics={
-                'faults_injected': len(fault_scenarios),
-                'faults_detected': detected_faults,
-                'fault_details': fault_scenarios
+                "faults_injected": len(fault_scenarios),
+                "faults_detected": detected_faults,
+                "fault_details": fault_scenarios,
             },
-            errors=errors
+            errors=errors,
         )
 
         self.results.append(result)
-        logger.info(f"✅ Fault injection testing completed: {'PASS' if result.success else 'FAIL'}")
+        logger.info(
+            f"✅ Fault injection testing completed: {'PASS' if result.success else 'FAIL'}"
+        )
 
     async def _test_system_readiness(self):
         """Comprehensive system readiness assessment"""
@@ -358,84 +404,91 @@ class JazzyStressTester:
         # Readiness Check 1: Component health
         try:
             component_health = await self._check_component_readiness()
-            readiness_checks['component_health'] = component_health
+            readiness_checks["component_health"] = component_health
         except Exception as e:
             errors.append(f"Component readiness check failed: {e}")
 
         # Readiness Check 2: Resource availability
         try:
             resource_status = await self._check_resource_readiness()
-            readiness_checks['resource_status'] = resource_status
+            readiness_checks["resource_status"] = resource_status
         except Exception as e:
             errors.append(f"Resource readiness check failed: {e}")
 
         # Readiness Check 3: Configuration validation
         try:
             config_valid = await self._check_configuration_readiness()
-            readiness_checks['configuration_valid'] = config_valid
+            readiness_checks["configuration_valid"] = config_valid
         except Exception as e:
             errors.append(f"Configuration readiness check failed: {e}")
 
         # Readiness Check 4: Integration testing
         try:
             integration_status = await self._check_integration_readiness()
-            readiness_checks['integration_status'] = integration_status
+            readiness_checks["integration_status"] = integration_status
         except Exception as e:
             errors.append(f"Integration readiness check failed: {e}")
 
         duration = time.time() - start_time
 
         # Calculate overall readiness score
-        readiness_score = sum(readiness_checks.values()) / len(readiness_checks) if readiness_checks else 0
+        readiness_score = (
+            sum(readiness_checks.values()) / len(readiness_checks)
+            if readiness_checks
+            else 0
+        )
 
         result = StressTestResult(
             test_name="system_readiness",
             duration_seconds=duration,
             success=readiness_score >= 0.8,  # 80% readiness threshold
             metrics={
-                'readiness_score': readiness_score,
-                'checks_performed': len(readiness_checks),
-                'checks_passed': sum(readiness_checks.values()),
-                'readiness_details': readiness_checks
+                "readiness_score": readiness_score,
+                "checks_performed": len(readiness_checks),
+                "checks_passed": sum(readiness_checks.values()),
+                "readiness_details": readiness_checks,
             },
-            errors=errors
+            errors=errors,
         )
 
         self.results.append(result)
-        logger.info(f"✅ System readiness testing completed: {'PASS' if result.success else 'FAIL'} "
-                   f"(Score: {readiness_score:.1%})")
+        logger.info(
+            f"✅ System readiness testing completed: {'PASS' if result.success else 'FAIL'} "
+            f"(Score: {readiness_score:.1%})"
+        )
 
     # ===== SIMULATION METHODS =====
 
     def _generate_sensor_data(self) -> Dict[str, float]:
         """Generate realistic sensor data for testing"""
         import random
+
         return {
-            'imu_accel_x': random.gauss(0, 2.0),
-            'imu_accel_y': random.gauss(0, 2.0),
-            'imu_accel_z': random.gauss(9.8, 0.5),
-            'proximity_front': random.uniform(0.1, 5.0),
-            'proximity_rear': random.uniform(0.1, 5.0),
-            'battery_voltage': random.uniform(20.0, 25.0),
-            'motor_current': random.uniform(0.5, 3.0)
+            "imu_accel_x": random.gauss(0, 2.0),
+            "imu_accel_y": random.gauss(0, 2.0),
+            "imu_accel_z": random.gauss(9.8, 0.5),
+            "proximity_front": random.uniform(0.1, 5.0),
+            "proximity_rear": random.uniform(0.1, 5.0),
+            "battery_voltage": random.uniform(20.0, 25.0),
+            "motor_current": random.uniform(0.5, 3.0),
         }
 
     def _process_safety_checks(self, sensor_data: Dict[str, float]) -> Dict[str, Any]:
         """Simulate safety system processing"""
         # Simulate collision detection
-        collision_risk = sensor_data['proximity_front'] < 0.5
+        collision_risk = sensor_data["proximity_front"] < 0.5
 
         # Simulate battery monitoring
-        battery_critical = sensor_data['battery_voltage'] < 21.0
+        battery_critical = sensor_data["battery_voltage"] < 21.0
 
         # Simulate motor overcurrent
-        motor_overload = sensor_data['motor_current'] > 2.5
+        motor_overload = sensor_data["motor_current"] > 2.5
 
         return {
-            'collision_detected': collision_risk,
-            'battery_critical': battery_critical,
-            'motor_overload': motor_overload,
-            'system_safe': not (collision_risk or battery_critical or motor_overload)
+            "collision_detected": collision_risk,
+            "battery_critical": battery_critical,
+            "motor_overload": motor_overload,
+            "system_safe": not (collision_risk or battery_critical or motor_overload),
         }
 
     async def _simulate_component_crash_recovery(self) -> float:
@@ -497,10 +550,10 @@ class JazzyStressTester:
         final_memory = self._collect_metrics().memory_mb
 
         return {
-            'initial_memory_mb': initial_memory,
-            'peak_memory_mb': peak_memory,
-            'final_memory_mb': final_memory,
-            'memory_delta_mb': peak_memory - initial_memory
+            "initial_memory_mb": initial_memory,
+            "peak_memory_mb": peak_memory,
+            "final_memory_mb": final_memory,
+            "memory_delta_mb": peak_memory - initial_memory,
         }
 
     async def _benchmark_cpu_utilization(self) -> Dict[str, float]:
@@ -513,9 +566,9 @@ class JazzyStressTester:
             await asyncio.sleep(0.1)
 
         return {
-            'avg_cpu_percent': statistics.mean(cpu_samples),
-            'max_cpu_percent': max(cpu_samples),
-            'cpu_std_dev': statistics.stdev(cpu_samples) if len(cpu_samples) > 1 else 0
+            "avg_cpu_percent": statistics.mean(cpu_samples),
+            "max_cpu_percent": max(cpu_samples),
+            "cpu_std_dev": statistics.stdev(cpu_samples) if len(cpu_samples) > 1 else 0,
         }
 
     async def _benchmark_latency(self) -> Dict[str, float]:
@@ -530,10 +583,10 @@ class JazzyStressTester:
             latencies.append(latency)
 
         return {
-            'avg_latency_ms': statistics.mean(latencies),
-            'min_latency_ms': min(latencies),
-            'max_latency_ms': max(latencies),
-            'latency_std_dev': statistics.stdev(latencies)
+            "avg_latency_ms": statistics.mean(latencies),
+            "min_latency_ms": min(latencies),
+            "max_latency_ms": max(latencies),
+            "latency_std_dev": statistics.stdev(latencies),
         }
 
     async def _inject_memory_leak_fault(self) -> bool:
@@ -555,10 +608,11 @@ class JazzyStressTester:
 
     async def _inject_cpu_spike_fault(self) -> bool:
         """Simulate CPU spike and test handling"""
+
         # Create CPU intensive task
         def cpu_intensive_task():
             for _ in range(100000):
-                _ = sum(i*i for i in range(100))
+                _ = sum(i * i for i in range(100))
 
         # Run in thread pool
         loop = asyncio.get_event_loop()
@@ -582,7 +636,12 @@ class JazzyStressTester:
     async def _check_component_readiness(self) -> float:
         """Check component readiness (0.0 to 1.0)"""
         # Simulate component checks
-        components_checked = ['bt_orchestrator', 'state_machine', 'motion_control', 'safety_system']
+        components_checked = [
+            "bt_orchestrator",
+            "state_machine",
+            "motion_control",
+            "safety_system",
+        ]
         components_ready = sum(1 for _ in components_checked)  # All simulated as ready
 
         return components_ready / len(components_checked)
@@ -602,7 +661,7 @@ class JazzyStressTester:
     async def _check_configuration_readiness(self) -> float:
         """Check configuration readiness (0.0 to 1.0)"""
         # Check for required configuration files
-        required_files = ['cyclonedds.xml', 'jazzy_setup.sh', 'jazzy_rover.launch.py']
+        required_files = ["cyclonedds.xml", "jazzy_setup.sh", "jazzy_rover.launch.py"]
         existing_files = sum(1 for f in required_files if os.path.exists(f))
 
         return existing_files / len(required_files)
@@ -615,8 +674,10 @@ class JazzyStressTester:
         # Test 1: Python imports
         try:
             import sys
-            sys.path.append('src')
+
+            sys.path.append("src")
             from src.core.jazzy_qos_profiles import get_autonomy_status_qos
+
             integration_tests.append(True)
         except:
             integration_tests.append(False)
@@ -625,7 +686,7 @@ class JazzyStressTester:
         integration_tests.append(True)  # Assume ROS2 is working
 
         # Test 3: File system integration
-        integration_tests.append(os.path.exists('src/core'))
+        integration_tests.append(os.path.exists("src/core"))
 
         return sum(integration_tests) / len(integration_tests)
 
@@ -650,74 +711,88 @@ class JazzyStressTester:
             all_warnings.extend(result.warnings)
 
         report = {
-            'test_suite': 'Jazzy URC 2026 Stress Test Suite',
-            'timestamp': time.time(),
-            'duration_seconds': total_duration,
-            'system_info': self.system_info,
-            'test_summary': {
-                'total_tests': total_tests,
-                'passed_tests': passed_tests,
-                'failed_tests': failed_tests,
-                'success_rate': health_score,
-                'overall_status': 'PASS' if health_score >= 0.8 else 'FAIL'
+            "test_suite": "Jazzy URC 2026 Stress Test Suite",
+            "timestamp": time.time(),
+            "duration_seconds": total_duration,
+            "system_info": self.system_info,
+            "test_summary": {
+                "total_tests": total_tests,
+                "passed_tests": passed_tests,
+                "failed_tests": failed_tests,
+                "success_rate": health_score,
+                "overall_status": "PASS" if health_score >= 0.8 else "FAIL",
             },
-            'test_results': [
+            "test_results": [
                 {
-                    'name': r.test_name,
-                    'duration': r.duration_seconds,
-                    'success': r.success,
-                    'metrics': r.metrics,
-                    'errors': r.errors,
-                    'warnings': r.warnings
+                    "name": r.test_name,
+                    "duration": r.duration_seconds,
+                    "success": r.success,
+                    "metrics": r.metrics,
+                    "errors": r.errors,
+                    "warnings": r.warnings,
                 }
                 for r in self.results
             ],
-            'system_metrics': all_metrics,
-            'issues': {
-                'errors': all_errors,
-                'warnings': all_warnings
-            },
-            'recommendations': self._generate_recommendations(health_score, all_errors)
+            "system_metrics": all_metrics,
+            "issues": {"errors": all_errors, "warnings": all_warnings},
+            "recommendations": self._generate_recommendations(health_score, all_errors),
         }
 
         return report
 
-    def _generate_recommendations(self, health_score: float, errors: List[str]) -> List[str]:
+    def _generate_recommendations(
+        self, health_score: float, errors: List[str]
+    ) -> List[str]:
         """Generate recommendations based on test results"""
         recommendations = []
 
         if health_score < 0.8:
-            recommendations.append("Overall system health is below acceptable threshold. Address critical issues before deployment.")
+            recommendations.append(
+                "Overall system health is below acceptable threshold. Address critical issues before deployment."
+            )
 
-        if any('memory' in error.lower() for error in errors):
-            recommendations.append("Memory management issues detected. Implement memory monitoring and garbage collection optimization.")
+        if any("memory" in error.lower() for error in errors):
+            recommendations.append(
+                "Memory management issues detected. Implement memory monitoring and garbage collection optimization."
+            )
 
-        if any('cpu' in error.lower() for error in errors):
-            recommendations.append("CPU utilization issues found. Optimize thread scheduling and implement CPU affinity.")
+        if any("cpu" in error.lower() for error in errors):
+            recommendations.append(
+                "CPU utilization issues found. Optimize thread scheduling and implement CPU affinity."
+            )
 
-        if any('latency' in error.lower() for error in errors):
-            recommendations.append("Latency violations detected. Review real-time scheduling and DDS configuration.")
+        if any("latency" in error.lower() for error in errors):
+            recommendations.append(
+                "Latency violations detected. Review real-time scheduling and DDS configuration."
+            )
 
-        if any('communication' in error.lower() or 'network' in error.lower() for error in errors):
-            recommendations.append("Communication reliability issues. Enhance QoS profiles and implement retry mechanisms.")
+        if any(
+            "communication" in error.lower() or "network" in error.lower()
+            for error in errors
+        ):
+            recommendations.append(
+                "Communication reliability issues. Enhance QoS profiles and implement retry mechanisms."
+            )
 
         # Always include general recommendations
-        recommendations.extend([
-            "Implement comprehensive monitoring dashboard for production deployment",
-            "Establish automated regression testing in CI/CD pipeline",
-            "Document failure modes and recovery procedures for operations team",
-            "Consider implementing circuit breaker patterns for external dependencies",
-            "Set up log aggregation and analysis for troubleshooting"
-        ])
+        recommendations.extend(
+            [
+                "Implement comprehensive monitoring dashboard for production deployment",
+                "Establish automated regression testing in CI/CD pipeline",
+                "Document failure modes and recovery procedures for operations team",
+                "Consider implementing circuit breaker patterns for external dependencies",
+                "Set up log aggregation and analysis for troubleshooting",
+            ]
+        )
 
         return recommendations
 
 
 async def main():
     """Main entry point for stress testing"""
-    print("="*80)
+    print("=" * 80)
     print("🎯 JAZZY URC 2026 STRESS TEST SUITE")
-    print("="*80)
+    print("=" * 80)
     print("Testing: Safety, Recovery, Performance, Readiness")
     print("Duration: ~5 minutes")
     print()
@@ -730,65 +805,68 @@ async def main():
         report = await tester.run_all_tests()
 
         # Display summary
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("📊 STRESS TEST SUMMARY")
-        print("="*80)
+        print("=" * 80)
         print(f"Duration: {report['duration_seconds']:.1f} seconds")
         print(f"Tests Run: {report['test_summary']['total_tests']}")
         print(f"Tests Passed: {report['test_summary']['passed_tests']}")
         print(f"Tests Failed: {report['test_summary']['failed_tests']}")
         print(".1%")
-        print(f"Overall Status: {'✅ PASS' if report['test_summary']['overall_status'] == 'PASS' else '❌ FAIL'}")
+        print(
+            f"Overall Status: {'✅ PASS' if report['test_summary']['overall_status'] == 'PASS' else '❌ FAIL'}"
+        )
         print()
 
         # Detailed results
         print("Test Results:")
-        for result in report['test_results']:
-            status = "✅ PASS" if result['success'] else "❌ FAIL"
+        for result in report["test_results"]:
+            status = "✅ PASS" if result["success"] else "❌ FAIL"
             print(".1f")
-            if result['errors']:
+            if result["errors"]:
                 print(f"      Errors: {len(result['errors'])}")
         print()
 
         # Issues
-        if report['issues']['errors']:
+        if report["issues"]["errors"]:
             print("Critical Issues:")
-            for error in report['issues']['errors'][:5]:  # Show first 5
+            for error in report["issues"]["errors"][:5]:  # Show first 5
                 print(f"  • {error}")
-            if len(report['issues']['errors']) > 5:
+            if len(report["issues"]["errors"]) > 5:
                 print(f"  ... and {len(report['issues']['errors']) - 5} more")
             print()
 
-        if report['issues']['warnings']:
+        if report["issues"]["warnings"]:
             print("Warnings:")
-            for warning in report['issues']['warnings'][:3]:  # Show first 3
+            for warning in report["issues"]["warnings"][:3]:  # Show first 3
                 print(f"  • {warning}")
             print()
 
         # Recommendations
         print("Recommendations:")
-        for rec in report['recommendations'][:5]:  # Show first 5
+        for rec in report["recommendations"][:5]:  # Show first 5
             print(f"  • {rec}")
         print()
 
         # Save detailed report
-        with open('/tmp/jazzy_stress_test_report.json', 'w') as f:
+        with open("/tmp/jazzy_stress_test_report.json", "w") as f:
             json.dump(report, f, indent=2, default=str)
 
         print(f"💾 Detailed report saved to: /tmp/jazzy_stress_test_report.json")
 
-        print("\n" + "="*80)
-        if report['test_summary']['overall_status'] == 'PASS':
+        print("\n" + "=" * 80)
+        if report["test_summary"]["overall_status"] == "PASS":
             print("🎉 SYSTEM READY FOR COMPETITION DEPLOYMENT!")
         else:
             print("⚠️  SYSTEM REQUIRES ATTENTION BEFORE COMPETITION")
-        print("="*80)
+        print("=" * 80)
 
     except Exception as e:
         logger.error(f"Stress test suite failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

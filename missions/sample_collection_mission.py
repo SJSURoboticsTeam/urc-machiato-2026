@@ -22,13 +22,29 @@ import cv2
 import numpy as np
 import rclpy
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Point, Pose, PoseStamped, Quaternion
+from geometry_msgs.msg import (
+    Point,
+    Pose,
+    PoseStamped,
+    PoseWithCovarianceStamped,
+    Quaternion,
+)
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Bool, Float32, Float32MultiArray, String
 from tf2_ros import Buffer, TransformListener
+
+# Unified blackboard (optional)
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    _BLACKBOARD_AVAILABLE = True
+except ImportError:
+    _BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class SampleCollectionState(Enum):
@@ -119,6 +135,13 @@ class SampleCollectionMission(Node):
             self.odom_callback,
             QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
         )
+        # SLAM pose for approach positioning (PoseWithCovarianceStamped from slam/pose)
+        self.slam_pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped,
+            "slam/pose",
+            self.slam_pose_callback,
+            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
+        )
 
         self.excavate_status_sub = self.create_subscription(
             String, "/hardware/excavate_status", self.excavate_status_callback, 10
@@ -138,7 +161,15 @@ class SampleCollectionMission(Node):
 
         # State tracking
         self.current_pose = None
+        self.slam_pose = None  # (x, y, z) from slam/pose for approach positioning
         self.image_count = 0
+        # Unified blackboard (optional)
+        self._blackboard = None
+        if _BLACKBOARD_AVAILABLE:
+            try:
+                self._blackboard = UnifiedBlackboardClient(self)
+            except Exception:
+                self._blackboard = None
         self.excavation_active = False
         self.sample_in_gripper = False
 
@@ -151,6 +182,27 @@ class SampleCollectionMission(Node):
         self.get_logger().info(
             f"Target: {self.max_samples} samples, {self.cache_slots} cache slots available"
         )
+
+    def slam_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
+        """Store SLAM pose for approach positioning."""
+        self.slam_pose = (
+            msg.pose.pose.position.x,
+            msg.pose.pose.position.y,
+            msg.pose.pose.position.z,
+        )
+
+    def _sync_blackboard(self) -> None:
+        """Write samples_collected and current_mission_phase to blackboard."""
+        if self._blackboard and BlackboardKeys:
+            try:
+                self._blackboard.set(
+                    BlackboardKeys.SAMPLES_COLLECTED, self.samples_collected
+                )
+                self._blackboard.set(
+                    BlackboardKeys.CURRENT_MISSION_PHASE, self.state.value
+                )
+            except Exception:
+                pass
 
     def mission_command_callback(self, msg: String):
         """Handle sample collection mission specific commands."""
@@ -195,6 +247,7 @@ class SampleCollectionMission(Node):
         self.samples_collected = 0
         self.cache_used = 0
         self.potential_samples = []
+        self._sync_blackboard()
 
         # Start search timeout
         self.search_timer = self.create_timer(
@@ -207,6 +260,7 @@ class SampleCollectionMission(Node):
         """Stop the current mission."""
         self.get_logger().info(" Stopping Sample Collection Mission")
         self.state = SampleCollectionState.IDLE
+        self._sync_blackboard()
         self.cleanup_timers()
 
         # Stop any active excavation
@@ -251,7 +305,9 @@ class SampleCollectionMission(Node):
                 self.state = SampleCollectionState.APPROACHING
                 self.approach_sample()
             else:
-                self.get_logger().error("⌛ Sample search timeout - no samples detected")
+                self.get_logger().error(
+                    "⌛ Sample search timeout - no samples detected"
+                )
                 self.state = SampleCollectionState.FAILED
                 self.publish_status()
 
@@ -586,6 +642,7 @@ class SampleCollectionMission(Node):
         self.samples_collected += 1
         self.cache_used += 1
         self.sample_in_gripper = False
+        self._sync_blackboard()
 
         # Publish sample data for science analysis
         sample_data = {
@@ -610,6 +667,7 @@ class SampleCollectionMission(Node):
                 f"[PARTY] Mission complete! Collected {self.samples_collected} samples"
             )
             self.state = SampleCollectionState.COMPLETED
+            self._sync_blackboard()
 
             # Publish mission completion
             completion_msg = String()

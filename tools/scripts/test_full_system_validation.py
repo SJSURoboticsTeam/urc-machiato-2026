@@ -363,9 +363,7 @@ class SystemValidator:
             status = (
                 "[PASS]"
                 if self.results["passed"] > 0
-                else "[FAIL]"
-                if self.results["failed"] > 0
-                else ""
+                else "[FAIL]" if self.results["failed"] > 0 else ""
             )
             report += f"   {status} {test}\n"
 

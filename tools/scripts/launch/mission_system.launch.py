@@ -22,7 +22,9 @@ def generate_launch_description():
 
     # Get workspace paths for submodules
     # File is at: tools/scripts/launch/mission_system.launch.py
-    workspace_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    workspace_root = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
     teleoperation_path = os.path.join(workspace_root, "submodules", "teleoperation")
     control_systems_path = os.path.join(workspace_root, "submodules", "control-systems")
 
@@ -49,19 +51,19 @@ def generate_launch_description():
                 package="autonomy_state_management",
                 executable="adaptive_state_machine",
                 name="adaptive_state_machine",
-                output="screen"
+                output="screen",
             ),
             Node(
                 package="autonomy_slam",
                 executable="slam_node",
                 name="slam_orchestrator",
-                output="screen"
+                output="screen",
             ),
             Node(
                 package="autonomy_navigation",
                 executable="navigation_node",
                 name="navigation_node",
-                output="screen"
+                output="screen",
             ),
             # ===========================================
             # TELEOPERATION STATUS MONITOR

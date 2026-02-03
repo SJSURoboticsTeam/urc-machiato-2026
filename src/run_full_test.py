@@ -14,60 +14,82 @@ SRC_ROOT = PROJECT_ROOT / "src"
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(SRC_ROOT))
 
+
 def test_unified_systems():
     """Test unified autonomous systems."""
     print("🧠 Testing Unified Systems...")
-    
+
     results = {}
-    
+
     # Test state management (simplified)
     try:
         from src.core.simplified_state_manager import get_state_manager
+
         state_mgr = get_state_manager()
-        results["state_management"] = {"status": "passed", "details": "Unified state manager available"}
+        results["state_management"] = {
+            "status": "passed",
+            "details": "Unified state manager available",
+        }
     except Exception as e:
         results["state_management"] = {"status": "failed", "error": str(e)}
 
     # Test observability
     try:
         from src.core.observability import get_observability_system
+
         obs_mgr = get_observability_system()
-        results["observability"] = {"status": "passed", "details": "Observability manager initialized"}
+        results["observability"] = {
+            "status": "passed",
+            "details": "Observability manager initialized",
+        }
     except Exception as e:
         results["observability"] = {"status": "failed", "error": str(e)}
 
     # Test communication
     try:
         from src.infrastructure.bridges.simple_bridge import get_simple_bridge
+
         bridge = get_simple_bridge()
-        results["communication"] = {"status": "passed", "details": "Simple bridge initialized"}
+        results["communication"] = {
+            "status": "passed",
+            "details": "Simple bridge initialized",
+        }
     except Exception as e:
         results["communication"] = {"status": "failed", "error": str(e)}
 
     # Test data manager
     try:
         from src.core.data_manager import get_data_manager
+
         data_mgr = get_data_manager()
-        results["data_manager"] = {"status": "passed", "details": "Data manager initialized"}
+        results["data_manager"] = {
+            "status": "passed",
+            "details": "Data manager initialized",
+        }
     except Exception as e:
         results["data_manager"] = {"status": "failed", "error": str(e)}
 
     # Test utilities
     try:
         from src.core.utilities import get_safety_manager
+
         safety_mgr = get_safety_manager()
-        results["utilities"] = {"status": "passed", "details": "Safety manager initialized"}
+        results["utilities"] = {
+            "status": "passed",
+            "details": "Safety manager initialized",
+        }
     except Exception as e:
         results["utilities"] = {"status": "failed", "error": str(e)}
-    
+
     return results
+
 
 def test_simulation():
     """Test simulation environments."""
     print("🎮 Testing Simulation...")
-    
+
     results = {}
-    
+
     # Check for simulation worlds
     worlds_dir = PROJECT_ROOT / "simulation" / "gazebo_simulation" / "worlds"
     if worlds_dir.exists():
@@ -75,55 +97,60 @@ def test_simulation():
         results["worlds"] = {"status": "passed", "count": len(worlds)}
     else:
         results["worlds"] = {"status": "failed", "error": "Worlds directory not found"}
-    
+
     # Check test scenarios
     scenarios_dir = PROJECT_ROOT / "simulation" / "gazebo_simulation" / "test_scenarios"
     if scenarios_dir.exists():
         scenarios = list(scenarios_dir.glob("*.py"))
         results["scenarios"] = {"status": "passed", "count": len(scenarios)}
     else:
-        results["scenarios"] = {"status": "failed", "error": "Scenarios directory not found"}
-    
+        results["scenarios"] = {
+            "status": "failed",
+            "error": "Scenarios directory not found",
+        }
+
     return results
+
 
 def test_performance():
     """Test performance metrics."""
     print("⚡ Testing Performance...")
-    
+
     import psutil
-    
+
     results = {}
-    
+
     # Memory usage
     process = psutil.Process()
     memory_mb = process.memory_info().rss / (1024 * 1024)
     results["memory_usage"] = {"value": memory_mb, "unit": "MB"}
-    
+
     # Startup time (already loaded)
     results["startup_time"] = {"value": 0.1, "unit": "seconds"}  # Minimal for this test
-    
+
     return results
+
 
 def main():
     print("🚀 URC 2026 Mars Rover - Full System Test Report")
     print("=" * 60)
-    
+
     start_time = time.time()
-    
+
     # Run all tests
     test_results = {
         "unified_systems": test_unified_systems(),
         "simulation": test_simulation(),
-        "performance": test_performance()
+        "performance": test_performance(),
     }
-    
+
     execution_time = time.time() - start_time
-    
+
     # Calculate statistics
     total_tests = 0
     passed_tests = 0
     failed_tests = 0
-    
+
     def count_results(results_dict):
         nonlocal total_tests, passed_tests, failed_tests
         for key, value in results_dict.items():
@@ -135,11 +162,12 @@ def main():
                     failed_tests += 1
             elif isinstance(value, dict):
                 count_results(value)
-    
+
     count_results(test_results)
-    
+
     # Generate report
-    print(f"""
+    print(
+        f"""
 📊 **TEST EXECUTION SUMMARY**
    • Total Tests: {total_tests}
    • Passed: {passed_tests}
@@ -160,27 +188,36 @@ def main():
 
 🚀 **COMPETITION READINESS**
    {'✅ SYSTEM READY FOR COMPETITION' if passed_tests >= total_tests * 0.8 else '⚠️ SYSTEM NEEDS IMPROVEMENT'}
-""")
-    
+"""
+    )
+
     # Save detailed results
     import json
-    report_file = PROJECT_ROOT / "test_reports" / f"full_test_report_{int(time.time())}.json"
+
+    report_file = (
+        PROJECT_ROOT / "test_reports" / f"full_test_report_{int(time.time())}.json"
+    )
     report_file.parent.mkdir(exist_ok=True)
-    
-    with open(report_file, 'w') as f:
-        json.dump({
-            "timestamp": time.time(),
-            "execution_time": execution_time,
-            "results": test_results,
-            "summary": {
-                "total": total_tests,
-                "passed": passed_tests,
-                "failed": failed_tests,
-                "pass_rate": passed_tests/total_tests if total_tests > 0 else 0
-            }
-        }, f, indent=2)
-    
+
+    with open(report_file, "w") as f:
+        json.dump(
+            {
+                "timestamp": time.time(),
+                "execution_time": execution_time,
+                "results": test_results,
+                "summary": {
+                    "total": total_tests,
+                    "passed": passed_tests,
+                    "failed": failed_tests,
+                    "pass_rate": passed_tests / total_tests if total_tests > 0 else 0,
+                },
+            },
+            f,
+            indent=2,
+        )
+
     print(f"📄 Detailed report saved to: {report_file}")
+
 
 if __name__ == "__main__":
     main()

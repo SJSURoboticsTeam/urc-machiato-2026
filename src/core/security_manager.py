@@ -56,31 +56,27 @@ class SecurityManager:
         """Hash a password using PBKDF2."""
         salt = secrets.token_hex(16)
         hashed = hashlib.pbkdf2_hmac(
-            'sha256',
-            password.encode(),
-            salt.encode(),
-            100000
+            "sha256", password.encode(), salt.encode(), 100000
         ).hex()
         return f"pbkdf2_sha256$100000${salt}${hashed}"
 
     def verify_password(self, password: str, hashed: str) -> bool:
         """Verify a password against its hash."""
         try:
-            method, iterations, salt, hash_value = hashed.split('$')
+            method, iterations, salt, hash_value = hashed.split("$")
             iterations = int(iterations)
 
             computed = hashlib.pbkdf2_hmac(
-                'sha256',
-                password.encode(),
-                salt.encode(),
-                iterations
+                "sha256", password.encode(), salt.encode(), iterations
             ).hex()
 
             return hmac.compare_digest(computed, hash_value)
         except:
             return False
 
-    def create_user(self, username: str, password: str, role: str, mfa_enabled: bool = False) -> Optional[str]:
+    def create_user(
+        self, username: str, password: str, role: str, mfa_enabled: bool = False
+    ) -> Optional[str]:
         """Create a new user account."""
         if username in self.users:
             return None
@@ -95,13 +91,15 @@ class SecurityManager:
             "created_at": time.time(),
             "login_attempts": 0,
             "last_login": None,
-            "account_locked": False
+            "account_locked": False,
         }
 
         self._audit_log("user_created", username, {"role": role})
         return user_id
 
-    def authenticate(self, username: str, password: str, mfa_code: Optional[str] = None) -> Dict[str, Any]:
+    def authenticate(
+        self, username: str, password: str, mfa_code: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Authenticate a user."""
         if username not in self.users:
             return {"authenticated": False, "reason": "user_not_found"}
@@ -135,7 +133,7 @@ class SecurityManager:
             "username": username,
             "role": user["role"],
             "created_at": time.time(),
-            "last_activity": time.time()
+            "last_activity": time.time(),
         }
 
         self._audit_log("authentication_success", username, {"method": "password"})
@@ -145,7 +143,7 @@ class SecurityManager:
             "user_id": user["user_id"],
             "username": username,
             "role": user["role"],
-            "session_token": session_token
+            "session_token": session_token,
         }
 
     def validate_session(self, session_token: str) -> Dict[str, Any]:
@@ -167,17 +165,21 @@ class SecurityManager:
             "valid": True,
             "user_id": session["user_id"],
             "username": session["username"],
-            "role": session["role"]
+            "role": session["role"],
         }
 
     def revoke_session(self, session_token: str):
         """Revoke a session."""
         if session_token in self.sessions:
             session = self.sessions[session_token]
-            self._audit_log("session_revoked", session["username"], {"session_token": session_token})
+            self._audit_log(
+                "session_revoked", session["username"], {"session_token": session_token}
+            )
             del self.sessions[session_token]
 
-    def check_permission(self, username: str, permission: str, permissions_map: Dict[str, List[str]]) -> bool:
+    def check_permission(
+        self, username: str, permission: str, permissions_map: Dict[str, List[str]]
+    ) -> bool:
         """Check if user has permission."""
         if username not in self.users:
             return False
@@ -202,7 +204,9 @@ class SecurityManager:
 
         return requested == pattern
 
-    def create_api_key(self, service_name: str, permissions: List[str], expiry_days: int = 365) -> Tuple[str, str]:
+    def create_api_key(
+        self, service_name: str, permissions: List[str], expiry_days: int = 365
+    ) -> Tuple[str, str]:
         """Create an API key for service authentication."""
         api_key = secrets.token_hex(32)
         secret = secrets.token_hex(32)
@@ -212,7 +216,7 @@ class SecurityManager:
             "permissions": permissions,
             "secret_hash": self.hash_password(secret),
             "created_at": time.time(),
-            "expires_at": time.time() + (expiry_days * 24 * 3600)
+            "expires_at": time.time() + (expiry_days * 24 * 3600),
         }
 
         self._audit_log("api_key_created", service_name, {"permissions": permissions})
@@ -236,16 +240,13 @@ class SecurityManager:
         return {
             "authenticated": True,
             "service_name": key_data["service_name"],
-            "permissions": key_data["permissions"]
+            "permissions": key_data["permissions"],
         }
 
     def generate_mfa_secret(self, username: str) -> str:
         """Generate MFA secret for user."""
         secret = secrets.token_hex(16)
-        self.mfa_secrets[username] = {
-            "secret": secret,
-            "created_at": time.time()
-        }
+        self.mfa_secrets[username] = {"secret": secret, "created_at": time.time()}
         return secret
 
     def verify_mfa_code(self, username: str, code: str) -> bool:
@@ -261,18 +262,20 @@ class SecurityManager:
         """Sign a request payload."""
         message = json.dumps(payload, sort_keys=True)
         signature = hmac.new(
-            secret.encode(),
-            message.encode(),
-            hashlib.sha256
+            secret.encode(), message.encode(), hashlib.sha256
         ).hexdigest()
         return signature
 
-    def verify_request_signature(self, payload: Dict[str, Any], signature: str, secret: str) -> bool:
+    def verify_request_signature(
+        self, payload: Dict[str, Any], signature: str, secret: str
+    ) -> bool:
         """Verify request signature."""
         expected = self.sign_request(payload, secret)
         return hmac.compare_digest(signature, expected)
 
-    def check_rate_limit(self, identifier: str, action: str, limit: int, window: int) -> bool:
+    def check_rate_limit(
+        self, identifier: str, action: str, limit: int, window: int
+    ) -> bool:
         """Check if request is within rate limit."""
         key = f"{identifier}:{action}"
         now = time.time()
@@ -282,8 +285,7 @@ class SecurityManager:
 
         # Remove old entries outside window
         self.rate_limits[key] = [
-            timestamp for timestamp in self.rate_limits[key]
-            if now - timestamp < window
+            timestamp for timestamp in self.rate_limits[key] if now - timestamp < window
         ]
 
         # Check if under limit
@@ -325,19 +327,20 @@ class SecurityManager:
             "event": event,
             "username": username,
             "details": details,
-            "ip_address": "127.0.0.1"  # Would get real IP in production
+            "ip_address": "127.0.0.1",  # Would get real IP in production
         }
         self.audit_log.append(log_entry)
 
-    def get_audit_logs(self, username: Optional[str] = None, event: Optional[str] = None,
-                      hours: int = 24) -> List[Dict[str, Any]]:
+    def get_audit_logs(
+        self,
+        username: Optional[str] = None,
+        event: Optional[str] = None,
+        hours: int = 24,
+    ) -> List[Dict[str, Any]]:
         """Get audit logs with filtering."""
         cutoff_time = time.time() - (hours * 3600)
 
-        logs = [
-            log for log in self.audit_log
-            if log["timestamp"] > cutoff_time
-        ]
+        logs = [log for log in self.audit_log if log["timestamp"] > cutoff_time]
 
         if username:
             logs = [log for log in logs if log["username"] == username]
@@ -362,7 +365,7 @@ class SecurityManager:
         return {
             "threat_detected": threat_level != "low",
             "threat_level": threat_level,
-            "recommendations": ["monitor_closely"] if threat_level != "low" else []
+            "recommendations": ["monitor_closely"] if threat_level != "low" else [],
         }
 
     def handle_security_incident(self, incident: Dict[str, Any]) -> Dict[str, Any]:
@@ -382,7 +385,7 @@ class SecurityManager:
         return {
             "incident_handled": True,
             "actions_taken": actions_taken,
-            "escalation_required": incident.get("severity") in ["high", "fatal"]
+            "escalation_required": incident.get("severity") in ["high", "fatal"],
         }
 
 
@@ -420,7 +423,10 @@ class AccessControl:
     def has_permission(self, user_id: str, permission: str) -> bool:
         """Check if user has permission."""
         # Check direct permissions
-        if user_id in self.user_permissions and permission in self.user_permissions[user_id]:
+        if (
+            user_id in self.user_permissions
+            and permission in self.user_permissions[user_id]
+        ):
             return True
 
         # Check role permissions
@@ -429,12 +435,16 @@ class AccessControl:
             if role in self.role_permissions:
                 # Check for wildcard permissions
                 for role_perm in self.role_permissions[role]:
-                    if role_perm == "*" or permission.startswith(role_perm.split("*")[0]):
+                    if role_perm == "*" or permission.startswith(
+                        role_perm.split("*")[0]
+                    ):
                         return True
 
         return False
 
-    def get_audit_logs(self, user_id: Optional[str] = None, permission: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_audit_logs(
+        self, user_id: Optional[str] = None, permission: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Get access control audit logs."""
         logs = self.audit_log
 
@@ -460,16 +470,20 @@ class AuditLogger:
             "timestamp": time.time(),
             "event_type": event_type,
             "action": action,
-            **kwargs
+            **kwargs,
         }
         self.logs.append(log_entry)
 
         # Maintain log size limit
         if len(self.logs) > self.max_logs:
-            self.logs = self.logs[-self.max_logs:]
+            self.logs = self.logs[-self.max_logs :]
 
-    def get_logs(self, event_type: Optional[str] = None, user: Optional[str] = None,
-                 hours: int = 24) -> List[Dict[str, Any]]:
+    def get_logs(
+        self,
+        event_type: Optional[str] = None,
+        user: Optional[str] = None,
+        hours: int = 24,
+    ) -> List[Dict[str, Any]]:
         """Get filtered audit logs."""
         cutoff_time = time.time() - (hours * 3600)
 
@@ -479,7 +493,11 @@ class AuditLogger:
             logs = [log for log in logs if log.get("event_type") == event_type]
 
         if user:
-            logs = [log for log in logs if log.get("username") == user or log.get("user") == user]
+            logs = [
+                log
+                for log in logs
+                if log.get("username") == user or log.get("user") == user
+            ]
 
         return logs
 
@@ -490,7 +508,7 @@ class AuditLogger:
 
     def export_logs(self, filepath: str):
         """Export logs to file."""
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.logs, f, indent=2)
 
     def get_log_statistics(self) -> Dict[str, Any]:
@@ -516,9 +534,6 @@ class AuditLogger:
             "unique_users": len(users),
             "date_range": {
                 "oldest": min(log["timestamp"] for log in self.logs),
-                "newest": max(log["timestamp"] for log in self.logs)
-            }
+                "newest": max(log["timestamp"] for log in self.logs),
+            },
         }
-
-
-

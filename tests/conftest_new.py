@@ -44,6 +44,7 @@ sys.path.extend(original_path)
 # ROS2 testing imports and setup
 try:
     import rclpy
+
     ROS2_AVAILABLE = True
 except ImportError:
     ROS2_AVAILABLE = False
@@ -74,6 +75,7 @@ def ros2_node():
         pytest.skip("ROS2 not available")
 
     from rclpy.node import Node
+
     node = Node("test_node")
     yield node
     node.destroy_node()
@@ -86,18 +88,12 @@ def mock_config():
         "system": {
             "name": "URC 2026 Test Rover",
             "version": "1.0.0",
-            "environment": "testing"
+            "environment": "testing",
         },
         "navigation": {
             "gps_timeout": 5.0,
             "imu_timeout": 1.0,
-            "waypoint_tolerance": 0.5
+            "waypoint_tolerance": 0.5,
         },
-        "communication": {
-            "websocket_port": 8080,
-            "ros_domain_id": 42
-        }
+        "communication": {"websocket_port": 8080, "ros_domain_id": 42},
     }
-
-
-

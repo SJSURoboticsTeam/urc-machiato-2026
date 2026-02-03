@@ -29,6 +29,7 @@ from src.core.simplified_state_manager import get_state_manager
 @dataclass
 class ComponentInfo:
     """Simple component information."""
+
     name: str
     component_class: Any
     status: str = "registered"
@@ -40,7 +41,7 @@ class ComponentInfo:
 class SimplifiedComponentRegistry:
     """
     Simple dictionary-based component registry.
-    
+
     Replaces complex enterprise registry with straightforward approach.
     """
 
@@ -49,18 +50,18 @@ class SimplifiedComponentRegistry:
         self._initialization_order: List[str] = []
         self._lock = threading.Lock()
         self._logger = logging.getLogger(__name__)
-        
+
         self._logger.info("Simplified Component Registry initialized")
 
     def register(self, name: str, component_class: Any, priority: int = 3) -> bool:
         """
         Register a component with simple priority system.
-        
+
         Args:
             name: Component name
             component_class: Component class or instance
             priority: Initialization priority (1=highest, 5=lowest)
-            
+
         Returns:
             True if registered successfully
         """
@@ -68,18 +69,16 @@ class SimplifiedComponentRegistry:
             if name in self._components:
                 self._logger.warning(f"Component {name} already registered")
                 return False
-            
+
             component_info = ComponentInfo(
-                name=name,
-                component_class=component_class,
-                priority=priority
+                name=name, component_class=component_class, priority=priority
             )
-            
+
             self._components[name] = component_info
-            
+
             # Update initialization order based on priority
             self._update_initialization_order()
-            
+
             self._logger.info(f"Registered component: {name} (priority: {priority})")
             return True
 
@@ -89,10 +88,10 @@ class SimplifiedComponentRegistry:
             if name not in self._components:
                 self._logger.warning(f"Component {name} not registered")
                 return False
-            
+
             del self._components[name]
             self._update_initialization_order()
-            
+
             self._logger.info(f"Unregistered component: {name}")
             return True
 
@@ -114,40 +113,44 @@ class SimplifiedComponentRegistry:
             if not info:
                 self._logger.error(f"Component {name} not registered")
                 return False
-            
+
             if info.initialized:
                 self._logger.warning(f"Component {name} already initialized")
                 return True
-            
+
             try:
                 # Initialize component
                 start_time = time.time()
-                
+
                 # If component is a class, instantiate it
-                if hasattr(info.component_class, '__call__') or inspect.isclass(info.component_class):
+                if hasattr(info.component_class, "__call__") or inspect.isclass(
+                    info.component_class
+                ):
                     if inspect.isclass(info.component_class):
                         instance = info.component_class()
                     else:
                         instance = info.component_class
-                    
+
                     # Common initialization interface
-                    if hasattr(instance, 'initialize'):
+                    if hasattr(instance, "initialize"):
                         instance.initialize()
-                    elif hasattr(instance, 'on_configure'):
+                    elif hasattr(instance, "on_configure"):
                         instance.on_configure()
-                    
+
                     info.component_class = instance
                     info.startup_time = time.time() - start_time
                     info.initialized = True
-                    
-                    self._logger.info(f"Initialized component: {name} ({info.startup_time:.3f}s)")
+
+                    self._logger.info(
+                        f"Initialized component: {name} ({info.startup_time:.3f}s)"
+                    )
                     return True
                 else:
                     info.initialized = True
                     info.startup_time = 0.0
                     self._logger.info(f"Marked component as initialized: {name}")
                     return True
-                    
+
             except Exception as e:
                 self._logger.error(f"Failed to initialize component {name}: {e}")
                 return False
@@ -159,20 +162,20 @@ class SimplifiedComponentRegistry:
             if not info or not info.initialized:
                 self._logger.warning(f"Component {name} not initialized")
                 return False
-            
+
             try:
                 instance = info.component_class
-                if hasattr(instance, 'shutdown'):
+                if hasattr(instance, "shutdown"):
                     instance.shutdown()
-                elif hasattr(instance, 'on_shutdown'):
+                elif hasattr(instance, "on_shutdown"):
                     instance.on_shutdown()
-                elif hasattr(instance, 'on_cleanup'):
+                elif hasattr(instance, "on_cleanup"):
                     instance.on_cleanup()
-                
+
                 info.initialized = False
                 self._logger.info(f"Shutdown component: {name}")
                 return True
-                
+
             except Exception as e:
                 self._logger.error(f"Failed to shutdown component {name}: {e}")
                 return False
@@ -185,34 +188,40 @@ class SimplifiedComponentRegistry:
     def initialize_all(self) -> Dict[str, bool]:
         """Initialize all components in priority order."""
         results = {}
-        
+
         for name in self._initialization_order:
             success = self.initialize_component(name)
             results[name] = success
-            
+
             if not success:
-                self._logger.error(f"Failed to initialize {name}, stopping initialization")
+                self._logger.error(
+                    f"Failed to initialize {name}, stopping initialization"
+                )
                 break
-        
+
         initialized_count = sum(1 for success in results.values() if success)
         total_count = len(results)
-        self._logger.info(f"Initialization complete: {initialized_count}/{total_count} components")
-        
+        self._logger.info(
+            f"Initialization complete: {initialized_count}/{total_count} components"
+        )
+
         return results
 
     def shutdown_all(self) -> Dict[str, bool]:
         """Shutdown all components (reverse order)."""
         results = {}
-        
+
         # Shutdown in reverse initialization order
         for name in reversed(self._initialization_order):
             success = self.shutdown_component(name)
             results[name] = success
-        
+
         shutdown_count = sum(1 for success in results.values() if success)
         total_count = len(results)
-        self._logger.info(f"Shutdown complete: {shutdown_count}/{total_count} components")
-        
+        self._logger.info(
+            f"Shutdown complete: {shutdown_count}/{total_count} components"
+        )
+
         return results
 
     def get_status(self) -> Dict[str, Any]:
@@ -220,29 +229,31 @@ class SimplifiedComponentRegistry:
         with self._lock:
             return {
                 "total_components": len(self._components),
-                "initialized_components": sum(1 for info in self._components.values() if info.initialized),
+                "initialized_components": sum(
+                    1 for info in self._components.values() if info.initialized
+                ),
                 "components": {
                     name: {
                         "status": info.status,
                         "priority": info.priority,
                         "initialized": info.initialized,
-                        "startup_time": info.startup_time
+                        "startup_time": info.startup_time,
                     }
                     for name, info in self._components.items()
                 },
-                "initialization_order": self._initialization_order.copy()
+                "initialization_order": self._initialization_order.copy(),
             }
 
     def _update_initialization_order(self):
         """Update initialization order based on priority."""
         self._initialization_order = sorted(
-            self._components.keys(),
-            key=lambda name: self._components[name].priority
+            self._components.keys(), key=lambda name: self._components[name].priority
         )
 
 
 # Global registry instance
 _registry_instance = None
+
 
 def get_component_registry() -> SimplifiedComponentRegistry:
     """Get global component registry instance."""
@@ -251,13 +262,16 @@ def get_component_registry() -> SimplifiedComponentRegistry:
         _registry_instance = SimplifiedComponentRegistry()
     return _registry_instance
 
+
 def register_component(name: str, component_class: Any, priority: int = 3) -> bool:
     """Register component (convenience function)."""
     return get_component_registry().register(name, component_class, priority)
 
+
 def initialize_component(name: str) -> bool:
     """Initialize component (convenience function)."""
     return get_component_registry().initialize_component(name)
+
 
 def get_component(name: str) -> Optional[Any]:
     """Get component instance (convenience function)."""

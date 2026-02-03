@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class TestResult(Enum):
     """Test execution result."""
+
     PASS = "pass"
     FAIL = "fail"
     SKIP = "skip"
@@ -38,6 +39,7 @@ class TestResult(Enum):
 @dataclass
 class StatisticalMeasurement:
     """Statistical measurement with confidence intervals."""
+
     name: str
     samples: List[float] = field(default_factory=list)
     mean: float = 0.0
@@ -75,6 +77,7 @@ class StatisticalMeasurement:
 @dataclass
 class PerformanceBenchmark:
     """Performance benchmark results."""
+
     test_name: str
     mission_profile: str
     duration_seconds: float
@@ -118,7 +121,9 @@ class StatisticalPerformanceTester:
         self.measurement_interval = 0.1  # 100ms sampling
         self.stability_threshold = 0.05  # 5% stability threshold
 
-        logger.info(f"Statistical Performance Tester initialized with {num_iterations} iterations")
+        logger.info(
+            f"Statistical Performance Tester initialized with {num_iterations} iterations"
+        )
 
     def run_comprehensive_test_suite(self) -> Dict[str, Any]:
         """
@@ -130,10 +135,10 @@ class StatisticalPerformanceTester:
         logger.info("Starting comprehensive statistical test suite")
 
         test_results = {
-            'timestamp': datetime.now().isoformat(),
-            'test_suite': 'URC 2026 Resource Optimization',
-            'iterations': self.num_iterations,
-            'tests': {}
+            "timestamp": datetime.now().isoformat(),
+            "test_suite": "URC 2026 Resource Optimization",
+            "iterations": self.num_iterations,
+            "tests": {},
         }
 
         # Test scenarios
@@ -142,7 +147,7 @@ class StatisticalPerformanceTester:
             self.test_fallback_functionality,
             self.test_recovery_mechanisms,
             self.test_integration_scenarios,
-            self.test_resource_optimization_effectiveness
+            self.test_resource_optimization_effectiveness,
         ]
 
         for test_func in test_scenarios:
@@ -151,14 +156,14 @@ class StatisticalPerformanceTester:
 
             try:
                 results = test_func()
-                test_results['tests'][test_name] = results
+                test_results["tests"][test_name] = results
                 logger.info(f"Test {test_name} completed: {len(results)} benchmarks")
             except Exception as e:
                 logger.error(f"Test {test_name} failed: {e}")
-                test_results['tests'][test_name] = {'error': str(e)}
+                test_results["tests"][test_name] = {"error": str(e)}
 
         # Generate statistical report
-        test_results['statistical_analysis'] = self.generate_statistical_report()
+        test_results["statistical_analysis"] = self.generate_statistical_report()
 
         return test_results
 
@@ -167,7 +172,7 @@ class StatisticalPerformanceTester:
         logger.info("Testing mission profile switching")
 
         results = []
-        mission_profiles = ['waypoint_navigation', 'object_search', 'sample_collection']
+        mission_profiles = ["waypoint_navigation", "object_search", "sample_collection"]
 
         for mission in mission_profiles:
             for iteration in range(self.num_iterations):
@@ -176,7 +181,9 @@ class StatisticalPerformanceTester:
 
         return results
 
-    def _benchmark_mission_switching(self, mission_profile: str, iteration: int) -> PerformanceBenchmark:
+    def _benchmark_mission_switching(
+        self, mission_profile: str, iteration: int
+    ) -> PerformanceBenchmark:
         """Benchmark a single mission profile switch."""
         benchmark = PerformanceBenchmark(
             test_name="mission_profile_switching",
@@ -187,7 +194,7 @@ class StatisticalPerformanceTester:
             components_enabled=[],
             success_rate=0.0,
             fallback_used=False,
-            recovery_events=0
+            recovery_events=0,
         )
 
         start_time = time.time()
@@ -212,7 +219,9 @@ class StatisticalPerformanceTester:
 
                 # Get component status
                 status = resource_manager.get_resource_status()
-                benchmark.components_enabled = list(status.get('component_status', {}).keys())
+                benchmark.components_enabled = list(
+                    status.get("component_status", {}).keys()
+                )
 
                 # Measure post-switch resources
                 post_cpu, post_memory = self._measure_resources()
@@ -220,7 +229,9 @@ class StatisticalPerformanceTester:
                 benchmark.memory_usage.add_sample(post_memory)
 
                 # Check for fallback usage (simplified check)
-                benchmark.fallback_used = len(benchmark.components_enabled) < 2  # Simple heuristic
+                benchmark.fallback_used = (
+                    len(benchmark.components_enabled) < 2
+                )  # Simple heuristic
 
             else:
                 benchmark.success_rate = 0.0
@@ -241,9 +252,12 @@ class StatisticalPerformanceTester:
 
         # Test scenarios with missing dependencies
         fallback_scenarios = [
-            {'scenario': 'no_ml_libraries', 'mock_missing': ['torch', 'detectron2', 'tensorflow']},
-            {'scenario': 'no_slam', 'mock_missing': ['rtabmap']},
-            {'scenario': 'minimal_hardware', 'mock_missing': ['opencv', 'pcl']}
+            {
+                "scenario": "no_ml_libraries",
+                "mock_missing": ["torch", "detectron2", "tensorflow"],
+            },
+            {"scenario": "no_slam", "mock_missing": ["rtabmap"]},
+            {"scenario": "minimal_hardware", "mock_missing": ["opencv", "pcl"]},
         ]
 
         for scenario in fallback_scenarios:
@@ -253,7 +267,9 @@ class StatisticalPerformanceTester:
 
         return results
 
-    def _benchmark_fallback_scenario(self, scenario: Dict[str, Any], iteration: int) -> PerformanceBenchmark:
+    def _benchmark_fallback_scenario(
+        self, scenario: Dict[str, Any], iteration: int
+    ) -> PerformanceBenchmark:
         """Benchmark a fallback scenario."""
         benchmark = PerformanceBenchmark(
             test_name="fallback_functionality",
@@ -265,15 +281,22 @@ class StatisticalPerformanceTester:
             success_rate=0.0,
             fallback_used=True,
             recovery_events=0,
-            metadata={'scenario': scenario['scenario'], 'mock_missing': scenario['mock_missing']}
+            metadata={
+                "scenario": scenario["scenario"],
+                "mock_missing": scenario["mock_missing"],
+            },
         )
 
         start_time = time.time()
 
         try:
             # Import lightweight implementations directly to test fallbacks
-            from src.autonomy.perception.computer_vision.lightweight_vision import LightweightVisionProcessor
-            from src.autonomy.perception.slam.lightweight_slam import LightweightVisualOdometry
+            from src.autonomy.perception.computer_vision.lightweight_vision import (
+                LightweightVisionProcessor,
+            )
+            from src.autonomy.perception.slam.lightweight_slam import (
+                LightweightVisualOdometry,
+            )
 
             # Measure baseline
             baseline_cpu, baseline_memory = self._measure_resources()
@@ -290,7 +313,7 @@ class StatisticalPerformanceTester:
             slam_system = LightweightVisualOdometry()
             slam_results = slam_system.process_frame(dummy_image)
 
-            benchmark.components_enabled = ['lightweight_vision', 'lightweight_slam']
+            benchmark.components_enabled = ["lightweight_vision", "lightweight_slam"]
             benchmark.success_rate = 1.0 if results and slam_results else 0.0
 
             # Measure post-fallback resources
@@ -313,9 +336,21 @@ class StatisticalPerformanceTester:
 
         # Test recovery scenarios
         recovery_scenarios = [
-            {'scenario': 'cpu_pressure', 'target_resource': 'cpu', 'pressure_level': 80},
-            {'scenario': 'memory_pressure', 'target_resource': 'memory', 'pressure_level': 85},
-            {'scenario': 'combined_pressure', 'target_resource': 'both', 'pressure_level': 75}
+            {
+                "scenario": "cpu_pressure",
+                "target_resource": "cpu",
+                "pressure_level": 80,
+            },
+            {
+                "scenario": "memory_pressure",
+                "target_resource": "memory",
+                "pressure_level": 85,
+            },
+            {
+                "scenario": "combined_pressure",
+                "target_resource": "both",
+                "pressure_level": 75,
+            },
         ]
 
         for scenario in recovery_scenarios:
@@ -325,7 +360,9 @@ class StatisticalPerformanceTester:
 
         return results
 
-    def _benchmark_recovery_scenario(self, scenario: Dict[str, Any], iteration: int) -> PerformanceBenchmark:
+    def _benchmark_recovery_scenario(
+        self, scenario: Dict[str, Any], iteration: int
+    ) -> PerformanceBenchmark:
         """Benchmark a recovery scenario under resource pressure."""
         benchmark = PerformanceBenchmark(
             test_name="recovery_mechanisms",
@@ -337,7 +374,10 @@ class StatisticalPerformanceTester:
             success_rate=0.0,
             fallback_used=False,
             recovery_events=0,
-            metadata={'scenario': scenario['scenario'], 'pressure_level': scenario['pressure_level']}
+            metadata={
+                "scenario": scenario["scenario"],
+                "pressure_level": scenario["pressure_level"],
+            },
         )
 
         start_time = time.time()
@@ -348,7 +388,7 @@ class StatisticalPerformanceTester:
             resource_manager = get_mission_resource_manager()
 
             # Switch to full mission mode
-            resource_manager.switch_mission_profile('sample_collection')
+            resource_manager.switch_mission_profile("sample_collection")
 
             # Measure baseline
             baseline_cpu, baseline_memory = self._measure_resources()
@@ -363,17 +403,21 @@ class StatisticalPerformanceTester:
             time.sleep(2.0)
 
             # Check if recovery mechanisms activate
-            initial_components = len(resource_manager.get_resource_status().get('component_status', {}))
+            initial_components = len(
+                resource_manager.get_resource_status().get("component_status", {})
+            )
 
             # Wait for recovery
             time.sleep(3.0)
 
             # Check recovery results
             final_status = resource_manager.get_resource_status()
-            final_components = len(final_status.get('component_status', {}))
+            final_components = len(final_status.get("component_status", {}))
             benchmark.recovery_events = max(0, initial_components - final_components)
 
-            benchmark.components_enabled = list(final_status.get('component_status', {}).keys())
+            benchmark.components_enabled = list(
+                final_status.get("component_status", {}).keys()
+            )
             benchmark.success_rate = 1.0 if benchmark.recovery_events > 0 else 0.5
 
             # Measure post-recovery resources
@@ -393,13 +437,14 @@ class StatisticalPerformanceTester:
 
     def _simulate_resource_pressure(self, scenario: Dict[str, Any]) -> threading.Thread:
         """Simulate resource pressure in background thread."""
+
         def pressure_worker():
             try:
-                if scenario['target_resource'] in ['cpu', 'both']:
+                if scenario["target_resource"] in ["cpu", "both"]:
                     # Simulate CPU pressure
                     self._generate_cpu_load(duration=5.0, intensity=0.7)
 
-                if scenario['target_resource'] in ['memory', 'both']:
+                if scenario["target_resource"] in ["memory", "both"]:
                     # Simulate memory pressure
                     self._generate_memory_load(duration=5.0, size_mb=200)
             except Exception as e:
@@ -438,10 +483,19 @@ class StatisticalPerformanceTester:
 
         # Integration test scenarios
         integration_scenarios = [
-            {'scenario': 'resource_manager_feature_flags', 'components': ['resource_manager', 'feature_flags']},
-            {'scenario': 'behavior_tree_resource_manager', 'components': ['behavior_tree', 'resource_manager']},
-            {'scenario': 'monitoring_resource_manager', 'components': ['monitoring', 'resource_manager']},
-            {'scenario': 'full_system_integration', 'components': ['all']}
+            {
+                "scenario": "resource_manager_feature_flags",
+                "components": ["resource_manager", "feature_flags"],
+            },
+            {
+                "scenario": "behavior_tree_resource_manager",
+                "components": ["behavior_tree", "resource_manager"],
+            },
+            {
+                "scenario": "monitoring_resource_manager",
+                "components": ["monitoring", "resource_manager"],
+            },
+            {"scenario": "full_system_integration", "components": ["all"]},
         ]
 
         for scenario in integration_scenarios:
@@ -451,7 +505,9 @@ class StatisticalPerformanceTester:
 
         return results
 
-    def _benchmark_integration_scenario(self, scenario: Dict[str, Any], iteration: int) -> PerformanceBenchmark:
+    def _benchmark_integration_scenario(
+        self, scenario: Dict[str, Any], iteration: int
+    ) -> PerformanceBenchmark:
         """Benchmark an integration scenario."""
         benchmark = PerformanceBenchmark(
             test_name="integration_scenarios",
@@ -463,7 +519,10 @@ class StatisticalPerformanceTester:
             success_rate=0.0,
             fallback_used=False,
             recovery_events=0,
-            metadata={'scenario': scenario['scenario'], 'components': scenario['components']}
+            metadata={
+                "scenario": scenario["scenario"],
+                "components": scenario["components"],
+            },
         )
 
         start_time = time.time()
@@ -476,36 +535,42 @@ class StatisticalPerformanceTester:
 
             success_count = 0
 
-            if 'resource_manager' in scenario['components']:
+            if "resource_manager" in scenario["components"]:
                 try:
-                    from src.core.mission_resource_manager import get_mission_resource_manager
+                    from src.core.mission_resource_manager import (
+                        get_mission_resource_manager,
+                    )
+
                     rm = get_mission_resource_manager()
-                    rm.switch_mission_profile('sample_collection')
+                    rm.switch_mission_profile("sample_collection")
                     success_count += 1
                 except Exception as e:
                     logger.warning(f"Resource manager integration failed: {e}")
 
-            if 'feature_flags' in scenario['components']:
+            if "feature_flags" in scenario["components"]:
                 try:
                     from src.core.feature_flags import get_feature_flag_manager
+
                     fm = get_feature_flag_manager()
-                    fm.set_mission_profile('sample_collection')
+                    fm.set_mission_profile("sample_collection")
                     success_count += 1
                 except Exception as e:
                     logger.warning(f"Feature flags integration failed: {e}")
 
-            if 'behavior_tree' in scenario['components']:
+            if "behavior_tree" in scenario["components"]:
                 try:
                     from missions.robust_behavior_tree import PyTreesBehaviorTree
+
                     bt = PyTreesBehaviorTree()
-                    bt.switch_mission_profile('sample_collection')
+                    bt.switch_mission_profile("sample_collection")
                     success_count += 1
                 except Exception as e:
                     logger.warning(f"Behavior tree integration failed: {e}")
 
-            if 'monitoring' in scenario['components']:
+            if "monitoring" in scenario["components"]:
                 try:
                     from simulation.tools.monitoring_dashboard import SimulationMonitor
+
                     monitor = SimulationMonitor()
                     monitor.start_monitoring()
                     time.sleep(1.0)
@@ -515,18 +580,20 @@ class StatisticalPerformanceTester:
                     logger.warning(f"Monitoring integration failed: {e}")
 
             # Calculate success rate
-            expected_components = len(scenario['components'])
-            if 'all' in scenario['components']:
+            expected_components = len(scenario["components"])
+            if "all" in scenario["components"]:
                 expected_components = 4  # All components
 
-            benchmark.success_rate = success_count / expected_components if expected_components > 0 else 0.0
+            benchmark.success_rate = (
+                success_count / expected_components if expected_components > 0 else 0.0
+            )
 
             # Measure post-integration resources
             post_cpu, post_memory = self._measure_resources()
             benchmark.cpu_usage.add_sample(post_cpu)
             benchmark.memory_usage.add_sample(post_memory)
 
-            benchmark.components_enabled = scenario['components']
+            benchmark.components_enabled = scenario["components"]
 
         except Exception as e:
             logger.error(f"Integration benchmark failed: {e}")
@@ -541,7 +608,7 @@ class StatisticalPerformanceTester:
 
         results = []
 
-        mission_profiles = ['waypoint_navigation', 'object_search', 'sample_collection']
+        mission_profiles = ["waypoint_navigation", "object_search", "sample_collection"]
 
         for mission in mission_profiles:
             for iteration in range(self.num_iterations):
@@ -550,7 +617,9 @@ class StatisticalPerformanceTester:
 
         return results
 
-    def _benchmark_resource_optimization(self, mission_profile: str, iteration: int) -> PerformanceBenchmark:
+    def _benchmark_resource_optimization(
+        self, mission_profile: str, iteration: int
+    ) -> PerformanceBenchmark:
         """Benchmark resource optimization for a specific mission profile."""
         benchmark = PerformanceBenchmark(
             test_name="resource_optimization_effectiveness",
@@ -561,7 +630,7 @@ class StatisticalPerformanceTester:
             components_enabled=[],
             success_rate=0.0,
             fallback_used=False,
-            recovery_events=0
+            recovery_events=0,
         )
 
         start_time = time.time()
@@ -584,7 +653,9 @@ class StatisticalPerformanceTester:
 
                 # Get component status
                 status = resource_manager.get_resource_status()
-                benchmark.components_enabled = list(status.get('component_status', {}).keys())
+                benchmark.components_enabled = list(
+                    status.get("component_status", {}).keys()
+                )
 
                 # Measure mission-specific resources
                 mission_cpu, mission_memory = self._measure_resources()
@@ -596,9 +667,9 @@ class StatisticalPerformanceTester:
                 memory_reduction = baseline_memory - mission_memory
 
                 benchmark.metadata = {
-                    'cpu_reduction': cpu_reduction,
-                    'memory_reduction': memory_reduction,
-                    'optimization_effective': cpu_reduction > 0 or memory_reduction > 0
+                    "cpu_reduction": cpu_reduction,
+                    "memory_reduction": memory_reduction,
+                    "optimization_effective": cpu_reduction > 0 or memory_reduction > 0,
                 }
 
             else:
@@ -620,11 +691,11 @@ class StatisticalPerformanceTester:
     def generate_statistical_report(self) -> Dict[str, Any]:
         """Generate comprehensive statistical report."""
         report = {
-            'summary': {},
-            'detailed_results': {},
-            'confidence_intervals': {},
-            'hypothesis_tests': {},
-            'recommendations': []
+            "summary": {},
+            "detailed_results": {},
+            "confidence_intervals": {},
+            "hypothesis_tests": {},
+            "recommendations": [],
         }
 
         # Analyze each test type
@@ -632,20 +703,27 @@ class StatisticalPerformanceTester:
             if not benchmarks:
                 continue
 
-            report['detailed_results'][test_name] = {
-                'total_samples': len(benchmarks),
-                'success_rate': sum(b.success_rate for b in benchmarks) / len(benchmarks),
-                'avg_duration': statistics.mean(b.duration_seconds for b in benchmarks),
-                'cpu_usage_stats': self._analyze_measurements([b.cpu_usage for b in benchmarks]),
-                'memory_usage_stats': self._analyze_measurements([b.memory_usage for b in benchmarks])
+            report["detailed_results"][test_name] = {
+                "total_samples": len(benchmarks),
+                "success_rate": sum(b.success_rate for b in benchmarks)
+                / len(benchmarks),
+                "avg_duration": statistics.mean(b.duration_seconds for b in benchmarks),
+                "cpu_usage_stats": self._analyze_measurements(
+                    [b.cpu_usage for b in benchmarks]
+                ),
+                "memory_usage_stats": self._analyze_measurements(
+                    [b.memory_usage for b in benchmarks]
+                ),
             }
 
         # Generate recommendations
-        report['recommendations'] = self._generate_recommendations(report)
+        report["recommendations"] = self._generate_recommendations(report)
 
         return report
 
-    def _analyze_measurements(self, measurements: List[StatisticalMeasurement]) -> Dict[str, Any]:
+    def _analyze_measurements(
+        self, measurements: List[StatisticalMeasurement]
+    ) -> Dict[str, Any]:
         """Analyze statistical measurements."""
         if not measurements:
             return {}
@@ -656,21 +734,23 @@ class StatisticalPerformanceTester:
             all_samples.extend(measurement.samples)
 
         if len(all_samples) < 2:
-            return {'insufficient_data': True}
+            return {"insufficient_data": True}
 
         analysis = {
-            'sample_size': len(all_samples),
-            'mean': statistics.mean(all_samples),
-            'median': statistics.median(all_samples),
-            'std_dev': statistics.stdev(all_samples),
-            'min': min(all_samples),
-            'max': max(all_samples),
-            'confidence_interval_95': self._calculate_confidence_interval(all_samples)
+            "sample_size": len(all_samples),
+            "mean": statistics.mean(all_samples),
+            "median": statistics.median(all_samples),
+            "std_dev": statistics.stdev(all_samples),
+            "min": min(all_samples),
+            "max": max(all_samples),
+            "confidence_interval_95": self._calculate_confidence_interval(all_samples),
         }
 
         return analysis
 
-    def _calculate_confidence_interval(self, samples: List[float], confidence: float = 0.95) -> Tuple[float, float]:
+    def _calculate_confidence_interval(
+        self, samples: List[float], confidence: float = 0.95
+    ) -> Tuple[float, float]:
         """Calculate confidence interval."""
         if len(samples) < 2:
             return (0.0, 0.0)
@@ -690,50 +770,63 @@ class StatisticalPerformanceTester:
         recommendations = []
 
         # Check resource optimization effectiveness
-        if 'resource_optimization_effectiveness' in report['detailed_results']:
-            results = report['detailed_results']['resource_optimization_effectiveness']
+        if "resource_optimization_effectiveness" in report["detailed_results"]:
+            results = report["detailed_results"]["resource_optimization_effectiveness"]
 
-            if results['success_rate'] > 0.8:
-                recommendations.append("✅ Resource optimization is highly effective (>80% success rate)")
-            elif results['success_rate'] > 0.6:
-                recommendations.append("⚠️ Resource optimization moderately effective (60-80% success rate)")
+            if results["success_rate"] > 0.8:
+                recommendations.append(
+                    "✅ Resource optimization is highly effective (>80% success rate)"
+                )
+            elif results["success_rate"] > 0.6:
+                recommendations.append(
+                    "⚠️ Resource optimization moderately effective (60-80% success rate)"
+                )
             else:
-                recommendations.append("❌ Resource optimization needs improvement (<60% success rate)")
+                recommendations.append(
+                    "❌ Resource optimization needs improvement (<60% success rate)"
+                )
 
         # Check fallback functionality
-        if 'fallback_functionality' in report['detailed_results']:
-            results = report['detailed_results']['fallback_functionality']
+        if "fallback_functionality" in report["detailed_results"]:
+            results = report["detailed_results"]["fallback_functionality"]
 
-            if results['success_rate'] > 0.9:
+            if results["success_rate"] > 0.9:
                 recommendations.append("✅ Fallback mechanisms are robust and reliable")
             else:
                 recommendations.append("⚠️ Fallback mechanisms need improvement")
 
         # Check recovery mechanisms
-        if 'recovery_mechanisms' in report['detailed_results']:
-            results = report['detailed_results']['recovery_mechanisms']
-            avg_recovery_events = sum(b.recovery_events for b in self.test_results.get('recovery_mechanisms', []))
+        if "recovery_mechanisms" in report["detailed_results"]:
+            results = report["detailed_results"]["recovery_mechanisms"]
+            avg_recovery_events = sum(
+                b.recovery_events
+                for b in self.test_results.get("recovery_mechanisms", [])
+            )
 
             if avg_recovery_events > 0:
-                recommendations.append("✅ Recovery mechanisms activate under resource pressure")
+                recommendations.append(
+                    "✅ Recovery mechanisms activate under resource pressure"
+                )
             else:
-                recommendations.append("⚠️ Recovery mechanisms may need tuning for resource pressure detection")
+                recommendations.append(
+                    "⚠️ Recovery mechanisms may need tuning for resource pressure detection"
+                )
 
         return recommendations
 
     def save_results(self, filename: str):
         """Save test results to file."""
         results = {
-            'test_results': self.test_results,
-            'statistical_report': self.generate_statistical_report(),
-            'metadata': {
-                'iterations': self.num_iterations,
-                'confidence_level': self.confidence_level,
-                'timestamp': datetime.now().isoformat()
-            }
+            "test_results": self.test_results,
+            "statistical_report": self.generate_statistical_report(),
+            "metadata": {
+                "iterations": self.num_iterations,
+                "confidence_level": self.confidence_level,
+                "timestamp": datetime.now().isoformat(),
+            },
         }
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(results, f, indent=2, default=str)
 
         logger.info(f"Test results saved to {filename}")
@@ -753,29 +846,31 @@ def run_statistical_performance_tests():
         print("\n📊 TEST RESULTS SUMMARY")
         print("=" * 40)
 
-        for test_name, test_results in results['tests'].items():
+        for test_name, test_results in results["tests"].items():
             if isinstance(test_results, list):
-                success_rate = sum(b.success_rate for b in test_results) / len(test_results)
+                success_rate = sum(b.success_rate for b in test_results) / len(
+                    test_results
+                )
                 print(".1%")
             else:
                 print(f"❌ {test_name}: ERROR - {test_results.get('error', 'Unknown')}")
 
         # Show statistical analysis
-        if 'statistical_analysis' in results:
-            analysis = results['statistical_analysis']
+        if "statistical_analysis" in results:
+            analysis = results["statistical_analysis"]
 
             print("\n📈 STATISTICAL ANALYSIS")
             print("-" * 30)
 
-            for test_name, stats in analysis.get('detailed_results', {}).items():
-                if 'cpu_usage_stats' in stats:
-                    cpu_stats = stats['cpu_usage_stats']
-                    if 'mean' in cpu_stats:
+            for test_name, stats in analysis.get("detailed_results", {}).items():
+                if "cpu_usage_stats" in stats:
+                    cpu_stats = stats["cpu_usage_stats"]
+                    if "mean" in cpu_stats:
                         print(".1f")
 
             # Show recommendations
             print("\n💡 RECOMMENDATIONS")
-            for rec in analysis.get('recommendations', []):
+            for rec in analysis.get("recommendations", []):
                 print(f"  {rec}")
 
         # Save detailed results
@@ -789,6 +884,7 @@ def run_statistical_performance_tests():
     except Exception as e:
         print(f"❌ Testing failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

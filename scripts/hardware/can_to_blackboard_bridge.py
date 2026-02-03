@@ -100,8 +100,12 @@ class CANToBlackboardBridge(Node):
             vx = msg.twist.linear.x
             vy = msg.twist.linear.y
             omega = msg.twist.angular.z
-            self.odom_x += (vx * math.cos(self.odom_theta) - vy * math.sin(self.odom_theta)) * dt
-            self.odom_y += (vx * math.sin(self.odom_theta) + vy * math.cos(self.odom_theta)) * dt
+            self.odom_x += (
+                vx * math.cos(self.odom_theta) - vy * math.sin(self.odom_theta)
+            ) * dt
+            self.odom_y += (
+                vx * math.sin(self.odom_theta) + vy * math.cos(self.odom_theta)
+            ) * dt
             self.odom_theta += omega * dt
         self.last_twist_time = t
 
@@ -144,7 +148,9 @@ class CANToBlackboardBridge(Node):
 
         if battery_stale:
             bat = BatteryState()
-            bat.header = Header(stamp=self.get_clock().now().to_msg(), frame_id="battery")
+            bat.header = Header(
+                stamp=self.get_clock().now().to_msg(), frame_id="battery"
+            )
             bat.voltage = 24.0
             bat.current = -5.0
             bat.percentage = 0.85

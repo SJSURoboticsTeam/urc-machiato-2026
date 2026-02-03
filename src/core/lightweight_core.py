@@ -45,47 +45,55 @@ class LightweightCore:
 
         def load_state_machine():
             from src.core.simplified_state_manager import get_state_manager
+
             state_mgr = get_state_manager()
             return state_mgr.create_state_machine("lightweight_core", "idle")
 
         def load_behavior_tree():
             from src.core.behavior_tree import URCBehaviorTree
+
             return URCBehaviorTree()
 
         def load_safety_system():
             from src.core.utilities import get_safety_manager
+
             return URCSafetyManager()
 
         def load_database():
             from src.core.data_manager import get_data_manager
+
             return get_data_manager()
 
         def load_bridge():
             from infrastructure.bridges.simple_bridge import get_simple_bridge
+
             return get_simple_bridge()
 
         def load_api():
             from src.core.simple_api import get_simple_api
+
             return get_simple_api()
 
         def load_network_resilience():
             from src.core.network_resilience import get_network_resilience_manager
+
             return get_network_resilience_manager()
 
         # Register loaders
         self._loaders = {
-            'state_machine': load_state_machine,
-            'behavior_tree': load_behavior_tree,
-            'safety_system': load_safety_system,
-            'database': load_database,
-            'bridge': load_bridge,
-            'api': load_api,
-            'network': load_network_resilience,
+            "state_machine": load_state_machine,
+            "behavior_tree": load_behavior_tree,
+            "safety_system": load_safety_system,
+            "database": load_database,
+            "bridge": load_bridge,
+            "api": load_api,
+            "network": load_network_resilience,
         }
 
     def _set_memory_baseline(self):
         """Set baseline memory usage."""
         import psutil
+
         process = psutil.Process()
         self._memory_baseline = process.memory_info().rss / 1024 / 1024  # MB
 
@@ -107,26 +115,27 @@ class LightweightCore:
     def get_memory_usage(self) -> Dict[str, float]:
         """Get current memory usage."""
         import psutil
+
         process = psutil.Process()
         current_mb = process.memory_info().rss / 1024 / 1024
         delta_mb = current_mb - self._memory_baseline
 
         return {
-            'current_mb': current_mb,
-            'baseline_mb': self._memory_baseline,
-            'delta_mb': delta_mb,
-            'limit_mb': self.config.max_memory_mb
+            "current_mb": current_mb,
+            "baseline_mb": self._memory_baseline,
+            "delta_mb": delta_mb,
+            "limit_mb": self.config.max_memory_mb,
         }
 
     def check_memory_pressure(self) -> str:
         """Check memory pressure level."""
         mem = self.get_memory_usage()
 
-        if mem['current_mb'] > self.config.max_memory_mb:
+        if mem["current_mb"] > self.config.max_memory_mb:
             return "CRITICAL"
-        elif mem['delta_mb'] > 30:  # 30MB increase
+        elif mem["delta_mb"] > 30:  # 30MB increase
             return "HIGH"
-        elif mem['delta_mb'] > 10:  # 10MB increase
+        elif mem["delta_mb"] > 10:  # 10MB increase
             return "MODERATE"
         else:
             return "LOW"
@@ -139,7 +148,7 @@ class LightweightCore:
 
         for name, component in self._components.items():
             # Simple heuristic: remove if not accessed in last 5 minutes
-            if hasattr(component, '_last_access'):
+            if hasattr(component, "_last_access"):
                 if current_time - component._last_access > 300:  # 5 minutes
                     to_remove.append(name)
 
@@ -152,46 +161,47 @@ class LightweightCore:
         mem = self.get_memory_usage()
 
         return {
-            'uptime_seconds': time.time() - self._start_time,
-            'memory_usage': mem,
-            'memory_pressure': self.check_memory_pressure(),
-            'loaded_components': list(self._components.keys()),
-            'available_components': list(self._loaders.keys()),
-            'profiling_enabled': self.config.enable_profiling
+            "uptime_seconds": time.time() - self._start_time,
+            "memory_usage": mem,
+            "memory_pressure": self.check_memory_pressure(),
+            "loaded_components": list(self._components.keys()),
+            "available_components": list(self._loaders.keys()),
+            "profiling_enabled": self.config.enable_profiling,
         }
 
     # Convenience methods for common operations
     def get_state_machine(self):
         """Get state machine (lazy loaded)."""
-        return self.get_component('state_machine')
+        return self.get_component("state_machine")
 
     def get_behavior_tree(self):
         """Get behavior tree (lazy loaded)."""
-        return self.get_component('behavior_tree')
+        return self.get_component("behavior_tree")
 
     def get_safety_system(self):
         """Get safety system (lazy loaded)."""
-        return self.get_component('safety_system')
+        return self.get_component("safety_system")
 
     def get_database(self):
         """Get database (lazy loaded)."""
-        return self.get_component('database')
+        return self.get_component("database")
 
     def get_bridge(self):
         """Get bridge (lazy loaded)."""
-        return self.get_component('bridge')
+        return self.get_component("bridge")
 
     def get_network_manager(self):
         """Get network manager (lazy loaded)."""
-        return self.get_component('network')
+        return self.get_component("network")
 
     def get_api(self):
         """Get API (lazy loaded)."""
-        return self.get_component('api')
+        return self.get_component("api")
 
 
 # Global lightweight core instance
 _core_instance: Optional[LightweightCore] = None
+
 
 def get_lightweight_core(config: Optional[CoreConfig] = None) -> LightweightCore:
     """Get global lightweight core instance."""
@@ -200,14 +210,16 @@ def get_lightweight_core(config: Optional[CoreConfig] = None) -> LightweightCore
         _core_instance = LightweightCore(config)
     return _core_instance
 
+
 def initialize_lightweight_core(config: Optional[CoreConfig] = None) -> LightweightCore:
     """Initialize the lightweight core."""
     return get_lightweight_core(config)
 
+
 # Export key components
 __all__ = [
-    'LightweightCore',
-    'CoreConfig',
-    'get_lightweight_core',
-    'initialize_lightweight_core'
+    "LightweightCore",
+    "CoreConfig",
+    "get_lightweight_core",
+    "initialize_lightweight_core",
 ]

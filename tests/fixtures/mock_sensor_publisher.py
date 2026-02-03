@@ -18,15 +18,16 @@ class MockSensorPublisher(Node):
     """Publishes sensor data with proper QoS for BT orchestrator."""
 
     def __init__(self):
-        super().__init__('mock_sensor_publisher')
+        super().__init__("mock_sensor_publisher")
 
         # Use QoS matching BT orchestrator expectations (reliable, transient local, deadline)
         from rclpy.duration import Duration
+
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
         # Add deadline to match BT orchestrator QoS
         try:
@@ -34,11 +35,11 @@ class MockSensorPublisher(Node):
         except Exception:
             pass  # Deadline may not be available in all ROS2 versions
 
-        self.odom_pub = self.create_publisher(Odometry, '/odom', qos_profile)
-        self.slam_pub = self.create_publisher(PoseStamped, '/slam/pose', qos_profile)
+        self.odom_pub = self.create_publisher(Odometry, "/odom", qos_profile)
+        self.slam_pub = self.create_publisher(PoseStamped, "/slam/pose", qos_profile)
         self.timer = self.create_timer(0.1, self.publish_data)
         self.start_time = time.time()
-        self.get_logger().info('Mock sensor publisher started with proper QoS')
+        self.get_logger().info("Mock sensor publisher started with proper QoS")
 
     def publish_data(self):
         """Publish odometry and SLAM pose data."""
@@ -47,8 +48,8 @@ class MockSensorPublisher(Node):
         # Publish odometry
         odom = Odometry()
         odom.header.stamp = self.get_clock().now().to_msg()
-        odom.header.frame_id = 'odom'
-        odom.child_frame_id = 'base_link'
+        odom.header.frame_id = "odom"
+        odom.child_frame_id = "base_link"
         odom.pose.pose.position.x = 0.1 * math.sin(0.1 * current_time)
         odom.pose.pose.position.y = 0.05 * current_time
         odom.pose.pose.position.z = 0.0
@@ -63,7 +64,7 @@ class MockSensorPublisher(Node):
         # Publish SLAM pose
         slam = PoseStamped()
         slam.header.stamp = self.get_clock().now().to_msg()
-        slam.header.frame_id = 'map'
+        slam.header.frame_id = "map"
         slam.pose.position.x = odom.pose.pose.position.x
         slam.pose.position.y = odom.pose.pose.position.y
         slam.pose.position.z = 0.0
@@ -83,5 +84,5 @@ def main():
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

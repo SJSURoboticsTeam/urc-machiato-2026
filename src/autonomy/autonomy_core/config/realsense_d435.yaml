@@ -1,0 +1,15 @@
+# Intel RealSense D435 camera configuration for URC 2026 SLAM pipeline
+# Used by realsense_driver node and depth_processor presets
+
+realsense_driver:
+  ros__parameters:
+    width: 640
+    height: 480
+    fps: 30
+    depth_width: 640
+    depth_height: 480
+    depth_fps: 30
+    depth_preset: "HighAccuracy"
+    align_depth_to_color: true
+    optical_frame_id: "camera_depth_optical_frame"
+    base_frame_id: "camera_link"

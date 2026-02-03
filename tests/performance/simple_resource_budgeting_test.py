@@ -42,20 +42,20 @@ class SimpleResourceBudgetingTester:
 
         # Performance bounds under constraints
         self.performance_bounds = {
-            'binary_protocol_p99_ms': 5.0,
-            'ipc_bridge_p99_ms': 10.0,
-            'motion_control_p99_ms': 50.0,  # Relaxed for resource constraints
-            'end_to_end_p99_ms': 15.0,
-            'cpu_usage_percent': 85.0,
-            'memory_usage_mb': self.ram_limit_gb * 1024 * 0.9
+            "binary_protocol_p99_ms": 5.0,
+            "ipc_bridge_p99_ms": 10.0,
+            "motion_control_p99_ms": 50.0,  # Relaxed for resource constraints
+            "end_to_end_p99_ms": 15.0,
+            "cpu_usage_percent": 85.0,
+            "memory_usage_mb": self.ram_limit_gb * 1024 * 0.9,
         }
 
         # Monitoring
         self.system_metrics = {
-            'cpu_percent': [],
-            'memory_percent': [],
-            'memory_mb': [],
-            'timestamps': []
+            "cpu_percent": [],
+            "memory_percent": [],
+            "memory_mb": [],
+            "timestamps": [],
         }
 
     def run_resource_budgeting_test(self) -> Dict[str, Any]:
@@ -68,8 +68,9 @@ class SimpleResourceBudgetingTester:
 
         # Start monitoring
         monitoring_active = True
-        monitor_thread = threading.Thread(target=self._monitor_system_resources,
-                                        args=(lambda: monitoring_active,))
+        monitor_thread = threading.Thread(
+            target=self._monitor_system_resources, args=(lambda: monitoring_active,)
+        )
         monitor_thread.start()
 
         try:
@@ -83,22 +84,24 @@ class SimpleResourceBudgetingTester:
 
             # Analyze resource budgeting
             print("\n💰 Analyzing Resource Budgeting...")
-            budget_analysis = self._analyze_resource_budgeting(perf_results, stress_results)
+            budget_analysis = self._analyze_resource_budgeting(
+                perf_results, stress_results
+            )
 
             # Generate report
             report = {
-                'test_metadata': {
-                    'constraints': {
-                        'cpu_ghz': self.cpu_limit_ghz,
-                        'ram_gb': self.ram_limit_gb
+                "test_metadata": {
+                    "constraints": {
+                        "cpu_ghz": self.cpu_limit_ghz,
+                        "ram_gb": self.ram_limit_gb,
                     },
-                    'timestamp': time.time(),
-                    'duration_seconds': time.time() - start_time
+                    "timestamp": time.time(),
+                    "duration_seconds": time.time() - start_time,
                 },
-                'performance_results': perf_results,
-                'stress_results': stress_results,
-                'budget_analysis': budget_analysis,
-                'system_monitoring': self.system_metrics
+                "performance_results": perf_results,
+                "stress_results": stress_results,
+                "budget_analysis": budget_analysis,
+                "system_monitoring": self.system_metrics,
             }
 
             return report
@@ -116,10 +119,10 @@ class SimpleResourceBudgetingTester:
 
         # Extract key metrics
         perf_metrics = {}
-        if 'results' in results:
-            for test_name, test_data in results['results'].items():
-                if isinstance(test_data, dict) and 'p99_ms' in test_data:
-                    perf_metrics[f"{test_name}_p99_ms"] = test_data['p99_ms']
+        if "results" in results:
+            for test_name, test_data in results["results"].items():
+                if isinstance(test_data, dict) and "p99_ms" in test_data:
+                    perf_metrics[f"{test_name}_p99_ms"] = test_data["p99_ms"]
 
         return perf_metrics
 
@@ -129,15 +132,15 @@ class SimpleResourceBudgetingTester:
 
         # CPU stress test
         print("  Testing CPU under 2GHz constraint...")
-        stress_results['cpu_stress'] = self._cpu_stress_test()
+        stress_results["cpu_stress"] = self._cpu_stress_test()
 
         # Memory stress test
         print("  Testing memory under 16GB constraint...")
-        stress_results['memory_stress'] = self._memory_stress_test()
+        stress_results["memory_stress"] = self._memory_stress_test()
 
         # Combined stress test
         print("  Testing combined CPU + memory stress...")
-        stress_results['combined_stress'] = self._combined_stress_test()
+        stress_results["combined_stress"] = self._combined_stress_test()
 
         return stress_results
 
@@ -158,10 +161,11 @@ class SimpleResourceBudgetingTester:
             time.sleep(0.1)
 
         return {
-            'duration_seconds': 15,
-            'avg_cpu_usage': sum(cpu_samples) / len(cpu_samples),
-            'max_cpu_usage': max(cpu_samples),
-            'within_limit': max(cpu_samples) <= self.performance_bounds['cpu_usage_percent']
+            "duration_seconds": 15,
+            "avg_cpu_usage": sum(cpu_samples) / len(cpu_samples),
+            "max_cpu_usage": max(cpu_samples),
+            "within_limit": max(cpu_samples)
+            <= self.performance_bounds["cpu_usage_percent"],
         }
 
     def _memory_stress_test(self) -> Dict[str, Any]:
@@ -189,10 +193,12 @@ class SimpleResourceBudgetingTester:
             allocations.clear()  # Clean up
 
         return {
-            'peak_memory_percent': max(memory_samples) if memory_samples else 0,
-            'avg_memory_percent': sum(memory_samples) / len(memory_samples) if memory_samples else 0,
-            'within_limit': max(memory_samples) <= 90 if memory_samples else True,
-            'memory_limit_gb': self.ram_limit_gb
+            "peak_memory_percent": max(memory_samples) if memory_samples else 0,
+            "avg_memory_percent": (
+                sum(memory_samples) / len(memory_samples) if memory_samples else 0
+            ),
+            "within_limit": max(memory_samples) <= 90 if memory_samples else True,
+            "memory_limit_gb": self.ram_limit_gb,
         }
 
     def _combined_stress_test(self) -> Dict[str, Any]:
@@ -226,23 +232,25 @@ class SimpleResourceBudgetingTester:
             allocations.clear()
 
         return {
-            'duration_seconds': 10,
-            'avg_cpu_usage': sum(cpu_samples) / len(cpu_samples),
-            'avg_memory_usage': sum(memory_samples) / len(memory_samples),
-            'max_cpu_usage': max(cpu_samples),
-            'max_memory_usage': max(memory_samples),
-            'cpu_within_limit': max(cpu_samples) <= self.performance_bounds['cpu_usage_percent'],
-            'memory_within_limit': max(memory_samples) <= 90
+            "duration_seconds": 10,
+            "avg_cpu_usage": sum(cpu_samples) / len(cpu_samples),
+            "avg_memory_usage": sum(memory_samples) / len(memory_samples),
+            "max_cpu_usage": max(cpu_samples),
+            "max_memory_usage": max(memory_samples),
+            "cpu_within_limit": max(cpu_samples)
+            <= self.performance_bounds["cpu_usage_percent"],
+            "memory_within_limit": max(memory_samples) <= 90,
         }
 
-    def _analyze_resource_budgeting(self, perf_results: Dict[str, Any],
-                                  stress_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_resource_budgeting(
+        self, perf_results: Dict[str, Any], stress_results: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Analyze resource budgeting requirements."""
         analysis = {
-            'performance_compliance': {},
-            'resource_requirements': {},
-            'bottlenecks': [],
-            'recommendations': []
+            "performance_compliance": {},
+            "resource_requirements": {},
+            "bottlenecks": [],
+            "recommendations": [],
         }
 
         # Check performance compliance under constraints
@@ -250,45 +258,59 @@ class SimpleResourceBudgetingTester:
             if metric_name in self.performance_bounds:
                 bound_value = self.performance_bounds[metric_name]
                 compliant = actual_value <= bound_value
-                analysis['performance_compliance'][metric_name] = {
-                    'actual': actual_value,
-                    'limit': bound_value,
-                    'compliant': compliant,
-                    'margin': bound_value - actual_value
+                analysis["performance_compliance"][metric_name] = {
+                    "actual": actual_value,
+                    "limit": bound_value,
+                    "compliant": compliant,
+                    "margin": bound_value - actual_value,
                 }
 
         # Resource requirements analysis
-        cpu_stress = stress_results.get('cpu_stress', {})
-        memory_stress = stress_results.get('memory_stress', {})
+        cpu_stress = stress_results.get("cpu_stress", {})
+        memory_stress = stress_results.get("memory_stress", {})
 
-        analysis['resource_requirements'] = {
-            'cpu_cores_required': max(1, int((cpu_stress.get('avg_cpu_usage', 0) / 80) * 4)),
-            'memory_gb_required': self.ram_limit_gb,
-            'cpu_freq_mhz_required': int(self.cpu_limit_ghz * 1000),
-            'power_budget_watts': self._estimate_power_budget(),
-            'thermal_budget_celsius': 75
+        analysis["resource_requirements"] = {
+            "cpu_cores_required": max(
+                1, int((cpu_stress.get("avg_cpu_usage", 0) / 80) * 4)
+            ),
+            "memory_gb_required": self.ram_limit_gb,
+            "cpu_freq_mhz_required": int(self.cpu_limit_ghz * 1000),
+            "power_budget_watts": self._estimate_power_budget(),
+            "thermal_budget_celsius": 75,
         }
 
         # Identify bottlenecks
-        if cpu_stress.get('avg_cpu_usage', 0) > 70:
-            analysis['bottlenecks'].append('CPU utilization high under 2GHz constraint')
-        if memory_stress.get('peak_memory_percent', 0) > 80:
-            analysis['bottlenecks'].append('Memory utilization high under 16GB constraint')
+        if cpu_stress.get("avg_cpu_usage", 0) > 70:
+            analysis["bottlenecks"].append("CPU utilization high under 2GHz constraint")
+        if memory_stress.get("peak_memory_percent", 0) > 80:
+            analysis["bottlenecks"].append(
+                "Memory utilization high under 16GB constraint"
+            )
 
         # Generate recommendations
-        if analysis['bottlenecks']:
-            analysis['recommendations'].append('⚠️ Resource bottlenecks detected - consider hardware upgrade')
+        if analysis["bottlenecks"]:
+            analysis["recommendations"].append(
+                "⚠️ Resource bottlenecks detected - consider hardware upgrade"
+            )
         else:
-            analysis['recommendations'].append('✅ Resources adequate for 2GHz/16GB constraints')
+            analysis["recommendations"].append(
+                "✅ Resources adequate for 2GHz/16GB constraints"
+            )
 
         # Performance recommendations
-        compliant_count = sum(1 for r in analysis['performance_compliance'].values() if r['compliant'])
-        total_count = len(analysis['performance_compliance'])
+        compliant_count = sum(
+            1 for r in analysis["performance_compliance"].values() if r["compliant"]
+        )
+        total_count = len(analysis["performance_compliance"])
 
         if compliant_count < total_count:
-            analysis['recommendations'].append('⚠️ Performance regressions detected under resource constraints')
+            analysis["recommendations"].append(
+                "⚠️ Performance regressions detected under resource constraints"
+            )
         else:
-            analysis['recommendations'].append('✅ All performance requirements met under resource constraints')
+            analysis["recommendations"].append(
+                "✅ All performance requirements met under resource constraints"
+            )
 
         return analysis
 
@@ -305,12 +327,16 @@ class SimpleResourceBudgetingTester:
         """Monitor system resources in background."""
         while is_active():
             try:
-                self.system_metrics['timestamps'].append(time.time())
-                self.system_metrics['cpu_percent'].append(psutil.cpu_percent(interval=None))
+                self.system_metrics["timestamps"].append(time.time())
+                self.system_metrics["cpu_percent"].append(
+                    psutil.cpu_percent(interval=None)
+                )
 
                 memory_info = psutil.virtual_memory()
-                self.system_metrics['memory_percent'].append(memory_info.percent)
-                self.system_metrics['memory_mb'].append(memory_info.used / (1024 * 1024))
+                self.system_metrics["memory_percent"].append(memory_info.percent)
+                self.system_metrics["memory_mb"].append(
+                    memory_info.used / (1024 * 1024)
+                )
 
                 time.sleep(1.0)
 
@@ -326,25 +352,25 @@ class SimpleResourceBudgetingTester:
         report_lines.append("=" * 70)
 
         # Test metadata
-        metadata = results.get('test_metadata', {})
-        constraints = metadata.get('constraints', {})
+        metadata = results.get("test_metadata", {})
+        constraints = metadata.get("constraints", {})
         report_lines.append("\n🎯 TEST CONSTRAINTS:")
         report_lines.append(f"  CPU: {constraints.get('cpu_ghz', 0)}GHz")
         report_lines.append(f"  RAM: {constraints.get('ram_gb', 0)}GB")
         report_lines.append(".1f")
         # Performance results
-        perf_results = results.get('performance_results', {})
+        perf_results = results.get("performance_results", {})
         if perf_results:
             report_lines.append("\n📊 PERFORMANCE RESULTS:")
             for metric, value in perf_results.items():
                 report_lines.append(".3f")
         # Stress test results
-        stress_results = results.get('stress_results', {})
+        stress_results = results.get("stress_results", {})
         if stress_results:
             report_lines.append("\n🏋️ STRESS TEST RESULTS:")
-            cpu_stress = stress_results.get('cpu_stress', {})
-            memory_stress = stress_results.get('memory_stress', {})
-            combined_stress = stress_results.get('combined_stress', {})
+            cpu_stress = stress_results.get("cpu_stress", {})
+            memory_stress = stress_results.get("memory_stress", {})
+            combined_stress = stress_results.get("combined_stress", {})
 
             if cpu_stress:
                 report_lines.append(".1f")
@@ -353,29 +379,39 @@ class SimpleResourceBudgetingTester:
             if combined_stress:
                 report_lines.append(".1f")
         # Budget analysis
-        budget_analysis = results.get('budget_analysis', {})
+        budget_analysis = results.get("budget_analysis", {})
         if budget_analysis:
             report_lines.append("\n💰 RESOURCE BUDGETING:")
-            requirements = budget_analysis.get('resource_requirements', {})
-            report_lines.append(f"  CPU Cores Required: {requirements.get('cpu_cores_required', 0)}")
-            report_lines.append(f"  Memory Required: {requirements.get('memory_gb_required', 0)}GB")
-            report_lines.append(f"  Power Budget: {requirements.get('power_budget_watts', 0):.1f}W")
+            requirements = budget_analysis.get("resource_requirements", {})
+            report_lines.append(
+                f"  CPU Cores Required: {requirements.get('cpu_cores_required', 0)}"
+            )
+            report_lines.append(
+                f"  Memory Required: {requirements.get('memory_gb_required', 0)}GB"
+            )
+            report_lines.append(
+                f"  Power Budget: {requirements.get('power_budget_watts', 0):.1f}W"
+            )
 
             # Compliance
-            compliance = budget_analysis.get('performance_compliance', {})
-            compliant_count = sum(1 for r in compliance.values() if r.get('compliant', False))
+            compliance = budget_analysis.get("performance_compliance", {})
+            compliant_count = sum(
+                1 for r in compliance.values() if r.get("compliant", False)
+            )
             total_count = len(compliance)
-            report_lines.append(f"  Performance Compliance: {compliant_count}/{total_count} requirements met")
+            report_lines.append(
+                f"  Performance Compliance: {compliant_count}/{total_count} requirements met"
+            )
 
             # Bottlenecks
-            bottlenecks = budget_analysis.get('bottlenecks', [])
+            bottlenecks = budget_analysis.get("bottlenecks", [])
             if bottlenecks:
                 report_lines.append("  ⚠️ Bottlenecks Detected:")
                 for bottleneck in bottlenecks:
                     report_lines.append(f"    - {bottleneck}")
 
             # Recommendations
-            recommendations = budget_analysis.get('recommendations', [])
+            recommendations = budget_analysis.get("recommendations", [])
             if recommendations:
                 report_lines.append("  💡 Recommendations:")
                 for rec in recommendations:
@@ -389,13 +425,19 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='URC 2026 Resource Budgeting Test')
-    parser.add_argument('--cpu-limit', type=float, default=2.0,
-                       help='CPU limit in GHz (default: 2.0)')
-    parser.add_argument('--ram-limit', type=float, default=16.0,
-                       help='RAM limit in GB (default: 16.0)')
-    parser.add_argument('--output-dir', type=str, default='resource_budgeting_results',
-                       help='Output directory (default: resource_budgeting_results)')
+    parser = argparse.ArgumentParser(description="URC 2026 Resource Budgeting Test")
+    parser.add_argument(
+        "--cpu-limit", type=float, default=2.0, help="CPU limit in GHz (default: 2.0)"
+    )
+    parser.add_argument(
+        "--ram-limit", type=float, default=16.0, help="RAM limit in GB (default: 16.0)"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="resource_budgeting_results",
+        help="Output directory (default: resource_budgeting_results)",
+    )
 
     args = parser.parse_args()
 
@@ -412,8 +454,10 @@ def main():
     print(report)
 
     # Save detailed results
-    output_file = Path(args.output_dir) / f"resource_budgeting_report_{int(time.time())}.json"
-    with open(output_file, 'w') as f:
+    output_file = (
+        Path(args.output_dir) / f"resource_budgeting_report_{int(time.time())}.json"
+    )
+    with open(output_file, "w") as f:
         json.dump(results, f, indent=2, default=str)
 
     print(f"\n📁 Detailed results saved to: {output_file}")

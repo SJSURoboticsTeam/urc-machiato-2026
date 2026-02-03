@@ -18,4 +18,10 @@ def get_simple_bridge(config: dict | None = None) -> CANBridge:
     return _singleton
 
 
-__all__ = ["SimpleBridge", "get_simple_bridge", "CANBridge", "BridgeStatus", "BridgeMessage"]
+__all__ = [
+    "SimpleBridge",
+    "get_simple_bridge",
+    "CANBridge",
+    "BridgeStatus",
+    "BridgeMessage",
+]

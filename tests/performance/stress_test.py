@@ -20,7 +20,8 @@ import sys
 import os
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 
 class StressTester:
     """Comprehensive stress testing suite."""
@@ -65,22 +66,25 @@ class StressTester:
         print("\n📨 Testing Message Throughput...")
 
         from src.core.lightweight_core import get_lightweight_core
+
         core = get_lightweight_core()
         db = core.get_database()
 
         # Generate high-volume test data
         messages = []
         for i in range(1000):
-            messages.append({
-                'timestamp': time.time() + i * 0.001,
-                'battery_level': 70 + (i % 30),
-                'system_health': 'nominal',
-                'current_mode': 'AUTONOMOUS',
-                'sensor_data': {
-                    'imu': {'x': i * 0.1, 'y': 0.0, 'z': 9.81},
-                    'gps': {'lat': 35.0, 'lon': -120.0 + i * 0.001}
+            messages.append(
+                {
+                    "timestamp": time.time() + i * 0.001,
+                    "battery_level": 70 + (i % 30),
+                    "system_health": "nominal",
+                    "current_mode": "AUTONOMOUS",
+                    "sensor_data": {
+                        "imu": {"x": i * 0.1, "y": 0.0, "z": 9.81},
+                        "gps": {"lat": 35.0, "lon": -120.0 + i * 0.001},
+                    },
                 }
-            })
+            )
 
         # Measure throughput
         start_time = time.time()
@@ -90,11 +94,11 @@ class StressTester:
         duration = time.time() - start_time
         throughput = len(messages) / duration
 
-        self.results['message_throughput'] = {
-            'messages_sent': len(messages),
-            'duration_seconds': duration,
-            'throughput_msgs_per_sec': throughput,
-            'avg_latency_ms': (duration / len(messages)) * 1000
+        self.results["message_throughput"] = {
+            "messages_sent": len(messages),
+            "duration_seconds": duration,
+            "throughput_msgs_per_sec": throughput,
+            "avg_latency_ms": (duration / len(messages)) * 1000,
         }
 
         print(".1f")
@@ -106,6 +110,7 @@ class StressTester:
         print("\n💧 Testing Memory Leak Detection...")
 
         from src.core.lightweight_core import get_lightweight_core
+
         core = get_lightweight_core()
 
         # Load/unload components repeatedly
@@ -114,7 +119,7 @@ class StressTester:
 
         while time.time() - start_time < 10:  # 10 seconds
             # Load components
-            for comp in ['state_machine', 'behavior_tree', 'safety_system']:
+            for comp in ["state_machine", "behavior_tree", "safety_system"]:
                 core.get_component(comp)
 
             # Sample memory
@@ -128,14 +133,18 @@ class StressTester:
         initial_mem = memory_samples[0]
         final_mem = memory_samples[-1]
         mem_delta = final_mem - initial_mem
-        mem_trend = "STABLE" if abs(mem_delta) < 5 else "INCREASING" if mem_delta > 0 else "DECREASING"
+        mem_trend = (
+            "STABLE"
+            if abs(mem_delta) < 5
+            else "INCREASING" if mem_delta > 0 else "DECREASING"
+        )
 
-        self.results['memory_leaks'] = {
-            'initial_memory_mb': initial_mem,
-            'final_memory_mb': final_mem,
-            'memory_delta_mb': mem_delta,
-            'memory_trend': mem_trend,
-            'samples_taken': len(memory_samples)
+        self.results["memory_leaks"] = {
+            "initial_memory_mb": initial_mem,
+            "final_memory_mb": final_mem,
+            "memory_delta_mb": mem_delta,
+            "memory_trend": mem_trend,
+            "samples_taken": len(memory_samples),
         }
 
         print(".1f")
@@ -161,11 +170,12 @@ class StressTester:
             """CPU intensive computation."""
             result = 0
             for i in range(500000):  # Reduced for reasonable test time
-                result += i ** 2
+                result += i**2
             return result
 
         # Run tasks concurrently
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = [executor.submit(cpu_intensive_task) for _ in range(4)]
 
@@ -183,17 +193,19 @@ class StressTester:
         if cpu_samples:
             avg_cpu = statistics.mean(cpu_samples)
             max_cpu = max(cpu_samples)
-            cpu_efficiency = "GOOD" if avg_cpu < 70 else "HIGH" if avg_cpu < 90 else "CRITICAL"
+            cpu_efficiency = (
+                "GOOD" if avg_cpu < 70 else "HIGH" if avg_cpu < 90 else "CRITICAL"
+            )
         else:
             avg_cpu = max_cpu = 0
             cpu_efficiency = "UNKNOWN"
 
-        self.results['cpu_stress'] = {
-            'test_duration_seconds': test_duration,
-            'avg_cpu_percent': avg_cpu,
-            'max_cpu_percent': max_cpu,
-            'cpu_efficiency': cpu_efficiency,
-            'tasks_completed': len(results)
+        self.results["cpu_stress"] = {
+            "test_duration_seconds": test_duration,
+            "avg_cpu_percent": avg_cpu,
+            "max_cpu_percent": max_cpu,
+            "cpu_efficiency": cpu_efficiency,
+            "tasks_completed": len(results),
         }
 
         print(".1f")
@@ -205,22 +217,21 @@ class StressTester:
         print("\n🔄 Testing Concurrent Operations...")
 
         from src.core.lightweight_core import get_lightweight_core
+
         core = get_lightweight_core()
 
         # Run multiple operations concurrently
         async def database_operations():
             db = core.get_database()
             for i in range(50):
-                db.store_telemetry({
-                    'concurrent_test': True,
-                    'iteration': i,
-                    'timestamp': time.time()
-                })
+                db.store_telemetry(
+                    {"concurrent_test": True, "iteration": i, "timestamp": time.time()}
+                )
             return "db_complete"
 
         async def component_operations():
             results = []
-            for comp in ['state_machine', 'behavior_tree', 'safety_system']:
+            for comp in ["state_machine", "behavior_tree", "safety_system"]:
                 component = core.get_component(comp)
                 results.append(f"{comp}_loaded")
                 await asyncio.sleep(0.01)  # Simulate work
@@ -237,20 +248,18 @@ class StressTester:
         # Run all concurrently
         start_time = time.time()
         results = await asyncio.gather(
-            database_operations(),
-            component_operations(),
-            memory_operations()
+            database_operations(), component_operations(), memory_operations()
         )
         duration = time.time() - start_time
 
         db_result, comp_result, mem_result = results
 
-        self.results['concurrent_operations'] = {
-            'total_duration_seconds': duration,
-            'database_operations': db_result,
-            'component_operations': len(comp_result),
-            'memory_samples': len(mem_result),
-            'avg_memory_mb': statistics.mean(mem_result) if mem_result else 0
+        self.results["concurrent_operations"] = {
+            "total_duration_seconds": duration,
+            "database_operations": db_result,
+            "component_operations": len(comp_result),
+            "memory_samples": len(mem_result),
+            "avg_memory_mb": statistics.mean(mem_result) if mem_result else 0,
         }
 
         print(".1f")
@@ -284,10 +293,12 @@ class StressTester:
             msg_start = time.time()
 
             # Simulate ROS2 topic publish (using our API)
-            result = await bridge._process_command({
-                "command": "ros2_test",
-                "data": {"iteration": i, "timestamp": time.time()}
-            })
+            result = await bridge._process_command(
+                {
+                    "command": "ros2_test",
+                    "data": {"iteration": i, "timestamp": time.time()},
+                }
+            )
 
             msg_latency = (time.time() - msg_start) * 1000  # ms
             latencies.append(msg_latency)
@@ -302,14 +313,14 @@ class StressTester:
         min_latency = min(latencies) if latencies else 0
         max_latency = max(latencies) if latencies else 0
 
-        self.results['ros2_performance'] = {
-            'messages_sent': message_count,
-            'test_duration_seconds': duration,
-            'throughput_msgs_per_sec': throughput,
-            'avg_latency_ms': avg_latency,
-            'min_latency_ms': min_latency,
-            'max_latency_ms': max_latency,
-            'latency_jitter_ms': max_latency - min_latency
+        self.results["ros2_performance"] = {
+            "messages_sent": message_count,
+            "test_duration_seconds": duration,
+            "throughput_msgs_per_sec": throughput,
+            "avg_latency_ms": avg_latency,
+            "min_latency_ms": min_latency,
+            "max_latency_ms": max_latency,
+            "latency_jitter_ms": max_latency - min_latency,
         }
 
         await bridge.stop()
@@ -333,39 +344,41 @@ class StressTester:
         for test_name, results in self.results.items():
             print(f"\n📊 {test_name.replace('_', ' ').title()}:")
 
-            if test_name == 'message_throughput':
-                throughput = results['throughput_msgs_per_sec']
+            if test_name == "message_throughput":
+                throughput = results["throughput_msgs_per_sec"]
                 print(".1f")
                 if throughput < 50:
                     critical_issues.append("Low message throughput")
                     all_tests_passed = False
 
-            elif test_name == 'memory_leaks':
-                mem_delta = results['memory_delta_mb']
-                trend = results['memory_trend']
+            elif test_name == "memory_leaks":
+                mem_delta = results["memory_delta_mb"]
+                trend = results["memory_trend"]
                 print(".1f")
                 print(f"   Memory Trend: {trend}")
                 if trend == "INCREASING" and mem_delta > 10:
                     critical_issues.append("Memory leak detected")
                     all_tests_passed = False
 
-            elif test_name == 'cpu_stress':
-                avg_cpu = results['avg_cpu_percent']
-                efficiency = results['cpu_efficiency']
+            elif test_name == "cpu_stress":
+                avg_cpu = results["avg_cpu_percent"]
+                efficiency = results["cpu_efficiency"]
                 print(".1f")
                 print(f"   CPU Efficiency: {efficiency}")
                 if efficiency == "CRITICAL":
                     critical_issues.append("High CPU utilization")
                     all_tests_passed = False
 
-            elif test_name == 'concurrent_operations':
-                duration = results['total_duration_seconds']
+            elif test_name == "concurrent_operations":
+                duration = results["total_duration_seconds"]
                 print(".1f")
-                print(f"   Operations Completed: {results['database_operations']} + {results['component_operations']}")
+                print(
+                    f"   Operations Completed: {results['database_operations']} + {results['component_operations']}"
+                )
 
-            elif test_name == 'ros2_performance':
-                throughput = results['throughput_msgs_per_sec']
-                avg_latency = results['avg_latency_ms']
+            elif test_name == "ros2_performance":
+                throughput = results["throughput_msgs_per_sec"]
+                avg_latency = results["avg_latency_ms"]
                 print(".1f")
                 print(".1f")
                 print(".1f")
@@ -391,10 +404,12 @@ class StressTester:
 
         print("=" * 50)
 
+
 async def main():
     """Run stress tests."""
     tester = StressTester()
     await tester.run_full_stress_test()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

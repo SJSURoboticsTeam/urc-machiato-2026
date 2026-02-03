@@ -137,12 +137,16 @@ class NetworkStressSubscriber(Node):
             "max_latency_ms": max(self.latency_samples),
             "min_latency_ms": min(self.latency_samples),
             "out_of_order": self.out_of_order_count,
-            "jitter_ms": statistics.stdev(self.latency_samples)
-            if len(self.latency_samples) > 1
-            else 0,
-            "p95_latency_ms": statistics.quantiles(self.latency_samples, n=20)[18]
-            if len(self.latency_samples) >= 20
-            else max(self.latency_samples),
+            "jitter_ms": (
+                statistics.stdev(self.latency_samples)
+                if len(self.latency_samples) > 1
+                else 0
+            ),
+            "p95_latency_ms": (
+                statistics.quantiles(self.latency_samples, n=20)[18]
+                if len(self.latency_samples) >= 20
+                else max(self.latency_samples)
+            ),
         }
 
 
@@ -299,12 +303,14 @@ def run_network_stress_test(stress_level: str = "extreme", duration: float = 30.
             "jitter_ms": final_stats["jitter_ms"],
             "out_of_order": final_stats["out_of_order"],
             "packet_loss_rate": (
-                publisher.dropped_messages
-                / (publisher.message_count + publisher.dropped_messages)
-            )
-            * 100
-            if publisher.message_count > 0
-            else 0,
+                (
+                    publisher.dropped_messages
+                    / (publisher.message_count + publisher.dropped_messages)
+                )
+                * 100
+                if publisher.message_count > 0
+                else 0
+            ),
         }
 
     finally:

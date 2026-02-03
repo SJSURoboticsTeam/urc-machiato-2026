@@ -53,8 +53,12 @@ DISPLAY_KEYS = [
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Print blackboard keys for CAN/sim testing")
-    parser.add_argument("--rate", type=float, default=2.0, help="Print interval in seconds")
+    parser = argparse.ArgumentParser(
+        description="Print blackboard keys for CAN/sim testing"
+    )
+    parser.add_argument(
+        "--rate", type=float, default=2.0, help="Print interval in seconds"
+    )
     parser.add_argument("--once", action="store_true", help="Print once and exit")
     args = parser.parse_args()
 

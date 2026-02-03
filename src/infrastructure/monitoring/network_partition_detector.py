@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class NetworkState(Enum):
     """Network connectivity states."""
+
     CONNECTED = "connected"
     DEGRADED = "degraded"
     PARTITIONED = "partitioned"
@@ -37,15 +38,17 @@ class NetworkState(Enum):
 
 class AutonomyMode(Enum):
     """Autonomy operation modes."""
-    FULL_AUTONOMY = "full_autonomy"      # Normal operation with cloud connectivity
+
+    FULL_AUTONOMY = "full_autonomy"  # Normal operation with cloud connectivity
     OFFLINE_AUTONOMY = "offline_autonomy"  # Local operation without cloud
     DEGRADED_AUTONOMY = "degraded_autonomy"  # Limited capabilities
-    MANUAL_OVERRIDE = "manual_override"   # Human operator control only
+    MANUAL_OVERRIDE = "manual_override"  # Human operator control only
 
 
 @dataclass
 class NetworkHealthCheck:
     """Result of network health check."""
+
     timestamp: float
     wifi_connected: bool
     internet_reachable: bool
@@ -58,7 +61,10 @@ class NetworkHealthCheck:
 @dataclass
 class PartitionEvent:
     """Network partition event record."""
-    event_type: str  # 'partition_detected', 'partition_resolved', 'degraded', 'recovered'
+
+    event_type: (
+        str  # 'partition_detected', 'partition_resolved', 'degraded', 'recovered'
+    )
     timestamp: float
     previous_state: NetworkState
     new_state: NetworkState
@@ -74,10 +80,12 @@ class NetworkPartitionDetector:
     to maintain rover operation during WiFi outages.
     """
 
-    def __init__(self,
-                 partition_threshold_seconds: float = 5.0,
-                 recovery_grace_period_seconds: float = 10.0,
-                 health_check_interval_seconds: float = 1.0):
+    def __init__(
+        self,
+        partition_threshold_seconds: float = 5.0,
+        recovery_grace_period_seconds: float = 10.0,
+        health_check_interval_seconds: float = 1.0,
+    ):
         """
         Initialize network partition detector.
 
@@ -120,9 +128,7 @@ class NetworkPartitionDetector:
 
             self.monitoring_active = True
             self.monitoring_thread = threading.Thread(
-                target=self._monitoring_loop,
-                name="network_monitor",
-                daemon=True
+                target=self._monitoring_loop, name="network_monitor", daemon=True
             )
             self.monitoring_thread.start()
             logger.info("Network partition monitoring started")
@@ -186,7 +192,7 @@ class NetworkPartitionDetector:
             latency_ms=latency_ms,
             packet_loss_percent=packet_loss_percent,
             signal_strength_dbm=signal_strength_dbm,
-            error_message=error_message
+            error_message=error_message,
         )
 
     def _check_wifi_connected(self) -> bool:
@@ -194,10 +200,7 @@ class NetworkPartitionDetector:
         try:
             # Check network interfaces
             result = subprocess.run(
-                ["iwconfig"],
-                capture_output=True,
-                text=True,
-                timeout=2.0
+                ["iwconfig"], capture_output=True, text=True, timeout=2.0
             )
 
             # Look for wlan0 or similar
@@ -211,12 +214,16 @@ class NetworkPartitionDetector:
                 ["nmcli", "device", "status"],
                 capture_output=True,
                 text=True,
-                timeout=2.0
+                timeout=2.0,
             )
 
             return "connected" in result.stdout.lower()
 
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+        except (
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+        ):
             # Fallback: try socket connection
             try:
                 socket.create_connection(("8.8.8.8", 53), timeout=1.0)
@@ -240,22 +247,23 @@ class NetworkPartitionDetector:
         """Get WiFi signal strength in dBm."""
         try:
             result = subprocess.run(
-                ["iwconfig", "wlan0"],
-                capture_output=True,
-                text=True,
-                timeout=1.0
+                ["iwconfig", "wlan0"], capture_output=True, text=True, timeout=1.0
             )
 
             # Parse signal level from output like "Signal level=-45 dBm"
-            for line in result.stdout.split('\n'):
-                if 'Signal level' in line and 'dBm' in line:
+            for line in result.stdout.split("\n"):
+                if "Signal level" in line and "dBm" in line:
                     # Extract the number
-                    parts = line.split('=')
+                    parts = line.split("=")
                     if len(parts) >= 2:
                         signal_part = parts[1].split()[0]
                         return int(signal_part)
 
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, subprocess.SubprocessError):
+        except (
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+            subprocess.SubprocessError,
+        ):
             pass
 
         return None
@@ -269,14 +277,21 @@ class NetworkPartitionDetector:
 
             # Record partition event
             event = PartitionEvent(
-                event_type='partition_detected' if new_state == NetworkState.PARTITIONED else
-                          'partition_resolved' if previous_state == NetworkState.PARTITIONED else
-                          'state_change',
+                event_type=(
+                    "partition_detected"
+                    if new_state == NetworkState.PARTITIONED
+                    else (
+                        "partition_resolved"
+                        if previous_state == NetworkState.PARTITIONED
+                        else "state_change"
+                    )
+                ),
                 timestamp=health_check.timestamp,
                 previous_state=previous_state,
                 new_state=new_state,
                 trigger_reason=health_check.error_message or "health_check",
-                duration_seconds=health_check.timestamp - (self.partition_start_time or health_check.timestamp)
+                duration_seconds=health_check.timestamp
+                - (self.partition_start_time or health_check.timestamp),
             )
 
             self.partition_events.append(event)
@@ -289,19 +304,27 @@ class NetworkPartitionDetector:
             if new_state == NetworkState.PARTITIONED:
                 self.partition_start_time = health_check.timestamp
                 self._handle_partition_detected(event)
-            elif previous_state == NetworkState.PARTITIONED and new_state == NetworkState.CONNECTED:
+            elif (
+                previous_state == NetworkState.PARTITIONED
+                and new_state == NetworkState.CONNECTED
+            ):
                 self._handle_partition_resolved(event)
 
-            logger.info(f"Network state changed: {previous_state.value} -> {new_state.value} "
-                       f"(reason: {event.trigger_reason})")
+            logger.info(
+                f"Network state changed: {previous_state.value} -> {new_state.value} "
+                f"(reason: {event.trigger_reason})"
+            )
 
-    def _determine_network_state(self, health_check: NetworkHealthCheck) -> NetworkState:
+    def _determine_network_state(
+        self, health_check: NetworkHealthCheck
+    ) -> NetworkState:
         """Determine network state from health check."""
         # Connected: WiFi up and internet reachable
         if health_check.wifi_connected and health_check.internet_reachable:
             # Check for degradation (high latency or packet loss)
-            if (health_check.latency_ms and health_check.latency_ms > 500) or \
-               health_check.packet_loss_percent > 20:
+            if (
+                health_check.latency_ms and health_check.latency_ms > 500
+            ) or health_check.packet_loss_percent > 20:
                 return NetworkState.DEGRADED
             else:
                 return NetworkState.CONNECTED
@@ -311,7 +334,9 @@ class NetworkPartitionDetector:
             # Check how long we've been in this state
             if self.last_healthy_check and self.last_healthy_check.internet_reachable:
                 # Just lost internet, give it time
-                time_since_internet_lost = health_check.timestamp - self.last_healthy_check.timestamp
+                time_since_internet_lost = (
+                    health_check.timestamp - self.last_healthy_check.timestamp
+                )
                 if time_since_internet_lost < self.partition_threshold_seconds:
                     return NetworkState.DEGRADED  # Temporary issue
                 else:
@@ -326,7 +351,9 @@ class NetworkPartitionDetector:
 
     def _handle_partition_detected(self, event: PartitionEvent):
         """Handle network partition detection."""
-        logger.warning(f"NETWORK PARTITION DETECTED after {event.duration_seconds:.1f}s: {event.trigger_reason}")
+        logger.warning(
+            f"NETWORK PARTITION DETECTED after {event.duration_seconds:.1f}s: {event.trigger_reason}"
+        )
 
         # Switch to offline autonomy
         self.current_autonomy_mode = AutonomyMode.OFFLINE_AUTONOMY
@@ -401,17 +428,26 @@ class NetworkPartitionDetector:
         """Get current network status."""
         with self.lock:
             return {
-                'network_state': self.current_network_state.value,
-                'autonomy_mode': self.current_autonomy_mode.value,
-                'last_health_check': self.last_healthy_check.__dict__ if self.last_healthy_check else None,
-                'partition_duration_seconds': (
+                "network_state": self.current_network_state.value,
+                "autonomy_mode": self.current_autonomy_mode.value,
+                "last_health_check": (
+                    self.last_healthy_check.__dict__
+                    if self.last_healthy_check
+                    else None
+                ),
+                "partition_duration_seconds": (
                     time.time() - (self.partition_start_time or time.time())
                     if self.current_network_state == NetworkState.PARTITIONED
                     else 0
                 ),
-                'total_partition_events': len([e for e in self.partition_events
-                                             if e.event_type == 'partition_detected']),
-                'timestamp': time.time()
+                "total_partition_events": len(
+                    [
+                        e
+                        for e in self.partition_events
+                        if e.event_type == "partition_detected"
+                    ]
+                ),
+                "timestamp": time.time(),
             }
 
     def get_network_history(self, hours: float = 1.0) -> Dict[str, Any]:
@@ -419,40 +455,51 @@ class NetworkPartitionDetector:
         with self.lock:
             cutoff_time = time.time() - (hours * 3600)
 
-            recent_checks = [hc for hc in self.health_checks if hc.timestamp > cutoff_time]
-            recent_events = [pe for pe in self.partition_events if pe.timestamp > cutoff_time]
+            recent_checks = [
+                hc for hc in self.health_checks if hc.timestamp > cutoff_time
+            ]
+            recent_events = [
+                pe for pe in self.partition_events if pe.timestamp > cutoff_time
+            ]
 
             # Calculate uptime percentage
             if recent_checks:
-                connected_checks = sum(1 for hc in recent_checks
-                                     if hc.wifi_connected and hc.internet_reachable)
+                connected_checks = sum(
+                    1
+                    for hc in recent_checks
+                    if hc.wifi_connected and hc.internet_reachable
+                )
                 uptime_percent = (connected_checks / len(recent_checks)) * 100
             else:
                 uptime_percent = 100.0
 
             # Calculate average latency
-            latencies = [hc.latency_ms for hc in recent_checks if hc.latency_ms is not None]
+            latencies = [
+                hc.latency_ms for hc in recent_checks if hc.latency_ms is not None
+            ]
             avg_latency_ms = sum(latencies) / len(latencies) if latencies else None
 
             return {
-                'time_range_hours': hours,
-                'uptime_percent': uptime_percent,
-                'avg_latency_ms': avg_latency_ms,
-                'total_health_checks': len(recent_checks),
-                'total_partition_events': len(recent_events),
-                'partition_events': [pe.__dict__ for pe in recent_events[-20:]],  # Last 20 events
-                'timestamp': time.time()
+                "time_range_hours": hours,
+                "uptime_percent": uptime_percent,
+                "avg_latency_ms": avg_latency_ms,
+                "total_health_checks": len(recent_checks),
+                "total_partition_events": len(recent_events),
+                "partition_events": [
+                    pe.__dict__ for pe in recent_events[-20:]
+                ],  # Last 20 events
+                "timestamp": time.time(),
             }
 
     def force_offline_mode(self, reason: str = "manual_trigger"):
         """Manually force offline mode (for testing or emergency)."""
         with self.lock:
             event = PartitionEvent(
-                event_type='partition_detected',
+                event_type="partition_detected",
                 timestamp=time.time(),
                 previous_state=self.current_network_state,
                 new_state=NetworkState.PARTITIONED,
-                trigger_reason=reason
+                trigger_reason=reason,
             )
 
             self.current_network_state = NetworkState.PARTITIONED
@@ -468,12 +515,13 @@ class NetworkPartitionDetector:
         with self.lock:
             if self.current_network_state != NetworkState.CONNECTED:
                 event = PartitionEvent(
-                    event_type='partition_resolved',
+                    event_type="partition_resolved",
                     timestamp=time.time(),
                     previous_state=self.current_network_state,
                     new_state=NetworkState.CONNECTED,
                     trigger_reason=reason,
-                    duration_seconds=time.time() - (self.partition_start_time or time.time())
+                    duration_seconds=time.time()
+                    - (self.partition_start_time or time.time()),
                 )
 
                 self.current_network_state = NetworkState.CONNECTED
@@ -487,17 +535,21 @@ class NetworkPartitionDetector:
         """Export diagnostic information for debugging."""
         with self.lock:
             return {
-                'current_status': self.get_network_status(),
-                'network_history_1h': self.get_network_history(1.0),
-                'network_history_24h': self.get_network_history(24.0),
-                'recent_health_checks': [hc.__dict__ for hc in self.health_checks[-50:]],
-                'recent_partition_events': [pe.__dict__ for pe in self.partition_events[-20:]],
-                'configuration': {
-                    'partition_threshold_seconds': self.partition_threshold_seconds,
-                    'recovery_grace_period_seconds': self.recovery_grace_period_seconds,
-                    'health_check_interval_seconds': self.health_check_interval_seconds
+                "current_status": self.get_network_status(),
+                "network_history_1h": self.get_network_history(1.0),
+                "network_history_24h": self.get_network_history(24.0),
+                "recent_health_checks": [
+                    hc.__dict__ for hc in self.health_checks[-50:]
+                ],
+                "recent_partition_events": [
+                    pe.__dict__ for pe in self.partition_events[-20:]
+                ],
+                "configuration": {
+                    "partition_threshold_seconds": self.partition_threshold_seconds,
+                    "recovery_grace_period_seconds": self.recovery_grace_period_seconds,
+                    "health_check_interval_seconds": self.health_check_interval_seconds,
                 },
-                'export_timestamp': time.time()
+                "export_timestamp": time.time(),
             }
 
 
@@ -506,8 +558,10 @@ _network_partition_detector_instance: Optional[NetworkPartitionDetector] = None
 _network_partition_detector_lock = threading.Lock()
 
 
-def get_network_partition_detector(partition_threshold_seconds: float = 5.0,
-                                 recovery_grace_period_seconds: float = 10.0) -> NetworkPartitionDetector:
+def get_network_partition_detector(
+    partition_threshold_seconds: float = 5.0,
+    recovery_grace_period_seconds: float = 10.0,
+) -> NetworkPartitionDetector:
     """Get global network partition detector instance."""
     global _network_partition_detector_instance
 

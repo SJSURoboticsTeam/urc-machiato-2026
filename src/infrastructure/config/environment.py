@@ -29,6 +29,7 @@ from pathlib import Path
 @dataclass
 class NetworkConfig:
     """Network configuration from environment variables."""
+
     api_host: str
     api_port: int
     websocket_host: str
@@ -36,115 +37,116 @@ class NetworkConfig:
     redis_host: str
     redis_port: int
     dashboard_port: int
-    
+
     @classmethod
-    def from_env(cls) -> 'NetworkConfig':
+    def from_env(cls) -> "NetworkConfig":
         """Create configuration from environment variables."""
         return cls(
-            api_host=os.getenv('URC_API_HOST', 'localhost'),
-            api_port=int(os.getenv('URC_API_PORT', '5000')),
-            websocket_host=os.getenv('URC_WEBSOCKET_HOST', 'localhost'),
-            websocket_port=int(os.getenv('URC_WEBSOCKET_PORT', '8080')),
-            redis_host=os.getenv('URC_REDIS_HOST', 'localhost'),
-            redis_port=int(os.getenv('URC_REDIS_PORT', '6379')),
-            dashboard_port=int(os.getenv('URC_DASHBOARD_PORT', '3000')),
+            api_host=os.getenv("URC_API_HOST", "localhost"),
+            api_port=int(os.getenv("URC_API_PORT", "5000")),
+            websocket_host=os.getenv("URC_WEBSOCKET_HOST", "localhost"),
+            websocket_port=int(os.getenv("URC_WEBSOCKET_PORT", "8080")),
+            redis_host=os.getenv("URC_REDIS_HOST", "localhost"),
+            redis_port=int(os.getenv("URC_REDIS_PORT", "6379")),
+            dashboard_port=int(os.getenv("URC_DASHBOARD_PORT", "3000")),
         )
 
 
 @dataclass
 class SystemConfig:
     """System-wide configuration from environment variables."""
+
     rover_id: str
     environment: str
     log_level: str
     data_dir: Path
-    
+
     @classmethod
-    def from_env(cls) -> 'SystemConfig':
+    def from_env(cls) -> "SystemConfig":
         """Create configuration from environment variables."""
         return cls(
-            rover_id=os.getenv('URC_ROVER_ID', 'urc-rover-001'),
-            environment=os.getenv('URC_ENVIRONMENT', 'development'),
-            log_level=os.getenv('URC_LOG_LEVEL', 'INFO'),
-            data_dir=Path(os.getenv('URC_DATA_DIR', '/var/lib/urc')),
+            rover_id=os.getenv("URC_ROVER_ID", "urc-rover-001"),
+            environment=os.getenv("URC_ENVIRONMENT", "development"),
+            log_level=os.getenv("URC_LOG_LEVEL", "INFO"),
+            data_dir=Path(os.getenv("URC_DATA_DIR", "/var/lib/urc")),
         )
 
 
 class EnvironmentManager:
     """Centralized environment variable management."""
-    
+
     def __init__(self):
         self.network = NetworkConfig.from_env()
         self.system = SystemConfig.from_env()
         self._validate_environment()
-    
+
     def _validate_environment(self):
         """Validate critical environment variables."""
-        if self.system.environment not in ['development', 'production', 'competition']:
+        if self.system.environment not in ["development", "production", "competition"]:
             raise ValueError(f"Invalid environment: {self.system.environment}")
-        
-        valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+
+        valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if self.system.log_level not in valid_log_levels:
             raise ValueError(f"Invalid log level: {self.system.log_level}")
-        
+
         # Validate port ranges
         for port_name, port_value in [
-            ('API_PORT', self.network.api_port),
-            ('WEBSOCKET_PORT', self.network.websocket_port),
-            ('REDIS_PORT', self.network.redis_port),
-            ('DASHBOARD_PORT', self.network.dashboard_port),
+            ("API_PORT", self.network.api_port),
+            ("WEBSOCKET_PORT", self.network.websocket_port),
+            ("REDIS_PORT", self.network.redis_port),
+            ("DASHBOARD_PORT", self.network.dashboard_port),
         ]:
             if not (1 <= port_value <= 65535):
                 raise ValueError(f"Invalid {port_name}: {port_value} (must be 1-65535)")
-    
+
     def get_api_url(self) -> str:
         """Get full API URL."""
         return f"http://{self.network.api_host}:{self.network.api_port}"
-    
+
     def get_websocket_url(self) -> str:
         """Get full WebSocket URL."""
         return f"ws://{self.network.websocket_host}:{self.network.websocket_port}"
-    
+
     def get_redis_url(self) -> str:
         """Get full Redis URL."""
         return f"redis://{self.network.redis_host}:{self.network.redis_port}"
-    
+
     def get_dashboard_url(self) -> str:
         """Get full Dashboard URL."""
         return f"http://localhost:{self.network.dashboard_port}"
-    
+
     def is_production(self) -> bool:
         """Check if running in production."""
-        return self.system.environment == 'production'
-    
+        return self.system.environment == "production"
+
     def is_competition(self) -> bool:
         """Check if running in competition mode."""
-        return self.system.environment == 'competition'
-    
+        return self.system.environment == "competition"
+
     def export_environment(self) -> Dict[str, Any]:
         """Export all environment variables as dictionary."""
         return {
-            'network': {
-                'api_host': self.network.api_host,
-                'api_port': self.network.api_port,
-                'websocket_host': self.network.websocket_host,
-                'websocket_port': self.network.websocket_port,
-                'redis_host': self.network.redis_host,
-                'redis_port': self.network.redis_port,
-                'dashboard_port': self.network.dashboard_port,
+            "network": {
+                "api_host": self.network.api_host,
+                "api_port": self.network.api_port,
+                "websocket_host": self.network.websocket_host,
+                "websocket_port": self.network.websocket_port,
+                "redis_host": self.network.redis_host,
+                "redis_port": self.network.redis_port,
+                "dashboard_port": self.network.dashboard_port,
             },
-            'system': {
-                'rover_id': self.system.rover_id,
-                'environment': self.system.environment,
-                'log_level': self.system.log_level,
-                'data_dir': str(self.system.data_dir),
+            "system": {
+                "rover_id": self.system.rover_id,
+                "environment": self.system.environment,
+                "log_level": self.system.log_level,
+                "data_dir": str(self.system.data_dir),
             },
-            'urls': {
-                'api': self.get_api_url(),
-                'websocket': self.get_websocket_url(),
-                'redis': self.get_redis_url(),
-                'dashboard': self.get_dashboard_url(),
-            }
+            "urls": {
+                "api": self.get_api_url(),
+                "websocket": self.get_websocket_url(),
+                "redis": self.get_redis_url(),
+                "dashboard": self.get_dashboard_url(),
+            },
         }
 
 
@@ -194,17 +196,17 @@ URC_DASHBOARD_PORT=3000
 # Data Storage
 URC_DATA_DIR=/var/lib/urc
 """
-    
-    env_file = Path('.env.example')
+
+    env_file = Path(".env.example")
     env_file.write_text(example_env)
     print(f"📝 Example environment file created: {env_file}")
     print("   Copy to '.env' and modify for your environment.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Test the environment manager
     env_mgr = get_env_manager()
-    
+
     print("🔧 Environment Configuration:")
     print(f"   Rover ID: {env_mgr.system.rover_id}")
     print(f"   Environment: {env_mgr.system.environment}")

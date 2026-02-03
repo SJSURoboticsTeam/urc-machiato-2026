@@ -1,4 +1,5 @@
 """Setup for autonomy_core package."""
+
 import os
 from glob import glob
 
@@ -41,6 +42,9 @@ setup(
             "computer_vision_node = autonomy_core.perception.computer_vision_node:main",
             "slam_node = autonomy_core.perception.slam_node:main",
             "sensor_simulator = autonomy_core.perception.sensor_simulator:main",
+            "depth_processor = autonomy_core.perception.depth_processor:main",
+            "realsense_driver = autonomy_core.perception.realsense_driver:main",
+            "odom_to_slam_pose_bridge = autonomy_core.perception.odom_to_slam_pose_bridge:main",
         ],
     },
 )

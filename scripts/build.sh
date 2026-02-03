@@ -216,8 +216,11 @@ build_ros2() {
     
     cd "$PROJECT_ROOT"
     
+    # Canonical ROS package paths (workspace root has COLCON_IGNORE)
+    COLCON_BASE_PATHS="src/autonomy/interfaces/autonomy_interfaces src/autonomy/autonomy_core src/autonomy/bt src/simulation/gazebo_simulation src/vision_processing"
+    
     # Prepare colcon command
-    COLCON_CMD="colcon build"
+    COLCON_CMD="colcon build --base-paths $COLCON_BASE_PATHS"
     COLCON_CMD="$COLCON_CMD $COLCON_BUILD_ARGS"
     COLCON_CMD="$COLCON_CMD --parallel-workers $PARALLEL_JOBS"
     

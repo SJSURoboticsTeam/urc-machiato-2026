@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class SensorType(Enum):
     """Sensor types for sequence tracking."""
+
     IMU = "imu"
     GPS = "gps"
     BATTERY = "battery"
@@ -40,6 +41,7 @@ class SensorType(Enum):
 @dataclass
 class SequenceGap:
     """Represents a detected gap in sequence numbers."""
+
     sensor_type: SensorType
     expected_sequence: int
     received_sequence: int
@@ -51,6 +53,7 @@ class SequenceGap:
 @dataclass
 class SequenceStats:
     """Statistics for sequence number tracking."""
+
     sensor_type: SensorType
     last_sequence: int
     total_messages: int
@@ -71,7 +74,9 @@ class MessageLossDetector:
     gaps that indicate lost messages or network issues.
     """
 
-    def __init__(self, gap_alert_threshold: int = 5, loss_rate_alert_threshold: float = 1.0):
+    def __init__(
+        self, gap_alert_threshold: int = 5, loss_rate_alert_threshold: float = 1.0
+    ):
         """
         Initialize message loss detector.
 
@@ -98,7 +103,7 @@ class MessageLossDetector:
                 loss_rate_percent=0.0,
                 last_update_time=time.time(),
                 gaps_in_last_minute=0,
-                gaps_in_last_hour=0
+                gaps_in_last_hour=0,
             )
 
         self.lock = threading.RLock()
@@ -111,7 +116,9 @@ class MessageLossDetector:
         with self.lock:
             self.alert_callbacks.append(callback)
 
-    def track_sequence(self, sensor_type: SensorType, sequence_number: int) -> Dict[str, Any]:
+    def track_sequence(
+        self, sensor_type: SensorType, sequence_number: int
+    ) -> Dict[str, Any]:
         """
         Track sequence number for a sensor type.
 
@@ -127,10 +134,10 @@ class MessageLossDetector:
             current_time = time.time()
 
             result = {
-                'gap_detected': False,
-                'gap_size': 0,
-                'loss_rate_percent': stats.loss_rate_percent,
-                'is_first_message': stats.last_sequence == -1
+                "gap_detected": False,
+                "gap_size": 0,
+                "loss_rate_percent": stats.loss_rate_percent,
+                "is_first_message": stats.last_sequence == -1,
             }
 
             # Update message count
@@ -139,7 +146,9 @@ class MessageLossDetector:
 
             # Check for sequence gap
             if stats.last_sequence != -1:
-                expected_sequence = (stats.last_sequence + 1) % 2**32  # Handle wraparound
+                expected_sequence = (
+                    stats.last_sequence + 1
+                ) % 2**32  # Handle wraparound
 
                 if sequence_number != expected_sequence:
                     # Gap detected
@@ -152,7 +161,7 @@ class MessageLossDetector:
                         received_sequence=sequence_number,
                         gap_size=gap_size,
                         timestamp=current_time,
-                        consecutive_gaps=stats.consecutive_gaps + 1
+                        consecutive_gaps=stats.consecutive_gaps + 1,
                     )
 
                     # Update stats
@@ -171,16 +180,21 @@ class MessageLossDetector:
                     # Calculate loss rate
                     total_expected = stats.total_messages + stats.total_gaps
                     if total_expected > 0:
-                        stats.loss_rate_percent = (stats.total_gaps / total_expected) * 100
+                        stats.loss_rate_percent = (
+                            stats.total_gaps / total_expected
+                        ) * 100
 
                     # Alert if gap is significant
-                    if gap_size >= self.gap_alert_threshold or stats.loss_rate_percent >= self.loss_rate_alert_threshold:
-                        result['gap_detected'] = True
-                        result['gap_size'] = gap_size
+                    if (
+                        gap_size >= self.gap_alert_threshold
+                        or stats.loss_rate_percent >= self.loss_rate_alert_threshold
+                    ):
+                        result["gap_detected"] = True
+                        result["gap_size"] = gap_size
                         self._trigger_alert(gap)
 
-                    result['gap_detected'] = True
-                    result['gap_size'] = gap_size
+                    result["gap_detected"] = True
+                    result["gap_size"] = gap_size
 
                 else:
                     # No gap, reset consecutive counter
@@ -206,16 +220,24 @@ class MessageLossDetector:
         minute_ago = current_time - 60
         hour_ago = current_time - 3600
 
-        stats.gaps_in_last_minute = sum(1 for g in self.recent_gaps
-                                       if g.sensor_type == sensor_type and g.timestamp > minute_ago)
-        stats.gaps_in_last_hour = sum(1 for g in self.recent_gaps
-                                     if g.sensor_type == sensor_type and g.timestamp > hour_ago)
+        stats.gaps_in_last_minute = sum(
+            1
+            for g in self.recent_gaps
+            if g.sensor_type == sensor_type and g.timestamp > minute_ago
+        )
+        stats.gaps_in_last_hour = sum(
+            1
+            for g in self.recent_gaps
+            if g.sensor_type == sensor_type and g.timestamp > hour_ago
+        )
 
     def _trigger_alert(self, gap: SequenceGap):
         """Trigger alert callbacks for significant gaps."""
-        logger.warning(f"Message gap detected: {gap.sensor_type.value} "
-                      f"expected={gap.expected_sequence} received={gap.received_sequence} "
-                      f"gap_size={gap.gap_size}")
+        logger.warning(
+            f"Message gap detected: {gap.sensor_type.value} "
+            f"expected={gap.expected_sequence} received={gap.received_sequence} "
+            f"gap_size={gap.gap_size}"
+        )
 
         for callback in self.alert_callbacks:
             try:
@@ -233,8 +255,9 @@ class MessageLossDetector:
         with self.lock:
             return self.sequence_stats.copy()
 
-    def get_recent_gaps(self, sensor_type: Optional[SensorType] = None,
-                       time_window_seconds: float = 300) -> List[SequenceGap]:
+    def get_recent_gaps(
+        self, sensor_type: Optional[SensorType] = None, time_window_seconds: float = 300
+    ) -> List[SequenceGap]:
         """Get recent gaps within time window."""
         with self.lock:
             cutoff_time = time.time() - time_window_seconds
@@ -248,7 +271,9 @@ class MessageLossDetector:
     def get_loss_summary(self) -> Dict[str, Any]:
         """Get overall message loss summary."""
         with self.lock:
-            total_messages = sum(stats.total_messages for stats in self.sequence_stats.values())
+            total_messages = sum(
+                stats.total_messages for stats in self.sequence_stats.values()
+            )
             total_gaps = sum(stats.total_gaps for stats in self.sequence_stats.values())
 
             if total_messages == 0:
@@ -263,20 +288,28 @@ class MessageLossDetector:
             for sensor_type, stats in self.sequence_stats.items():
                 if stats.total_messages > 0:
                     sensor_expected = stats.total_messages + stats.total_gaps
-                    sensor_loss_rate = (stats.total_gaps / sensor_expected) * 100 if sensor_expected > 0 else 0
+                    sensor_loss_rate = (
+                        (stats.total_gaps / sensor_expected) * 100
+                        if sensor_expected > 0
+                        else 0
+                    )
 
                     if sensor_loss_rate > worst_loss_rate:
                         worst_loss_rate = sensor_loss_rate
                         worst_sensor = sensor_type
 
             return {
-                'total_messages': total_messages,
-                'total_gaps': total_gaps,
-                'overall_loss_rate_percent': overall_loss_rate,
-                'worst_sensor': worst_sensor.value if worst_sensor else None,
-                'worst_sensor_loss_rate_percent': worst_loss_rate,
-                'sensors_with_gaps': [s.value for s, stats in self.sequence_stats.items() if stats.total_gaps > 0],
-                'timestamp': time.time()
+                "total_messages": total_messages,
+                "total_gaps": total_gaps,
+                "overall_loss_rate_percent": overall_loss_rate,
+                "worst_sensor": worst_sensor.value if worst_sensor else None,
+                "worst_sensor_loss_rate_percent": worst_loss_rate,
+                "sensors_with_gaps": [
+                    s.value
+                    for s, stats in self.sequence_stats.items()
+                    if stats.total_gaps > 0
+                ],
+                "timestamp": time.time(),
             }
 
     def reset_stats(self, sensor_type: Optional[SensorType] = None):
@@ -294,7 +327,7 @@ class MessageLossDetector:
                     loss_rate_percent=0.0,
                     last_update_time=time.time(),
                     gaps_in_last_minute=0,
-                    gaps_in_last_hour=0
+                    gaps_in_last_hour=0,
                 )
             else:
                 # Reset all sensors
@@ -303,11 +336,16 @@ class MessageLossDetector:
 
                 self.recent_gaps.clear()
 
-        logger.info(f"Reset sequence stats for {sensor_type.value if sensor_type else 'all sensors'}")
+        logger.info(
+            f"Reset sequence stats for {sensor_type.value if sensor_type else 'all sensors'}"
+        )
 
-    def validate_sequence_integrity(self, sensor_type: SensorType,
-                                   expected_sequence: int,
-                                   timeout_seconds: float = 5.0) -> bool:
+    def validate_sequence_integrity(
+        self,
+        sensor_type: SensorType,
+        expected_sequence: int,
+        timeout_seconds: float = 5.0,
+    ) -> bool:
         """
         Validate that expected sequence number is received within timeout.
 
@@ -337,26 +375,32 @@ class MessageLossDetector:
         """Export all statistics for persistence/debugging."""
         with self.lock:
             return {
-                'sequence_stats': {s.value: {
-                    'last_sequence': stats.last_sequence,
-                    'total_messages': stats.total_messages,
-                    'total_gaps': stats.total_gaps,
-                    'consecutive_gaps': stats.consecutive_gaps,
-                    'largest_gap': stats.largest_gap,
-                    'loss_rate_percent': stats.loss_rate_percent,
-                    'gaps_in_last_minute': stats.gaps_in_last_minute,
-                    'gaps_in_last_hour': stats.gaps_in_last_hour
-                } for s, stats in self.sequence_stats.items()},
-                'recent_gaps': [{
-                    'sensor_type': g.sensor_type.value,
-                    'expected_sequence': g.expected_sequence,
-                    'received_sequence': g.received_sequence,
-                    'gap_size': g.gap_size,
-                    'timestamp': g.timestamp,
-                    'consecutive_gaps': g.consecutive_gaps
-                } for g in self.recent_gaps[-100:]],  # Last 100 gaps
-                'loss_summary': self.get_loss_summary(),
-                'export_timestamp': time.time()
+                "sequence_stats": {
+                    s.value: {
+                        "last_sequence": stats.last_sequence,
+                        "total_messages": stats.total_messages,
+                        "total_gaps": stats.total_gaps,
+                        "consecutive_gaps": stats.consecutive_gaps,
+                        "largest_gap": stats.largest_gap,
+                        "loss_rate_percent": stats.loss_rate_percent,
+                        "gaps_in_last_minute": stats.gaps_in_last_minute,
+                        "gaps_in_last_hour": stats.gaps_in_last_hour,
+                    }
+                    for s, stats in self.sequence_stats.items()
+                },
+                "recent_gaps": [
+                    {
+                        "sensor_type": g.sensor_type.value,
+                        "expected_sequence": g.expected_sequence,
+                        "received_sequence": g.received_sequence,
+                        "gap_size": g.gap_size,
+                        "timestamp": g.timestamp,
+                        "consecutive_gaps": g.consecutive_gaps,
+                    }
+                    for g in self.recent_gaps[-100:]
+                ],  # Last 100 gaps
+                "loss_summary": self.get_loss_summary(),
+                "export_timestamp": time.time(),
             }
 
 
@@ -365,8 +409,9 @@ _message_loss_detector_instance: Optional[MessageLossDetector] = None
 _message_loss_detector_lock = threading.Lock()
 
 
-def get_message_loss_detector(gap_alert_threshold: int = 5,
-                             loss_rate_alert_threshold: float = 1.0) -> MessageLossDetector:
+def get_message_loss_detector(
+    gap_alert_threshold: int = 5, loss_rate_alert_threshold: float = 1.0
+) -> MessageLossDetector:
     """Get global message loss detector instance."""
     global _message_loss_detector_instance
 
@@ -381,7 +426,9 @@ def get_message_loss_detector(gap_alert_threshold: int = 5,
 
 
 # Convenience functions
-def track_sensor_sequence(sensor_type: SensorType, sequence_number: int) -> Dict[str, Any]:
+def track_sensor_sequence(
+    sensor_type: SensorType, sequence_number: int
+) -> Dict[str, Any]:
     """Track sequence number for sensor."""
     detector = get_message_loss_detector()
     return detector.track_sequence(sensor_type, sequence_number)

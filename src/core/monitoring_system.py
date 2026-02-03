@@ -30,15 +30,17 @@ from .observability import get_observability_system, HealthStatus
 
 class MonitoringLevel(Enum):
     """Monitoring detail levels."""
-    BASIC = "basic"          # Essential metrics only
-    STANDARD = "standard"    # Standard monitoring
-    DETAILED = "detailed"    # Comprehensive monitoring
-    DEBUG = "debug"          # Debug-level monitoring
+
+    BASIC = "basic"  # Essential metrics only
+    STANDARD = "standard"  # Standard monitoring
+    DETAILED = "detailed"  # Comprehensive monitoring
+    DEBUG = "debug"  # Debug-level monitoring
 
 
 @dataclass
 class SystemMetrics:
     """System-wide metrics snapshot."""
+
     timestamp: float
     cpu_percent: float
     memory_percent: float
@@ -52,6 +54,7 @@ class SystemMetrics:
 @dataclass
 class ComponentMetrics:
     """Component-specific metrics."""
+
     component_name: str
     status: str
     response_time_ms: Optional[float] = None
@@ -86,9 +89,9 @@ class MonitoringSystem:
 
         # Thresholds
         self.alert_thresholds = {
-            'cpu_percent': 80.0,
-            'memory_percent': 85.0,
-            'disk_percent': 90.0,
+            "cpu_percent": 80.0,
+            "memory_percent": 85.0,
+            "disk_percent": 90.0,
         }
 
         # Alerts
@@ -101,9 +104,7 @@ class MonitoringSystem:
 
         self._monitoring_active = True
         self._monitor_thread = threading.Thread(
-            target=self._monitoring_loop,
-            args=(interval_seconds,),
-            daemon=True
+            target=self._monitoring_loop, args=(interval_seconds,), daemon=True
         )
         self._monitor_thread.start()
 
@@ -146,7 +147,7 @@ class MonitoringSystem:
             memory_mb = memory.used / 1024 / 1024
 
             # Disk metrics
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_percent = disk.percent
 
             # Network metrics
@@ -167,7 +168,7 @@ class MonitoringSystem:
                 disk_percent=disk_percent,
                 network_connections=network_connections,
                 active_threads=active_threads,
-                uptime_seconds=uptime_seconds
+                uptime_seconds=uptime_seconds,
             )
 
             self.metrics_history.append(metrics)
@@ -188,15 +189,15 @@ class MonitoringSystem:
                 # Create component metrics
                 metrics = ComponentMetrics(
                     component_name=component_name,
-                    status=result.get('status', 'unknown'),
+                    status=result.get("status", "unknown"),
                     response_time_ms=response_time,
-                    error_count=result.get('error_count', 0),
+                    error_count=result.get("error_count", 0),
                     last_check=time.time(),
-                    metadata=result.get('metadata', {})
+                    metadata=result.get("metadata", {}),
                 )
 
                 # Store in observability system
-                if hasattr(self.observability, 'record_component_health'):
+                if hasattr(self.observability, "record_component_health"):
                     self.observability.record_component_health(metrics)
 
             except Exception as e:
@@ -208,7 +209,7 @@ class MonitoringSystem:
             latest = self.metrics_history[-1]
 
             # Update system metrics in observability
-            if hasattr(self.observability, 'update_system_metrics'):
+            if hasattr(self.observability, "update_system_metrics"):
                 self.observability.update_system_metrics()
 
     def _check_alerts(self):
@@ -219,33 +220,43 @@ class MonitoringSystem:
         latest = self.metrics_history[-1]
 
         # Check CPU threshold
-        if latest.cpu_percent > self.alert_thresholds['cpu_percent']:
-            self._create_alert('high_cpu', f"CPU usage: {latest.cpu_percent:.1f}%", latest.cpu_percent)
+        if latest.cpu_percent > self.alert_thresholds["cpu_percent"]:
+            self._create_alert(
+                "high_cpu", f"CPU usage: {latest.cpu_percent:.1f}%", latest.cpu_percent
+            )
 
         # Check memory threshold
-        if latest.memory_percent > self.alert_thresholds['memory_percent']:
-            self._create_alert('high_memory', f"Memory usage: {latest.memory_percent:.1f}%", latest.memory_percent)
+        if latest.memory_percent > self.alert_thresholds["memory_percent"]:
+            self._create_alert(
+                "high_memory",
+                f"Memory usage: {latest.memory_percent:.1f}%",
+                latest.memory_percent,
+            )
 
         # Check disk threshold
-        if latest.disk_percent > self.alert_thresholds['disk_percent']:
-            self._create_alert('high_disk', f"Disk usage: {latest.disk_percent:.1f}%", latest.disk_percent)
+        if latest.disk_percent > self.alert_thresholds["disk_percent"]:
+            self._create_alert(
+                "high_disk",
+                f"Disk usage: {latest.disk_percent:.1f}%",
+                latest.disk_percent,
+            )
 
     def _create_alert(self, alert_type: str, message: str, value: float):
         """Create an alert if it doesn't already exist."""
         # Check if alert already exists
         for alert in self.active_alerts:
-            if alert['type'] == alert_type:
-                alert['last_updated'] = time.time()
-                alert['value'] = value
+            if alert["type"] == alert_type:
+                alert["last_updated"] = time.time()
+                alert["value"] = value
                 return
 
         # Create new alert
         alert = {
-            'type': alert_type,
-            'message': message,
-            'value': value,
-            'created': time.time(),
-            'last_updated': time.time()
+            "type": alert_type,
+            "message": message,
+            "value": value,
+            "created": time.time(),
+            "last_updated": time.time(),
         }
 
         self.active_alerts.append(alert)
@@ -255,10 +266,14 @@ class MonitoringSystem:
         """Log debug information."""
         if self.metrics_history:
             latest = self.metrics_history[-1]
-            print(f"📊 DEBUG - CPU: {latest.cpu_percent:.1f}%, MEM: {latest.memory_percent:.1f}%, "
-                  f"DISK: {latest.disk_percent:.1f}%, THREADS: {latest.active_threads}")
+            print(
+                f"📊 DEBUG - CPU: {latest.cpu_percent:.1f}%, MEM: {latest.memory_percent:.1f}%, "
+                f"DISK: {latest.disk_percent:.1f}%, THREADS: {latest.active_threads}"
+            )
 
-    def register_component_monitor(self, component_name: str, health_check: Callable[[], Dict[str, Any]]):
+    def register_component_monitor(
+        self, component_name: str, health_check: Callable[[], Dict[str, Any]]
+    ):
         """Register a component for health monitoring."""
         self._component_monitors[component_name] = health_check
 
@@ -269,22 +284,22 @@ class MonitoringSystem:
     def get_system_status(self) -> Dict[str, Any]:
         """Get current system status."""
         if not self.metrics_history:
-            return {'status': 'no_data'}
+            return {"status": "no_data"}
 
         latest = self.metrics_history[-1]
 
         return {
-            'timestamp': latest.timestamp,
-            'cpu_percent': latest.cpu_percent,
-            'memory_percent': latest.memory_percent,
-            'disk_percent': latest.disk_percent,
-            'network_connections': latest.network_connections,
-            'active_threads': latest.active_threads,
-            'uptime_seconds': latest.uptime_seconds,
-            'active_alerts': len(self.active_alerts),
-            'monitored_components': len(self._component_monitors),
-            'monitoring_level': self.monitoring_level.value,
-            'monitoring_active': self._monitoring_active
+            "timestamp": latest.timestamp,
+            "cpu_percent": latest.cpu_percent,
+            "memory_percent": latest.memory_percent,
+            "disk_percent": latest.disk_percent,
+            "network_connections": latest.network_connections,
+            "active_threads": latest.active_threads,
+            "uptime_seconds": latest.uptime_seconds,
+            "active_alerts": len(self.active_alerts),
+            "monitored_components": len(self._component_monitors),
+            "monitoring_level": self.monitoring_level.value,
+            "monitoring_active": self._monitoring_active,
         }
 
     def get_alerts(self) -> List[Dict[str, Any]]:
@@ -293,7 +308,9 @@ class MonitoringSystem:
 
     def clear_alert(self, alert_type: str):
         """Clear an alert by type."""
-        self.active_alerts = [alert for alert in self.active_alerts if alert['type'] != alert_type]
+        self.active_alerts = [
+            alert for alert in self.active_alerts if alert["type"] != alert_type
+        ]
 
     def set_alert_threshold(self, metric: str, threshold: float):
         """Set alert threshold for a metric."""
@@ -311,7 +328,10 @@ class MonitoringSystem:
 _monitoring_instance = None
 _monitoring_lock = threading.Lock()
 
-def get_monitoring_system(monitoring_level: MonitoringLevel = MonitoringLevel.STANDARD) -> MonitoringSystem:
+
+def get_monitoring_system(
+    monitoring_level: MonitoringLevel = MonitoringLevel.STANDARD,
+) -> MonitoringSystem:
     """Get or create the global monitoring system instance."""
     global _monitoring_instance
 
@@ -322,10 +342,12 @@ def get_monitoring_system(monitoring_level: MonitoringLevel = MonitoringLevel.ST
 
     return _monitoring_instance
 
+
 def start_monitoring(interval_seconds: float = 30.0):
     """Start the global monitoring system."""
     system = get_monitoring_system()
     system.start_monitoring(interval_seconds)
+
 
 def stop_monitoring():
     """Stop the global monitoring system."""
@@ -333,6 +355,3 @@ def stop_monitoring():
     if _monitoring_instance:
         _monitoring_instance.stop_monitoring()
         _monitoring_instance = None
-
-
-

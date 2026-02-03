@@ -39,7 +39,6 @@ def generate_launch_description():
             DeclareLaunchArgument("use_intra_process", default_value="true"),
             DeclareLaunchArgument("use_composable_nodes", default_value="true"),
             DeclareLaunchArgument("real_time_priority", default_value="true"),
-
             # High-Performance Composable Node Container for Zero-Copy
             ComposableNodeContainer(
                 name="autonomy_container",
@@ -52,24 +51,29 @@ def generate_launch_description():
                         package="vision_processing",
                         plugin="vision_processing::VisionProcessingNode",
                         name="vision_processor",
-                        extra_arguments=[{"use_intra_process_comms": use_intra_process}],
-                        parameters=[{
-                            "processing_rate_hz": 15.0,
-                            "enable_shared_memory": True,
-                            "use_zero_copy": True,
-                        }],
+                        extra_arguments=[
+                            {"use_intra_process_comms": use_intra_process}
+                        ],
+                        parameters=[
+                            {
+                                "processing_rate_hz": 15.0,
+                                "enable_shared_memory": True,
+                                "use_zero_copy": True,
+                            }
+                        ],
                     ),
                     # Terrain Intelligence (Zero-Copy Consumer)
                     ComposableNode(
                         package="terrain_intelligence",
                         plugin="terrain_intelligence::TerrainAnalyzer",
                         name="terrain_analyzer",
-                        extra_arguments=[{"use_intra_process_comms": use_intra_process}],
+                        extra_arguments=[
+                            {"use_intra_process_comms": use_intra_process}
+                        ],
                     ),
                 ],
                 output="screen",
             ),
-
             # Hardware Interface (separate for real-time CAN communication)
             Node(
                 package="missions",
@@ -170,13 +174,15 @@ def generate_launch_description():
                 output="screen",
                 arguments=["--ros-args", "--log-level", "INFO"],
             ),
-            # Navigation Stack (existing, optimized)
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    [os.path.join(autonomy_dir, "launch", "navigation.launch.py")]
-                )
+            # Navigation (SLAM-integrated navigation_node)
+            Node(
+                package="autonomy_core",
+                executable="navigation_node",
+                name="navigation_node",
+                output="screen",
+                arguments=["--ros-args", "--log-level", "WARN"],
             ),
-            # SLAM (existing, optimized)
+            # SLAM pipeline (RealSense, depth_processor, odom bridge, slam_orchestrator)
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     [os.path.join(autonomy_dir, "launch", "slam.launch.py")]

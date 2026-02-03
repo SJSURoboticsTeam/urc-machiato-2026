@@ -52,13 +52,15 @@ class PerformanceBaseline:
             "std_dev": statistics.stdev(self.values) if len(self.values) > 1 else 0,
             "min": min(self.values),
             "max": max(self.values),
-            "p95": statistics.quantiles(self.values, n=20)[18]
-            if len(self.values) >= 20
-            else max(self.values),
+            "p95": (
+                statistics.quantiles(self.values, n=20)[18]
+                if len(self.values) >= 20
+                else max(self.values)
+            ),
             "sample_count": len(self.values),
-            "last_updated": self.timestamps[-1].isoformat()
-            if self.timestamps
-            else None,
+            "last_updated": (
+                self.timestamps[-1].isoformat() if self.timestamps else None
+            ),
         }
 
         self.baseline_stats = stats
@@ -342,9 +344,11 @@ class PerformanceRegressionFramework:
             "regressions_detected": regression_count,
             "improvements_found": improvement_count,
             "no_baseline_metrics": len(report["no_baseline_metrics"]),
-            "pass_rate": ((total_checks - regression_count) / total_checks * 100)
-            if total_checks > 0
-            else 100,
+            "pass_rate": (
+                ((total_checks - regression_count) / total_checks * 100)
+                if total_checks > 0
+                else 100
+            ),
             "threshold_percent": threshold_percent,
         }
 

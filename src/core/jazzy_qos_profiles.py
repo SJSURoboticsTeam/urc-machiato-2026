@@ -18,6 +18,7 @@ from rclpy.qos import QoSHistoryPolicy
 # Try to import Jazzy-specific QoS features
 try:
     from rclpy.qos import QoSLivelinessPolicy, QoSDeadline, QoSLifespan
+
     JAZZY_QOS_AVAILABLE = True
 except ImportError:
     JAZZY_QOS_AVAILABLE = False
@@ -47,7 +48,7 @@ class JazzyQoSProfiles:
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Add Jazzy-specific features if available
@@ -55,7 +56,9 @@ class JazzyQoSProfiles:
             qos.deadline = QoSDeadline(milliseconds=10)  # 100Hz max latency
             qos.lifespan = QoSLifespan(milliseconds=100)  # Data expires quickly
             qos.liveliness = QoSLivelinessPolicy.AUTOMATIC
-            qos.liveliness_lease_duration = rclpy.duration.Duration(seconds=0.1)  # 100ms
+            qos.liveliness_lease_duration = rclpy.duration.Duration(
+                seconds=0.1
+            )  # 100ms
 
         return qos
 
@@ -70,15 +73,19 @@ class JazzyQoSProfiles:
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=3
+            depth=3,
         )
 
         # Add Jazzy-specific features if available
         if JAZZY_QOS_AVAILABLE and QoSDeadline and QoSLifespan and QoSLivelinessPolicy:
             qos.deadline = QoSDeadline(milliseconds=20)  # 50Hz max latency
-            qos.lifespan = QoSLifespan(milliseconds=200)  # Data valid for motion planning
+            qos.lifespan = QoSLifespan(
+                milliseconds=200
+            )  # Data valid for motion planning
             qos.liveliness = QoSLivelinessPolicy.AUTOMATIC
-            qos.liveliness_lease_duration = rclpy.duration.Duration(seconds=0.2)  # 200ms
+            qos.liveliness_lease_duration = rclpy.duration.Duration(
+                seconds=0.2
+            )  # 200ms
 
         return qos
 
@@ -93,7 +100,7 @@ class JazzyQoSProfiles:
             reliability=QoSReliabilityPolicy.RELIABLE,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
 
         # Add Jazzy-specific features if available
@@ -116,7 +123,7 @@ class JazzyQoSProfiles:
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=50
+            depth=50,
         )
 
         # Add Jazzy-specific features if available
@@ -139,7 +146,7 @@ class JazzyQoSProfiles:
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             durability=QoSDurabilityPolicy.VOLATILE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Add Jazzy-specific features if available
@@ -147,7 +154,9 @@ class JazzyQoSProfiles:
             qos.deadline = QoSDeadline(milliseconds=1)  # 1000Hz potential
             qos.lifespan = QoSLifespan(milliseconds=10)  # Very fresh data only
             qos.liveliness = QoSLivelinessPolicy.AUTOMATIC
-            qos.liveliness_lease_duration = rclpy.duration.Duration(milliseconds=100)  # 100ms
+            qos.liveliness_lease_duration = rclpy.duration.Duration(
+                milliseconds=100
+            )  # 100ms
 
         return qos
 
@@ -184,7 +193,9 @@ def qos_event_callback(event_type: str, event_data: dict):
     Callback for QoS events (liveliness changes, deadline misses, etc.)
     """
     if event_type == "liveliness_changed":
-        logger.warning(f"Liveliness changed: alive_count={event_data.get('alive_count', 0)}")
+        logger.warning(
+            f"Liveliness changed: alive_count={event_data.get('alive_count', 0)}"
+        )
     elif event_type == "deadline_missed":
         logger.error("QoS deadline missed!")
     elif event_type == "liveliness_lost":
@@ -201,21 +212,23 @@ def create_jazzy_publisher(node, msg_type, topic: str, qos_profile: QoSProfile):
     publisher = node.create_publisher(msg_type, topic, qos_profile)
 
     # Jazzy: Enable QoS event monitoring if available
-    if hasattr(publisher, 'add_on_qos_event_callback'):
+    if hasattr(publisher, "add_on_qos_event_callback"):
         publisher.add_on_qos_event_callback(qos_event_callback)
 
     return publisher
 
 
 # Utility function to create subscribers with QoS profiles
-def create_jazzy_subscription(node, msg_type, topic: str, callback, qos_profile: QoSProfile):
+def create_jazzy_subscription(
+    node, msg_type, topic: str, callback, qos_profile: QoSProfile
+):
     """
     Create a subscription with Jazzy-optimized QoS
     """
     subscription = node.create_subscription(msg_type, topic, callback, qos_profile)
 
     # Jazzy: Enable QoS event monitoring if available
-    if hasattr(subscription, 'add_on_qos_event_callback'):
+    if hasattr(subscription, "add_on_qos_event_callback"):
         subscription.add_on_qos_event_callback(qos_event_callback)
 
     return subscription

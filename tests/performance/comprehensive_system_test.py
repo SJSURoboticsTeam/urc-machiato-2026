@@ -87,7 +87,7 @@ class ComprehensiveSystemTester:
         # Add some realistic test data
         for i in range(3):
             self.metrics_collector.collect_performance_metric(
-                'startup', f'initialization_step_{i}', time.time() % 100
+                "startup", f"initialization_step_{i}", time.time() % 100
             )
 
         print("✅ System startup simulation complete")
@@ -98,26 +98,30 @@ class ComprehensiveSystemTester:
 
         # Simulate BT execution
         bt_scenarios = [
-            {'name': 'waypoint_navigation', 'duration': 5.0, 'success': True},
-            {'name': 'obstacle_avoidance', 'duration': 3.0, 'success': True},
-            {'name': 'sample_collection', 'duration': 7.0, 'success': False},  # Simulate failure
+            {"name": "waypoint_navigation", "duration": 5.0, "success": True},
+            {"name": "obstacle_avoidance", "duration": 3.0, "success": True},
+            {
+                "name": "sample_collection",
+                "duration": 7.0,
+                "success": False,
+            },  # Simulate failure
         ]
 
         for scenario in bt_scenarios:
             start_time = time.time()
 
             # Simulate BT execution
-            time.sleep(scenario['duration'] * 0.1)  # Fast simulation
+            time.sleep(scenario["duration"] * 0.1)  # Fast simulation
 
             duration = time.time() - start_time
-            success = scenario['success']
+            success = scenario["success"]
 
             # Record metrics
             self.metrics_collector.collect_performance_metric(
-                'behavior_trees', f'{scenario["name"]}_duration', duration
+                "behavior_trees", f'{scenario["name"]}_duration', duration
             )
             self.metrics_collector.collect_performance_metric(
-                'behavior_trees', f'{scenario["name"]}_success', 1 if success else 0
+                "behavior_trees", f'{scenario["name"]}_success', 1 if success else 0
             )
 
             print(f"  {'✅' if success else '❌'} {scenario['name']}: {duration:.2f}s")
@@ -127,10 +131,10 @@ class ComprehensiveSystemTester:
         print("🔄 Testing State Machine Integration...")
 
         # Simulate state transitions
-        states = ['IDLE', 'INITIALIZING', 'NAVIGATING', 'SAMPLING', 'RETURNING']
+        states = ["IDLE", "INITIALIZING", "NAVIGATING", "SAMPLING", "RETURNING"]
         transitions = []
 
-        current_state = 'IDLE'
+        current_state = "IDLE"
         for target_state in states[1:]:
             start_time = time.time()
 
@@ -140,15 +144,19 @@ class ComprehensiveSystemTester:
             transition_time = time.time() - start_time
             valid_transition = True  # Assume valid
 
-            transitions.append({
-                'from': current_state,
-                'to': target_state,
-                'duration': transition_time,
-                'valid': valid_transition
-            })
+            transitions.append(
+                {
+                    "from": current_state,
+                    "to": target_state,
+                    "duration": transition_time,
+                    "valid": valid_transition,
+                }
+            )
 
             self.metrics_collector.collect_performance_metric(
-                'state_machines', f'transition_{current_state}_to_{target_state}', transition_time
+                "state_machines",
+                f"transition_{current_state}_to_{target_state}",
+                transition_time,
             )
 
             current_state = target_state
@@ -160,9 +168,13 @@ class ComprehensiveSystemTester:
 
         # Test different network scenarios
         network_tests = [
-            {'interface': 'wifi_main', 'latency_ms': 5.2, 'connected': True},
-            {'interface': 'lte_backup', 'latency_ms': 45.8, 'connected': True},
-            {'interface': 'ethernet_direct', 'latency_ms': 0.8, 'connected': False},  # Disconnected
+            {"interface": "wifi_main", "latency_ms": 5.2, "connected": True},
+            {"interface": "lte_backup", "latency_ms": 45.8, "connected": True},
+            {
+                "interface": "ethernet_direct",
+                "latency_ms": 0.8,
+                "connected": False,
+            },  # Disconnected
         ]
 
         for test in network_tests:
@@ -170,13 +182,15 @@ class ComprehensiveSystemTester:
             time.sleep(0.2)
 
             self.metrics_collector.collect_performance_metric(
-                'network', f'{test["interface"]}_latency', test['latency_ms']
+                "network", f'{test["interface"]}_latency', test["latency_ms"]
             )
             self.metrics_collector.collect_performance_metric(
-                'network', f'{test["interface"]}_connected', 1 if test['connected'] else 0
+                "network",
+                f'{test["interface"]}_connected',
+                1 if test["connected"] else 0,
             )
 
-            status = "✅" if test['connected'] else "❌"
+            status = "✅" if test["connected"] else "❌"
             print(f"  {status} {test['interface']}: {test['latency_ms']:.1f}ms")
 
     def _run_performance_tests(self):
@@ -185,17 +199,19 @@ class ComprehensiveSystemTester:
 
         # Import and run performance tests
         try:
-            from tests.performance.test_performance_baseline import PerformanceBaselineTester
+            from tests.performance.test_performance_baseline import (
+                PerformanceBaselineTester,
+            )
 
             tester = PerformanceBaselineTester()
             results = tester.run_all_baselines()
 
             # Record key metrics
-            if 'results' in results:
-                for test_name, test_data in results['results'].items():
-                    if isinstance(test_data, dict) and 'p99_ms' in test_data:
+            if "results" in results:
+                for test_name, test_data in results["results"].items():
+                    if isinstance(test_data, dict) and "p99_ms" in test_data:
                         self.metrics_collector.collect_performance_metric(
-                            'performance', f'{test_name}_p99', test_data['p99_ms']
+                            "performance", f"{test_name}_p99", test_data["p99_ms"]
                         )
                         print(".3f")
 
@@ -208,17 +224,17 @@ class ComprehensiveSystemTester:
 
         # Check for running simulator processes
         sim_found = False
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
             try:
-                name = proc.info['name'].lower()
-                cmdline = ' '.join(proc.info['cmdline'] or []).lower()
-                if 'gazebo' in name or 'gzserver' in name or 'simulator' in cmdline:
+                name = proc.info["name"].lower()
+                cmdline = " ".join(proc.info["cmdline"] or []).lower()
+                if "gazebo" in name or "gzserver" in name or "simulator" in cmdline:
                     sim_found = True
                     self.metrics_collector.collect_performance_metric(
-                        'simulator', 'process_found', 1
+                        "simulator", "process_found", 1
                     )
                     self.metrics_collector.collect_performance_metric(
-                        'simulator', 'process_cpu', proc.cpu_percent()
+                        "simulator", "process_cpu", proc.cpu_percent()
                     )
                     break
             except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -231,10 +247,10 @@ class ComprehensiveSystemTester:
 
         # Simulate simulator metrics
         self.metrics_collector.collect_performance_metric(
-            'simulator', 'real_time_factor', 0.95
+            "simulator", "real_time_factor", 0.95
         )
         self.metrics_collector.collect_performance_metric(
-            'simulator', 'physics_uptime', time.time() - time.time() + 120  # 2 minutes
+            "simulator", "physics_uptime", time.time() - time.time() + 120  # 2 minutes
         )
 
     def _generate_system_test_report(self, start_time: float) -> Dict[str, Any]:
@@ -248,111 +264,146 @@ class ComprehensiveSystemTester:
         dashboard_data = self.metrics_collector.metrics_store.get_dashboard_data()
 
         report = {
-            'test_metadata': {
-                'start_time': start_time,
-                'end_time': end_time,
-                'duration_seconds': total_duration,
-                'test_components': [
-                    'behavior_trees', 'state_machines', 'network',
-                    'performance', 'simulator', 'system_integration'
-                ]
+            "test_metadata": {
+                "start_time": start_time,
+                "end_time": end_time,
+                "duration_seconds": total_duration,
+                "test_components": [
+                    "behavior_trees",
+                    "state_machines",
+                    "network",
+                    "performance",
+                    "simulator",
+                    "system_integration",
+                ],
             },
-            'system_integration_status': dashboard_data.get('system_integration', {}),
-            'performance_metrics': dashboard_data.get('performance_status', {}),
-            'test_results': self.test_results,
-            'alerts_generated': len(dashboard_data.get('recent_alerts', [])),
-            'system_health': dashboard_data.get('system_health', {}),
-            'recommendations': self._generate_test_recommendations(dashboard_data)
+            "system_integration_status": dashboard_data.get("system_integration", {}),
+            "performance_metrics": dashboard_data.get("performance_status", {}),
+            "test_results": self.test_results,
+            "alerts_generated": len(dashboard_data.get("recent_alerts", [])),
+            "system_health": dashboard_data.get("system_health", {}),
+            "recommendations": self._generate_test_recommendations(dashboard_data),
         }
 
         # Save detailed report
         report_file = Path(f"comprehensive_system_test_report_{int(time.time())}.json")
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             import json
+
             json.dump(report, f, indent=2, default=str)
 
         print(f"📁 Detailed report saved to: {report_file}")
         return report
 
-    def _generate_test_recommendations(self, dashboard_data: Dict[str, Any]) -> List[str]:
+    def _generate_test_recommendations(
+        self, dashboard_data: Dict[str, Any]
+    ) -> List[str]:
         """Generate test recommendations based on results."""
         recommendations = []
 
         # Check system integration health
-        integration = dashboard_data.get('system_integration', {})
+        integration = dashboard_data.get("system_integration", {})
 
         # Behavior trees
-        bt_health = integration.get('behavior_trees', {}).get('health_percentage', 0)
+        bt_health = integration.get("behavior_trees", {}).get("health_percentage", 0)
         if bt_health < 80:
             recommendations.append("⚠️ Improve behavior tree reliability and monitoring")
 
         # State machines
-        sm_transitions = integration.get('state_machines', {}).get('transition_success_rate', 0)
+        sm_transitions = integration.get("state_machines", {}).get(
+            "transition_success_rate", 0
+        )
         if sm_transitions < 95:
-            recommendations.append("⚠️ Review state machine transition logic and error handling")
+            recommendations.append(
+                "⚠️ Review state machine transition logic and error handling"
+            )
 
         # Network
-        net_health = integration.get('network', {}).get('network_health_score', 0)
+        net_health = integration.get("network", {}).get("network_health_score", 0)
         if net_health < 80:
-            recommendations.append("⚠️ Improve network connectivity and failover mechanisms")
+            recommendations.append(
+                "⚠️ Improve network connectivity and failover mechanisms"
+            )
 
         # Performance
-        perf_status = dashboard_data.get('performance_status', {})
-        motion_control = perf_status.get('motion_control', {}).get('status', 'UNKNOWN')
-        if motion_control != 'PASS':
+        perf_status = dashboard_data.get("performance_status", {})
+        motion_control = perf_status.get("motion_control", {}).get("status", "UNKNOWN")
+        if motion_control != "PASS":
             recommendations.append("⚠️ Address motion control performance issues")
 
         # Simulator
-        sim_stability = integration.get('simulator', {}).get('simulation_stability', 'UNKNOWN')
-        if sim_stability != 'GOOD':
-            recommendations.append("⚠️ Improve simulator stability and real-time performance")
+        sim_stability = integration.get("simulator", {}).get(
+            "simulation_stability", "UNKNOWN"
+        )
+        if sim_stability != "GOOD":
+            recommendations.append(
+                "⚠️ Improve simulator stability and real-time performance"
+            )
 
         # Overall health
-        system_health = dashboard_data.get('system_health', {}).get('overall_health', 'UNKNOWN')
-        if system_health != 'HEALTHY':
+        system_health = dashboard_data.get("system_health", {}).get(
+            "overall_health", "UNKNOWN"
+        )
+        if system_health != "HEALTHY":
             recommendations.append("⚠️ Address system health issues before deployment")
 
         if not recommendations:
-            recommendations.append("✅ All systems performing well - ready for deployment")
+            recommendations.append(
+                "✅ All systems performing well - ready for deployment"
+            )
 
         return recommendations
 
     def print_test_summary(self, report: Dict[str, Any]):
         """Print human-readable test summary."""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🧪 COMPREHENSIVE SYSTEM INTEGRATION TEST SUMMARY")
-        print("="*80)
+        print("=" * 80)
 
-        metadata = report.get('test_metadata', {})
+        metadata = report.get("test_metadata", {})
         print(".1f")
         # System integration status
-        integration = report.get('system_integration', {})
+        integration = report.get("system_integration", {})
         print("\n🔗 SYSTEM INTEGRATION STATUS:")
-        print(f"  Behavior Trees: {integration.get('behavior_trees', {}).get('healthy_trees', 0)}/{integration.get('behavior_trees', {}).get('total_trees', 0)} healthy")
-        print(f"  State Machines: {integration.get('state_machines', {}).get('active_machines', 0)}/{integration.get('state_machines', {}).get('total_machines', 0)} active")
-        print(f"  Network: {integration.get('network', {}).get('active_connections', 0)}/{integration.get('network', {}).get('total_connections', 0)} connected")
-        print(f"  Simulator: {integration.get('simulator', {}).get('active_simulations', 0)}/{integration.get('simulator', {}).get('total_simulations', 0)} running")
+        print(
+            f"  Behavior Trees: {integration.get('behavior_trees', {}).get('healthy_trees', 0)}/{integration.get('behavior_trees', {}).get('total_trees', 0)} healthy"
+        )
+        print(
+            f"  State Machines: {integration.get('state_machines', {}).get('active_machines', 0)}/{integration.get('state_machines', {}).get('total_machines', 0)} active"
+        )
+        print(
+            f"  Network: {integration.get('network', {}).get('active_connections', 0)}/{integration.get('network', {}).get('total_connections', 0)} connected"
+        )
+        print(
+            f"  Simulator: {integration.get('simulator', {}).get('active_simulations', 0)}/{integration.get('simulator', {}).get('total_simulations', 0)} running"
+        )
 
         # Performance status
-        performance = report.get('performance_status', {})
+        performance = report.get("performance_status", {})
         print("\n📊 PERFORMANCE STATUS:")
-        print(f"  Motion Control: {performance.get('motion_control', {}).get('status', 'UNKNOWN')}")
-        print(f"  Communication: {performance.get('communication', {}).get('status', 'UNKNOWN')}")
-        print(f"  Resources: {performance.get('resources', {}).get('status', 'UNKNOWN')}")
+        print(
+            f"  Motion Control: {performance.get('motion_control', {}).get('status', 'UNKNOWN')}"
+        )
+        print(
+            f"  Communication: {performance.get('communication', {}).get('status', 'UNKNOWN')}"
+        )
+        print(
+            f"  Resources: {performance.get('resources', {}).get('status', 'UNKNOWN')}"
+        )
 
         # System health
-        health = report.get('system_health', {})
+        health = report.get("system_health", {})
         print("\n❤️ SYSTEM HEALTH:")
         print(f"  Overall: {health.get('overall_health', 'UNKNOWN')}")
         print(".1f")
         # Recommendations
-        recommendations = report.get('recommendations', [])
+        recommendations = report.get("recommendations", [])
         if recommendations:
             print("\n💡 RECOMMENDATIONS:")
             for rec in recommendations:
                 print(f"  {rec}")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
 
 def run_comprehensive_system_test():
@@ -381,19 +432,28 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='URC 2026 Comprehensive System Integration Test')
-    parser.add_argument('--test-only', action='store_true',
-                       help='Run tests only (no dashboard)')
-    parser.add_argument('--dashboard-only', action='store_true',
-                       help='Start dashboard only (no tests)')
-    parser.add_argument('--duration', type=int, default=120,
-                       help='Test duration in seconds (default: 120)')
+    parser = argparse.ArgumentParser(
+        description="URC 2026 Comprehensive System Integration Test"
+    )
+    parser.add_argument(
+        "--test-only", action="store_true", help="Run tests only (no dashboard)"
+    )
+    parser.add_argument(
+        "--dashboard-only", action="store_true", help="Start dashboard only (no tests)"
+    )
+    parser.add_argument(
+        "--duration",
+        type=int,
+        default=120,
+        help="Test duration in seconds (default: 120)",
+    )
 
     args = parser.parse_args()
 
     if args.dashboard_only:
         # Start dashboard with simulated data
         from tests.performance.system_integration_monitor import system_monitor
+
         system_monitor.simulate_test_data()
         start_dashboard_server()
 
@@ -415,9 +475,9 @@ def main():
         report = tester.run_comprehensive_system_test()
         tester.print_test_summary(report)
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("🎯 STARTING METRICS DASHBOARD")
-        print("="*50)
+        print("=" * 50)
 
         # Start dashboard
         start_dashboard_server()

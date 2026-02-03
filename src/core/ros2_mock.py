@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class QoSPreset(Enum):
     """QoS presets matching ROS2."""
+
     SYSTEM_DEFAULT = "system_default"
     PARAMETER_EVENTS = "parameter_events"
     SERVICES_DEFAULT = "services_default"
@@ -42,27 +43,29 @@ class QoSPreset(Enum):
 
 class QoSProfile:
     """Mock QoS profile."""
+
     def __init__(self, preset: QoSPreset = QoSPreset.SYSTEM_DEFAULT, **kwargs):
         self.preset = preset
-        self.depth = kwargs.get('depth', 10)
-        self.reliability = kwargs.get('reliability', 'reliable')
-        self.durability = kwargs.get('durability', 'volatile')
-        self.deadline = kwargs.get('deadline', None)
-        self.lifespan = kwargs.get('lifespan', None)
+        self.depth = kwargs.get("depth", 10)
+        self.reliability = kwargs.get("reliability", "reliable")
+        self.durability = kwargs.get("durability", "volatile")
+        self.deadline = kwargs.get("deadline", None)
+        self.lifespan = kwargs.get("lifespan", None)
 
 
 # QoS Presets
 qos_profiles = {
-    'system_default': QoSProfile(QoSPreset.SYSTEM_DEFAULT),
-    'services_default': QoSProfile(QoSPreset.SERVICES_DEFAULT),
-    'sensor_data': QoSProfile(QoSPreset.SENSOR_DATA, reliability='best_effort'),
-    'parameters': QoSProfile(QoSPreset.PARAMETERS),
+    "system_default": QoSProfile(QoSPreset.SYSTEM_DEFAULT),
+    "services_default": QoSProfile(QoSPreset.SERVICES_DEFAULT),
+    "sensor_data": QoSProfile(QoSPreset.SENSOR_DATA, reliability="best_effort"),
+    "parameters": QoSProfile(QoSPreset.PARAMETERS),
 }
 
 
 @dataclass
 class ROS2Message:
     """Base ROS2 message structure."""
+
     timestamp: float = field(default_factory=time.time)
     sequence_id: int = field(default_factory=lambda: int(time.time() * 1000000))
     frame_id: str = ""
@@ -71,6 +74,7 @@ class ROS2Message:
 @dataclass
 class Twist(ROS2Message):
     """Mock geometry_msgs/Twist."""
+
     linear_x: float = 0.0
     linear_y: float = 0.0
     linear_z: float = 0.0
@@ -82,6 +86,7 @@ class Twist(ROS2Message):
 @dataclass
 class PoseStamped(ROS2Message):
     """Mock geometry_msgs/PoseStamped."""
+
     position_x: float = 0.0
     position_y: float = 0.0
     position_z: float = 0.0
@@ -94,6 +99,7 @@ class PoseStamped(ROS2Message):
 @dataclass
 class NavSatFix(ROS2Message):
     """Mock sensor_msgs/NavSatFix."""
+
     latitude: float = 0.0
     longitude: float = 0.0
     altitude: float = 0.0
@@ -103,6 +109,7 @@ class NavSatFix(ROS2Message):
 @dataclass
 class Imu(ROS2Message):
     """Mock sensor_msgs/Imu."""
+
     linear_acceleration_x: float = 0.0
     linear_acceleration_y: float = 0.0
     linear_acceleration_z: float = 9.81
@@ -114,12 +121,14 @@ class Imu(ROS2Message):
 @dataclass
 class Trigger:
     """Mock std_srvs/Trigger."""
+
     pass
 
 
 @dataclass
 class NavigateToPose:
     """Mock nav2_msgs/action/NavigateToPose."""
+
     pose: PoseStamped = field(default_factory=PoseStamped)
     behavior_tree: str = ""
 
@@ -132,14 +141,14 @@ class ROS2Node:
         self.namespace = namespace
         self.full_name = f"{namespace}/{node_name}" if namespace else node_name
 
-        self.publishers: Dict[str, 'Publisher'] = {}
-        self.subscribers: Dict[str, 'Subscriber'] = {}
-        self.services: Dict[str, 'Service'] = {}
-        self.action_servers: Dict[str, 'ActionServer'] = {}
-        self.action_clients: Dict[str, 'ActionClient'] = {}
+        self.publishers: Dict[str, "Publisher"] = {}
+        self.subscribers: Dict[str, "Subscriber"] = {}
+        self.services: Dict[str, "Service"] = {}
+        self.action_servers: Dict[str, "ActionServer"] = {}
+        self.action_clients: Dict[str, "ActionClient"] = {}
 
-        self.timers: Dict[str, 'Timer'] = {}
-        self.executors: List['Executor'] = []
+        self.timers: Dict[str, "Timer"] = {}
+        self.executors: List["Executor"] = []
 
         self.logger = logging.getLogger(self.full_name)
         self.is_shutdown = False
@@ -150,44 +159,82 @@ class ROS2Node:
 
         logger.info(f"Mock ROS2 Node created: {self.full_name}")
 
-    def create_publisher(self, msg_type: Type, topic: str, qos_profile: Optional[QoSProfile] = None) -> 'Publisher':
+    def create_publisher(
+        self, msg_type: Type, topic: str, qos_profile: Optional[QoSProfile] = None
+    ) -> "Publisher":
         """Create a publisher."""
-        publisher = Publisher(self, msg_type, topic, qos_profile or qos_profiles['system_default'])
+        publisher = Publisher(
+            self, msg_type, topic, qos_profile or qos_profiles["system_default"]
+        )
         self.publishers[topic] = publisher
         return publisher
 
-    def create_subscription(self, msg_type: Type, topic: str, callback: Callable,
-                          qos_profile: Optional[QoSProfile] = None) -> 'Subscriber':
+    def create_subscription(
+        self,
+        msg_type: Type,
+        topic: str,
+        callback: Callable,
+        qos_profile: Optional[QoSProfile] = None,
+    ) -> "Subscriber":
         """Create a subscription."""
-        subscriber = Subscriber(self, msg_type, topic, callback, qos_profile or qos_profiles['system_default'])
+        subscriber = Subscriber(
+            self,
+            msg_type,
+            topic,
+            callback,
+            qos_profile or qos_profiles["system_default"],
+        )
         self.subscribers[topic] = subscriber
 
         # Register with global message bus
         ROS2MessageBus.get_instance().register_subscriber(subscriber)
         return subscriber
 
-    def create_service(self, srv_type: Type, service_name: str, callback: Callable,
-                     qos_profile: Optional[QoSProfile] = None) -> 'Service':
+    def create_service(
+        self,
+        srv_type: Type,
+        service_name: str,
+        callback: Callable,
+        qos_profile: Optional[QoSProfile] = None,
+    ) -> "Service":
         """Create a service."""
-        service = Service(self, srv_type, service_name, callback, qos_profile or qos_profiles['services_default'])
+        service = Service(
+            self,
+            srv_type,
+            service_name,
+            callback,
+            qos_profile or qos_profiles["services_default"],
+        )
         self.services[service_name] = service
 
         # Register with global message bus
         ROS2MessageBus.get_instance().register_service(service)
         return service
 
-    def create_action_server(self, action_type: Type, action_name: str, callback: Callable,
-                            qos_profile: Optional[QoSProfile] = None) -> 'ActionServer':
+    def create_action_server(
+        self,
+        action_type: Type,
+        action_name: str,
+        callback: Callable,
+        qos_profile: Optional[QoSProfile] = None,
+    ) -> "ActionServer":
         """Create an action server."""
-        action_server = ActionServer(self, action_type, action_name, callback,
-                                    qos_profile or qos_profiles['system_default'])
+        action_server = ActionServer(
+            self,
+            action_type,
+            action_name,
+            callback,
+            qos_profile or qos_profiles["system_default"],
+        )
         self.action_servers[action_name] = action_server
 
         # Register with global message bus
         ROS2MessageBus.get_instance().register_action_server(action_server)
         return action_server
 
-    def create_timer(self, period: float, callback: Callable, name: str = "") -> 'Timer':
+    def create_timer(
+        self, period: float, callback: Callable, name: str = ""
+    ) -> "Timer":
         """Create a timer."""
         timer_name = name or f"timer_{len(self.timers)}"
         timer = Timer(self, period, callback, timer_name)
@@ -198,14 +245,14 @@ class ROS2Node:
         """Get node logger."""
         return self.logger
 
-    def destroy_publisher(self, publisher: 'Publisher'):
+    def destroy_publisher(self, publisher: "Publisher"):
         """Destroy a publisher."""
         for topic, pub in self.publishers.items():
             if pub == publisher:
                 del self.publishers[topic]
                 break
 
-    def destroy_subscription(self, subscriber: 'Subscriber'):
+    def destroy_subscription(self, subscriber: "Subscriber"):
         """Destroy a subscription."""
         for topic, sub in self.subscribers.items():
             if sub == subscriber:
@@ -241,7 +288,9 @@ class ROS2Node:
 class Publisher:
     """Mock ROS2 publisher."""
 
-    def __init__(self, node: ROS2Node, msg_type: Type, topic: str, qos_profile: QoSProfile):
+    def __init__(
+        self, node: ROS2Node, msg_type: Type, topic: str, qos_profile: QoSProfile
+    ):
         self.node = node
         self.msg_type = msg_type
         self.topic = topic
@@ -263,8 +312,14 @@ class Publisher:
 class Subscriber:
     """Mock ROS2 subscriber."""
 
-    def __init__(self, node: ROS2Node, msg_type: Type, topic: str,
-                 callback: Callable, qos_profile: QoSProfile):
+    def __init__(
+        self,
+        node: ROS2Node,
+        msg_type: Type,
+        topic: str,
+        callback: Callable,
+        qos_profile: QoSProfile,
+    ):
         self.node = node
         self.msg_type = msg_type
         self.topic = topic
@@ -287,8 +342,14 @@ class Subscriber:
 class Service:
     """Mock ROS2 service."""
 
-    def __init__(self, node: ROS2Node, srv_type: Type, service_name: str,
-                 callback: Callable, qos_profile: QoSProfile):
+    def __init__(
+        self,
+        node: ROS2Node,
+        srv_type: Type,
+        service_name: str,
+        callback: Callable,
+        qos_profile: QoSProfile,
+    ):
         self.node = node
         self.srv_type = srv_type
         self.service_name = service_name
@@ -305,15 +366,23 @@ class Service:
         try:
             return self.callback(request)
         except Exception as e:
-            self.node.logger.error(f"Service callback error on {self.service_name}: {e}")
+            self.node.logger.error(
+                f"Service callback error on {self.service_name}: {e}"
+            )
             return None
 
 
 class ActionServer:
     """Mock ROS2 action server."""
 
-    def __init__(self, node: ROS2Node, action_type: Type, action_name: str,
-                 callback: Callable, qos_profile: QoSProfile):
+    def __init__(
+        self,
+        node: ROS2Node,
+        action_type: Type,
+        action_name: str,
+        callback: Callable,
+        qos_profile: QoSProfile,
+    ):
         self.node = node
         self.action_type = action_type
         self.action_name = action_name
@@ -335,7 +404,9 @@ class ActionServer:
             self.active_goals[goal_id] = result
             return result
         except Exception as e:
-            self.node.logger.error(f"Action server callback error on {self.action_name}: {e}")
+            self.node.logger.error(
+                f"Action server callback error on {self.action_name}: {e}"
+            )
             return None
 
 
@@ -448,14 +519,15 @@ class ROS2MessageBus:
         # Store in history
         if topic not in self.message_history:
             self.message_history[topic] = []
-        self.message_history[topic].append({
-            'timestamp': time.time(),
-            'message': message
-        })
+        self.message_history[topic].append(
+            {"timestamp": time.time(), "message": message}
+        )
 
         # Keep history bounded
         if len(self.message_history[topic]) > self.max_history:
-            self.message_history[topic] = self.message_history[topic][-self.max_history:]
+            self.message_history[topic] = self.message_history[topic][
+                -self.max_history :
+            ]
 
         # Deliver to subscribers
         if topic in self.subscribers:
@@ -483,11 +555,15 @@ class ROS2MessageBus:
     def get_topic_stats(self) -> Dict[str, Any]:
         """Get topic statistics."""
         return {
-            'topics': list(self.subscribers.keys()),
-            'subscribers_per_topic': {topic: len(subs) for topic, subs in self.subscribers.items()},
-            'services': list(self.services.keys()),
-            'action_servers': list(self.action_servers.keys()),
-            'total_messages': sum(len(history) for history in self.message_history.values())
+            "topics": list(self.subscribers.keys()),
+            "subscribers_per_topic": {
+                topic: len(subs) for topic, subs in self.subscribers.items()
+            },
+            "services": list(self.services.keys()),
+            "action_servers": list(self.action_servers.keys()),
+            "total_messages": sum(
+                len(history) for history in self.message_history.values()
+            ),
         }
 
 
@@ -524,6 +600,7 @@ class MockRCLPY:
 
     class QoSProfile(QoSProfile):
         """QoS profile class."""
+
         pass
 
     # QoS presets
@@ -546,31 +623,31 @@ class MockMessages:
         Trigger = Trigger
 
     class nav2_msgs:
-        action = type('action', (), {'NavigateToPose': NavigateToPose})()
+        action = type("action", (), {"NavigateToPose": NavigateToPose})()
 
 
 # Create mock modules for import compatibility
-sys.modules['rclpy'] = MockRCLPY()
-sys.modules['rclpy.qos'] = MockRCLPY
-sys.modules['geometry_msgs.msg'] = MockMessages.geometry_msgs
-sys.modules['sensor_msgs.msg'] = MockMessages.sensor_msgs
-sys.modules['std_srvs.srv'] = MockMessages.std_srvs
-sys.modules['nav2_msgs.action'] = MockMessages.nav2_msgs.action
+sys.modules["rclpy"] = MockRCLPY()
+sys.modules["rclpy.qos"] = MockRCLPY
+sys.modules["geometry_msgs.msg"] = MockMessages.geometry_msgs
+sys.modules["sensor_msgs.msg"] = MockMessages.sensor_msgs
+sys.modules["std_srvs.srv"] = MockMessages.std_srvs
+sys.modules["nav2_msgs.action"] = MockMessages.nav2_msgs.action
 
 # Mock autonomy_interfaces if they don't exist
 try:
     import autonomy_interfaces
 except ImportError:
     # Create mock autonomy_interfaces
-    mock_autonomy = type('autonomy_interfaces', (), {})
+    mock_autonomy = type("autonomy_interfaces", (), {})
 
     # Mock action module
-    mock_action = type('action', (), {})
+    mock_action = type("action", (), {})
     mock_action.NavigateToPose = NavigateToPose
     mock_autonomy.action = mock_action
 
-    sys.modules['autonomy_interfaces'] = mock_autonomy
-    sys.modules['autonomy_interfaces.action'] = mock_action
+    sys.modules["autonomy_interfaces"] = mock_autonomy
+    sys.modules["autonomy_interfaces.action"] = mock_action
 
 
 # Performance monitoring
@@ -595,17 +672,19 @@ class ROS2PerformanceMonitor:
         max_latency = max(self.latencies) if self.latencies else 0
 
         return {
-            'uptime_seconds': time.time() - self.start_time,
-            'total_messages': total_messages,
-            'messages_per_topic': self.message_counts,
-            'avg_latency_ms': avg_latency * 1000,
-            'max_latency_ms': max_latency * 1000,
-            'messages_per_second': total_messages / max(1, time.time() - self.start_time)
+            "uptime_seconds": time.time() - self.start_time,
+            "total_messages": total_messages,
+            "messages_per_topic": self.message_counts,
+            "avg_latency_ms": avg_latency * 1000,
+            "max_latency_ms": max_latency * 1000,
+            "messages_per_second": total_messages
+            / max(1, time.time() - self.start_time),
         }
 
 
 # Global performance monitor
 _performance_monitor = ROS2PerformanceMonitor()
+
 
 def get_performance_stats() -> Dict[str, Any]:
     """Get ROS2 performance statistics."""
@@ -617,32 +696,33 @@ def check_ros2_compatibility() -> Dict[str, bool]:
     """Check if real ROS2 is available."""
     try:
         import rclpy
+
         rclpy.init()
         rclpy.shutdown()
-        return {'ros2_available': True, 'using_mock': False}
+        return {"ros2_available": True, "using_mock": False}
     except ImportError:
-        return {'ros2_available': False, 'using_mock': True}
+        return {"ros2_available": False, "using_mock": True}
 
 
 # Export compatibility
 __all__ = [
-    'ROS2Node',
-    'Publisher',
-    'Subscriber',
-    'Service',
-    'ActionServer',
-    'Timer',
-    'Executor',
-    'ROS2MessageBus',
-    'MockRCLPY',
-    'Twist',
-    'PoseStamped',
-    'NavSatFix',
-    'Imu',
-    'Trigger',
-    'NavigateToPose',
-    'QoSProfile',
-    'qos_profiles',
-    'get_performance_stats',
-    'check_ros2_compatibility'
+    "ROS2Node",
+    "Publisher",
+    "Subscriber",
+    "Service",
+    "ActionServer",
+    "Timer",
+    "Executor",
+    "ROS2MessageBus",
+    "MockRCLPY",
+    "Twist",
+    "PoseStamped",
+    "NavSatFix",
+    "Imu",
+    "Trigger",
+    "NavigateToPose",
+    "QoSProfile",
+    "qos_profiles",
+    "get_performance_stats",
+    "check_ros2_compatibility",
 ]

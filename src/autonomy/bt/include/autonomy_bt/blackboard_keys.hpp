@@ -14,7 +14,20 @@
 
 namespace BlackboardKeys {
 
-    // ===== ROBOT STATE (Updated by odometry callback) =====
+    // ===== HIERARCHICAL (DOT) KEYS - URC / Hybrid =====
+    namespace Auto {
+        constexpr const char* MODE = "auto.mode";  // "teleop" | "autonomous" | "emergency"
+        constexpr const char* MODE_REQUEST = "auto.mode_request";  // pending mode change
+        constexpr const char* HUMAN_OVERRIDE_ACTIVE = "auto.human_override_active";  // bool
+        constexpr const char* ASSIST_ENABLED = "auto.assist_enabled";  // bool
+    }
+    namespace System {
+        constexpr const char* EMERGENCY_STOP = "system.emergency_stop";  // bool
+        constexpr const char* BATTERY_PERCENT = "system.battery_percent";  // float 0-100
+        constexpr const char* LAST_ERROR = "system.last_error";  // string
+    }
+
+    // ===== ROBOT STATE (Updated by odometry callback) - flat keys kept for compatibility =====
     constexpr const char* ROBOT_X = "robot_x";
     constexpr const char* ROBOT_Y = "robot_y";
     constexpr const char* ROBOT_YAW = "robot_yaw";
@@ -59,7 +72,22 @@ namespace BlackboardKeys {
     // ===== SYSTEM HEALTH (Updated by sensor checks and watchdogs) =====
     constexpr const char* SENSORS_OK = "sensors_ok";  // bool
     constexpr const char* NAVIGATION_OK = "navigation_ok";  // bool
-    constexpr const char* LAST_ERROR = "last_error";  // string
+    constexpr const char* LAST_ERROR = "last_error";  // string (flat key, alias for compatibility)
+
+    // ===== HARDWARE SENSORS (Updated by hardware_interface_node) =====
+    // IMU (double, m/s^2 or rad/s)
+    constexpr const char* IMU_LINEAR_ACCEL_X = "imu_linear_accel_x";
+    constexpr const char* IMU_LINEAR_ACCEL_Y = "imu_linear_accel_y";
+    constexpr const char* IMU_LINEAR_ACCEL_Z = "imu_linear_accel_z";
+    constexpr const char* IMU_ANGULAR_VEL_X = "imu_angular_vel_x";
+    constexpr const char* IMU_ANGULAR_VEL_Y = "imu_angular_vel_y";
+    constexpr const char* IMU_ANGULAR_VEL_Z = "imu_angular_vel_z";
+    // Motor temperatures (double, Celsius)
+    constexpr const char* MOTOR_TEMP_MAX = "motor_temp_max";
+    // GPS (double)
+    constexpr const char* GPS_LATITUDE = "gps_latitude";
+    constexpr const char* GPS_LONGITUDE = "gps_longitude";
+    constexpr const char* GPS_ALTITUDE = "gps_altitude";
 
 }  // namespace BlackboardKeys
 

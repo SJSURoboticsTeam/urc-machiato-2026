@@ -12,6 +12,7 @@ import subprocess
 import time
 from pathlib import Path
 
+
 def print_banner():
     """Print implementation banner."""
     print("=" * 80)
@@ -24,17 +25,21 @@ def print_banner():
     input("Press Enter to begin implementation...")
     print()
 
+
 def execute_phase(phase_name: str, script_path: str) -> bool:
     """Execute a phase implementation script."""
     print(f"🔧 {phase_name}")
     print("-" * len(phase_name))
-    
+
     try:
         if script_path.exists():
-            result = subprocess.run([
-                sys.executable, str(script_path)
-            ], capture_output=True, text=True, cwd=Path.cwd())
-            
+            result = subprocess.run(
+                [sys.executable, str(script_path)],
+                capture_output=True,
+                text=True,
+                cwd=Path.cwd(),
+            )
+
             if result.returncode == 0:
                 print(f"✅ {phase_name} completed successfully")
                 return True
@@ -45,15 +50,16 @@ def execute_phase(phase_name: str, script_path: str) -> bool:
         else:
             print(f"⚠️  {script_path} not found, skipping...")
             return True
-            
+
     except Exception as e:
         print(f"❌ Error executing {phase_name}: {e}")
         return False
 
+
 def create_additional_files():
     """Create additional configuration and documentation files."""
     print("\n📁 Creating additional configuration files...")
-    
+
     # Create requirements file for testing
     requirements = """# URC 2026 Testing Infrastructure Requirements
 pytest>=7.0.0
@@ -93,12 +99,12 @@ nav_msgs
 tf2_ros
 tf2_geometry_msgs
 """
-    
+
     with open("requirements-testing.txt", "w") as f:
         f.write(requirements)
-    
+
     print("✅ Created requirements-testing.txt")
-    
+
     # Create test configuration file
     config = """# URC 2026 Test Configuration
 
@@ -128,15 +134,15 @@ format = "json"
 include_metrics = true
 include_plots = true
 """
-    
+
     config_dir = Path("config")
     config_dir.mkdir(exist_ok=True)
-    
+
     with open(config_dir / "test_config.ini", "w") as f:
         f.write(config)
-    
+
     print("✅ Created config/test_config.ini")
-    
+
     # Create Makefile for easy testing
     makefile = """# URC 2026 Testing Makefile
 
@@ -208,12 +214,12 @@ clean:
 	rm -f performance_baseline.json
 	rm -f hardware_registry.json
 """
-    
+
     with open("Makefile", "w") as f:
         f.write(makefile)
-    
+
     print("✅ Created Makefile for testing")
-    
+
     # Create documentation
     readme = """# URC 2026 Testing Infrastructure
 
@@ -395,16 +401,17 @@ For issues:
 3. Consult configuration files
 4. Contact the testing team
 """
-    
+
     with open("TESTING_README.md", "w") as f:
         f.write(readme)
-    
+
     print("✅ Created TESTING_README.md")
+
 
 def validate_implementation():
     """Validate the implementation."""
     print("\n🔍 Validating implementation...")
-    
+
     validation_checks = [
         ("Import fix script", "tools/scripts/phase1_import_fixes.py"),
         ("HIL infrastructure script", "tools/scripts/phase2_hil_infrastructure.py"),
@@ -422,17 +429,18 @@ def validate_implementation():
         ("Makefile", "Makefile"),
         ("Testing documentation", "TESTING_README.md"),
     ]
-    
+
     all_passed = True
-    
+
     for name, path in validation_checks:
         if Path(path).exists():
             print(f"✅ {name}")
         else:
             print(f"❌ {name} - Missing: {path}")
             all_passed = False
-    
+
     return all_passed
+
 
 def print_completion_summary():
     """Print completion summary and next steps."""
@@ -474,43 +482,54 @@ def print_completion_summary():
     print("- Consult configuration files")
     print()
 
+
 def main():
     """Main implementation function."""
     print_banner()
-    
+
     # Change to project root
     project_root = Path(__file__).parent
     os.chdir(project_root)
-    
+
     # Execute phases
     phases = [
         ("Phase 1: Import Path Fixes", Path("tools/scripts/phase1_import_fixes.py")),
-        ("Phase 2: HIL Infrastructure", Path("tools/scripts/phase2_hil_infrastructure.py")),
-        ("Phase 3: WebSocket Testing", Path("tools/scripts/phase3_websocket_testing.py")),
-        ("Phase 4: Performance Testing", Path("tools/scripts/phase4_performance_testing.py")),
+        (
+            "Phase 2: HIL Infrastructure",
+            Path("tools/scripts/phase2_hil_infrastructure.py"),
+        ),
+        (
+            "Phase 3: WebSocket Testing",
+            Path("tools/scripts/phase3_websocket_testing.py"),
+        ),
+        (
+            "Phase 4: Performance Testing",
+            Path("tools/scripts/phase4_performance_testing.py"),
+        ),
     ]
-    
+
     success_count = 0
-    
+
     for phase_name, script_path in phases:
         if execute_phase(phase_name, script_path):
             success_count += 1
         print()
-    
+
     # Create additional files
     create_additional_files()
-    
+
     # Validate implementation
     if validate_implementation():
         print("\n✅ All validation checks passed!")
     else:
         print("\n⚠️  Some validation checks failed. Review the output above.")
-    
+
     # Print completion summary
     print_completion_summary()
-    
+
     # Return success if most phases completed
     return success_count >= len(phases) * 0.75
+
 
 if __name__ == "__main__":
     success = main()

@@ -11,16 +11,29 @@ import json
 import statistics
 from typing import Dict, Any, List
 from dataclasses import dataclass, asdict
-from src.testing.performance_profiling import PerformanceProfiler, MotionControlBenchmark
-from src.comms.binary_sensor_protocol import BinarySensorProtocol, IMUData
+from src.testing.performance_profiling import (
+    PerformanceProfiler,
+    MotionControlBenchmark,
+)
+from src.infrastructure.monitoring.binary_sensor_protocol import (
+    BinarySensorProtocol,
+    IMUData,
+)
 from src.sensors.timestamp_provider import get_timestamp_provider, SensorType
-from src.motion.ipc_motion_bridge import create_motion_bridge_server, create_motion_bridge_client
-from src.comms.adaptive_circuit_breaker import get_adaptive_circuit_breaker, CircuitBreakerOpenException
+from src.motion.ipc_motion_bridge import (
+    create_motion_bridge_server,
+    create_motion_bridge_client,
+)
+from src.infrastructure.monitoring.adaptive_circuit_breaker import (
+    get_adaptive_circuit_breaker,
+    CircuitBreakerOpenException,
+)
 
 
 @dataclass
 class PerformanceBaseline:
     """Performance baseline data."""
+
     operation: str
     measurements: List[float]
     statistics: Dict[str, float]
@@ -31,6 +44,7 @@ class PerformanceBaseline:
 @dataclass
 class ArchitectureComparison:
     """Comparison between old and new architecture."""
+
     operation: str
     old_implementation: str
     new_implementation: str
@@ -58,22 +72,22 @@ class PerformanceBaselineRunner:
         results = {}
 
         # Binary protocol vs JSON baseline
-        results['binary_protocol'] = self._baseline_binary_protocol()
+        results["binary_protocol"] = self._baseline_binary_protocol()
 
         # Sensor timestamping baseline
-        results['sensor_timestamps'] = self._baseline_sensor_timestamps()
+        results["sensor_timestamps"] = self._baseline_sensor_timestamps()
 
         # IPC motion control baseline
-        results['ipc_motion_bridge'] = self._baseline_ipc_motion_bridge()
+        results["ipc_motion_bridge"] = self._baseline_ipc_motion_bridge()
 
         # Motion control deadline compliance
-        results['motion_control_deadlines'] = self._baseline_motion_control_deadlines()
+        results["motion_control_deadlines"] = self._baseline_motion_control_deadlines()
 
         # Circuit breaker performance
-        results['adaptive_circuit_breaker'] = self._baseline_circuit_breaker()
+        results["adaptive_circuit_breaker"] = self._baseline_circuit_breaker()
 
         # Overall system baseline
-        results['system_baseline'] = self._establish_system_baseline()
+        results["system_baseline"] = self._establish_system_baseline()
 
         # Generate comparisons
         self._generate_architecture_comparisons()
@@ -91,9 +105,16 @@ class PerformanceBaselineRunner:
         imu_data = IMUData(
             measurement_timestamp_ns=int(time.time_ns()),
             reception_timestamp_ns=int(time.time_ns()),
-            accel_x=0.1, accel_y=0.2, accel_z=9.8,
-            gyro_x=0.01, gyro_y=0.02, gyro_z=0.03,
-            orientation_x=0.0, orientation_y=0.0, orientation_z=0.0, orientation_w=1.0
+            accel_x=0.1,
+            accel_y=0.2,
+            accel_z=9.8,
+            gyro_x=0.01,
+            gyro_y=0.02,
+            gyro_z=0.03,
+            orientation_x=0.0,
+            orientation_y=0.0,
+            orientation_z=0.0,
+            orientation_w=1.0,
         )
 
         iterations = 10000
@@ -122,18 +143,22 @@ class PerformanceBaselineRunner:
             "reception_timestamp_ns": imu_data.reception_timestamp_ns,
             "accel": [imu_data.accel_x, imu_data.accel_y, imu_data.accel_z],
             "gyro": [imu_data.gyro_x, imu_data.gyro_y, imu_data.gyro_z],
-            "orientation": [imu_data.orientation_x, imu_data.orientation_y,
-                           imu_data.orientation_z, imu_data.orientation_w]
+            "orientation": [
+                imu_data.orientation_x,
+                imu_data.orientation_y,
+                imu_data.orientation_z,
+                imu_data.orientation_w,
+            ],
         }
 
         start_time = time.perf_counter()
         for _ in range(iterations):
-            json_msg = json.dumps(json_data).encode('utf-8')
+            json_msg = json.dumps(json_data).encode("utf-8")
         json_encode_time = time.perf_counter() - start_time
 
         start_time = time.perf_counter()
         for _ in range(iterations):
-            decoded = json.loads(json_msg.decode('utf-8'))
+            decoded = json.loads(json_msg.decode("utf-8"))
         json_decode_time = time.perf_counter() - start_time
 
         json_encode_ms = (json_encode_time / iterations) * 1000
@@ -142,17 +167,17 @@ class PerformanceBaselineRunner:
 
         # Results
         result = {
-            'binary_encode_ms': binary_encode_ms,
-            'binary_decode_ms': binary_decode_ms,
-            'binary_roundtrip_ms': binary_roundtrip_ms,
-            'json_encode_ms': json_encode_ms,
-            'json_decode_ms': json_decode_ms,
-            'json_roundtrip_ms': json_roundtrip_ms,
-            'improvement_factor': json_roundtrip_ms / binary_roundtrip_ms,
-            'binary_size_bytes': len(binary_msg),
-            'json_size_bytes': len(json.dumps(json_data).encode('utf-8')),
-            'size_ratio': len(json.dumps(json_data).encode('utf-8')) / len(binary_msg),
-            'iterations': iterations
+            "binary_encode_ms": binary_encode_ms,
+            "binary_decode_ms": binary_decode_ms,
+            "binary_roundtrip_ms": binary_roundtrip_ms,
+            "json_encode_ms": json_encode_ms,
+            "json_decode_ms": json_decode_ms,
+            "json_roundtrip_ms": json_roundtrip_ms,
+            "improvement_factor": json_roundtrip_ms / binary_roundtrip_ms,
+            "binary_size_bytes": len(binary_msg),
+            "json_size_bytes": len(json.dumps(json_data).encode("utf-8")),
+            "size_ratio": len(json.dumps(json_data).encode("utf-8")) / len(binary_msg),
+            "iterations": iterations,
         }
 
         print(f"Binary encode: {binary_encode_ms:.3f}ms")
@@ -167,19 +192,19 @@ class PerformanceBaselineRunner:
         print(f"Size ratio: {result['size_ratio']:.1f}x smaller")
 
         # Store baseline
-        self.baselines['binary_protocol'] = PerformanceBaseline(
-            operation='binary_protocol_serialization',
+        self.baselines["binary_protocol"] = PerformanceBaseline(
+            operation="binary_protocol_serialization",
             measurements=[binary_roundtrip_ms] * iterations,
             statistics={
-                'mean_ms': binary_roundtrip_ms,
-                'p50_ms': binary_roundtrip_ms,
-                'p95_ms': binary_roundtrip_ms,
-                'p99_ms': binary_roundtrip_ms,
-                'min_ms': binary_roundtrip_ms,
-                'max_ms': binary_roundtrip_ms
+                "mean_ms": binary_roundtrip_ms,
+                "p50_ms": binary_roundtrip_ms,
+                "p95_ms": binary_roundtrip_ms,
+                "p99_ms": binary_roundtrip_ms,
+                "min_ms": binary_roundtrip_ms,
+                "max_ms": binary_roundtrip_ms,
             },
             timestamp=time.time(),
-            system_info={'iterations': iterations}
+            system_info={"iterations": iterations},
         )
 
         return result
@@ -197,7 +222,7 @@ class PerformanceBaselineRunner:
             raw_data = {
                 "accel_x": 0.1 + i * 0.001,
                 "accel_y": 0.2 + i * 0.0005,
-                "accel_z": 9.8
+                "accel_z": 9.8,
             }
 
             start_time = time.perf_counter()
@@ -214,37 +239,39 @@ class PerformanceBaselineRunner:
         p99_latency = latencies[int(len(latencies) * 0.99)]
 
         result = {
-            'iterations': iterations,
-            'mean_latency_ms': mean_latency,
-            'p50_latency_ms': p50_latency,
-            'p95_latency_ms': p95_latency,
-            'p99_latency_ms': p99_latency,
-            'min_latency_ms': min(latencies),
-            'max_latency_ms': max(latencies),
-            'requirement_target_ms': 5.0,  # Should be <5ms
-            'meets_requirement': p99_latency < 5.0
+            "iterations": iterations,
+            "mean_latency_ms": mean_latency,
+            "p50_latency_ms": p50_latency,
+            "p95_latency_ms": p95_latency,
+            "p99_latency_ms": p99_latency,
+            "min_latency_ms": min(latencies),
+            "max_latency_ms": max(latencies),
+            "requirement_target_ms": 5.0,  # Should be <5ms
+            "meets_requirement": p99_latency < 5.0,
         }
 
         print(f"Mean latency: {mean_latency:.3f}ms")
         print(f"P50 latency: {p50_latency:.3f}ms")
         print(f"P95 latency: {p95_latency:.3f}ms")
         print(f"P99 latency: {p99_latency:.3f}ms")
-        print(f"Requirement (<5ms p99): {'✅ MET' if result['meets_requirement'] else '❌ FAILED'}")
+        print(
+            f"Requirement (<5ms p99): {'✅ MET' if result['meets_requirement'] else '❌ FAILED'}"
+        )
 
         # Store baseline
-        self.baselines['sensor_timestamps'] = PerformanceBaseline(
-            operation='sensor_timestamp_tagging',
+        self.baselines["sensor_timestamps"] = PerformanceBaseline(
+            operation="sensor_timestamp_tagging",
             measurements=latencies,
             statistics={
-                'mean_ms': mean_latency,
-                'p50_ms': p50_latency,
-                'p95_ms': p95_latency,
-                'p99_ms': p99_latency,
-                'min_ms': min(latencies),
-                'max_ms': max(latencies)
+                "mean_ms": mean_latency,
+                "p50_ms": p50_latency,
+                "p95_ms": p95_latency,
+                "p99_ms": p99_latency,
+                "min_ms": min(latencies),
+                "max_ms": max(latencies),
             },
             timestamp=time.time(),
-            system_info={'iterations': iterations, 'sensor_type': 'IMU'}
+            system_info={"iterations": iterations, "sensor_type": "IMU"},
         )
 
         return result
@@ -267,8 +294,7 @@ class PerformanceBaselineRunner:
                 from src.motion.ipc_motion_bridge import VelocityCommand
 
                 command = VelocityCommand(
-                    linear_x=0.5 + i * 0.001,
-                    angular_z=0.1 + i * 0.0005
+                    linear_x=0.5 + i * 0.001, angular_z=0.1 + i * 0.0005
                 )
 
                 start_time = time.perf_counter()
@@ -283,7 +309,11 @@ class PerformanceBaselineRunner:
 
             # Test state latency
             for i in range(iterations):
-                from src.motion.ipc_motion_bridge import MotionControlState, MotionControlStatus, VelocityCommand
+                from src.motion.ipc_motion_bridge import (
+                    MotionControlState,
+                    MotionControlStatus,
+                    VelocityCommand,
+                )
 
                 state = MotionControlState(
                     timestamp_ns=time.time_ns(),
@@ -295,7 +325,7 @@ class PerformanceBaselineRunner:
                     hardware_ok=True,
                     temperature_c=35.0,
                     battery_voltage=12.5,
-                    motor_currents=(1.2, 1.1)
+                    motor_currents=(1.2, 1.1),
                 )
 
                 start_time = time.perf_counter()
@@ -316,45 +346,49 @@ class PerformanceBaselineRunner:
             state_p99 = state_latencies[int(len(state_latencies) * 0.99)]
 
             result = {
-                'iterations': iterations,
-                'command_latencies': {
-                    'mean_ms': statistics.mean(command_latencies),
-                    'p50_ms': command_latencies[int(len(command_latencies) * 0.5)],
-                    'p95_ms': command_latencies[int(len(command_latencies) * 0.95)],
-                    'p99_ms': cmd_p99,
+                "iterations": iterations,
+                "command_latencies": {
+                    "mean_ms": statistics.mean(command_latencies),
+                    "p50_ms": command_latencies[int(len(command_latencies) * 0.5)],
+                    "p95_ms": command_latencies[int(len(command_latencies) * 0.95)],
+                    "p99_ms": cmd_p99,
                 },
-                'state_latencies': {
-                    'mean_ms': statistics.mean(state_latencies),
-                    'p50_ms': state_latencies[int(len(state_latencies) * 0.5)],
-                    'p95_ms': state_latencies[int(len(state_latencies) * 0.95)],
-                    'p99_ms': state_p99,
+                "state_latencies": {
+                    "mean_ms": statistics.mean(state_latencies),
+                    "p50_ms": state_latencies[int(len(state_latencies) * 0.5)],
+                    "p95_ms": state_latencies[int(len(state_latencies) * 0.95)],
+                    "p99_ms": state_p99,
                 },
-                'requirement_target_ms': 5.0,  # <5ms p99 for IPC
-                'command_meets_requirement': cmd_p99 < 5.0,
-                'state_meets_requirement': state_p99 < 5.0,
-                'overall_meets_requirement': cmd_p99 < 5.0 and state_p99 < 5.0
+                "requirement_target_ms": 5.0,  # <5ms p99 for IPC
+                "command_meets_requirement": cmd_p99 < 5.0,
+                "state_meets_requirement": state_p99 < 5.0,
+                "overall_meets_requirement": cmd_p99 < 5.0 and state_p99 < 5.0,
             }
 
             print(f"Command p99 latency: {cmd_p99:.3f}ms")
             print(f"State p99 latency: {state_p99:.3f}ms")
-            print(f"Command requirement (<5ms p99): {'✅ MET' if result['command_meets_requirement'] else '❌ FAILED'}")
-            print(f"State requirement (<5ms p99): {'✅ MET' if result['state_meets_requirement'] else '❌ FAILED'}")
-
-            # Store baselines
-            self.baselines['ipc_command_latency'] = PerformanceBaseline(
-                operation='ipc_command_roundtrip',
-                measurements=command_latencies,
-                statistics=result['command_latencies'],
-                timestamp=time.time(),
-                system_info={'iterations': iterations}
+            print(
+                f"Command requirement (<5ms p99): {'✅ MET' if result['command_meets_requirement'] else '❌ FAILED'}"
+            )
+            print(
+                f"State requirement (<5ms p99): {'✅ MET' if result['state_meets_requirement'] else '❌ FAILED'}"
             )
 
-            self.baselines['ipc_state_latency'] = PerformanceBaseline(
-                operation='ipc_state_roundtrip',
-                measurements=state_latencies,
-                statistics=result['state_latencies'],
+            # Store baselines
+            self.baselines["ipc_command_latency"] = PerformanceBaseline(
+                operation="ipc_command_roundtrip",
+                measurements=command_latencies,
+                statistics=result["command_latencies"],
                 timestamp=time.time(),
-                system_info={'iterations': iterations}
+                system_info={"iterations": iterations},
+            )
+
+            self.baselines["ipc_state_latency"] = PerformanceBaseline(
+                operation="ipc_state_roundtrip",
+                measurements=state_latencies,
+                statistics=result["state_latencies"],
+                timestamp=time.time(),
+                system_info={"iterations": iterations},
             )
 
             return result
@@ -370,26 +404,29 @@ class PerformanceBaselineRunner:
         # Use the specialized benchmark
         benchmark = MotionControlBenchmark()
         result = benchmark.benchmark_motion_control_loop(
-            iterations=1000,
-            target_frequency_hz=50.0
+            iterations=1000, target_frequency_hz=50.0
         )
 
         print(f"P99 latency: {result['p99_latency_ms']:.3f}ms")
-        print(f"Deadline violations: {result['deadline_violations']}/{result['iterations']}")
+        print(
+            f"Deadline violations: {result['deadline_violations']}/{result['iterations']}"
+        )
         print(f"Violation rate: {result['violation_rate_percent']:.1f}%")
-        print(f"Deadline compliance: {'✅ MET' if result['deadline_met'] else '❌ FAILED'}")
+        print(
+            f"Deadline compliance: {'✅ MET' if result['deadline_met'] else '❌ FAILED'}"
+        )
 
         # Store baseline
-        self.baselines['motion_control_loop'] = PerformanceBaseline(
-            operation='motion_control_loop_50hz',
+        self.baselines["motion_control_loop"] = PerformanceBaseline(
+            operation="motion_control_loop_50hz",
             measurements=[],  # Would need to capture individual measurements
             statistics={
-                'p99_latency_ms': result['p99_latency_ms'],
-                'deadline_violations': result['deadline_violations'],
-                'violation_rate_percent': result['violation_rate_percent']
+                "p99_latency_ms": result["p99_latency_ms"],
+                "deadline_violations": result["deadline_violations"],
+                "violation_rate_percent": result["violation_rate_percent"],
             },
             timestamp=time.time(),
-            system_info=result
+            system_info=result,
         )
 
         return result
@@ -399,7 +436,7 @@ class PerformanceBaselineRunner:
         print("\n📊 Establishing Circuit Breaker Baseline...")
 
         # Test different service profiles
-        services = ['motion_control', 'sensor_fusion', 'telemetry']
+        services = ["motion_control", "sensor_fusion", "telemetry"]
         results = {}
 
         for service in services:
@@ -425,17 +462,21 @@ class PerformanceBaselineRunner:
 
             latencies.sort()
             results[service] = {
-                'breaker_config': breaker.config.__dict__,
-                'requirement': breaker.requirement.__dict__,
-                'performance': {
-                    'iterations': iterations,
-                    'mean_latency_ms': statistics.mean(latencies),
-                    'p99_latency_ms': latencies[int(len(latencies) * 0.99)],
-                    'overhead_ms': latencies[int(len(latencies) * 0.99)]  # Circuit breaker overhead
-                }
+                "breaker_config": breaker.config.__dict__,
+                "requirement": breaker.requirement.__dict__,
+                "performance": {
+                    "iterations": iterations,
+                    "mean_latency_ms": statistics.mean(latencies),
+                    "p99_latency_ms": latencies[int(len(latencies) * 0.99)],
+                    "overhead_ms": latencies[
+                        int(len(latencies) * 0.99)
+                    ],  # Circuit breaker overhead
+                },
             }
 
-            print(f"  {service}: p99 overhead = {results[service]['performance']['p99_latency_ms']:.3f}ms")
+            print(
+                f"  {service}: p99 overhead = {results[service]['performance']['p99_latency_ms']:.3f}ms"
+            )
 
         return results
 
@@ -462,40 +503,44 @@ class PerformanceBaselineRunner:
 
         # Analyze results
         system_baseline = {
-            'monitoring_duration_seconds': baseline_duration_seconds,
-            'system_metrics': {},
-            'overall_health': 'good',
-            'performance_violations': len(system_report.get('violations', []))
+            "monitoring_duration_seconds": baseline_duration_seconds,
+            "system_metrics": {},
+            "overall_health": "good",
+            "performance_violations": len(system_report.get("violations", [])),
         }
 
         # Check key system metrics
-        profiles = system_report.get('profiles', {})
+        profiles = system_report.get("profiles", {})
 
-        if 'system_cpu_usage' in profiles:
-            cpu_stats = profiles['system_cpu_usage']
-            system_baseline['system_metrics']['cpu_usage_percent'] = {
-                'mean': cpu_stats.get('mean_ms', 0),
-                'p95': cpu_stats.get('p95_ms', 0),
-                'max': cpu_stats.get('max_ms', 0)
+        if "system_cpu_usage" in profiles:
+            cpu_stats = profiles["system_cpu_usage"]
+            system_baseline["system_metrics"]["cpu_usage_percent"] = {
+                "mean": cpu_stats.get("mean_ms", 0),
+                "p95": cpu_stats.get("p95_ms", 0),
+                "max": cpu_stats.get("max_ms", 0),
             }
 
-        if 'system_memory_usage' in profiles:
-            mem_stats = profiles['system_memory_usage']
-            system_baseline['system_metrics']['memory_usage_mb'] = {
-                'mean': mem_stats.get('mean_ms', 0),
-                'p95': mem_stats.get('p95_ms', 0),
-                'max': mem_stats.get('max_ms', 0)
+        if "system_memory_usage" in profiles:
+            mem_stats = profiles["system_memory_usage"]
+            system_baseline["system_metrics"]["memory_usage_mb"] = {
+                "mean": mem_stats.get("mean_ms", 0),
+                "p95": mem_stats.get("p95_ms", 0),
+                "max": mem_stats.get("max_ms", 0),
             }
 
         # Determine overall health
-        violations = system_report.get('violations', [])
+        violations = system_report.get("violations", [])
         if violations:
-            system_baseline['overall_health'] = 'degraded'
-            system_baseline['violation_details'] = violations[-5:]  # Last 5 violations
+            system_baseline["overall_health"] = "degraded"
+            system_baseline["violation_details"] = violations[-5:]  # Last 5 violations
 
         print("System baseline established:")
-        print(f"  CPU usage: {system_baseline['system_metrics'].get('cpu_usage_percent', {}).get('p95', 0):.1f}% p95")
-        print(f"  Memory usage: {system_baseline['system_metrics'].get('memory_usage_mb', {}).get('max', 0):.1f}MB max")
+        print(
+            f"  CPU usage: {system_baseline['system_metrics'].get('cpu_usage_percent', {}).get('p95', 0):.1f}% p95"
+        )
+        print(
+            f"  Memory usage: {system_baseline['system_metrics'].get('memory_usage_mb', {}).get('max', 0):.1f}MB max"
+        )
         print(f"  Violations: {len(violations)}")
         print(f"  Health: {system_baseline['overall_health']}")
 
@@ -508,45 +553,51 @@ class PerformanceBaselineRunner:
         # Define comparisons
         comparisons_data = [
             {
-                'operation': 'sensor_serialization',
-                'old_implementation': 'JSON serialization',
-                'new_implementation': 'Binary protocol',
-                'old_performance_ms': 0.045,  # Estimated from measurements
-                'new_performance_ms': self.baselines.get('binary_protocol', PerformanceBaseline('dummy', [], {}, 0, {})).statistics.get('mean_ms', 0.013),
-                'requirement_target': 0.020  # <20ms budget contribution
+                "operation": "sensor_serialization",
+                "old_implementation": "JSON serialization",
+                "new_implementation": "Binary protocol",
+                "old_performance_ms": 0.045,  # Estimated from measurements
+                "new_performance_ms": self.baselines.get(
+                    "binary_protocol", PerformanceBaseline("dummy", [], {}, 0, {})
+                ).statistics.get("mean_ms", 0.013),
+                "requirement_target": 0.020,  # <20ms budget contribution
             },
             {
-                'operation': 'motion_control_latency',
-                'old_implementation': 'ROS2 DDS (unbounded)',
-                'new_implementation': 'IPC shared memory',
-                'old_performance_ms': 100.0,  # Estimated p99 from DDS
-                'new_performance_ms': 2.0,    # From IPC measurements
-                'requirement_target': 20.0    # <20ms p99 for 50Hz control
+                "operation": "motion_control_latency",
+                "old_implementation": "ROS2 DDS (unbounded)",
+                "new_implementation": "IPC shared memory",
+                "old_performance_ms": 100.0,  # Estimated p99 from DDS
+                "new_performance_ms": 2.0,  # From IPC measurements
+                "requirement_target": 20.0,  # <20ms p99 for 50Hz control
             },
             {
-                'operation': 'sensor_timestamp_accuracy',
-                'old_implementation': 'WebSocket arrival time',
-                'new_implementation': 'Hardware latency correction',
-                'old_performance_ms': 50.0,   # Estimated error
-                'new_performance_ms': 2.0,    # From timestamp provider
-                'requirement_target': 5.0     # <5ms timestamp accuracy
-            }
+                "operation": "sensor_timestamp_accuracy",
+                "old_implementation": "WebSocket arrival time",
+                "new_implementation": "Hardware latency correction",
+                "old_performance_ms": 50.0,  # Estimated error
+                "new_performance_ms": 2.0,  # From timestamp provider
+                "requirement_target": 5.0,  # <5ms timestamp accuracy
+            },
         ]
 
         for comp_data in comparisons_data:
-            improvement = comp_data['old_performance_ms'] / comp_data['new_performance_ms']
-            meets_req = comp_data['new_performance_ms'] <= comp_data['requirement_target']
+            improvement = (
+                comp_data["old_performance_ms"] / comp_data["new_performance_ms"]
+            )
+            meets_req = (
+                comp_data["new_performance_ms"] <= comp_data["requirement_target"]
+            )
 
             comparison = ArchitectureComparison(
-                operation=comp_data['operation'],
-                old_implementation=comp_data['old_implementation'],
-                new_implementation=comp_data['new_implementation'],
-                old_performance={'p99_ms': comp_data['old_performance_ms']},
-                new_performance={'p99_ms': comp_data['new_performance_ms']},
+                operation=comp_data["operation"],
+                old_implementation=comp_data["old_implementation"],
+                new_implementation=comp_data["new_implementation"],
+                old_performance={"p99_ms": comp_data["old_performance_ms"]},
+                new_performance={"p99_ms": comp_data["new_performance_ms"]},
                 improvement_factor=improvement,
                 meets_requirement=meets_req,
-                requirement_target=comp_data['requirement_target'],
-                timestamp=time.time()
+                requirement_target=comp_data["requirement_target"],
+                timestamp=time.time(),
             )
 
             self.comparisons.append(comparison)
@@ -560,73 +611,88 @@ class PerformanceBaselineRunner:
         filename = f"performance_baseline_{timestamp}.json"
 
         output = {
-            'timestamp': time.time(),
-            'timestamp_str': timestamp,
-            'baselines': {name: asdict(baseline) for name, baseline in self.baselines.items()},
-            'comparisons': [asdict(comp) for comp in self.comparisons],
-            'results': results,
-            'summary': self._generate_summary(results)
+            "timestamp": time.time(),
+            "timestamp_str": timestamp,
+            "baselines": {
+                name: asdict(baseline) for name, baseline in self.baselines.items()
+            },
+            "comparisons": [asdict(comp) for comp in self.comparisons],
+            "results": results,
+            "summary": self._generate_summary(results),
         }
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(output, f, indent=2, default=str)
 
         print(f"\n💾 Performance baseline saved to: {filename}")
 
         # Print summary
-        summary = output['summary']
+        summary = output["summary"]
         print("\n🎯 PERFORMANCE BASELINE SUMMARY")
         print("=" * 50)
         print(f"Overall Status: {'✅ PASS' if summary['overall_pass'] else '❌ FAIL'}")
-        print(f"Critical Requirements Met: {summary['critical_requirements_met']}/{summary['total_critical_requirements']}")
+        print(
+            f"Critical Requirements Met: {summary['critical_requirements_met']}/{summary['total_critical_requirements']}"
+        )
         print(f"Average improvement: {summary['average_improvement_factor']:.1f}x")
-        print(f"Architecture Readiness: {summary['architecture_readiness_percent']:.1f}%")
+        print(
+            f"Architecture Readiness: {summary['architecture_readiness_percent']:.1f}%"
+        )
 
     def _generate_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate performance summary."""
         summary = {
-            'overall_pass': True,
-            'critical_requirements_met': 0,
-            'total_critical_requirements': 0,
-            'average_improvement_factor': 0.0,
-            'architecture_readiness_percent': 0.0
+            "overall_pass": True,
+            "critical_requirements_met": 0,
+            "total_critical_requirements": 0,
+            "average_improvement_factor": 0.0,
+            "architecture_readiness_percent": 0.0,
         }
 
         # Check critical requirements
         critical_checks = [
-            ('binary_protocol', lambda r: r.get('improvement_factor', 0) > 2.0),
-            ('sensor_timestamps', lambda r: r.get('meets_requirement', False)),
-            ('ipc_motion_bridge', lambda r: r.get('overall_meets_requirement', False)),
-            ('motion_control_deadlines', lambda r: r.get('deadline_met', False))
+            ("binary_protocol", lambda r: r.get("improvement_factor", 0) > 2.0),
+            ("sensor_timestamps", lambda r: r.get("meets_requirement", False)),
+            ("ipc_motion_bridge", lambda r: r.get("overall_meets_requirement", False)),
+            ("motion_control_deadlines", lambda r: r.get("deadline_met", False)),
         ]
 
         for check_name, check_func in critical_checks:
-            summary['total_critical_requirements'] += 1
+            summary["total_critical_requirements"] += 1
             if check_name in results and check_func(results[check_name]):
-                summary['critical_requirements_met'] += 1
+                summary["critical_requirements_met"] += 1
             else:
-                summary['overall_pass'] = False
+                summary["overall_pass"] = False
 
         # Calculate average improvement
-        improvements = [comp.improvement_factor for comp in self.comparisons if comp.improvement_factor > 1]
+        improvements = [
+            comp.improvement_factor
+            for comp in self.comparisons
+            if comp.improvement_factor > 1
+        ]
         if improvements:
-            summary['average_improvement_factor'] = statistics.mean(improvements)
+            summary["average_improvement_factor"] = statistics.mean(improvements)
 
         # Calculate architecture readiness
         readiness_factors = [
             0.3,  # Binary protocol (30% weight)
             0.2,  # Sensor timestamps (20% weight)
             0.3,  # IPC motion bridge (30% weight)
-            0.2   # Motion control deadlines (20% weight)
+            0.2,  # Motion control deadlines (20% weight)
         ]
 
         readiness_scores = []
-        result_keys = ['binary_protocol', 'sensor_timestamps', 'ipc_motion_bridge', 'motion_control_deadlines']
+        result_keys = [
+            "binary_protocol",
+            "sensor_timestamps",
+            "ipc_motion_bridge",
+            "motion_control_deadlines",
+        ]
         check_funcs = [
-            lambda r: r.get('improvement_factor', 0) > 2.0,
-            lambda r: r.get('meets_requirement', False),
-            lambda r: r.get('overall_meets_requirement', False),
-            lambda r: r.get('deadline_met', False)
+            lambda r: r.get("improvement_factor", 0) > 2.0,
+            lambda r: r.get("meets_requirement", False),
+            lambda r: r.get("overall_meets_requirement", False),
+            lambda r: r.get("deadline_met", False),
         ]
 
         for i, (key, check_func) in enumerate(zip(result_keys, check_funcs)):
@@ -635,7 +701,7 @@ class PerformanceBaselineRunner:
             else:
                 readiness_scores.append(0)
 
-        summary['architecture_readiness_percent'] = sum(readiness_scores) * 100
+        summary["architecture_readiness_percent"] = sum(readiness_scores) * 100
 
         return summary
 

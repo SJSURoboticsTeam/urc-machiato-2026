@@ -131,12 +131,16 @@ class SystemResourceMonitor:
             "max_cpu": max(self.cpu_samples),
             "avg_memory": statistics.mean(self.memory_samples),
             "max_memory": max(self.memory_samples),
-            "cpu_variance": statistics.variance(self.cpu_samples)
-            if len(self.cpu_samples) > 1
-            else 0,
-            "memory_variance": statistics.variance(self.memory_samples)
-            if len(self.memory_samples) > 1
-            else 0,
+            "cpu_variance": (
+                statistics.variance(self.cpu_samples)
+                if len(self.cpu_samples) > 1
+                else 0
+            ),
+            "memory_variance": (
+                statistics.variance(self.memory_samples)
+                if len(self.memory_samples) > 1
+                else 0
+            ),
         }
 
 
@@ -341,9 +345,11 @@ class IntegratedStressTest:
                     "timestamp": time.time(),
                     "type": "cross_system_conflict",
                     "description": "Simulated cross-system communication conflict",
-                    "severity": "high"
-                    if self.config.stress_level == IntegratedStressLevel.EXTREME
-                    else "medium",
+                    "severity": (
+                        "high"
+                        if self.config.stress_level == IntegratedStressLevel.EXTREME
+                        else "medium"
+                    ),
                 }
                 conflicts.append(conflict)
 

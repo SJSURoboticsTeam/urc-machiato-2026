@@ -1,0 +1,217 @@
+# Simulation Environment Configuration
+environment: simulation
+version: "2.0.0"
+
+# ==================================================
+# ROS2 CONFIGURATION
+# ==================================================
+ros2:
+  namespace: "urc"
+  domain_id: 42
+  use_sim_time: true  # Use simulation time
+  qos_preset: "reliable"
+  distro: "humble"
+
+# ==================================================
+# DOCKER CONFIGURATION
+# ==================================================
+docker:
+  profiles: ["sim"]
+  compose_file: "docker-compose.unified.yml"
+  env_file: ".env.unified"
+  project_prefix: "urc2026"
+
+# ==================================================
+# MOCK SYSTEMS
+# ==================================================
+mock_systems:
+  can_enabled: true
+  websocket_enabled: true
+  sensor_simulation: true
+  hardware_mock: true
+
+# ==================================================
+# SIMULATION CONFIGURATION
+# ==================================================
+simulation:
+  # Gazebo configuration
+  gazebo_gui_enabled: true
+  gazebo_gui_port: 11345
+  gazebo_master_port: 11311
+  gazebo_master_uri: "http://localhost:11311"
+  
+  # World and robot configuration
+  default_world: "urc_mars_world"
+  default_robot: "urc_rover"
+  world_files_path: "simulation/worlds"
+  robot_models_path: "simulation/models"
+  
+  # Sensor simulation
+  sensor_simulation_enabled: true
+  sensor_update_rate: 30.0
+  sensor_noise_level: 0.1
+  camera_enabled: true
+  lidar_enabled: true
+  imu_enabled: true
+  gps_enabled: true
+  
+  # Display configuration
+  display: "${DISPLAY:-:0}"
+  xvfb_enabled: false  # Use real display for simulation
+  gui_enabled: true
+  
+  # Physics configuration
+  physics_engine: "ode"
+  gravity_z: -9.81
+  max_step_size: 0.01
+  real_time_factor: 1.0
+  
+  # Mars environment specific
+  mars_environment:
+    gravity_multiplier: 0.38  # Mars gravity
+    atmospheric_pressure: 610.0  # Pa
+    wind_simulation: true
+    dust_simulation: true
+    temperature_range: [-63, 20]  # Celsius
+
+# ==================================================
+# WORLD CONFIGURATION
+# ==================================================
+worlds:
+  urc_mars_world:
+    description: "URC Mars competition world"
+    file: "urc_mars_world.world"
+    size: [100, 100]  # meters
+    terrain_types: ["rocky", "sandy", "crater"]
+    
+  test_world:
+    description: "Simple test world"
+    file: "test_world.world"
+    size: [50, 50]  # meters
+    terrain_types: ["flat"]
+    
+  obstacle_course:
+    description: "Obstacle navigation course"
+    file: "obstacle_course.world"
+    size: [75, 75]  # meters
+    terrain_types: ["rocky", "sloped"]
+
+# ==================================================
+# ROBOT CONFIGURATION
+# ==================================================
+robots:
+  urc_rover:
+    description: "URC 2026 competition rover"
+    model_file: "urc_rover.urdf"
+    
+    # Physical properties
+    mass: 50.0  # kg
+    wheelbase: 0.8  # meters
+    track_width: 0.6  # meters
+    wheel_diameter: 0.3  # meters
+    
+    # Sensors
+    sensors:
+      - type: "camera"
+        model: "realsense_d435"
+        position: [0.2, 0.0, 0.5]
+        orientation: [0.0, 0.0, 0.0]
+        
+      - type: "lidar"
+        model: "sick_lms111"
+        position: [0.0, 0.0, 0.8]
+        orientation: [0.0, 0.0, 0.0]
+        
+      - type: "imu"
+        model: "mpu9250"
+        position: [0.0, 0.0, 0.1]
+        orientation: [0.0, 0.0, 0.0]
+        
+      - type: "gps"
+        model: "ublox_neo_m8p"
+        position: [0.0, 0.0, 0.2]
+        orientation: [0.0, 0.0, 0.0]
+    
+    # Actuators
+    actuators:
+      - type: "wheel"
+        count: 6
+        model: "dc_motor"
+        max_velocity: 2.0  # m/s
+        max_torque: 10.0  # Nm
+        
+      - type: "arm"
+        count: 1
+        model: "6dof_arm"
+        max_reach: 1.2  # meters
+
+# ==================================================
+# SCENARIOS CONFIGURATION
+# ==================================================
+scenarios:
+  autonomous_navigation:
+    description: "Autonomous navigation to waypoints"
+    duration: 300  # seconds
+    waypoints: 5
+    obstacles: true
+    
+  sample_collection:
+    description: "Sample collection and return"
+    duration: 600  # seconds
+    sample_locations: 3
+    precision_required: 0.1  # meters
+    
+  equipment_delivery:
+    description: "Equipment delivery to astronauts"
+    duration: 450  # seconds
+    delivery_locations: 2
+    equipment_types: ["tools", "supplies"]
+
+# ==================================================
+# SERVICE CONFIGURATION
+# ==================================================
+services:
+  simulation_service:
+    command: ["xvfb-run", "-a", "-s", "-screen 0 1600x1200x24", "python3", "-m", "simulation.gazebo_world"]
+    privileged: true  # Required for Gazebo
+    volumes:
+      - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+      
+  sensor_simulator:
+    sensor_update_rate: 30.0
+    noise_level: 0.1
+    data_retention: 60  # seconds
+    
+  # Disable unnecessary services in simulation
+  frontend_dev:
+    enabled: false
+    
+  monitoring:
+    enabled: true  # Keep monitoring for simulation analysis
+
+# ==================================================
+# SIMULATION SPECIFIC
+# ==================================================
+simulation_specific:
+  # Recording configuration
+  recording:
+    enabled: false  # Enable to record simulation
+    format: "bag"
+    topics: ["/camera/image_raw", "/lidar/scan", "/imu/data", "/gps/fix"]
+    compression: true
+    
+  # Playback configuration
+  playback:
+    enabled: false
+    file: ""
+    loop: false
+    
+  # Debugging
+  debug_visualization: true
+  rviz_enabled: true
+  tf_tree_visualization: true
+  
+  # Performance optimization
+  gpu_acceleration: true
+  multi_threading: true
+  real_time_factor_target: 1.0

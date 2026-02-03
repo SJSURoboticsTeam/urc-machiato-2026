@@ -37,6 +37,7 @@ try:
     from src.core.safety_system import SafetySystem
     from src.motion.ipc_motion_bridge import get_motion_bridge
     from src.core.synchronization_engine import SynchronizationEngine
+
     SYSTEM_COMPONENTS_AVAILABLE = True
 except ImportError:
     SYSTEM_COMPONENTS_AVAILABLE = False
@@ -62,7 +63,6 @@ class EnhancedOperatorDashboard:
         return {
             "timestamp": time.time(),
             "overall_health": 85,
-
             # System Health Overview
             "system_health": {
                 "overall_score": 85,
@@ -71,9 +71,8 @@ class EnhancedOperatorDashboard:
                 "disk_usage": 67.8,
                 "network_status": "CONNECTED",
                 "uptime_seconds": 3600,
-                "temperature_celsius": 42.3
+                "temperature_celsius": 42.3,
             },
-
             # Component Status
             "components": {
                 "behavior_tree": {
@@ -82,7 +81,7 @@ class EnhancedOperatorDashboard:
                     "current_node": "waypoint_navigation",
                     "active_branches": 3,
                     "execution_rate_hz": 49.8,
-                    "last_tick_ms": 20.1
+                    "last_tick_ms": 20.1,
                 },
                 "state_machine": {
                     "status": "ACTIVE",
@@ -90,7 +89,7 @@ class EnhancedOperatorDashboard:
                     "current_state": "NAVIGATING",
                     "last_transition": "IDLE → NAVIGATING",
                     "transition_count": 12,
-                    "uptime_seconds": 1800
+                    "uptime_seconds": 1800,
                 },
                 "navigation": {
                     "status": "HEALTHY",
@@ -98,7 +97,7 @@ class EnhancedOperatorDashboard:
                     "current_waypoint": "WP-003",
                     "distance_to_goal": 45.2,
                     "heading_degrees": 127.3,
-                    "speed_ms": 1.2
+                    "speed_ms": 1.2,
                 },
                 "sensors": {
                     "status": "HEALTHY",
@@ -107,7 +106,7 @@ class EnhancedOperatorDashboard:
                     "gps_active": True,
                     "lidar_active": True,
                     "camera_active": True,
-                    "last_sensor_update_ms": 15.2
+                    "last_sensor_update_ms": 15.2,
                 },
                 "motors": {
                     "status": "HEALTHY",
@@ -116,7 +115,7 @@ class EnhancedOperatorDashboard:
                     "right_motor_current": 1.9,
                     "left_motor_temp": 38.2,
                     "right_motor_temp": 39.1,
-                    "emergency_brake": False
+                    "emergency_brake": False,
                 },
                 "power": {
                     "status": "HEALTHY",
@@ -125,10 +124,9 @@ class EnhancedOperatorDashboard:
                     "battery_current": 3.2,
                     "battery_percentage": 78,
                     "time_remaining_hours": 4.2,
-                    "charging": False
-                }
+                    "charging": False,
+                },
             },
-
             # Mission Status
             "mission": {
                 "current_objective": "Navigate to sample site A",
@@ -140,19 +138,33 @@ class EnhancedOperatorDashboard:
                 "distance_to_goal_meters": 45.2,
                 "efficiency_score": 92,
                 "current_phase": "navigation",
-                "next_milestone": "Sample collection at site A"
+                "next_milestone": "Sample collection at site A",
             },
-
             # Mission Timeline
             "mission_timeline": [
-                {"phase": "Launch sequence", "status": "completed", "timestamp": time.time() - 1100},
-                {"phase": "Navigation to waypoint 1", "status": "completed", "timestamp": time.time() - 800},
-                {"phase": "Navigation to waypoint 2", "status": "in_progress", "timestamp": time.time() - 300},
-                {"phase": "Sample collection at site A", "status": "pending", "timestamp": None},
+                {
+                    "phase": "Launch sequence",
+                    "status": "completed",
+                    "timestamp": time.time() - 1100,
+                },
+                {
+                    "phase": "Navigation to waypoint 1",
+                    "status": "completed",
+                    "timestamp": time.time() - 800,
+                },
+                {
+                    "phase": "Navigation to waypoint 2",
+                    "status": "in_progress",
+                    "timestamp": time.time() - 300,
+                },
+                {
+                    "phase": "Sample collection at site A",
+                    "status": "pending",
+                    "timestamp": None,
+                },
                 {"phase": "Return navigation", "status": "pending", "timestamp": None},
-                {"phase": "Mission completion", "status": "pending", "timestamp": None}
+                {"phase": "Mission completion", "status": "pending", "timestamp": None},
             ],
-
             # Environmental Awareness
             "environment": {
                 "terrain": {
@@ -161,7 +173,7 @@ class EnhancedOperatorDashboard:
                     "obstacle_density": "Low",
                     "slip_risk_percentage": 23,
                     "surface_type": "Regolith",
-                    "slope_degrees": 15.2
+                    "slope_degrees": 15.2,
                 },
                 "communication": {
                     "primary_network": "WiFi",
@@ -171,7 +183,7 @@ class EnhancedOperatorDashboard:
                     "backup_signal_dbm": -85,
                     "data_rate_up_mbps": 2.4,
                     "data_rate_down_mbps": 1.8,
-                    "latency_ms": 12
+                    "latency_ms": 12,
                 },
                 "weather": {
                     "wind_speed_ms": 8.2,
@@ -179,10 +191,9 @@ class EnhancedOperatorDashboard:
                     "temperature_celsius": 22,
                     "humidity_percentage": 45,
                     "visibility_meters": 150,
-                    "atmospheric_pressure_hpa": 1013.25
-                }
+                    "atmospheric_pressure_hpa": 1013.25,
+                },
             },
-
             # Performance Metrics
             "performance": {
                 "motion_control": {
@@ -191,23 +202,22 @@ class EnhancedOperatorDashboard:
                     "latency_p99_ms": 0.052,
                     "jitter_ms": 0.008,
                     "deadline_misses": 0,
-                    "commands_per_second": 985
+                    "commands_per_second": 985,
                 },
                 "communication": {
                     "websocket_latency_ms": 12.3,
                     "ros2_publish_rate_hz": 98.5,
                     "message_loss_rate_percent": 0.01,
                     "connection_uptime_percent": 99.8,
-                    "bandwidth_usage_mbps": 1.2
+                    "bandwidth_usage_mbps": 1.2,
                 },
                 "system_resources": {
                     "cpu_usage_percent": 23.5,
                     "memory_usage_percent": 45.2,
                     "disk_usage_percent": 67.8,
-                    "network_bandwidth_percent": 12.3
-                }
+                    "network_bandwidth_percent": 12.3,
+                },
             },
-
             # Emergency Systems
             "emergency": {
                 "system_active": False,
@@ -216,9 +226,8 @@ class EnhancedOperatorDashboard:
                 "recovery_available": True,
                 "last_emergency_seconds": 3600,
                 "emergency_stop_response_ms": 8.5,
-                "recovery_time_ms": 1250
+                "recovery_time_ms": 1250,
             },
-
             # Active Alerts
             "alerts": [
                 {
@@ -226,10 +235,9 @@ class EnhancedOperatorDashboard:
                     "message": "CPU usage approaching limit (78%)",
                     "timestamp": time.time() - 120,
                     "action_required": False,
-                    "acknowledged": False
+                    "acknowledged": False,
                 }
             ],
-
             # Diagnostic Data
             "diagnostics": {
                 "system_logs": [],
@@ -238,15 +246,15 @@ class EnhancedOperatorDashboard:
                     "communication_errors": 2,
                     "sensor_timeouts": 0,
                     "motion_control_errors": 1,
-                    "state_machine_errors": 0
+                    "state_machine_errors": 0,
                 },
                 "calibration_status": {
                     "imu": "calibrated",
                     "gps": "needs_calibration",
                     "camera": "calibrated",
-                    "motors": "calibrated"
-                }
-            }
+                    "motors": "calibrated",
+                },
+            },
         }
 
     def _initialize_monitoring_components(self):
@@ -284,9 +292,15 @@ class EnhancedOperatorDashboard:
             component["health"] = max(0, min(100, component["health"] + variation))
 
         # Update overall health as average of components
-        component_healths = [c["health"] for c in self.system_status["components"].values()]
-        self.system_status["overall_health"] = sum(component_healths) / len(component_healths)
-        self.system_status["system_health"]["overall_score"] = self.system_status["overall_health"]
+        component_healths = [
+            c["health"] for c in self.system_status["components"].values()
+        ]
+        self.system_status["overall_health"] = sum(component_healths) / len(
+            component_healths
+        )
+        self.system_status["system_health"]["overall_score"] = self.system_status[
+            "overall_health"
+        ]
 
         # Simulate performance metrics updates
         perf = self.system_status["performance"]
@@ -305,9 +319,21 @@ class EnhancedOperatorDashboard:
         # Add random alerts occasionally
         if random.random() < 0.05:  # 5% chance per update
             alerts = [
-                {"level": "info", "message": "Waypoint reached successfully", "action_required": False},
-                {"level": "warning", "message": "High CPU usage detected", "action_required": False},
-                {"level": "error", "message": "Sensor timeout detected", "action_required": True}
+                {
+                    "level": "info",
+                    "message": "Waypoint reached successfully",
+                    "action_required": False,
+                },
+                {
+                    "level": "warning",
+                    "message": "High CPU usage detected",
+                    "action_required": False,
+                },
+                {
+                    "level": "error",
+                    "message": "Sensor timeout detected",
+                    "action_required": True,
+                },
             ]
             alert = random.choice(alerts)
             alert["timestamp"] = time.time()
@@ -320,7 +346,9 @@ class EnhancedOperatorDashboard:
     def start_monitoring(self):
         """Start real-time monitoring."""
         self.monitoring_active = True
-        self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True
+        )
         self.monitor_thread.start()
         print("🔄 Enhanced Operator Dashboard monitoring started")
 
@@ -351,19 +379,21 @@ class EnhancedOperatorDashboard:
         """Update dashboard from real system components."""
         try:
             # Update from state manager
-            if hasattr(self, 'state_manager'):
+            if hasattr(self, "state_manager"):
                 state_data = self.state_manager.get_state()
                 if state_data:
-                    self.system_status["components"]["state_machine"]["current_state"] = state_data.get("current_state", "UNKNOWN")
+                    self.system_status["components"]["state_machine"][
+                        "current_state"
+                    ] = state_data.get("current_state", "UNKNOWN")
 
             # Update from system monitor
-            if hasattr(self, 'system_monitor'):
+            if hasattr(self, "system_monitor"):
                 health_data = self.system_monitor.get_health_status()
                 if health_data:
                     self.system_status["system_health"].update(health_data)
 
             # Update from safety system
-            if hasattr(self, 'safety_system'):
+            if hasattr(self, "safety_system"):
                 safety_data = self.safety_system.get_status()
                 if safety_data:
                     self.system_status["emergency"].update(safety_data)
@@ -381,12 +411,14 @@ class EnhancedOperatorDashboard:
     def trigger_emergency_stop(self) -> bool:
         """Trigger emergency stop."""
         with self._lock:
-            if hasattr(self, 'safety_system'):
+            if hasattr(self, "safety_system"):
                 try:
                     success = self.safety_system.emergency_stop("Operator initiated")
                     if success:
                         self.system_status["emergency"]["system_active"] = True
-                        self.system_status["emergency"]["emergency_reason"] = "Operator initiated"
+                        self.system_status["emergency"][
+                            "emergency_reason"
+                        ] = "Operator initiated"
                         return True
                 except Exception as e:
                     print(f"⚠️ Emergency stop failed: {e}")
@@ -402,7 +434,7 @@ class EnhancedOperatorDashboard:
                 "message": "EMERGENCY STOP ACTIVATED",
                 "timestamp": time.time(),
                 "action_required": True,
-                "acknowledged": False
+                "acknowledged": False,
             }
             self.system_status["alerts"].append(alert)
 
@@ -411,7 +443,7 @@ class EnhancedOperatorDashboard:
     def initiate_recovery(self) -> bool:
         """Initiate system recovery."""
         with self._lock:
-            if hasattr(self, 'safety_system'):
+            if hasattr(self, "safety_system"):
                 try:
                     success = self.safety_system.initiate_recovery()
                     if success:
@@ -430,7 +462,7 @@ class EnhancedOperatorDashboard:
                 "message": "System recovery initiated",
                 "timestamp": time.time(),
                 "action_required": False,
-                "acknowledged": False
+                "acknowledged": False,
             }
             self.system_status["alerts"].append(alert)
 
@@ -443,8 +475,8 @@ class EnhancedDashboardHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/dashboard":
             self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
 
             data = dashboard.get_dashboard_data()
@@ -455,7 +487,7 @@ class EnhancedDashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 alert_index = int(self.path.split("/")[-1])
                 dashboard.acknowledge_alert(alert_index)
                 self.send_response(200)
-                self.send_header('Content-type', 'application/json')
+                self.send_header("Content-type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "acknowledged"}).encode())
             except (ValueError, IndexError):
@@ -470,14 +502,14 @@ class EnhancedDashboardHTTPRequestHandler(BaseHTTPRequestHandler):
         if self.path == "/api/emergency/stop":
             success = dashboard.trigger_emergency_stop()
             self.send_response(200 if success else 500)
-            self.send_header('Content-type', 'application/json')
+            self.send_header("Content-type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"success": success}).encode())
 
         elif self.path == "/api/recovery/initiate":
             success = dashboard.initiate_recovery()
             self.send_response(200 if success else 500)
-            self.send_header('Content-type', 'application/json')
+            self.send_header("Content-type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"success": success}).encode())
 
@@ -1133,10 +1165,12 @@ def create_enhanced_operator_interface():
 </body>
 </html>"""
 
-    with open('frontend/enhanced_operator_dashboard.html', 'w') as f:
+    with open("frontend/enhanced_operator_dashboard.html", "w") as f:
         f.write(html_content)
 
-    print("✅ Enhanced operator dashboard HTML created: frontend/enhanced_operator_dashboard.html")
+    print(
+        "✅ Enhanced operator dashboard HTML created: frontend/enhanced_operator_dashboard.html"
+    )
 
 
 def start_enhanced_dashboard_server(port: int = 8081):
@@ -1145,11 +1179,15 @@ def start_enhanced_dashboard_server(port: int = 8081):
 
     # Use environment-based configuration
     import sys
+
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from infrastructure.config.environment import get_env_manager
+
     env = get_env_manager()
-    
-    server = HTTPServer(('0.0.0.0', env.network.dashboard_port), EnhancedDashboardHTTPRequestHandler)
+
+    server = HTTPServer(
+        ("0.0.0.0", env.network.dashboard_port), EnhancedDashboardHTTPRequestHandler
+    )
     print(f"🚀 Enhanced Operator Dashboard running on {env.get_dashboard_url()}")
     print("📊 Real-time monitoring of:")
     print("  • System health & component status")
@@ -1172,6 +1210,3 @@ if __name__ == "__main__":
 
     # Start the server
     start_enhanced_dashboard_server(8081)
-
-
-

@@ -72,6 +72,7 @@ except ImportError:
     def get_gps_breaker():
         return AdaptiveCircuitBreaker("gps")
 
+
 # Try to import CAN bridge
 try:
     from .can_bridge import CANBridge, BridgeMessage, BridgeStatus
@@ -79,22 +80,22 @@ except ImportError:
     # Stubs for CAN bridge
     class BridgeMessage:
         pass
-    
+
     class BridgeStatus:
         CONNECTED = "connected"
         DISCONNECTED = "disconnected"
-    
+
     class CANBridge:
         def __init__(self, channel="vcan0"):
             self.channel = channel
             self.status = BridgeStatus.DISCONNECTED
+
 
 __all__ = [
     # CAN Bridge
     "CANBridge",
     "BridgeMessage",
     "BridgeStatus",
-    
     # Circuit Breaker
     "AdaptiveCircuitBreaker",
     "CircuitBreakerState",

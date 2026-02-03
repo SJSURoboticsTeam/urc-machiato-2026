@@ -1,0 +1,125 @@
+# Testing Environment Configuration
+environment: testing
+version: "2.0.0"
+
+# ==================================================
+# ROS2 CONFIGURATION
+# ==================================================
+ros2:
+  namespace: "urc"
+  domain_id: 42
+  use_sim_time: false
+  qos_preset: "reliable"
+  distro: "humble"
+
+# ==================================================
+# DOCKER CONFIGURATION
+# ==================================================
+docker:
+  profiles: ["test"]
+  compose_file: "docker-compose.unified.yml"
+  env_file: ".env.unified"
+  project_prefix: "urc2026"
+
+# ==================================================
+# MOCK SYSTEMS
+# ==================================================
+mock_systems:
+  can_enabled: true
+  websocket_enabled: true
+  sensor_simulation: true
+  hardware_mock: true
+
+# ==================================================
+# TESTING CONFIGURATION
+# ==================================================
+testing:
+  parallel_workers: 8
+  test_memory_limit: "6G"
+  test_cpu_limit: "4.0"
+  test_types: ["unit", "integration", "simulation", "performance"]
+  timeout_seconds: 300
+  retry_count: 3
+  
+  # Test database
+  database:
+    type: "sqlite"
+    path: ":memory:"  # In-memory for tests
+    connection_pool_size: 1
+    
+  # Coverage configuration
+  coverage:
+    enabled: true
+    report_formats: ["html", "xml", "term"]
+    minimum_coverage: 80.0
+    fail_under_threshold: true
+    
+  # Performance benchmarks
+  performance:
+    enabled: true
+    benchmark_json: "test_results/performance-benchmarks.json"
+    regression_threshold: 5.0  # 5% regression tolerance
+
+# ==================================================
+# SERVICE CONFIGURATION
+# ==================================================
+services:
+  test_runner:
+    health_check_interval: 10s
+    restart_policy: "no"  # Don't restart test containers
+    log_driver: "json-file"
+    log_max_size: "10m"
+    log_max_file: "3"
+    
+  performance_tester:
+    memory_limit: "6G"
+    cpu_limit: "4.0"
+    benchmark_timeout: 600  # 10 minutes
+
+# ==================================================
+# SIMULATION CONFIGURATION (for simulation tests)
+# ==================================================
+simulation:
+  gazebo_gui_enabled: false  # Headless for tests
+  gazebo_master_port: 11311
+  default_world: "test_world"
+  default_robot: "test_rover"
+  sensor_update_rate: 60.0  # Higher rate for tests
+  sensor_noise_level: 0.0   # No noise for consistent tests
+  display: ":99"
+  xvfb_enabled: true
+
+# ==================================================
+# MONITORING CONFIGURATION
+# ==================================================
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  grafana:
+    enabled: false  # Disable Grafana in tests
+  metrics_export_interval: 1  # Faster for tests
+
+# ==================================================
+# TESTING SPECIFIC
+# ==================================================
+testing_specific:
+  # Test data
+  fixtures_path: "tests/fixtures"
+  mock_data_path: "tests/mock_data"
+  
+  # Test isolation
+  container_isolation: true
+  network_isolation: true
+  volume_isolation: true
+  
+  # Test reporting
+  junit_reports: true
+  html_reports: true
+  coverage_reports: true
+  benchmark_reports: true
+  
+  # CI/CD integration
+  ci_mode: true
+  parallel_execution: true
+  fail_fast: false

@@ -412,9 +412,9 @@ class URCChallengeSimulator(Node):
         status_msg.data = json.dumps(
             {
                 "elapsed_minutes": elapsed / 60,
-                "current_challenge": self.current_challenge.value
-                if self.current_challenge
-                else None,
+                "current_challenge": (
+                    self.current_challenge.value if self.current_challenge else None
+                ),
                 "challenge_index": self.challenge_index,
                 "total_distance": self.total_distance,
                 "obstacles_avoided": self.obstacles_detected,

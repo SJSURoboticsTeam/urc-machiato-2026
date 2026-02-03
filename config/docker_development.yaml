@@ -1,0 +1,97 @@
+# Development Environment Configuration
+environment: development
+version: "2.0.0"
+
+# ==================================================
+# ROS2 CONFIGURATION
+# ==================================================
+ros2:
+  namespace: "urc"
+  domain_id: 42
+  use_sim_time: false
+  qos_preset: "reliable"
+  distro: "humble"
+
+# ==================================================
+# DOCKER CONFIGURATION
+# ==================================================
+docker:
+  profiles: ["dev", "test", "sim"]
+  compose_file: "docker-compose.unified.yml"
+  env_file: ".env.unified"
+  project_prefix: "urc2026"
+
+# ==================================================
+# MOCK SYSTEMS
+# ==================================================
+mock_systems:
+  can_enabled: true
+  websocket_enabled: true
+  sensor_simulation: true
+  hardware_mock: true
+
+# ==================================================
+# SERVICE CONFIGURATION
+# ==================================================
+services:
+  config_service:
+    port: 8080
+    health_check_interval: 30s
+    restart_policy: unless-stopped
+    
+  can_mock:
+    port: 8766
+    mock_device_count: 8
+    
+  websocket_bridge:
+    port: 8765
+    enable_cors: true
+    max_connections: 100
+    
+  frontend_dev:
+    port: 3000
+    hot_reload: true
+    dev_server: true
+
+# ==================================================
+# TESTING CONFIGURATION
+# ==================================================
+testing:
+  parallel_workers: 4
+  test_memory_limit: "4G"
+  test_cpu_limit: "2.0"
+  test_types: ["unit", "integration", "simulation", "performance"]
+  
+# ==================================================
+# SIMULATION CONFIGURATION
+# ==================================================
+simulation:
+  gazebo_gui_port: 11345
+  gazebo_master_port: 11311
+  default_world: "urc_mars_world"
+  default_robot: "urc_rover"
+  sensor_update_rate: 30.0
+  sensor_noise_level: 0.1
+  display: ":99"
+  
+# ==================================================
+# MONITORING CONFIGURATION
+# ==================================================
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  grafana:
+    enabled: true
+    port: 3001
+  metrics_export_interval: 5
+  
+# ==================================================
+# DEVELOPMENT SPECIFIC
+# ==================================================
+development:
+  debug_mode: true
+  log_level: "DEBUG"
+  enable_hot_reload: true
+  source_mount: true
+  node_volume_mount: true

@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class SafetyLevel(Enum):
     """Safety levels for operations."""
+
     NOMINAL = "nominal"
     CAUTION = "caution"
     WARNING = "warning"
@@ -41,6 +42,7 @@ class SafetyLevel(Enum):
 
 class SystemHealth(Enum):
     """Overall system health status."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -50,6 +52,7 @@ class SystemHealth(Enum):
 @dataclass
 class SafetyCheck:
     """Safety check result."""
+
     component: str
     check_type: str
     status: SafetyLevel
@@ -61,6 +64,7 @@ class SafetyCheck:
 @dataclass
 class RecoveryAction:
     """Recovery action definition."""
+
     name: str
     description: str
     action_function: Callable
@@ -95,11 +99,12 @@ class SafetyManager:
             "temperature_celsius": 70,
             "emergency_stop_timeout_sec": 5.0,
             "heartbeat_interval_sec": 1.0,
-            "max_sensor_age_sec": 2.0
+            "max_sensor_age_sec": 2.0,
         }
 
-    def perform_safety_check(self, component: str, check_type: str,
-                           check_function: Callable) -> SafetyCheck:
+    def perform_safety_check(
+        self, component: str, check_type: str, check_function: Callable
+    ) -> SafetyCheck:
         """
         Perform a safety check.
 
@@ -126,7 +131,10 @@ class SafetyManager:
                 status = SafetyLevel.NOMINAL
             else:
                 # Check severity based on check_type
-                if "emergency" in check_type.lower() or "critical" in check_type.lower():
+                if (
+                    "emergency" in check_type.lower()
+                    or "critical" in check_type.lower()
+                ):
                     status = SafetyLevel.CRITICAL
                 elif "warning" in check_type.lower():
                     status = SafetyLevel.WARNING
@@ -138,7 +146,7 @@ class SafetyManager:
                 check_type=check_type,
                 status=status,
                 message=message,
-                details=details
+                details=details,
             )
 
             # Store result
@@ -156,7 +164,7 @@ class SafetyManager:
                 check_type=check_type,
                 status=SafetyLevel.CRITICAL,
                 message=f"Safety check failed: {e}",
-                details={"error": str(e)}
+                details={"error": str(e)},
             )
 
             self.safety_checks[f"{component}_{check_type}"] = safety_check
@@ -166,7 +174,9 @@ class SafetyManager:
 
     def _trigger_emergency(self, safety_check: SafetyCheck):
         """Trigger emergency procedures."""
-        logger.critical(f"EMERGENCY TRIGGERED: {safety_check.component} - {safety_check.message}")
+        logger.critical(
+            f"EMERGENCY TRIGGERED: {safety_check.component} - {safety_check.message}"
+        )
 
         for handler in self.emergency_handlers:
             try:
@@ -187,7 +197,7 @@ class SafetyManager:
                 "overall_status": SafetyLevel.NOMINAL.value,
                 "system_health": SystemHealth.HEALTHY.value,
                 "checks_performed": 0,
-                "critical_issues": 0
+                "critical_issues": 0,
             }
 
         # Determine overall status
@@ -212,7 +222,7 @@ class SafetyManager:
             "system_health": system_health.value,
             "checks_performed": len(checks),
             "critical_issues": critical_issues,
-            "last_check": max((c.timestamp for c in checks), default=time.time())
+            "last_check": max((c.timestamp for c in checks), default=time.time()),
         }
 
 
@@ -238,29 +248,30 @@ class HardwareValidator:
                 "interface": "socketcan",
                 "channel": "can0",
                 "bitrate": 500000,
-                "timeout_ms": 100
+                "timeout_ms": 100,
             },
             "motor_controller": {
                 "max_current_a": 10.0,
                 "max_voltage_v": 24.0,
                 "max_rpm": 3000,
-                "control_mode": "velocity"
+                "control_mode": "velocity",
             },
             "robotic_arm": {
                 "degrees_of_freedom": 6,
                 "payload_kg": 5.0,
                 "reach_m": 1.2,
-                "precision_mm": 1.0
+                "precision_mm": 1.0,
             },
             "sensors": {
                 "imu": {"update_rate_hz": 100, "accuracy_deg": 0.1},
                 "gps": {"accuracy_m": 2.0, "update_rate_hz": 10},
-                "lidar": {"range_m": 30, "fov_deg": 270}
-            }
+                "lidar": {"range_m": 30, "fov_deg": 270},
+            },
         }
 
-    def validate_hardware_config(self, hardware_type: str,
-                               config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_hardware_config(
+        self, hardware_type: str, config: Dict[str, Any]
+    ) -> Tuple[bool, List[str]]:
         """
         Validate hardware configuration.
 
@@ -297,16 +308,23 @@ class HardwareValidator:
                 elif isinstance(expected_value, (int, float)):
                     if isinstance(actual_value, (int, float)):
                         if actual_value > expected_value * 1.1:  # 10% tolerance
-                            errors.append(f"{key}: {actual_value} exceeds recommended {expected_value}")
+                            errors.append(
+                                f"{key}: {actual_value} exceeds recommended {expected_value}"
+                            )
                         elif actual_value < expected_value * 0.9:
-                            errors.append(f"{key}: {actual_value} below recommended {expected_value}")
+                            errors.append(
+                                f"{key}: {actual_value} below recommended {expected_value}"
+                            )
                     else:
-                        errors.append(f"{key}: expected numeric value, got {type(actual_value)}")
+                        errors.append(
+                            f"{key}: expected numeric value, got {type(actual_value)}"
+                        )
 
         return len(errors) == 0, errors
 
-    def monitor_hardware_health(self, hardware_type: str,
-                              health_data: Dict[str, Any]) -> Dict[str, Any]:
+    def monitor_hardware_health(
+        self, hardware_type: str, health_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Monitor hardware health status.
 
@@ -321,7 +339,7 @@ class HardwareValidator:
             "hardware_type": hardware_type,
             "status": "unknown",
             "issues": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         if hardware_type == "can_bus":
@@ -332,12 +350,16 @@ class HardwareValidator:
             if error_count > 100:
                 assessment["status"] = "critical"
                 assessment["issues"].append("High error count on CAN bus")
-                assessment["recommendations"].append("Check bus termination and cable quality")
+                assessment["recommendations"].append(
+                    "Check bus termination and cable quality"
+                )
 
             if bus_load > 80:
                 assessment["status"] = "warning"
                 assessment["issues"].append("High bus utilization")
-                assessment["recommendations"].append("Consider reducing message frequency")
+                assessment["recommendations"].append(
+                    "Consider reducing message frequency"
+                )
 
         elif hardware_type == "motor_controller":
             # Motor controller health checks
@@ -347,7 +369,9 @@ class HardwareValidator:
             if temperature > 70:
                 assessment["status"] = "critical"
                 assessment["issues"].append("Motor controller overheating")
-                assessment["recommendations"].append("Check cooling system and reduce load")
+                assessment["recommendations"].append(
+                    "Check cooling system and reduce load"
+                )
 
             if current > 8.0:  # 80% of max
                 assessment["status"] = "warning"
@@ -362,7 +386,7 @@ class HardwareValidator:
         self.hardware_status[hardware_type] = {
             **assessment,
             "timestamp": time.time(),
-            "health_data": health_data
+            "health_data": health_data,
         }
 
         return assessment
@@ -372,7 +396,13 @@ class HardwareValidator:
         return {
             "hardware_components": len(self.hardware_status),
             "component_status": self.hardware_status,
-            "last_updated": max((status.get("timestamp", 0) for status in self.hardware_status.values()), default=time.time())
+            "last_updated": max(
+                (
+                    status.get("timestamp", 0)
+                    for status in self.hardware_status.values()
+                ),
+                default=time.time(),
+            ),
         }
 
 
@@ -423,16 +453,14 @@ class RecoveryCoordinator:
             "action": action,
             "start_time": time.time(),
             "attempts": 0,
-            "context": context
+            "context": context,
         }
 
         logger.info(f"Initiated recovery for {failure_type}: {action.description}")
 
         # Execute recovery in background
         threading.Thread(
-            target=self._execute_recovery,
-            args=(failure_type,),
-            daemon=True
+            target=self._execute_recovery, args=(failure_type,), daemon=True
         ).start()
 
         return True
@@ -446,7 +474,9 @@ class RecoveryCoordinator:
         for attempt in range(action.max_attempts):
             try:
                 recovery_info["attempts"] = attempt + 1
-                logger.info(f"Executing recovery attempt {attempt + 1}/{action.max_attempts} for {failure_type}")
+                logger.info(
+                    f"Executing recovery attempt {attempt + 1}/{action.max_attempts} for {failure_type}"
+                )
 
                 result = action.action_function(recovery_info["context"])
 
@@ -455,10 +485,14 @@ class RecoveryCoordinator:
                     logger.info(f"Recovery successful for {failure_type}")
                     break
                 else:
-                    logger.warning(f"Recovery attempt {attempt + 1} failed for {failure_type}")
+                    logger.warning(
+                        f"Recovery attempt {attempt + 1} failed for {failure_type}"
+                    )
 
             except Exception as e:
-                logger.error(f"Recovery attempt {attempt + 1} error for {failure_type}: {e}")
+                logger.error(
+                    f"Recovery attempt {attempt + 1} error for {failure_type}: {e}"
+                )
 
             # Wait before next attempt
             if attempt < action.max_attempts - 1:
@@ -471,7 +505,7 @@ class RecoveryCoordinator:
             "success": success,
             "attempts": recovery_info["attempts"],
             "duration": time.time() - recovery_info["start_time"],
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         self.recovery_history.append(recovery_record)
@@ -488,7 +522,7 @@ class RecoveryCoordinator:
             "active_recoveries": len(self.active_recoveries),
             "registered_actions": len(self.recovery_actions),
             "recovery_history_count": len(self.recovery_history),
-            "active_recovery_types": list(self.active_recoveries.keys())
+            "active_recovery_types": list(self.active_recoveries.keys()),
         }
 
 
@@ -536,7 +570,7 @@ class NetworkResilienceManager:
         base_delay = self.network_conditions.get("base_retry_delay", 1.0)
         max_delay = self.network_conditions.get("max_retry_delay", 30.0)
 
-        delay = base_delay * (2 ** attempt)  # Exponential backoff
+        delay = base_delay * (2**attempt)  # Exponential backoff
         return min(delay, max_delay)
 
     def monitor_network_health(self) -> Dict[str, Any]:
@@ -546,7 +580,7 @@ class NetworkResilienceManager:
             "latency_ms": 50,  # Mock values
             "packet_loss_percent": 0.1,
             "bandwidth_mbps": 10.0,
-            "status": "healthy"
+            "status": "healthy",
         }
 
 
@@ -561,22 +595,23 @@ class SystemUtilities:
     def get_system_info() -> Dict[str, Any]:
         """Get comprehensive system information."""
         import sys
+
         return {
             "cpu_count": psutil.cpu_count(),
             "cpu_percent": psutil.cpu_percent(),
             "memory_total": psutil.virtual_memory().total,
             "memory_available": psutil.virtual_memory().available,
             "memory_percent": psutil.virtual_memory().percent,
-            "disk_usage": psutil.disk_usage('/').percent,
+            "disk_usage": psutil.disk_usage("/").percent,
             "uptime_seconds": time.time() - psutil.boot_time(),
             "python_version": f"{sys.version}",
-            "platform": psutil.sys.platform
+            "platform": psutil.sys.platform,
         }
 
     @staticmethod
     def format_bytes(bytes_value: int) -> str:
         """Format bytes to human readable format."""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if bytes_value < 1024.0:
                 return ".1f"
             bytes_value /= 1024.0
@@ -593,7 +628,8 @@ class SystemUtilities:
     def validate_ip_address(ip: str) -> bool:
         """Validate IP address format."""
         import re
-        pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+
+        pattern = r"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$"
         match = re.match(pattern, ip)
 
         if not match:
@@ -606,12 +642,18 @@ class SystemUtilities:
         return True
 
     @staticmethod
-    def deep_merge_dicts(base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
+    def deep_merge_dicts(
+        base: Dict[str, Any], update: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Deep merge two dictionaries."""
         result = base.copy()
 
         for key, value in update.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = SystemUtilities.deep_merge_dicts(result[key], value)
             else:
                 result[key] = value
@@ -625,12 +667,14 @@ _hardware_validator = None
 _recovery_coordinator = None
 _network_resilience = None
 
+
 def get_safety_manager() -> SafetyManager:
     """Get global safety manager instance."""
     global _safety_manager
     if _safety_manager is None:
         _safety_manager = SafetyManager()
     return _safety_manager
+
 
 def get_hardware_validator() -> HardwareValidator:
     """Get global hardware validator instance."""
@@ -639,12 +683,14 @@ def get_hardware_validator() -> HardwareValidator:
         _hardware_validator = HardwareValidator()
     return _hardware_validator
 
+
 def get_recovery_coordinator() -> RecoveryCoordinator:
     """Get global recovery coordinator instance."""
     global _recovery_coordinator
     if _recovery_coordinator is None:
         _recovery_coordinator = RecoveryCoordinator()
     return _recovery_coordinator
+
 
 def get_network_resilience_manager() -> NetworkResilienceManager:
     """Get global network resilience manager instance."""
@@ -653,19 +699,20 @@ def get_network_resilience_manager() -> NetworkResilienceManager:
         _network_resilience = NetworkResilienceManager()
     return _network_resilience
 
+
 # Export all utility classes and functions
 __all__ = [
-    'SafetyManager',
-    'HardwareValidator',
-    'RecoveryCoordinator',
-    'NetworkResilienceManager',
-    'SystemUtilities',
-    'SafetyLevel',
-    'SystemHealth',
-    'SafetyCheck',
-    'RecoveryAction',
-    'get_safety_manager',
-    'get_hardware_validator',
-    'get_recovery_coordinator',
-    'get_network_resilience_manager'
+    "SafetyManager",
+    "HardwareValidator",
+    "RecoveryCoordinator",
+    "NetworkResilienceManager",
+    "SystemUtilities",
+    "SafetyLevel",
+    "SystemHealth",
+    "SafetyCheck",
+    "RecoveryAction",
+    "get_safety_manager",
+    "get_hardware_validator",
+    "get_recovery_coordinator",
+    "get_network_resilience_manager",
 ]

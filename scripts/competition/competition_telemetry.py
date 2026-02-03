@@ -278,9 +278,9 @@ class CompetitionTelemetry(Node):
             "latitude": msg.latitude,
             "longitude": msg.longitude,
             "altitude": msg.altitude,
-            "satellites_visible": msg.position_covariance[0]
-            if msg.position_covariance
-            else 0,
+            "satellites_visible": (
+                msg.position_covariance[0] if msg.position_covariance else 0
+            ),
         }
 
         self.gps_history.append({"timestamp": time.time(), **self.current_gps_fix})
@@ -444,9 +444,11 @@ class CompetitionTelemetryAnalyzer:
         return {
             "total_errors": len(error_events),
             "error_types": error_types,
-            "most_common_error": max(error_types.keys(), key=lambda k: error_types[k])
-            if error_types
-            else None,
+            "most_common_error": (
+                max(error_types.keys(), key=lambda k: error_types[k])
+                if error_types
+                else None
+            ),
         }
 
     def analyze_performance_trends(self) -> Dict[str, Any]:

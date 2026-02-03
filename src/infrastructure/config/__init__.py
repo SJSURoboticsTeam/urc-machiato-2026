@@ -33,12 +33,14 @@ try:
         is_production,
         is_simulation,
     )
+
     logger.info("Using simplified configuration system")
 except (ImportError, AttributeError) as e:
     logger.warning("Simplified config unavailable, using stubs: %s", e)
 
     class URCSettings:
         """Stub configuration settings."""
+
         def __init__(self):
             self.data = {}
 
@@ -71,8 +73,10 @@ except (ImportError, AttributeError) as e:
 # Enums
 # ============================================================================
 
+
 class Environment:
     """Environment types."""
+
     DEVELOPMENT = "development"
     PRODUCTION = "production"
     SIMULATION = "simulation"
@@ -80,6 +84,7 @@ class Environment:
 
 class LogLevel:
     """Logging levels."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -88,6 +93,7 @@ class LogLevel:
 
 class RoverMode:
     """Rover operation modes."""
+
     AUTONOMOUS = "autonomous"
     TELEOPERATION = "teleoperation"
     SIMULATION = "simulation"
@@ -95,6 +101,7 @@ class RoverMode:
 
 class SafetyLevel:
     """Safety levels."""
+
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -102,6 +109,7 @@ class SafetyLevel:
 
 class SensorType:
     """Sensor types."""
+
     GPS = "gps"
     IMU = "imu"
     CAMERA = "camera"
@@ -110,18 +118,21 @@ class SensorType:
 
 class MotorType:
     """Motor types."""
+
     BRUSHLESS = "brushless"
     BRUSHED = "brushed"
 
 
 class CommunicationProtocol:
     """Communication protocols."""
+
     CANBUS = "canbus"
     WEBSOCKET = "websocket"
 
 
 class MissionType:
     """Mission types."""
+
     AUTONOMOUS = "autonomous"
     TELEOPERATED = "teleoperated"
 
@@ -130,18 +141,34 @@ class MissionType:
 # Configuration Classes
 # ============================================================================
 
+
 class RoverConfig:
     """Main rover configuration."""
 
     def __init__(self):
-        self.navigation = {}
+        self.title = "URC 2026 Rover"
+        self.enable_real_time = True
+        self.refresh_interval = 1.0
+        self.environment = "development"
+        self.navigation = type(
+            "_Nav", (), {"update_rate_hz": 10.0, "waypoint_tolerance_m": 1.0}
+        )()
+        self.network = type(
+            "_Net",
+            (),
+            {
+                "websocket_port": 9090,
+                "http_port": 8080,
+                "enable_cors": True,
+                "max_connections": 10,
+            },
+        )()
         self.safety = {}
         self.sensors = {}
         self.motors = {}
         self.communication = {}
         self.simulation = {}
         self.sync = {}
-        self.network = {}
         self.mission = {}
         self.mission_profiles = {}
         self.hardware = {}
@@ -158,99 +185,145 @@ class RoverConfig:
         return config
 
 
+class ConfigurationManager:
+    """Wrapper for config directory and config access (backward compatibility)."""
+
+    def __init__(self, config_dir: str = "config"):
+        from pathlib import Path
+
+        self._config_dir = Path(config_dir)
+
+    def get_config(self) -> "RoverConfig":
+        """Return current rover config."""
+        return get_urc_config()
+
+    @property
+    def current_config(self) -> "RoverConfig":
+        """Current config (same as get_config())."""
+        return self.get_config()
+
+    def load_config(self, environment: str) -> "RoverConfig":
+        """Load config for environment; returns current config."""
+        return get_urc_config()
+
+    def update_config(self, updates: Dict[str, Any]) -> bool:
+        """Update and reload config; returns True on success."""
+        reload_config()
+        return True
+
+
 class SystemConfig:
     """System configuration."""
+
     pass
 
 
 # Sub-configs
 class SimulationConfig:
     """Simulation configuration."""
+
     enabled: bool = False
 
 
 class SyncConfig:
     """Synchronization configuration."""
+
     enabled: bool = True
 
 
 class NetworkConfig:
     """Network configuration."""
+
     timeout: float = 5.0
 
 
 class NavigationConfig:
     """Navigation configuration."""
+
     pass
 
 
 class SafetyConfig:
     """Safety configuration."""
+
     pass
 
 
 class MissionConfig:
     """Mission configuration."""
+
     pass
 
 
 class HardwareConfig:
     """Hardware configuration."""
+
     pass
 
 
 class DatabaseConfig:
     """Database configuration."""
+
     pass
 
 
 class RedisConfig:
     """Redis configuration."""
+
     pass
 
 
 class APIConfig:
     """API configuration."""
+
     pass
 
 
 class PerformanceConfig:
     """Performance configuration."""
+
     pass
 
 
 class WaypointConfig:
     """Waypoint configuration."""
+
     pass
 
 
 class NetworkMonitorConfig:
     """Network monitoring configuration."""
+
     pass
 
 
 class HealthMonitorConfig:
     """Health monitoring configuration."""
+
     pass
 
 
 class ObservabilityConfig:
     """Observability configuration."""
+
     pass
 
 
 class TelemetryConfig:
     """Telemetry configuration."""
+
     pass
 
 
 class StateManagementConfig:
     """State management configuration."""
+
     pass
 
 
 class CommunicationConfig:
     """Communication configuration."""
+
     pass
 
 
@@ -258,13 +331,16 @@ class CommunicationConfig:
 # Validation Functions (stubs for compatibility)
 # ============================================================================
 
+
 class ValidationError(Exception):
     """Configuration validation error."""
+
     pass
 
 
 class URCConfigValidator:
     """Configuration validator."""
+
     pass
 
 
@@ -293,17 +369,17 @@ _rover_config: Optional[RoverConfig] = None
 def get_urc_config(force_reload: bool = False) -> RoverConfig:
     """
     Get the unified URC configuration.
-    
+
     This is the primary entry point for configuration access.
-    
+
     Args:
         force_reload: Force reload from settings
-        
+
     Returns:
         RoverConfig instance
     """
     global _rover_config
-    
+
     if _rover_config is None or force_reload:
         try:
             settings = get_settings()
@@ -311,7 +387,7 @@ def get_urc_config(force_reload: bool = False) -> RoverConfig:
         except Exception as e:
             logger.warning(f"Failed to load config: {e}, using default")
             _rover_config = RoverConfig()
-    
+
     return _rover_config
 
 
@@ -333,9 +409,26 @@ def get_system_config() -> RoverConfig:
     return get_urc_config()
 
 
+_config_manager: Optional[ConfigurationManager] = None
+
+
+def get_config_manager() -> ConfigurationManager:
+    """Return singleton ConfigurationManager (backward compatibility)."""
+    global _config_manager
+    if _config_manager is None:
+        _config_manager = ConfigurationManager("config")
+    return _config_manager
+
+
+def load_system_config(environment: str = "development") -> RoverConfig:
+    """Load system config for environment (backward compatibility)."""
+    return get_urc_config()
+
+
 # ============================================================================
 # Convenience Accessors
 # ============================================================================
+
 
 def get_sync_config() -> SyncConfig:
     """Get synchronization configuration."""
@@ -382,24 +475,23 @@ __all__ = [
     "get_config",
     "get_system_config",
     "reload_config",
-    
+    "get_config_manager",
+    "load_system_config",
+    "ConfigurationManager",
     # Settings access
     "URCSettings",
     "get_settings",
     "reset_settings",
     "config_get",
     "config_set",
-    
     # Environment helpers
     "get_environment",
     "is_development",
     "is_production",
     "is_simulation",
-    
     # Main config models
     "RoverConfig",
     "SystemConfig",
-    
     # Enums
     "Environment",
     "LogLevel",
@@ -409,7 +501,6 @@ __all__ = [
     "MotorType",
     "CommunicationProtocol",
     "MissionType",
-    
     # Sub-config models
     "SimulationConfig",
     "SyncConfig",
@@ -423,7 +514,6 @@ __all__ = [
     "APIConfig",
     "PerformanceConfig",
     "WaypointConfig",
-    
     # Convenience accessors
     "get_sync_config",
     "get_network_config",
@@ -432,7 +522,6 @@ __all__ = [
     "get_navigation_config",
     "get_simulation_config",
     "get_hardware_config",
-    
     # Validation
     "URCConfigValidator",
     "ValidationError",

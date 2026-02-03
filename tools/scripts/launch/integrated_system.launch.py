@@ -14,7 +14,12 @@ This launch file demonstrates the integration of submodules for complete system 
 
 import os
 
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, SetEnvironmentVariable, TimerAction
+from launch.actions import (
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    SetEnvironmentVariable,
+    TimerAction,
+)
 from launch.launch_description import LaunchDescription  # type: ignore
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -29,12 +34,21 @@ def generate_launch_description():
     # dirname*2 -> tools/scripts
     # dirname*3 -> tools
     # dirname*4 -> urc-machiato-2026 (root)
-    workspace_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    workspace_root = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
     teleoperation_path = os.path.join(workspace_root, "submodules", "teleoperation")
     control_systems_path = os.path.join(workspace_root, "submodules", "control-systems")
 
     # Set PYTHONPATH to include autonomy_utilities
-    autonomy_utilities_path = os.path.join(workspace_root, "install", "autonomy_utilities", "lib", "python3.12", "site-packages")
+    autonomy_utilities_path = os.path.join(
+        workspace_root,
+        "install",
+        "autonomy_utilities",
+        "lib",
+        "python3.12",
+        "site-packages",
+    )
 
     return LaunchDescription(
         [
@@ -43,9 +57,8 @@ def generate_launch_description():
             # ===========================================
             SetEnvironmentVariable(
                 name="PYTHONPATH",
-                value=autonomy_utilities_path + ":" + os.environ.get("PYTHONPATH", "")
+                value=autonomy_utilities_path + ":" + os.environ.get("PYTHONPATH", ""),
             ),
-
             # ===========================================
             # SYSTEM STATUS
             # ===========================================
@@ -62,14 +75,14 @@ def generate_launch_description():
                 executable="rosbridge_websocket",
                 name="rosbridge_server",
                 output="screen",
-                parameters=[{"port": 9091}]
+                parameters=[{"port": 9091}],
             ),
             Node(
                 package="autonomy_simulation",
                 executable="sensor_simulator.py",
                 name="sensor_simulator",
                 output="screen",
-                parameters=[{"gps_noise_std": 0.5}]
+                parameters=[{"gps_noise_std": 0.5}],
             ),
             # ===========================================
             # CORE LIFECYCLE NODES
@@ -79,25 +92,25 @@ def generate_launch_description():
                 executable="hardware_interface_node.py",
                 name="hardware_interface",
                 output="screen",
-                parameters=[{"can_port": "/dev/ttyACM0"}]
+                parameters=[{"can_port": "/dev/ttyACM0"}],
             ),
             Node(
                 package="autonomy_navigation",
                 executable="navigation_node.py",
                 name="navigation_node",
-                output="screen"
+                output="screen",
             ),
             Node(
                 package="autonomy_slam",
                 executable="slam_node.py",
                 name="slam_orchestrator",
-                output="screen"
+                output="screen",
             ),
             Node(
                 package="autonomy_state_management",
                 executable="adaptive_state_machine",
                 name="adaptive_state_machine",
-                output="screen"
+                output="screen",
             ),
             # Autonomous Typing System (temporarily disabled due to build issue)
             # Node(
@@ -110,7 +123,7 @@ def generate_launch_description():
                 package="autonomy_bt",
                 executable="bt_orchestrator",
                 name="bt_orchestrator",
-                output="screen"
+                output="screen",
             ),
             # ===========================================
             # SYSTEM MONITORING (Delayed)
@@ -118,8 +131,12 @@ def generate_launch_description():
             TimerAction(
                 period=5.0,
                 actions=[
-                    ExecuteProcess(cmd=["ros2", "topic", "list"], output="screen", name="topic_monitor")
-                ]
+                    ExecuteProcess(
+                        cmd=["ros2", "topic", "list"],
+                        output="screen",
+                        name="topic_monitor",
+                    )
+                ],
             ),
             # ===========================================
             # INTEGRATION VERIFICATION

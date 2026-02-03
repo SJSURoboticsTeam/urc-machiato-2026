@@ -59,7 +59,12 @@ jobs:
           cp -r . ~/ros2_ws/src/urc-machiato-2026
           cd ~/ros2_ws
           rosdep install --from-paths src --ignore-src -y
-          colcon build --symlink-install --packages-skip urc-machiato-2026
+          colcon build --symlink-install --base-paths \
+            src/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces \
+            src/urc-machiato-2026/src/autonomy/autonomy_core \
+            src/urc-machiato-2026/src/autonomy/bt \
+            src/urc-machiato-2026/src/simulation/gazebo_simulation \
+            src/urc-machiato-2026/src/vision_processing
 
       - name: Code formatting check
         run: |
@@ -99,10 +104,14 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           cd ~/ros2_ws
-          colcon build --symlink-install --packages-select autonomy_interfaces
-          colcon build --symlink-install --packages-select autonomy_navigation
-          colcon build --symlink-install --packages-select autonomy_state_management
-          echo "✅ ROS2 package build check passed"
+          colcon build --symlink-install --base-paths \
+            src/urc-machiato-2026/src/autonomy/interfaces/autonomy_interfaces \
+            src/urc-machiato-2026/src/autonomy/autonomy_core \
+            src/urc-machiato-2026/src/autonomy/bt \
+            src/urc-machiato-2026/src/simulation/gazebo_simulation \
+            src/urc-machiato-2026/src/vision_processing \
+            --packages-select autonomy_interfaces autonomy_core autonomy_bt
+          echo "ROS2 package build check passed"
 
       - name: Documentation build check
         run: |

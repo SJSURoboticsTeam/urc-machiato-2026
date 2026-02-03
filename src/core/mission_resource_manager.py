@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class ComponentStatus(Enum):
     """Component operational status."""
+
     DISABLED = "disabled"
     ENABLED = "enabled"
     LIGHTWEIGHT = "lightweight"
@@ -38,15 +39,17 @@ class ComponentStatus(Enum):
 
 class ResourcePriority(Enum):
     """Resource allocation priorities."""
+
     CRITICAL = "critical"  # Safety, emergency systems
-    HIGH = "high"         # Navigation, SLAM
-    MEDIUM = "medium"     # Vision, terrain analysis
-    LOW = "low"          # Telemetry, logging
+    HIGH = "high"  # Navigation, SLAM
+    MEDIUM = "medium"  # Vision, terrain analysis
+    LOW = "low"  # Telemetry, logging
 
 
 @dataclass
 class ComponentConfig:
     """Configuration for a system component."""
+
     name: str
     priority: ResourcePriority
     resource_usage: Dict[str, float]  # CPU%, Memory MB, etc.
@@ -80,10 +83,10 @@ class MissionResourceManager:
         # Resource monitoring
         self.resource_history: List[Dict[str, Any]] = []
         self.scaling_thresholds = {
-            'cpu_warning': 75.0,
-            'cpu_critical': 90.0,
-            'memory_warning_mb': 500.0,
-            'memory_critical_mb': 700.0
+            "cpu_warning": 75.0,
+            "cpu_critical": 90.0,
+            "memory_warning_mb": 500.0,
+            "memory_critical_mb": 700.0,
         }
 
         logger.info("Mission Resource Manager initialized")
@@ -92,81 +95,81 @@ class MissionResourceManager:
         """Register all system components with their configurations."""
 
         # Computer Vision Components
-        self.components['computer_vision'] = ComponentConfig(
-            name='computer_vision',
+        self.components["computer_vision"] = ComponentConfig(
+            name="computer_vision",
             priority=ResourcePriority.MEDIUM,
-            resource_usage={'cpu_percent': 30.0, 'memory_mb': 200.0},
+            resource_usage={"cpu_percent": 30.0, "memory_mb": 200.0},
             enable_callback=self._enable_computer_vision,
             disable_callback=self._disable_computer_vision,
-            lightweight_callback=self._enable_lightweight_vision
+            lightweight_callback=self._enable_lightweight_vision,
         )
 
         # SLAM Components
-        self.components['slam_full'] = ComponentConfig(
-            name='slam_full',
+        self.components["slam_full"] = ComponentConfig(
+            name="slam_full",
             priority=ResourcePriority.HIGH,
-            resource_usage={'cpu_percent': 25.0, 'memory_mb': 300.0},
-            dependencies=['computer_vision'],
+            resource_usage={"cpu_percent": 25.0, "memory_mb": 300.0},
+            dependencies=["computer_vision"],
             enable_callback=self._enable_full_slam,
             disable_callback=self._disable_slam,
-            lightweight_callback=self._enable_lightweight_slam
+            lightweight_callback=self._enable_lightweight_slam,
         )
 
-        self.components['slam_loop_closure'] = ComponentConfig(
-            name='slam_loop_closure',
+        self.components["slam_loop_closure"] = ComponentConfig(
+            name="slam_loop_closure",
             priority=ResourcePriority.MEDIUM,
-            resource_usage={'cpu_percent': 15.0, 'memory_mb': 150.0},
-            dependencies=['slam_full'],
+            resource_usage={"cpu_percent": 15.0, "memory_mb": 150.0},
+            dependencies=["slam_full"],
             enable_callback=self._enable_loop_closure,
-            disable_callback=self._disable_loop_closure
+            disable_callback=self._disable_loop_closure,
         )
 
         # Terrain Analysis
-        self.components['terrain_analysis'] = ComponentConfig(
-            name='terrain_analysis',
+        self.components["terrain_analysis"] = ComponentConfig(
+            name="terrain_analysis",
             priority=ResourcePriority.MEDIUM,
-            resource_usage={'cpu_percent': 20.0, 'memory_mb': 100.0},
+            resource_usage={"cpu_percent": 20.0, "memory_mb": 100.0},
             enable_callback=self._enable_terrain_analysis,
             disable_callback=self._disable_terrain_analysis,
-            lightweight_callback=self._enable_lightweight_terrain
+            lightweight_callback=self._enable_lightweight_terrain,
         )
 
         # Excavation Systems
-        self.components['excavation'] = ComponentConfig(
-            name='excavation',
+        self.components["excavation"] = ComponentConfig(
+            name="excavation",
             priority=ResourcePriority.LOW,
-            resource_usage={'cpu_percent': 5.0, 'memory_mb': 50.0},
+            resource_usage={"cpu_percent": 5.0, "memory_mb": 50.0},
             enable_callback=self._enable_excavation,
-            disable_callback=self._disable_excavation
+            disable_callback=self._disable_excavation,
         )
 
         # Science Payload
-        self.components['science_payload'] = ComponentConfig(
-            name='science_payload',
+        self.components["science_payload"] = ComponentConfig(
+            name="science_payload",
             priority=ResourcePriority.LOW,
-            resource_usage={'cpu_percent': 3.0, 'memory_mb': 30.0},
+            resource_usage={"cpu_percent": 3.0, "memory_mb": 30.0},
             enable_callback=self._enable_science_payload,
-            disable_callback=self._disable_science_payload
+            disable_callback=self._disable_science_payload,
         )
 
         # Advanced Path Planning
-        self.components['advanced_path_planning'] = ComponentConfig(
-            name='advanced_path_planning',
+        self.components["advanced_path_planning"] = ComponentConfig(
+            name="advanced_path_planning",
             priority=ResourcePriority.HIGH,
-            resource_usage={'cpu_percent': 10.0, 'memory_mb': 80.0},
+            resource_usage={"cpu_percent": 10.0, "memory_mb": 80.0},
             enable_callback=self._enable_advanced_planning,
             disable_callback=self._disable_advanced_planning,
-            lightweight_callback=self._enable_basic_planning
+            lightweight_callback=self._enable_basic_planning,
         )
 
         # Telemetry Levels
-        self.components['telemetry_detailed'] = ComponentConfig(
-            name='telemetry_detailed',
+        self.components["telemetry_detailed"] = ComponentConfig(
+            name="telemetry_detailed",
             priority=ResourcePriority.LOW,
-            resource_usage={'cpu_percent': 2.0, 'memory_mb': 20.0},
+            resource_usage={"cpu_percent": 2.0, "memory_mb": 20.0},
             enable_callback=self._enable_detailed_telemetry,
             disable_callback=self._disable_detailed_telemetry,
-            lightweight_callback=self._enable_standard_telemetry
+            lightweight_callback=self._enable_standard_telemetry,
         )
 
     def switch_mission_profile(self, mission_type: str):
@@ -176,23 +179,23 @@ class MissionResourceManager:
         Args:
             mission_type: Mission profile name (e.g., 'waypoint_navigation', 'sample_collection')
         """
-        if mission_type not in self.config.get('mission_profiles', {}):
+        if mission_type not in self.config.get("mission_profiles", {}):
             logger.error(f"Unknown mission profile: {mission_type}")
             return False
 
-        profile = self.config['mission_profiles'][mission_type]
+        profile = self.config["mission_profiles"][mission_type]
         self.current_mission_profile = mission_type
 
         logger.info(f"Switching to mission profile: {mission_type}")
 
         # Apply component settings from profile
         component_mappings = {
-            'computer_vision_enabled': 'computer_vision',
-            'terrain_analysis_enabled': 'terrain_analysis',
-            'slam_loop_closure_enabled': 'slam_loop_closure',
-            'excavation_enabled': 'excavation',
-            'science_payload_enabled': 'science_payload',
-            'advanced_path_planning': 'advanced_path_planning'
+            "computer_vision_enabled": "computer_vision",
+            "terrain_analysis_enabled": "terrain_analysis",
+            "slam_loop_closure_enabled": "slam_loop_closure",
+            "excavation_enabled": "excavation",
+            "science_payload_enabled": "science_payload",
+            "advanced_path_planning": "advanced_path_planning",
         }
 
         # Disable all components first
@@ -206,21 +209,22 @@ class MissionResourceManager:
                 self._disable_component(component_name)
 
         # Handle telemetry level
-        telemetry_level = profile.get('telemetry_level', 'standard')
-        if telemetry_level == 'detailed':
-            self._enable_component('telemetry_detailed', ComponentStatus.FULL)
-        elif telemetry_level == 'minimal':
-            self._enable_component('telemetry_detailed', ComponentStatus.LIGHTWEIGHT)
+        telemetry_level = profile.get("telemetry_level", "standard")
+        if telemetry_level == "detailed":
+            self._enable_component("telemetry_detailed", ComponentStatus.FULL)
+        elif telemetry_level == "minimal":
+            self._enable_component("telemetry_detailed", ComponentStatus.LIGHTWEIGHT)
         else:
-            self._enable_component('telemetry_detailed', ComponentStatus.LIGHTWEIGHT)
+            self._enable_component("telemetry_detailed", ComponentStatus.LIGHTWEIGHT)
 
         # Enable base SLAM if any SLAM components are enabled
-        if (profile.get('slam_loop_closure_enabled', False) or
-            profile.get('computer_vision_enabled', False)):
-            self._enable_component('slam_full', ComponentStatus.FULL)
+        if profile.get("slam_loop_closure_enabled", False) or profile.get(
+            "computer_vision_enabled", False
+        ):
+            self._enable_component("slam_full", ComponentStatus.FULL)
 
         # Apply vision settings if vision is enabled
-        if profile.get('computer_vision_enabled', False):
+        if profile.get("computer_vision_enabled", False):
             self._configure_vision_settings(profile)
 
         logger.info(f"Successfully switched to mission profile: {mission_type}")
@@ -228,8 +232,8 @@ class MissionResourceManager:
 
     def _configure_vision_settings(self, profile: Dict[str, Any]):
         """Configure computer vision settings based on profile."""
-        fps = profile.get('vision_fps', 20)
-        resolution = profile.get('vision_resolution', '720p')
+        fps = profile.get("vision_fps", 20)
+        resolution = profile.get("vision_resolution", "720p")
 
         # Apply vision configuration (this would integrate with actual vision system)
         logger.info(f"Configuring vision: {fps}fps at {resolution}")
@@ -241,9 +245,7 @@ class MissionResourceManager:
 
         self.resource_monitoring = True
         self.monitoring_thread = threading.Thread(
-            target=self._resource_monitoring_loop,
-            daemon=True,
-            name="ResourceMonitor"
+            target=self._resource_monitoring_loop, daemon=True, name="ResourceMonitor"
         )
         self.monitoring_thread.start()
         logger.info("Resource monitoring started")
@@ -285,33 +287,33 @@ class MissionResourceManager:
         memory = psutil.virtual_memory()
 
         return {
-            'timestamp': time.time(),
-            'cpu_percent': process.cpu_percent(interval=None),
-            'memory_mb': process.memory_info().rss / (1024 * 1024),
-            'system_memory_percent': memory.percent,
-            'system_memory_available_mb': memory.available / (1024 * 1024)
+            "timestamp": time.time(),
+            "cpu_percent": process.cpu_percent(interval=None),
+            "memory_mb": process.memory_info().rss / (1024 * 1024),
+            "system_memory_percent": memory.percent,
+            "system_memory_available_mb": memory.available / (1024 * 1024),
         }
 
     def _check_resource_thresholds(self, resources: Dict[str, Any]):
         """Check if resources exceed thresholds and take action."""
-        cpu_percent = resources['cpu_percent']
-        memory_mb = resources['memory_mb']
+        cpu_percent = resources["cpu_percent"]
+        memory_mb = resources["memory_mb"]
 
         # Critical thresholds - disable components immediately
-        if cpu_percent > self.scaling_thresholds['cpu_critical']:
+        if cpu_percent > self.scaling_thresholds["cpu_critical"]:
             logger.warning(".1f")
             self._emergency_resource_reduction()
 
-        elif memory_mb > self.scaling_thresholds['memory_critical_mb']:
+        elif memory_mb > self.scaling_thresholds["memory_critical_mb"]:
             logger.warning(".1f")
             self._emergency_resource_reduction()
 
         # Warning thresholds - scale back gradually
-        elif cpu_percent > self.scaling_thresholds['cpu_warning']:
+        elif cpu_percent > self.scaling_thresholds["cpu_warning"]:
             logger.info(".1f")
             self._scale_back_resources()
 
-        elif memory_mb > self.scaling_thresholds['memory_warning_mb']:
+        elif memory_mb > self.scaling_thresholds["memory_warning_mb"]:
             logger.info(".1f")
             self._scale_back_resources()
 
@@ -321,9 +323,10 @@ class MissionResourceManager:
 
         # Disable lowest priority components first
         low_priority_components = [
-            comp for comp in self.components.values()
-            if comp.priority == ResourcePriority.LOW and
-            self.component_status.get(comp.name) != ComponentStatus.DISABLED
+            comp
+            for comp in self.components.values()
+            if comp.priority == ResourcePriority.LOW
+            and self.component_status.get(comp.name) != ComponentStatus.DISABLED
         ]
 
         for component in low_priority_components:
@@ -332,9 +335,10 @@ class MissionResourceManager:
         # If still critical, disable medium priority
         if self._check_resources_critical():
             medium_priority_components = [
-                comp for comp in self.components.values()
-                if comp.priority == ResourcePriority.MEDIUM and
-                self.component_status.get(comp.name) != ComponentStatus.DISABLED
+                comp
+                for comp in self.components.values()
+                if comp.priority == ResourcePriority.MEDIUM
+                and self.component_status.get(comp.name) != ComponentStatus.DISABLED
             ]
 
             for component in medium_priority_components:
@@ -355,8 +359,11 @@ class MissionResourceManager:
         """Check if resources are still in critical state."""
         try:
             resources = self._measure_resources()
-            return (resources['cpu_percent'] > self.scaling_thresholds['cpu_critical'] or
-                    resources['memory_mb'] > self.scaling_thresholds['memory_critical_mb'])
+            return (
+                resources["cpu_percent"] > self.scaling_thresholds["cpu_critical"]
+                or resources["memory_mb"]
+                > self.scaling_thresholds["memory_critical_mb"]
+            )
         except:
             return True  # Assume critical if measurement fails
 
@@ -501,16 +508,21 @@ class MissionResourceManager:
     def get_resource_status(self) -> Dict[str, Any]:
         """Get current resource usage and component status."""
         return {
-            'component_status': {name: status.value for name, status in self.component_status.items()},
-            'current_resources': self._measure_resources() if self.resource_history else {},
-            'mission_profile': self.current_mission_profile,
-            'adaptive_scaling': self.adaptive_scaling_enabled,
-            'monitoring_active': self.resource_monitoring
+            "component_status": {
+                name: status.value for name, status in self.component_status.items()
+            },
+            "current_resources": (
+                self._measure_resources() if self.resource_history else {}
+            ),
+            "mission_profile": self.current_mission_profile,
+            "adaptive_scaling": self.adaptive_scaling_enabled,
+            "monitoring_active": self.resource_monitoring,
         }
 
 
 # Global instance
 _resource_manager = None
+
 
 def get_mission_resource_manager() -> MissionResourceManager:
     """Get the global mission resource manager instance."""
@@ -518,6 +530,3 @@ def get_mission_resource_manager() -> MissionResourceManager:
     if _resource_manager is None:
         _resource_manager = MissionResourceManager()
     return _resource_manager
-
-
-

@@ -24,51 +24,87 @@ try:
     import plotly.graph_objects as go
     import plotly.express as px
     from plotly.subplots import make_subplots
+
     VISUALIZATION_AVAILABLE = True
 except ImportError:
     VISUALIZATION_AVAILABLE = False
+
     # Fallback implementations
     class st:
         @staticmethod
-        def title(*args, **kwargs): print(*args)
+        def title(*args, **kwargs):
+            print(*args)
+
         @staticmethod
-        def header(*args, **kwargs): print(*args)
+        def header(*args, **kwargs):
+            print(*args)
+
         @staticmethod
-        def subheader(*args, **kwargs): print(*args)
+        def subheader(*args, **kwargs):
+            print(*args)
+
         @staticmethod
-        def metric(*args, **kwargs): print(f"{args[0]}: {args[1]}")
+        def metric(*args, **kwargs):
+            print(f"{args[0]}: {args[1]}")
+
         @staticmethod
-        def columns(*args): return [MockColumn() for _ in range(args[0])]
+        def columns(*args):
+            return [MockColumn() for _ in range(args[0])]
+
         @staticmethod
-        def empty(): return MockEmpty()
+        def empty():
+            return MockEmpty()
+
         @staticmethod
-        def plotly_chart(*args, **kwargs): print("Chart would be displayed here")
+        def plotly_chart(*args, **kwargs):
+            print("Chart would be displayed here")
+
         @staticmethod
-        def line_chart(*args, **kwargs): print("Line chart would be displayed here")
+        def line_chart(*args, **kwargs):
+            print("Line chart would be displayed here")
+
         @staticmethod
-        def selectbox(*args, **kwargs): return args[1][0] if len(args) > 1 else None
+        def selectbox(*args, **kwargs):
+            return args[1][0] if len(args) > 1 else None
+
         @staticmethod
-        def multiselect(*args, **kwargs): return args[1] if len(args) > 1 else []
+        def multiselect(*args, **kwargs):
+            return args[1] if len(args) > 1 else []
+
         @staticmethod
-        def checkbox(*args, **kwargs): return False
+        def checkbox(*args, **kwargs):
+            return False
+
         @staticmethod
-        def button(*args, **kwargs): return False
+        def button(*args, **kwargs):
+            return False
+
         @staticmethod
-        def slider(*args, **kwargs): return args[1] if len(args) > 1 else 0
+        def slider(*args, **kwargs):
+            return args[1] if len(args) > 1 else 0
+
         @staticmethod
-        def text_input(*args, **kwargs): return ""
+        def text_input(*args, **kwargs):
+            return ""
+
         @staticmethod
-        def sidebar(): return MockSidebar()
+        def sidebar():
+            return MockSidebar()
 
     class MockColumn:
-        def metric(self, *args, **kwargs): print(f"{args[0]}: {args[1]}")
+        def metric(self, *args, **kwargs):
+            print(f"{args[0]}: {args[1]}")
 
     class MockEmpty:
-        def line_chart(self, *args, **kwargs): print("Updating chart...")
+        def line_chart(self, *args, **kwargs):
+            print("Updating chart...")
 
     class MockSidebar:
-        def title(self, *args, **kwargs): print(*args)
-        def selectbox(self, *args, **kwargs): return args[1][0] if len(args) > 1 else None
+        def title(self, *args, **kwargs):
+            print(*args)
+
+        def selectbox(self, *args, **kwargs):
+            return args[1][0] if len(args) > 1 else None
 
     go = None
     px = None
@@ -93,11 +129,11 @@ class URCMonitoringDashboard:
 
         # Initialize session state for Streamlit
         if VISUALIZATION_AVAILABLE:
-            if 'dashboard_initialized' not in st.session_state:
+            if "dashboard_initialized" not in st.session_state:
                 st.session_state.dashboard_initialized = True
                 st.session_state.telemetry_data = []
                 st.session_state.alerts = []
-                st.session_state.mission_status = 'IDLE'
+                st.session_state.mission_status = "IDLE"
 
     def run_dashboard(self):
         """Main dashboard execution."""
@@ -110,7 +146,7 @@ class URCMonitoringDashboard:
             page_title="URC 2026 Rover Monitor",
             page_icon="🚀",
             layout="wide",
-            initial_sidebar_state="expanded"
+            initial_sidebar_state="expanded",
         )
 
         # Title and header
@@ -136,7 +172,13 @@ class URCMonitoringDashboard:
             st.subheader("Mission Control")
             mission_action = st.selectbox(
                 "Mission Action:",
-                ["Start Mission", "Pause Mission", "Resume Mission", "Emergency Stop", "Return Home"]
+                [
+                    "Start Mission",
+                    "Pause Mission",
+                    "Resume Mission",
+                    "Emergency Stop",
+                    "Return Home",
+                ],
             )
 
             if st.button("Execute Action", type="primary"):
@@ -187,7 +229,7 @@ class URCMonitoringDashboard:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            battery_level = telemetry.get('battery_level', 85)
+            battery_level = telemetry.get("battery_level", 85)
             battery_color = "normal"
             if battery_level < 20:
                 battery_color = "inverse"  # Red background
@@ -195,24 +237,31 @@ class URCMonitoringDashboard:
                 "Battery Level",
                 f"{battery_level}%",
                 delta=f"{random.uniform(-2, 1):.1f}%",
-                delta_color="inverse" if battery_level < 20 else "normal"
+                delta_color="inverse" if battery_level < 20 else "normal",
             )
 
         with col2:
-            comm_status = telemetry.get('communication_status', 'connected')
-            status_color = "🟢" if comm_status == 'connected' else "🔴"
+            comm_status = telemetry.get("communication_status", "connected")
+            status_color = "🟢" if comm_status == "connected" else "🔴"
             st.metric("Communication", f"{status_color} {comm_status.title()}")
 
         with col3:
-            system_health = telemetry.get('system_health', 'nominal')
-            health_color = "🟢" if system_health == 'nominal' else "🟡" if system_health == 'degraded' else "🔴"
+            system_health = telemetry.get("system_health", "nominal")
+            health_color = (
+                "🟢"
+                if system_health == "nominal"
+                else "🟡" if system_health == "degraded" else "🔴"
+            )
             st.metric("System Health", f"{health_color} {system_health.title()}")
 
         with col4:
             mission_status = st.session_state.mission_status
             status_icon = {
-                'IDLE': '⏸️', 'ACTIVE': '▶️', 'PAUSED': '⏸️', 'EMERGENCY': '🚨'
-            }.get(mission_status, '❓')
+                "IDLE": "⏸️",
+                "ACTIVE": "▶️",
+                "PAUSED": "⏸️",
+                "EMERGENCY": "🚨",
+            }.get(mission_status, "❓")
             st.metric("Mission Status", f"{status_icon} {mission_status}")
 
     def _render_system_status_chart(self):
@@ -231,39 +280,71 @@ class URCMonitoringDashboard:
 
         # Create subplots
         fig = make_subplots(
-            rows=2, cols=2,
-            subplot_titles=('Battery Level', 'CPU Usage', 'Memory Usage', 'Temperature'),
-            specs=[[{'type': 'scatter'}, {'type': 'scatter'}],
-                   [{'type': 'scatter'}, {'type': 'scatter'}]]
+            rows=2,
+            cols=2,
+            subplot_titles=(
+                "Battery Level",
+                "CPU Usage",
+                "Memory Usage",
+                "Temperature",
+            ),
+            specs=[
+                [{"type": "scatter"}, {"type": "scatter"}],
+                [{"type": "scatter"}, {"type": "scatter"}],
+            ],
         )
 
         # Add traces
-        if 'battery_level' in df.columns:
+        if "battery_level" in df.columns:
             fig.add_trace(
-                go.Scatter(x=df.index, y=df['battery_level'], mode='lines+markers',
-                          name='Battery', line=dict(color='blue')),
-                row=1, col=1
+                go.Scatter(
+                    x=df.index,
+                    y=df["battery_level"],
+                    mode="lines+markers",
+                    name="Battery",
+                    line=dict(color="blue"),
+                ),
+                row=1,
+                col=1,
             )
 
-        if 'cpu_usage' in df.columns:
+        if "cpu_usage" in df.columns:
             fig.add_trace(
-                go.Scatter(x=df.index, y=df['cpu_usage'], mode='lines',
-                          name='CPU', line=dict(color='red')),
-                row=1, col=2
+                go.Scatter(
+                    x=df.index,
+                    y=df["cpu_usage"],
+                    mode="lines",
+                    name="CPU",
+                    line=dict(color="red"),
+                ),
+                row=1,
+                col=2,
             )
 
-        if 'memory_usage' in df.columns:
+        if "memory_usage" in df.columns:
             fig.add_trace(
-                go.Scatter(x=df.index, y=df['memory_usage'], mode='lines',
-                          name='Memory', line=dict(color='green')),
-                row=2, col=1
+                go.Scatter(
+                    x=df.index,
+                    y=df["memory_usage"],
+                    mode="lines",
+                    name="Memory",
+                    line=dict(color="green"),
+                ),
+                row=2,
+                col=1,
             )
 
-        if 'temperature' in df.columns:
+        if "temperature" in df.columns:
             fig.add_trace(
-                go.Scatter(x=df.index, y=df['temperature'], mode='lines',
-                          name='Temperature', line=dict(color='orange')),
-                row=2, col=2
+                go.Scatter(
+                    x=df.index,
+                    y=df["temperature"],
+                    mode="lines",
+                    name="Temperature",
+                    line=dict(color="orange"),
+                ),
+                row=2,
+                col=2,
             )
 
         fig.update_layout(height=400, showlegend=False)
@@ -280,30 +361,34 @@ class URCMonitoringDashboard:
             # Create progress chart
             fig = go.Figure()
 
-            fig.add_trace(go.Scatter(
-                x=[wp['x'] for wp in mission_data['waypoints']],
-                y=[wp['y'] for wp in mission_data['waypoints']],
-                mode='lines+markers+text',
-                text=[wp['name'] for wp in mission_data['waypoints']],
-                textposition="top center",
-                name='Planned Path',
-                line=dict(color='blue', width=2)
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=[wp["x"] for wp in mission_data["waypoints"]],
+                    y=[wp["y"] for wp in mission_data["waypoints"]],
+                    mode="lines+markers+text",
+                    text=[wp["name"] for wp in mission_data["waypoints"]],
+                    textposition="top center",
+                    name="Planned Path",
+                    line=dict(color="blue", width=2),
+                )
+            )
 
-            if mission_data['current_position']:
-                fig.add_trace(go.Scatter(
-                    x=[mission_data['current_position']['x']],
-                    y=[mission_data['current_position']['y']],
-                    mode='markers',
-                    marker=dict(size=15, color='red', symbol='star'),
-                    name='Current Position'
-                ))
+            if mission_data["current_position"]:
+                fig.add_trace(
+                    go.Scatter(
+                        x=[mission_data["current_position"]["x"]],
+                        y=[mission_data["current_position"]["y"]],
+                        mode="markers",
+                        marker=dict(size=15, color="red", symbol="star"),
+                        name="Current Position",
+                    )
+                )
 
             fig.update_layout(
                 title="Mission Path & Progress",
                 xaxis_title="X Position (m)",
                 yaxis_title="Y Position (m)",
-                height=400
+                height=400,
             )
 
             st.plotly_chart(fig, use_container_width=True)
@@ -311,18 +396,23 @@ class URCMonitoringDashboard:
             # Progress metrics
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("Waypoints Completed", mission_data['completed_waypoints'])
+                st.metric("Waypoints Completed", mission_data["completed_waypoints"])
             with col2:
-                st.metric("Total Waypoints", mission_data['total_waypoints'])
+                st.metric("Total Waypoints", mission_data["total_waypoints"])
             with col3:
-                progress = (mission_data['completed_waypoints'] / mission_data['total_waypoints']) * 100
+                progress = (
+                    mission_data["completed_waypoints"]
+                    / mission_data["total_waypoints"]
+                ) * 100
                 st.metric("Progress", f"{progress:.1f}%")
 
     def _render_detailed_charts(self):
         """Render detailed analysis charts."""
         st.header("📈 Detailed Analysis")
 
-        tab1, tab2, tab3 = st.tabs(["Telemetry Trends", "Sensor Data", "Performance Metrics"])
+        tab1, tab2, tab3 = st.tabs(
+            ["Telemetry Trends", "Sensor Data", "Performance Metrics"]
+        )
 
         with tab1:
             self._render_telemetry_trends()
@@ -342,14 +432,14 @@ class URCMonitoringDashboard:
         df = pd.DataFrame(self.telemetry_history)
 
         # Time series plot
-        fig = px.line(df, x=df.index, y=['battery_level', 'cpu_usage', 'memory_usage'],
-                     title="Telemetry Trends Over Time")
-
-        fig.update_layout(
-            xaxis_title="Time (samples)",
-            yaxis_title="Value",
-            height=400
+        fig = px.line(
+            df,
+            x=df.index,
+            y=["battery_level", "cpu_usage", "memory_usage"],
+            title="Telemetry Trends Over Time",
         )
+
+        fig.update_layout(xaxis_title="Time (samples)", yaxis_title="Value", height=400)
 
         st.plotly_chart(fig, use_container_width=True)
 
@@ -362,27 +452,36 @@ class URCMonitoringDashboard:
 
         with col1:
             # IMU data
-            imu_df = pd.DataFrame({
-                'time': sensor_data['timestamps'],
-                'accel_x': sensor_data['imu']['accel_x'],
-                'accel_y': sensor_data['imu']['accel_y'],
-                'accel_z': sensor_data['imu']['accel_z']
-            })
+            imu_df = pd.DataFrame(
+                {
+                    "time": sensor_data["timestamps"],
+                    "accel_x": sensor_data["imu"]["accel_x"],
+                    "accel_y": sensor_data["imu"]["accel_y"],
+                    "accel_z": sensor_data["imu"]["accel_z"],
+                }
+            )
 
-            fig = px.line(imu_df, x='time', y=['accel_x', 'accel_y', 'accel_z'],
-                         title="IMU Acceleration")
+            fig = px.line(
+                imu_df,
+                x="time",
+                y=["accel_x", "accel_y", "accel_z"],
+                title="IMU Acceleration",
+            )
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
             # GPS data
-            gps_df = pd.DataFrame({
-                'time': sensor_data['timestamps'],
-                'latitude': sensor_data['gps']['latitude'],
-                'longitude': sensor_data['gps']['longitude']
-            })
+            gps_df = pd.DataFrame(
+                {
+                    "time": sensor_data["timestamps"],
+                    "latitude": sensor_data["gps"]["latitude"],
+                    "longitude": sensor_data["gps"]["longitude"],
+                }
+            )
 
-            fig = px.line(gps_df, x='time', y=['latitude', 'longitude'],
-                         title="GPS Position")
+            fig = px.line(
+                gps_df, x="time", y=["latitude", "longitude"], title="GPS Position"
+            )
             st.plotly_chart(fig, use_container_width=True)
 
     def _render_performance_metrics(self):
@@ -395,23 +494,25 @@ class URCMonitoringDashboard:
         with col1:
             # Response times
             fig = go.Figure()
-            fig.add_trace(go.Histogram(
-                x=perf_data['response_times'],
-                nbinsx=20,
-                name='Response Times'
-            ))
+            fig.add_trace(
+                go.Histogram(
+                    x=perf_data["response_times"], nbinsx=20, name="Response Times"
+                )
+            )
             fig.update_layout(title="Command Response Time Distribution")
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
             # Throughput
             fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=perf_data['time'],
-                y=perf_data['throughput'],
-                mode='lines',
-                name='Commands/sec'
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=perf_data["time"],
+                    y=perf_data["throughput"],
+                    mode="lines",
+                    name="Commands/sec",
+                )
+            )
             fig.update_layout(title="System Throughput")
             st.plotly_chart(fig, use_container_width=True)
 
@@ -427,9 +528,9 @@ class URCMonitoringDashboard:
 
             if alerts:
                 for alert in alerts:
-                    if alert['severity'] == 'critical':
+                    if alert["severity"] == "critical":
                         st.error(f"🚨 {alert['message']}")
-                    elif alert['severity'] == 'warning':
+                    elif alert["severity"] == "warning":
                         st.warning(f"⚠️ {alert['message']}")
                     else:
                         st.info(f"ℹ️ {alert['message']}")
@@ -441,13 +542,13 @@ class URCMonitoringDashboard:
             logs = self._get_recent_logs()
 
             for log in logs[-10:]:  # Last 10 logs
-                timestamp = log['timestamp'].strftime('%H:%M:%S')
-                level = log['level']
-                message = log['message']
+                timestamp = log["timestamp"].strftime("%H:%M:%S")
+                level = log["level"]
+                message = log["message"]
 
-                if level == 'ERROR':
+                if level == "ERROR":
                     st.error(f"{timestamp}: {message}")
-                elif level == 'WARNING':
+                elif level == "WARNING":
                     st.warning(f"{timestamp}: {message}")
                 else:
                     st.text(f"{timestamp}: {message}")
@@ -458,13 +559,15 @@ class URCMonitoringDashboard:
         telemetry = RoverStateFactory()
 
         # Add additional computed fields
-        telemetry.update({
-            'cpu_usage': random.uniform(10, 90),
-            'memory_usage': random.uniform(20, 85),
-            'temperature': random.uniform(25, 75),
-            'network_latency': random.uniform(5, 50),
-            'timestamp': datetime.now()
-        })
+        telemetry.update(
+            {
+                "cpu_usage": random.uniform(10, 90),
+                "memory_usage": random.uniform(20, 85),
+                "temperature": random.uniform(25, 75),
+                "network_latency": random.uniform(5, 50),
+                "timestamp": datetime.now(),
+            }
+        )
 
         return telemetry
 
@@ -474,52 +577,60 @@ class URCMonitoringDashboard:
 
         # Keep only recent history
         if len(self.telemetry_history) > self.max_history_points:
-            self.telemetry_history = self.telemetry_history[-self.max_history_points:]
+            self.telemetry_history = self.telemetry_history[-self.max_history_points :]
 
         # Also update Streamlit session state
         if VISUALIZATION_AVAILABLE:
-            st.session_state.telemetry_data = self.telemetry_history[-100:]  # Keep last 100 for display
+            st.session_state.telemetry_data = self.telemetry_history[
+                -100:
+            ]  # Keep last 100 for display
 
     def _generate_mission_progress_data(self) -> Dict[str, Any]:
         """Generate mission progress data."""
         return {
-            'waypoints': [
-                {'name': 'Start', 'x': 0, 'y': 0},
-                {'name': 'WP1', 'x': 10, 'y': 5},
-                {'name': 'WP2', 'x': 20, 'y': 15},
-                {'name': 'WP3', 'x': 30, 'y': 10},
-                {'name': 'Goal', 'x': 40, 'y': 20}
+            "waypoints": [
+                {"name": "Start", "x": 0, "y": 0},
+                {"name": "WP1", "x": 10, "y": 5},
+                {"name": "WP2", "x": 20, "y": 15},
+                {"name": "WP3", "x": 30, "y": 10},
+                {"name": "Goal", "x": 40, "y": 20},
             ],
-            'current_position': {'x': 15, 'y': 8},
-            'completed_waypoints': 2,
-            'total_waypoints': 5
+            "current_position": {"x": 15, "y": 8},
+            "completed_waypoints": 2,
+            "total_waypoints": 5,
         }
 
     def _generate_sensor_data(self) -> Dict[str, Any]:
         """Generate sample sensor data."""
-        timestamps = pd.date_range(start=datetime.now() - timedelta(minutes=5),
-                                  end=datetime.now(), freq='1s')
+        timestamps = pd.date_range(
+            start=datetime.now() - timedelta(minutes=5), end=datetime.now(), freq="1s"
+        )
 
         return {
-            'timestamps': timestamps,
-            'imu': {
-                'accel_x': np.random.normal(0, 0.1, len(timestamps)),
-                'accel_y': np.random.normal(0, 0.1, len(timestamps)),
-                'accel_z': np.random.normal(9.8, 0.05, len(timestamps))
+            "timestamps": timestamps,
+            "imu": {
+                "accel_x": np.random.normal(0, 0.1, len(timestamps)),
+                "accel_y": np.random.normal(0, 0.1, len(timestamps)),
+                "accel_z": np.random.normal(9.8, 0.05, len(timestamps)),
             },
-            'gps': {
-                'latitude': np.linspace(37.7749, 37.7849, len(timestamps)),
-                'longitude': np.linspace(-122.4194, -122.4094, len(timestamps))
-            }
+            "gps": {
+                "latitude": np.linspace(37.7749, 37.7849, len(timestamps)),
+                "longitude": np.linspace(-122.4194, -122.4094, len(timestamps)),
+            },
         }
 
     def _generate_performance_data(self) -> Dict[str, Any]:
         """Generate performance metrics data."""
         return {
-            'response_times': np.random.exponential(0.1, 100),  # Exponential distribution
-            'time': pd.date_range(start=datetime.now() - timedelta(minutes=10),
-                                end=datetime.now(), freq='1s'),
-            'throughput': np.random.normal(50, 10, 600)  # Commands per second
+            "response_times": np.random.exponential(
+                0.1, 100
+            ),  # Exponential distribution
+            "time": pd.date_range(
+                start=datetime.now() - timedelta(minutes=10),
+                end=datetime.now(),
+                freq="1s",
+            ),
+            "throughput": np.random.normal(50, 10, 600),  # Commands per second
         }
 
     def _get_active_alerts(self) -> List[Dict[str, Any]]:
@@ -529,16 +640,20 @@ class URCMonitoringDashboard:
         # Check battery level
         if self.telemetry_history:
             latest = self.telemetry_history[-1]
-            if latest.get('battery_level', 100) < 20:
-                alerts.append({
-                    'severity': 'critical',
-                    'message': f"Battery level critical: {latest['battery_level']}%"
-                })
-            elif latest.get('battery_level', 100) < 30:
-                alerts.append({
-                    'severity': 'warning',
-                    'message': f"Battery level low: {latest['battery_level']}%"
-                })
+            if latest.get("battery_level", 100) < 20:
+                alerts.append(
+                    {
+                        "severity": "critical",
+                        "message": f"Battery level critical: {latest['battery_level']}%",
+                    }
+                )
+            elif latest.get("battery_level", 100) < 30:
+                alerts.append(
+                    {
+                        "severity": "warning",
+                        "message": f"Battery level low: {latest['battery_level']}%",
+                    }
+                )
 
         return alerts
 
@@ -547,34 +662,30 @@ class URCMonitoringDashboard:
         logs = []
 
         for i in range(20):
-            timestamp = datetime.now() - timedelta(seconds=i*30)
-            level = random.choice(['INFO', 'WARNING', 'ERROR'])
+            timestamp = datetime.now() - timedelta(seconds=i * 30)
+            level = random.choice(["INFO", "WARNING", "ERROR"])
             message = {
-                'INFO': 'System operating normally',
-                'WARNING': 'Sensor calibration recommended',
-                'ERROR': 'Communication timeout detected'
+                "INFO": "System operating normally",
+                "WARNING": "Sensor calibration recommended",
+                "ERROR": "Communication timeout detected",
             }[level]
 
-            logs.append({
-                'timestamp': timestamp,
-                'level': level,
-                'message': message
-            })
+            logs.append({"timestamp": timestamp, "level": level, "message": message})
 
         return logs
 
     def _execute_mission_action(self, action: str):
         """Execute mission action."""
         action_map = {
-            'Start Mission': 'ACTIVE',
-            'Pause Mission': 'PAUSED',
-            'Resume Mission': 'ACTIVE',
-            'Emergency Stop': 'EMERGENCY',
-            'Return Home': 'RETURNING'
+            "Start Mission": "ACTIVE",
+            "Pause Mission": "PAUSED",
+            "Resume Mission": "ACTIVE",
+            "Emergency Stop": "EMERGENCY",
+            "Return Home": "RETURNING",
         }
 
         if VISUALIZATION_AVAILABLE:
-            st.session_state.mission_status = action_map.get(action, 'IDLE')
+            st.session_state.mission_status = action_map.get(action, "IDLE")
 
         st.success(f"Executed: {action}")
 
@@ -603,7 +714,9 @@ class URCMonitoringDashboard:
             for alert in alerts:
                 print(f"  {alert['severity'].upper()}: {alert['message']}")
 
-        print("\nRun 'streamlit run src/dashboard/urc_monitoring_dashboard.py' for full dashboard")
+        print(
+            "\nRun 'streamlit run src/dashboard/urc_monitoring_dashboard.py' for full dashboard"
+        )
         print("=" * 60)
 
 

@@ -75,9 +75,7 @@ class MockBlackboardService(Node):
             response.success = True
             response.error_message = ""
 
-            self.get_logger().info(
-                "SET %s = %s (%s)" % (key, value, value_type)
-            )
+            self.get_logger().info("SET %s = %s (%s)" % (key, value, value_type))
         except Exception as e:
             response.success = False
             response.error_message = str(e)

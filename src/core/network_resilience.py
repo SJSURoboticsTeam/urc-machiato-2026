@@ -15,7 +15,7 @@ Author: URC 2026 Team
 import asyncio
 import time
 import threading
-from typing import Dict, Any, Optional, Callable, List, Union, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
@@ -26,75 +26,119 @@ import json
 try:
     import aiohttp
     import aiohttp.web
+
     AIOHTTP_AVAILABLE = True
 except ImportError:
     AIOHTTP_AVAILABLE = False
+
     # Mock aiohttp classes
     class aiohttp:
-        class ClientSession: pass
-        class ClientTimeout: pass
+        class ClientSession:
+            pass
+
+        class ClientTimeout:
+            pass
+
         class web:
-            class Application: pass
-            class Request: pass
-            class Response: pass
+            class Application:
+                pass
+
+            class Request:
+                pass
+
+            class Response:
+                pass
+
 
 try:
-    from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
+    from tenacity import (
+        retry,
+        stop_after_attempt,
+        wait_exponential,
+        retry_if_exception_type,
+        RetryError,
+    )
+
     TENACITY_AVAILABLE = True
 except ImportError:
     TENACITY_AVAILABLE = False
+
     # Mock tenacity decorators
     def retry(*args, **kwargs):
         def decorator(func):
             return func
+
         return decorator
 
-    def stop_after_attempt(*args): pass
-    def wait_exponential(*args): pass
-    def retry_if_exception_type(*args): pass
-    class RetryError(Exception): pass
+    def stop_after_attempt(*args):
+        pass
+
+    def wait_exponential(*args):
+        pass
+
+    def retry_if_exception_type(*args):
+        pass
+
+    class RetryError(Exception):
+        pass
+
 
 class CircuitBreakerState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, requests rejected
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, requests rejected
     HALF_OPEN = "half_open"  # Testing if service recovered
+
 
 class NetworkError(Exception):
     """Base network error."""
+
     pass
+
 
 class ConnectionError(NetworkError):
     """Connection failed."""
+
     pass
+
 
 class TimeoutError(NetworkError):
     """Request timed out."""
+
     pass
+
 
 class CircuitBreakerOpenError(NetworkError):
     """Circuit breaker is open."""
+
     pass
+
 
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for circuit breaker."""
-    failure_threshold: int = 5          # Failures before opening
-    recovery_timeout: float = 60.0      # Seconds to wait before half-open
-    success_threshold: int = 3          # Successes needed to close
-    timeout: float = 30.0               # Request timeout
+
+    failure_threshold: int = 5  # Failures before opening
+    recovery_timeout: float = 60.0  # Seconds to wait before half-open
+    success_threshold: int = 3  # Successes needed to close
+    timeout: float = 30.0  # Request timeout
+
 
 @dataclass
 class RetryConfig:
     """Configuration for retry logic."""
+
     max_attempts: int = 3
     backoff_factor: float = 1.0
     max_backoff: float = 30.0
     jitter: bool = True
 
+
 @dataclass
 class ConnectionPoolConfig:
     """Configuration for connection pooling."""
+
     max_connections: int = 20
     max_keepalive_connections: int = 10
     keepalive_timeout: float = 60.0
@@ -103,6 +147,7 @@ class ConnectionPoolConfig:
     def __post_init__(self):
         if self.timeout is None:
             self.timeout = aiohttp.ClientTimeout(total=30.0)
+
 
 class CircuitBreaker:
     """
@@ -135,7 +180,9 @@ class CircuitBreaker:
                     self.state = CircuitBreakerState.CLOSED
                     self.failure_count = 0
                     self.success_count = 0
-                    print(f"🔄 Circuit breaker '{self.name}' closed (service recovered)")
+                    print(
+                        f"🔄 Circuit breaker '{self.name}' closed (service recovered)"
+                    )
 
     def _record_failure(self):
         """Record a failed request."""
@@ -146,11 +193,17 @@ class CircuitBreaker:
             if self.state == CircuitBreakerState.HALF_OPEN:
                 self.state = CircuitBreakerState.OPEN
                 self.success_count = 0
-                print(f"🚫 Circuit breaker '{self.name}' opened (service still failing)")
-            elif (self.state == CircuitBreakerState.CLOSED and
-                  self.failure_count >= self.config.failure_threshold):
+                print(
+                    f"🚫 Circuit breaker '{self.name}' opened (service still failing)"
+                )
+            elif (
+                self.state == CircuitBreakerState.CLOSED
+                and self.failure_count >= self.config.failure_threshold
+            ):
                 self.state = CircuitBreakerState.OPEN
-                print(f"🚫 Circuit breaker '{self.name}' opened (failure threshold exceeded)")
+                print(
+                    f"🚫 Circuit breaker '{self.name}' opened (failure threshold exceeded)"
+                )
 
     def call(self, func: Callable, *args, **kwargs):
         """Execute function through circuit breaker."""
@@ -158,9 +211,13 @@ class CircuitBreaker:
             if self.state == CircuitBreakerState.OPEN:
                 if self._should_attempt_reset():
                     self.state = CircuitBreakerState.HALF_OPEN
-                    print(f"🔄 Circuit breaker '{self.name}' half-open (testing recovery)")
+                    print(
+                        f"🔄 Circuit breaker '{self.name}' half-open (testing recovery)"
+                    )
                 else:
-                    raise CircuitBreakerOpenError(f"Circuit breaker '{self.name}' is open")
+                    raise CircuitBreakerOpenError(
+                        f"Circuit breaker '{self.name}' is open"
+                    )
 
         try:
             result = func(*args, **kwargs)
@@ -176,9 +233,13 @@ class CircuitBreaker:
             if self.state == CircuitBreakerState.OPEN:
                 if self._should_attempt_reset():
                     self.state = CircuitBreakerState.HALF_OPEN
-                    print(f"🔄 Circuit breaker '{self.name}' half-open (testing recovery)")
+                    print(
+                        f"🔄 Circuit breaker '{self.name}' half-open (testing recovery)"
+                    )
                 else:
-                    raise CircuitBreakerOpenError(f"Circuit breaker '{self.name}' is open")
+                    raise CircuitBreakerOpenError(
+                        f"Circuit breaker '{self.name}' is open"
+                    )
 
         try:
             result = await func(*args, **kwargs)
@@ -191,22 +252,88 @@ class CircuitBreaker:
     def get_state(self) -> Dict[str, Any]:
         """Get circuit breaker state information."""
         return {
-            'name': self.name,
-            'state': self.state.value,
-            'failure_count': self.failure_count,
-            'success_count': self.success_count,
-            'last_failure_time': self.last_failure_time,
-            'time_since_last_failure': time.time() - self.last_failure_time
+            "name": self.name,
+            "state": self.state.value,
+            "failure_count": self.failure_count,
+            "success_count": self.success_count,
+            "last_failure_time": self.last_failure_time,
+            "time_since_last_failure": time.time() - self.last_failure_time,
         }
+
+
+class BridgeOutboundQueue:
+    """
+    Bounded outbound queue for bridge messages with retry and exponential backoff.
+
+    Failed sends are queued and retried by calling process_one() periodically
+    (e.g. from a bridge timer). Reuses the pattern from WebhookResilienceManager.
+    """
+
+    def __init__(
+        self,
+        max_size: int = 100,
+        initial_backoff: float = 1.0,
+        max_backoff: float = 30.0,
+    ):
+        self.max_size = max_size
+        self.initial_backoff = initial_backoff
+        self.max_backoff = max_backoff
+        self._queue: List[Tuple[Any, Callable]] = []
+        self._consecutive_failures = 0
+        self._lock = threading.Lock()
+
+    def put(self, payload: Any, sender_fn: Callable) -> None:
+        """Queue a payload and its sender (async or sync callable). Drops oldest if over max_size."""
+        with self._lock:
+            if len(self._queue) >= self.max_size:
+                self._queue.pop(0)
+            self._queue.append((payload, sender_fn))
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._queue)
+
+    async def process_one(self) -> bool:
+        """
+        Try to send one queued item. Returns True if an item was processed (success or dropped).
+        On send failure, re-queues and applies backoff sleep.
+        """
+        with self._lock:
+            if not self._queue:
+                return False
+            item = self._queue.pop(0)
+        payload, sender_fn = item
+        backoff = min(
+            self.initial_backoff * (2**self._consecutive_failures), self.max_backoff
+        )
+        try:
+            result = sender_fn(payload)
+            if asyncio.iscoroutine(result):
+                result = await result
+            self._consecutive_failures = 0
+            return True
+        except Exception:
+            self._consecutive_failures += 1
+            with self._lock:
+                if len(self._queue) < self.max_size:
+                    self._queue.append((payload, sender_fn))
+            await asyncio.sleep(backoff)
+            return True
+
 
 class ResilientHTTPClient:
     """
     HTTP client with automatic retry, circuit breaking, and fault tolerance.
     """
 
-    def __init__(self, base_url: str = "", circuit_breaker_config: CircuitBreakerConfig = None,
-                 retry_config: RetryConfig = None, pool_config: ConnectionPoolConfig = None):
-        self.base_url = base_url.rstrip('/')
+    def __init__(
+        self,
+        base_url: str = "",
+        circuit_breaker_config: CircuitBreakerConfig = None,
+        retry_config: RetryConfig = None,
+        pool_config: ConnectionPoolConfig = None,
+    ):
+        self.base_url = base_url.rstrip("/")
         self.circuit_breaker_config = circuit_breaker_config or CircuitBreakerConfig()
         self.retry_config = retry_config or RetryConfig()
         self.pool_config = pool_config or ConnectionPoolConfig()
@@ -224,9 +351,11 @@ class ResilientHTTPClient:
                 stop=stop_after_attempt(self.retry_config.max_attempts),
                 wait=wait_exponential(
                     multiplier=self.retry_config.backoff_factor,
-                    max=self.retry_config.max_backoff
+                    max=self.retry_config.max_backoff,
                 ),
-                retry=retry_if_exception_type((ConnectionError, TimeoutError, aiohttp.ClientError))
+                retry=retry_if_exception_type(
+                    (ConnectionError, TimeoutError, aiohttp.ClientError)
+                ),
             )
         else:
             self._retry_decorator = lambda func: func
@@ -239,11 +368,10 @@ class ResilientHTTPClient:
                     limit=self.pool_config.max_connections,
                     limit_per_host=self.pool_config.max_keepalive_connections,
                     keepalive_timeout=self.pool_config.keepalive_timeout,
-                    ttl_dns_cache=300
+                    ttl_dns_cache=300,
                 )
                 self._session = aiohttp.ClientSession(
-                    connector=connector,
-                    timeout=self.pool_config.timeout
+                    connector=connector, timeout=self.pool_config.timeout
                 )
         return self._session
 
@@ -251,8 +379,7 @@ class ResilientHTTPClient:
         """Get circuit breaker for endpoint."""
         if endpoint not in self.circuit_breakers:
             self.circuit_breakers[endpoint] = CircuitBreaker(
-                f"http_{endpoint}",
-                self.circuit_breaker_config
+                f"http_{endpoint}", self.circuit_breaker_config
             )
         return self.circuit_breakers[endpoint]
 
@@ -280,10 +407,10 @@ class ResilientHTTPClient:
                 async with session.request(method, url, **kwargs) as response:
                     response_data = await response.json()
                     return {
-                        'status': response.status,
-                        'headers': dict(response.headers),
-                        'data': response_data,
-                        'url': str(response.url)
+                        "status": response.status,
+                        "headers": dict(response.headers),
+                        "data": response_data,
+                        "url": str(response.url),
                     }
             except aiohttp.ClientConnectorError as e:
                 raise ConnectionError(f"Connection failed: {e}")
@@ -295,33 +422,35 @@ class ResilientHTTPClient:
         try:
             return await circuit_breaker.call_async(_make_request)
         except CircuitBreakerOpenError:
-            raise CircuitBreakerOpenError(f"Service {endpoint} is currently unavailable")
+            raise CircuitBreakerOpenError(
+                f"Service {endpoint} is currently unavailable"
+            )
 
     async def get(self, endpoint: str, **kwargs) -> Dict[str, Any]:
         """GET request."""
-        return await self.request('GET', endpoint, **kwargs)
+        return await self.request("GET", endpoint, **kwargs)
 
     async def post(self, endpoint: str, data: Any = None, **kwargs) -> Dict[str, Any]:
         """POST request."""
         if data is not None:
             if isinstance(data, dict):
-                kwargs['json'] = data
+                kwargs["json"] = data
             else:
-                kwargs['data'] = data
-        return await self.request('POST', endpoint, **kwargs)
+                kwargs["data"] = data
+        return await self.request("POST", endpoint, **kwargs)
 
     async def put(self, endpoint: str, data: Any = None, **kwargs) -> Dict[str, Any]:
         """PUT request."""
         if data is not None:
             if isinstance(data, dict):
-                kwargs['json'] = data
+                kwargs["json"] = data
             else:
-                kwargs['data'] = data
-        return await self.request('PUT', endpoint, **kwargs)
+                kwargs["data"] = data
+        return await self.request("PUT", endpoint, **kwargs)
 
     async def delete(self, endpoint: str, **kwargs) -> Dict[str, Any]:
         """DELETE request."""
-        return await self.request('DELETE', endpoint, **kwargs)
+        return await self.request("DELETE", endpoint, **kwargs)
 
     def get_circuit_breaker_states(self) -> Dict[str, Dict[str, Any]]:
         """Get states of all circuit breakers."""
@@ -332,6 +461,7 @@ class ResilientHTTPClient:
         async with self._session_lock:
             if self._session and not self._session.closed:
                 await self._session.close()
+
 
 class WebhookResilienceManager:
     """
@@ -397,6 +527,7 @@ class WebhookResilienceManager:
 
             await asyncio.sleep(1.0)  # Process every second
 
+
 class NetworkHealthMonitor:
     """
     Monitors network connectivity and service health.
@@ -408,15 +539,16 @@ class NetworkHealthMonitor:
         self._running = False
         self._task: Optional[asyncio.Task] = None
 
-    def add_service_check(self, name: str, check_func: Callable[[], bool],
-                         failure_threshold: int = 3):
+    def add_service_check(
+        self, name: str, check_func: Callable[[], bool], failure_threshold: int = 3
+    ):
         """Add a service health check."""
         self.services[name] = {
-            'check_func': check_func,
-            'failure_threshold': failure_threshold,
-            'failure_count': 0,
-            'last_check': 0,
-            'healthy': True
+            "check_func": check_func,
+            "failure_threshold": failure_threshold,
+            "failure_count": 0,
+            "last_check": 0,
+            "healthy": True,
         }
 
     async def start_monitoring(self):
@@ -445,44 +577,49 @@ class NetworkHealthMonitor:
         for name, service_info in self.services.items():
             try:
                 healthy = await asyncio.get_event_loop().run_in_executor(
-                    None, service_info['check_func']
+                    None, service_info["check_func"]
                 )
 
                 if healthy:
-                    service_info['failure_count'] = 0
-                    if not service_info['healthy']:
-                        service_info['healthy'] = True
+                    service_info["failure_count"] = 0
+                    if not service_info["healthy"]:
+                        service_info["healthy"] = True
                         print(f"✅ Service '{name}' recovered")
                 else:
-                    service_info['failure_count'] += 1
-                    if (service_info['failure_count'] >= service_info['failure_threshold'] and
-                        service_info['healthy']):
-                        service_info['healthy'] = False
+                    service_info["failure_count"] += 1
+                    if (
+                        service_info["failure_count"]
+                        >= service_info["failure_threshold"]
+                        and service_info["healthy"]
+                    ):
+                        service_info["healthy"] = False
                         print(f"❌ Service '{name}' failed (threshold exceeded)")
 
             except Exception as e:
-                service_info['failure_count'] += 1
+                service_info["failure_count"] += 1
                 print(f"⚠️ Service check '{name}' error: {e}")
 
-            service_info['last_check'] = time.time()
+            service_info["last_check"] = time.time()
 
     def get_health_status(self) -> Dict[str, Dict[str, Any]]:
         """Get health status of all services."""
         return {
             name: {
-                'healthy': info['healthy'],
-                'failure_count': info['failure_count'],
-                'last_check': info['last_check'],
-                'time_since_check': time.time() - info['last_check']
+                "healthy": info["healthy"],
+                "failure_count": info["failure_count"],
+                "last_check": info["last_check"],
+                "time_since_check": time.time() - info["last_check"],
             }
             for name, info in self.services.items()
         }
+
 
 # Global instances
 _http_client_instance = None
 _monitor_instance = None
 _client_lock = threading.Lock()
 _monitor_lock = threading.Lock()
+
 
 def get_resilient_http_client(base_url: str = "") -> ResilientHTTPClient:
     """Get or create global resilient HTTP client."""
@@ -495,6 +632,7 @@ def get_resilient_http_client(base_url: str = "") -> ResilientHTTPClient:
 
     return _http_client_instance
 
+
 def get_network_health_monitor() -> NetworkHealthMonitor:
     """Get or create global network health monitor."""
     global _monitor_instance
@@ -506,9 +644,13 @@ def get_network_health_monitor() -> NetworkHealthMonitor:
 
     return _monitor_instance
 
-def create_circuit_breaker(name: str, config: CircuitBreakerConfig = None) -> CircuitBreaker:
+
+def create_circuit_breaker(
+    name: str, config: CircuitBreakerConfig = None
+) -> CircuitBreaker:
     """Create a new circuit breaker instance."""
     return CircuitBreaker(name, config)
+
 
 class NetworkResilienceManager:
     """
@@ -521,7 +663,7 @@ class NetworkResilienceManager:
     def __init__(self):
         self.frequency_hopping_active = False
         self.current_frequency = 2400  # MHz
-        self.transmit_power = 1.0      # 0.0 to 1.0
+        self.transmit_power = 1.0  # 0.0 to 1.0
         self.adaptive_mode = True
         self._hop_task: Optional[asyncio.Task] = None
 
@@ -595,19 +737,19 @@ class NetworkResilienceManager:
         """
         try:
             response = await self.http_client.get(target_url)
-            return response.get('status') == 200
+            return response.get("status") == 200
         except Exception:
             return False
 
     def get_network_status(self) -> Dict[str, Any]:
         """Get current network status."""
         return {
-            'frequency_hopping_active': self.frequency_hopping_active,
-            'current_frequency': self.current_frequency,
-            'transmit_power': self.transmit_power,
-            'adaptive_mode': self.adaptive_mode,
-            'circuit_breakers': self.http_client.get_circuit_breaker_states(),
-            'health_status': self.health_monitor.get_health_status()
+            "frequency_hopping_active": self.frequency_hopping_active,
+            "current_frequency": self.current_frequency,
+            "transmit_power": self.transmit_power,
+            "adaptive_mode": self.adaptive_mode,
+            "circuit_breakers": self.http_client.get_circuit_breaker_states(),
+            "health_status": self.health_monitor.get_health_status(),
         }
 
     async def shutdown(self):
@@ -618,10 +760,12 @@ class NetworkResilienceManager:
         await self.webhook_manager.stop()
         print("📡 Network resilience manager shutdown")
 
+
 async def resilient_get(url: str, **kwargs) -> Dict[str, Any]:
     """Convenience function for resilient GET requests."""
     client = get_resilient_http_client()
     return await client.get(url, **kwargs)
+
 
 async def resilient_post(url: str, data: Any = None, **kwargs) -> Dict[str, Any]:
     """Convenience function for resilient POST requests."""

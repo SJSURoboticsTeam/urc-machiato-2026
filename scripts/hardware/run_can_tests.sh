@@ -4,8 +4,9 @@
 
 set -e
 
-WORKSPACE="/home/durian/urc-machiato-2026"
-cd "$WORKSPACE"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
 
 # Colors
 GREEN='\033[0;32m'
@@ -44,7 +45,13 @@ echo ""
 # Check if packages are built
 if [ ! -d "install/autonomy_core" ]; then
     echo "Building ROS2 packages..."
-    colcon build --base-paths src/autonomy/autonomy_core src/autonomy/interfaces/autonomy_interfaces --symlink-install
+    colcon build --base-paths \
+        src/autonomy/interfaces/autonomy_interfaces \
+        src/autonomy/autonomy_core \
+        src/autonomy/bt \
+        src/simulation/gazebo_simulation \
+        src/vision_processing \
+        --symlink-install
     source install/setup.bash
     echo -e "${GREEN}✓${NC} Packages built"
     echo ""

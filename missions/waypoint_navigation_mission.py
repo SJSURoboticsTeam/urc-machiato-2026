@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 import rclpy
 
 # ROS2 Messages
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, Path
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
@@ -30,6 +30,16 @@ from std_msgs.msg import Float32, String
 
 # Using std_srvs for basic service calls instead of nav2 action
 from std_srvs.srv import Trigger
+
+# Unified blackboard (optional)
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    _BLACKBOARD_AVAILABLE = True
+except ImportError:
+    _BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class WaypointState(Enum):
@@ -114,9 +124,9 @@ class WaypointNavigationMission(Node):
             Path, "/mission/waypoint/path", qos_reliable
         )
 
-        # Subscribers
+        # Subscribers (slam/pose is PoseWithCovarianceStamped from RTAB-Map or odom bridge)
         self.pose_sub = self.create_subscription(
-            PoseStamped, "/slam/pose", self.pose_callback, 10
+            PoseWithCovarianceStamped, "slam/pose", self.pose_callback, 10
         )
         self.gps_sub = self.create_subscription(
             NavSatFix, "/gps/fix", self.gps_callback, 10
@@ -157,12 +167,23 @@ class WaypointNavigationMission(Node):
         self.mission_thread: Optional[threading.Thread] = None
         self.stop_execution = False
 
+        # Unified blackboard for mission state (optional)
+        self._blackboard = None
+        if _BLACKBOARD_AVAILABLE:
+            try:
+                self._blackboard = UnifiedBlackboardClient(self)
+            except Exception:
+                self._blackboard = None
+
         self.get_logger().info("Waypoint Navigation Mission initialized")
 
     # Sensor data callbacks
-    def pose_callback(self, msg: PoseStamped):
-        """Update SLAM pose"""
-        self.current_pose = msg
+    def pose_callback(self, msg: PoseWithCovarianceStamped):
+        """Update SLAM pose (convert to PoseStamped for internal use)."""
+        ps = PoseStamped()
+        ps.header = msg.header
+        ps.pose = msg.pose.pose
+        self.current_pose = ps
 
     def gps_callback(self, msg: NavSatFix):
         """Update GPS position"""
@@ -171,6 +192,22 @@ class WaypointNavigationMission(Node):
     def odom_callback(self, msg: Odometry):
         """Update odometry"""
         self.current_odom = msg
+
+    def _sync_blackboard(self) -> None:
+        """Write waypoints_completed, current_waypoint_index, current_mission_phase to blackboard."""
+        if self._blackboard and BlackboardKeys:
+            try:
+                self._blackboard.set(
+                    BlackboardKeys.WAYPOINTS_COMPLETED, self.current_waypoint_index
+                )
+                self._blackboard.set(
+                    BlackboardKeys.CURRENT_WAYPOINT_INDEX, self.current_waypoint_index
+                )
+                self._blackboard.set(
+                    BlackboardKeys.CURRENT_MISSION_PHASE, self.state.value
+                )
+            except Exception:
+                pass
 
     # Mission control callbacks
     def start_mission_callback(self, request, response):
@@ -231,6 +268,7 @@ class WaypointNavigationMission(Node):
             f"Waypoint: {self.current_waypoint_index}/{len(self.waypoints)}, "
             f"Progress: {progress:.1f}"
         )
+        self._sync_blackboard()
         return response
 
     # Mission execution

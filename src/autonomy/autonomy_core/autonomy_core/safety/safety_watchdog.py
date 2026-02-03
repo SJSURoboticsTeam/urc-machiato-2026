@@ -23,13 +23,16 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import BatteryState
 from std_msgs.msg import Bool, String
 
-# Unified blackboard client
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../src'))
+# Unified blackboard client and key constants
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../src"))
 try:
     from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
     UNIFIED_BLACKBOARD_AVAILABLE = True
 except ImportError:
     UNIFIED_BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class WatchdogLevel(Enum):
@@ -64,6 +67,10 @@ class WatchdogConfiguration:
     temperature_critical_threshold: float = 85.0  # celsius
     enable_emergency_stop: bool = True
     enable_automatic_recovery: bool = False
+    recovery_cooldown_seconds: float = (
+        30.0  # min time in violation before attempting recovery
+    )
+    recovery_check_interval_seconds: float = 5.0  # how often to run recovery check
     watchdog_levels: List[WatchdogLevel] = field(
         default_factory=lambda: [
             WatchdogLevel.HEARTBEAT,
@@ -87,6 +94,7 @@ class SafetyWatchdog(Node):
 
         self.config = config or WatchdogConfiguration()
         self._logger = self.get_logger()
+        self.logger = self._logger  # Alias for code that uses self.logger
 
         # Watchdog state tracking
         self.last_heartbeat_time = time.time()
@@ -127,13 +135,17 @@ class SafetyWatchdog(Node):
         if UNIFIED_BLACKBOARD_AVAILABLE:
             try:
                 self.blackboard = UnifiedBlackboardClient(self)
-                self.logger.info("Unified blackboard client initialized for safety watchdog")
+                self.logger.info(
+                    "Unified blackboard client initialized for safety watchdog"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to initialize blackboard client: {e}")
                 self.blackboard = None
         else:
             self.blackboard = None
-            self.logger.warning("Unified blackboard not available - safety state won't be written to blackboard")
+            self.logger.warning(
+                "Unified blackboard not available - safety state won't be written to blackboard"
+            )
 
         self.logger.info(
             "Safety Watchdog initialized with monitoring levels: "
@@ -248,6 +260,13 @@ class SafetyWatchdog(Node):
             5.0, self._publish_diagnostics, callback_group=self.monitoring_group
         )
 
+        # Automatic recovery check timer (only effective when enable_automatic_recovery is True)
+        self.recovery_timer = self.create_timer(
+            self.config.recovery_check_interval_seconds,
+            self._check_automatic_recovery,
+            callback_group=self.monitoring_group,
+        )
+
     def _heartbeat_callback(self, msg: String):
         """Handle heartbeat messages from state machine."""
         try:
@@ -297,8 +316,11 @@ class SafetyWatchdog(Node):
         self.last_sensor_update_time = time.time()
 
         # Update unified blackboard with battery level
-        if self.blackboard:
-            self.blackboard.set("battery_level", float(msg.percentage))
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(BlackboardKeys.BATTERY_LEVEL, float(msg.percentage))
+            self.blackboard.set(
+                BlackboardKeys.System.BATTERY_PERCENT, float(msg.percentage)
+            )
 
         # Check battery safety thresholds
         if msg.percentage <= self.config.battery_critical_threshold:
@@ -353,8 +375,26 @@ class SafetyWatchdog(Node):
             )
 
     def _check_sensor_integrity(self):
-        """Check sensor data integrity."""
+        """Check sensor data integrity (global and per-sensor when sensor_health available)."""
         time_since_sensor_update = time.time() - self.last_sensor_update_time
+
+        # Per-sensor timeout from sensor_health tracker if available
+        try:
+            from ..perception.sensor_health import get_sensor_health_tracker
+
+            timeout_sec = (
+                self.config.sensor_integrity_timeout * 2
+            )  # allow 2x for per-sensor
+            stale = get_sensor_health_tracker().get_timeout_sensors(timeout_sec)
+            if stale:
+                self._trigger_safety_violation(
+                    "per_sensor_timeout",
+                    SafetySeverity.WARNING,
+                    f"Stale sensors: {sorted(stale)}",
+                    {"stale_sensors": list(stale)},
+                )
+        except ImportError:
+            pass
 
         if time_since_sensor_update > self.config.sensor_integrity_timeout:
             self._trigger_safety_violation(
@@ -448,12 +488,13 @@ class SafetyWatchdog(Node):
 
         # Determine safety type based on violation severity
         is_emergency = severity == SafetySeverity.EMERGENCY
-        
+
         # Update unified blackboard with safety state
-        if self.blackboard:
-            self.blackboard.set("safety_stop_active", True)
-            self.blackboard.set("emergency_stop_active", is_emergency)
-        
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(BlackboardKeys.SAFETY_STOP_ACTIVE, True)
+            self.blackboard.set(BlackboardKeys.EMERGENCY_STOP_ACTIVE, is_emergency)
+            self.blackboard.set(BlackboardKeys.System.EMERGENCY_STOP, is_emergency)
+
         safety_level = "EMERGENCY" if is_emergency else "CRITICAL"
 
         # Publish safety stop signal
@@ -486,11 +527,75 @@ class SafetyWatchdog(Node):
 
         self.safety_violations_pub.publish(safety_msg)
 
+    def _check_automatic_recovery(self) -> None:
+        """When enable_automatic_recovery is True, attempt recovery for non-EMERGENCY violations after cooldown."""
+        if not self.config.enable_automatic_recovery:
+            return
+        now = time.time()
+        to_clear: List[str] = []
+        for violation_id, v in list(self.active_violations.items()):
+            if v["severity"] == SafetySeverity.EMERGENCY:
+                continue
+            first_triggered = v.get("first_triggered", now)
+            if now - first_triggered < self.config.recovery_cooldown_seconds:
+                continue
+            if self._health_ok_for_recovery():
+                to_clear.append(violation_id)
+        for violation_id in to_clear:
+            self.clear_violation(violation_id)
+        # If no CRITICAL/EMERGENCY violations remain, clear safety stop and publish safe status
+        critical_or_emergency = any(
+            v["severity"] in (SafetySeverity.CRITICAL, SafetySeverity.EMERGENCY)
+            for v in self.active_violations.values()
+        )
+        if not critical_or_emergency and to_clear:
+            self._execute_recovery_clear()
+
+    def _health_ok_for_recovery(self) -> bool:
+        """Re-check health (heartbeat and sensor) before allowing recovery."""
+        now = time.time()
+        heartbeat_ok = (
+            now - self.last_heartbeat_time
+        ) <= self.config.heartbeat_timeout * 2
+        sensor_ok = (
+            now - self.last_sensor_update_time
+        ) <= self.config.sensor_integrity_timeout * 2
+        return heartbeat_ok and sensor_ok
+
+    def _execute_recovery_clear(self) -> None:
+        """Clear safety stop, update blackboard, and publish safe status."""
+        self.clear_safety_stop()
+        emergency_msg = Bool()
+        emergency_msg.data = False
+        self.emergency_stop_pub.publish(emergency_msg)
+        safety_msg = SafetyStatus()
+        safety_msg.header.stamp = self.get_clock().now().to_msg()
+        safety_msg.header.frame_id = "safety_watchdog"
+        safety_msg.is_safe = True
+        safety_msg.safety_level = "NOMINAL"
+        safety_msg.active_triggers = []
+        safety_msg.trigger_type = ""
+        safety_msg.trigger_source = "safety_watchdog"
+        safety_msg.trigger_time = self.get_clock().now().to_msg()
+        safety_msg.trigger_description = "Automatic recovery completed"
+        safety_msg.requires_manual_intervention = False
+        safety_msg.can_auto_recover = True
+        safety_msg.recovery_steps = []
+        safety_msg.estimated_recovery_time = 0.0
+        safety_msg.context_state = self.current_system_state or "unknown"
+        safety_msg.mission_phase = "unknown"
+        safety_msg.safe_to_retry = True
+        self.safety_violations_pub.publish(safety_msg)
+        self._logger.info(
+            "Automatic recovery: safety stop cleared, safe status published"
+        )
+
     def clear_safety_stop(self):
         """Clear safety stop and update blackboard."""
-        if self.blackboard:
-            self.blackboard.set("safety_stop_active", False)
-            self.blackboard.set("emergency_stop_active", False)
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(BlackboardKeys.SAFETY_STOP_ACTIVE, False)
+            self.blackboard.set(BlackboardKeys.EMERGENCY_STOP_ACTIVE, False)
+            self.blackboard.set(BlackboardKeys.System.EMERGENCY_STOP, False)
 
     def _publish_watchdog_status(self):
         """Publish current watchdog status."""

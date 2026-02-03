@@ -58,9 +58,17 @@ class TestBlackboardIntegration:
     def test_blackboard_initial_state_from_config(self, mock_blackboard):
         """Initial blackboard state consistent with realistic bootstrap keys."""
         initial = get_blackboard_initial_state()
-        for key in ("robot_x", "robot_y", "mission_active", "sensors_ok",
-                    "perception_confidence", "map_quality", "closest_obstacle_distance",
-                    "samples_collected", "waypoints_completed"):
+        for key in (
+            "robot_x",
+            "robot_y",
+            "mission_active",
+            "sensors_ok",
+            "perception_confidence",
+            "map_quality",
+            "closest_obstacle_distance",
+            "samples_collected",
+            "waypoints_completed",
+        ):
             if key not in initial:
                 continue
             expected = initial[key]

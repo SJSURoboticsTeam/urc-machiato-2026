@@ -24,12 +24,13 @@ import sys
 import os
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 @dataclass
 class StressTestScenario:
     """Stress test scenario configuration."""
+
     name: str
     description: str
     duration_seconds: float
@@ -42,6 +43,7 @@ class StressTestScenario:
 @dataclass
 class TestMetrics:
     """Stress test metrics."""
+
     timestamp: float
     cpu_percent: float
     memory_mb: float
@@ -79,21 +81,23 @@ class NetworkSimulator:
         base_latency = self.baseline_latency
 
         # Microwave interference (2.4GHz)
-        if 'microwave_interference' in self.active_conditions:
-            intensity = self.active_conditions['microwave_interference'].get('intensity', 0.5)
+        if "microwave_interference" in self.active_conditions:
+            intensity = self.active_conditions["microwave_interference"].get(
+                "intensity", 0.5
+            )
             base_latency += random.uniform(50, 200) * intensity
 
         # Distance attenuation
-        if 'distance_attenuation' in self.active_conditions:
-            distance = self.active_conditions['distance_attenuation'].get('meters', 10)
+        if "distance_attenuation" in self.active_conditions:
+            distance = self.active_conditions["distance_attenuation"].get("meters", 10)
             base_latency += distance * 0.5  # 0.5ms per meter
 
         # Weather conditions
-        if 'weather' in self.active_conditions:
-            weather_type = self.active_conditions['weather'].get('type', 'clear')
-            if weather_type == 'dust_storm':
+        if "weather" in self.active_conditions:
+            weather_type = self.active_conditions["weather"].get("type", "clear")
+            if weather_type == "dust_storm":
                 base_latency += random.uniform(20, 100)
-            elif weather_type == 'heavy_rain':
+            elif weather_type == "heavy_rain":
                 base_latency += random.uniform(10, 50)
 
         # Add random jitter
@@ -105,15 +109,15 @@ class NetworkSimulator:
         """Simulate packet loss."""
         loss_rate = 0.0
 
-        if 'packet_loss' in self.active_conditions:
-            loss_rate = self.active_conditions['packet_loss'].get('rate', 0.0)
+        if "packet_loss" in self.active_conditions:
+            loss_rate = self.active_conditions["packet_loss"].get("rate", 0.0)
 
         return random.random() < loss_rate
 
     def simulate_bandwidth_limit(self, data_size: int) -> float:
         """Simulate bandwidth limitations."""
-        if 'bandwidth_limit' in self.active_conditions:
-            limit_mbps = self.active_conditions['bandwidth_limit'].get('mbps', 100)
+        if "bandwidth_limit" in self.active_conditions:
+            limit_mbps = self.active_conditions["bandwidth_limit"].get("mbps", 100)
             # Simulate transmission time based on bandwidth
             return (data_size * 8) / (limit_mbps * 1000000) * 1000  # ms
         return 0.0
@@ -136,9 +140,9 @@ class HardwareFailureSimulator:
     def inject_failure(self, component: str, failure_type: str, **params):
         """Inject hardware failure."""
         self.active_failures[component] = {
-            'type': failure_type,
-            'params': params,
-            'start_time': time.time()
+            "type": failure_type,
+            "params": params,
+            "start_time": time.time(),
         }
 
     def clear_failure(self, component: str):
@@ -149,32 +153,32 @@ class HardwareFailureSimulator:
         """Check if motor has failure."""
         if motor_id in self.active_failures:
             failure = self.active_failures[motor_id]
-            if failure['type'] == 'stuck':
-                return 'motor_stuck'
-            elif failure['type'] == 'overcurrent':
-                return 'overcurrent'
-            elif failure['type'] == 'encoder_failure':
-                return 'encoder_failure'
+            if failure["type"] == "stuck":
+                return "motor_stuck"
+            elif failure["type"] == "overcurrent":
+                return "overcurrent"
+            elif failure["type"] == "encoder_failure":
+                return "encoder_failure"
         return None
 
     def check_sensor_failure(self, sensor_id: str) -> Optional[str]:
         """Check if sensor has failure."""
         if sensor_id in self.active_failures:
             failure = self.active_failures[sensor_id]
-            if failure['type'] == 'no_signal':
-                return 'no_signal'
-            elif failure['type'] == 'corrupted_data':
-                return 'corrupted_data'
+            if failure["type"] == "no_signal":
+                return "no_signal"
+            elif failure["type"] == "corrupted_data":
+                return "corrupted_data"
         return None
 
     def check_can_bus_failure(self) -> Optional[str]:
         """Check CAN bus status."""
-        if 'can_bus' in self.active_failures:
-            failure = self.active_failures['can_bus']
-            if failure['type'] == 'bus_off':
-                return 'bus_off'
-            elif failure['type'] == 'high_error_count':
-                return 'high_error_count'
+        if "can_bus" in self.active_failures:
+            failure = self.active_failures["can_bus"]
+            if failure["type"] == "bus_off":
+                return "bus_off"
+            elif failure["type"] == "high_error_count":
+                return "high_error_count"
         return None
 
 
@@ -198,25 +202,29 @@ class MissionLoadGenerator:
         self.mission_counter += 1
 
         mission = {
-            'id': f"stress_mission_{self.mission_counter}",
-            'type': mission_type,
-            'status': 'pending',
-            'created_at': time.time(),
-            'priority': random.randint(1, 5)
+            "id": f"stress_mission_{self.mission_counter}",
+            "type": mission_type,
+            "status": "pending",
+            "created_at": time.time(),
+            "priority": random.randint(1, 5),
         }
 
-        if mission_type == 'waypoint_navigation':
-            mission['waypoints'] = [
-                {'lat': 35.0 + random.uniform(-0.01, 0.01),
-                 'lon': -120.0 + random.uniform(-0.01, 0.01)}
+        if mission_type == "waypoint_navigation":
+            mission["waypoints"] = [
+                {
+                    "lat": 35.0 + random.uniform(-0.01, 0.01),
+                    "lon": -120.0 + random.uniform(-0.01, 0.01),
+                }
                 for _ in range(random.randint(3, 10))
             ]
-        elif mission_type == 'object_detection':
-            mission['target_objects'] = ['rock', 'crater', 'artifact']
-        elif mission_type == 'sample_collection':
-            mission['sample_sites'] = [
-                {'lat': 35.0 + random.uniform(-0.005, 0.005),
-                 'lon': -120.0 + random.uniform(-0.005, 0.005)}
+        elif mission_type == "object_detection":
+            mission["target_objects"] = ["rock", "crater", "artifact"]
+        elif mission_type == "sample_collection":
+            mission["sample_sites"] = [
+                {
+                    "lat": 35.0 + random.uniform(-0.005, 0.005),
+                    "lon": -120.0 + random.uniform(-0.005, 0.005),
+                }
                 for _ in range(random.randint(1, 3))
             ]
 
@@ -224,47 +232,57 @@ class MissionLoadGenerator:
 
     def start_mission(self, mission: Dict[str, Any]):
         """Start a mission."""
-        mission['status'] = 'running'
-        mission['start_time'] = time.time()
+        mission["status"] = "running"
+        mission["start_time"] = time.time()
         self.active_missions.append(mission)
 
     def update_missions(self):
         """Update active missions (simulate progress)."""
         current_time = time.time()
 
-        for mission in self.active_missions[:]:  # Copy to avoid modification during iteration
-            if mission['status'] == 'running':
-                elapsed = current_time - mission['start_time']
-                mission_type = mission['type']
+        for mission in self.active_missions[
+            :
+        ]:  # Copy to avoid modification during iteration
+            if mission["status"] == "running":
+                elapsed = current_time - mission["start_time"]
+                mission_type = mission["type"]
 
                 # Simulate mission completion
-                if mission_type == 'waypoint_navigation':
-                    duration = len(mission.get('waypoints', [])) * 30  # 30s per waypoint
-                elif mission_type == 'object_detection':
+                if mission_type == "waypoint_navigation":
+                    duration = (
+                        len(mission.get("waypoints", [])) * 30
+                    )  # 30s per waypoint
+                elif mission_type == "object_detection":
                     duration = random.uniform(60, 180)  # 1-3 minutes
                 else:
                     duration = random.uniform(30, 120)  # 30s-2min
 
                 if elapsed > duration:
-                    mission['status'] = 'completed'
-                    mission['end_time'] = current_time
+                    mission["status"] = "completed"
+                    mission["end_time"] = current_time
                     self.active_missions.remove(mission)
 
     def get_active_mission_count(self) -> int:
         """Get count of active missions."""
-        return len([m for m in self.active_missions if m['status'] == 'running'])
+        return len([m for m in self.active_missions if m["status"] == "running"])
 
     def simulate_conflicts(self) -> List[str]:
         """Simulate mission conflicts."""
         conflicts = []
 
         # Check for conflicting missions
-        nav_missions = [m for m in self.active_missions if m['type'] == 'waypoint_navigation']
+        nav_missions = [
+            m for m in self.active_missions if m["type"] == "waypoint_navigation"
+        ]
         if len(nav_missions) > 1:
-            conflicts.append("Multiple navigation missions active - potential conflicts")
+            conflicts.append(
+                "Multiple navigation missions active - potential conflicts"
+            )
 
         # Check resource contention
-        sample_missions = [m for m in self.active_missions if m['type'] == 'sample_collection']
+        sample_missions = [
+            m for m in self.active_missions if m["type"] == "sample_collection"
+        ]
         if len(sample_missions) > 0 and len(nav_missions) > 0:
             conflicts.append("Sample collection may interfere with navigation")
 
@@ -327,7 +345,7 @@ class StressTestRunner:
             ("distance_attenuation", {"meters": 50}),
             ("weather_dust_storm", {"type": "dust_storm"}),
             ("packet_loss", {"rate": 0.1}),
-            ("bandwidth_limit", {"mbps": 1.0})
+            ("bandwidth_limit", {"mbps": 1.0}),
         ]
 
         results = {}
@@ -369,22 +387,22 @@ class StressTestRunner:
             packet_loss_rate = packet_losses / total_packets
 
             results[condition_name] = {
-                'avg_latency_ms': avg_latency,
-                'max_latency_ms': max_latency,
-                'packet_loss_rate': packet_loss_rate,
-                'jitter_ms': statistics.stdev(latencies) if len(latencies) > 1 else 0
+                "avg_latency_ms": avg_latency,
+                "max_latency_ms": max_latency,
+                "packet_loss_rate": packet_loss_rate,
+                "jitter_ms": statistics.stdev(latencies) if len(latencies) > 1 else 0,
             }
 
             # Clear condition
             if condition_name != "baseline":
-                condition_parts = condition_name.split('_')
+                condition_parts = condition_name.split("_")
                 self.network_sim.remove_condition(condition_parts[0])
 
-        self.test_results['network_resilience'] = {
-            'success': True,
-            'conditions_tested': len(network_conditions),
-            'test_duration': time.time() - start_time,
-            'results': results
+        self.test_results["network_resilience"] = {
+            "success": True,
+            "conditions_tested": len(network_conditions),
+            "test_duration": time.time() - start_time,
+            "results": results,
         }
 
         print(f"✅ ROS2 performance test completed: {time.time() - start_time:.2f}s")
@@ -400,7 +418,7 @@ class StressTestRunner:
         motor_failures = [
             ("motor_stuck", "left_front"),
             ("overcurrent", "right_rear"),
-            ("encoder_failure", "left_rear")
+            ("encoder_failure", "left_rear"),
         ]
 
         for failure_type, motor_id in motor_failures:
@@ -426,20 +444,22 @@ class StressTestRunner:
                         break
                 await asyncio.sleep(0.1)
 
-            recovery_tests.append({
-                'failure_type': failure_type,
-                'motor_id': motor_id,
-                'detected': failure_detected,
-                'recovery_attempted': recovery_attempted,
-                'recovery_successful': recovery_successful
-            })
+            recovery_tests.append(
+                {
+                    "failure_type": failure_type,
+                    "motor_id": motor_id,
+                    "detected": failure_detected,
+                    "recovery_attempted": recovery_attempted,
+                    "recovery_successful": recovery_successful,
+                }
+            )
 
             # Clear failure
             self.hardware_sim.clear_failure(motor_id)
 
         # Test CAN bus failure recovery
         print("   Testing CAN bus failure recovery...")
-        self.hardware_sim.inject_failure('can_bus', 'bus_off')
+        self.hardware_sim.inject_failure("can_bus", "bus_off")
 
         can_recovery = False
         for _ in range(15):  # 15 attempts for CAN recovery
@@ -448,19 +468,23 @@ class StressTestRunner:
                 break
             await asyncio.sleep(0.2)
 
-        self.hardware_sim.clear_failure('can_bus')
+        self.hardware_sim.clear_failure("can_bus")
 
-        self.test_results['hardware_failure_recovery'] = {
-            'success': True,
-            'motor_failures_tested': len(motor_failures),
-            'can_bus_tested': True,
-            'test_duration': time.time() - start_time,
-            'motor_recovery_results': recovery_tests,
-            'can_recovery_successful': can_recovery
+        self.test_results["hardware_failure_recovery"] = {
+            "success": True,
+            "motor_failures_tested": len(motor_failures),
+            "can_bus_tested": True,
+            "test_duration": time.time() - start_time,
+            "motor_recovery_results": recovery_tests,
+            "can_recovery_successful": can_recovery,
         }
 
-        successful_recoveries = len([r for r in recovery_tests if r['recovery_successful']])
-        print(f"✅ Recovery rate: {successful_recoveries}/{len(recovery_tests)} tests passed")
+        successful_recoveries = len(
+            [r for r in recovery_tests if r["recovery_successful"]]
+        )
+        print(
+            f"✅ Recovery rate: {successful_recoveries}/{len(recovery_tests)} tests passed"
+        )
 
     async def test_concurrent_mission_execution(self):
         """Test concurrent mission execution stress."""
@@ -469,7 +493,7 @@ class StressTestRunner:
         start_time = time.time()
         test_duration = 60  # seconds
 
-        mission_types = ['waypoint_navigation', 'object_detection', 'sample_collection']
+        mission_types = ["waypoint_navigation", "object_detection", "sample_collection"]
         max_concurrent = 5
         mission_creation_rate = 2  # missions per second
 
@@ -500,35 +524,36 @@ class StressTestRunner:
 
             # Record performance metrics
             process = psutil.Process()
-            performance_metrics.append({
-                'timestamp': current_time,
-                'active_missions': self.mission_gen.get_active_mission_count(),
-                'cpu_percent': process.cpu_percent(),
-                'memory_mb': process.memory_info().rss / 1024 / 1024,
-                'conflicts': len(conflicts)
-            })
+            performance_metrics.append(
+                {
+                    "timestamp": current_time,
+                    "active_missions": self.mission_gen.get_active_mission_count(),
+                    "cpu_percent": process.cpu_percent(),
+                    "memory_mb": process.memory_info().rss / 1024 / 1024,
+                    "conflicts": len(conflicts),
+                }
+            )
 
             await asyncio.sleep(0.5)
 
         # Analyze results
-        active_counts = [m['active_missions'] for m in performance_metrics]
-        cpu_usage = [m['cpu_percent'] for m in performance_metrics]
-        memory_usage = [m['memory_mb'] for m in performance_metrics]
+        active_counts = [m["active_missions"] for m in performance_metrics]
+        cpu_usage = [m["cpu_percent"] for m in performance_metrics]
+        memory_usage = [m["memory_mb"] for m in performance_metrics]
 
-        self.test_results['concurrent_missions'] = {
-            'success': True,
-            'missions_created': missions_created,
-            'test_duration': test_duration,
-            'max_concurrent_missions': max(active_counts),
-            'avg_concurrent_missions': statistics.mean(active_counts),
-            'conflicts_detected': len(set(conflicts_detected)),
-            'avg_cpu_during_test': statistics.mean(cpu_usage),
-            'max_cpu_during_test': max(cpu_usage),
-            'avg_memory_mb': statistics.mean(memory_usage),
-            'max_memory_mb': max(memory_usage)
+        self.test_results["concurrent_missions"] = {
+            "success": True,
+            "missions_created": missions_created,
+            "test_duration": test_duration,
+            "max_concurrent_missions": max(active_counts),
+            "avg_concurrent_missions": statistics.mean(active_counts),
+            "conflicts_detected": len(set(conflicts_detected)),
+            "avg_cpu_during_test": statistics.mean(cpu_usage),
+            "max_cpu_during_test": max(cpu_usage),
+            "avg_memory_mb": statistics.mean(memory_usage),
+            "max_memory_mb": max(memory_usage),
         }
 
-        
     async def test_resource_exhaustion(self):
         """Test system behavior under resource exhaustion."""
         print("\n💾 Testing Resource Exhaustion...")
@@ -554,10 +579,12 @@ class StressTestRunner:
 
             await asyncio.sleep(0.1)
 
-        exhaustion_results['memory'] = {
-            'peak_simulated_mb': max(memory_pressure),
-            'avg_cpu_under_pressure': statistics.mean([psutil.cpu_percent() for _ in range(5)]),
-            'system_stable': True  # Would check for OOM kills in real scenario
+        exhaustion_results["memory"] = {
+            "peak_simulated_mb": max(memory_pressure),
+            "avg_cpu_under_pressure": statistics.mean(
+                [psutil.cpu_percent() for _ in range(5)]
+            ),
+            "system_stable": True,  # Would check for OOM kills in real scenario
         }
 
         # Test CPU exhaustion
@@ -568,10 +595,10 @@ class StressTestRunner:
             cpu_loads.append(psutil.cpu_percent())
             await asyncio.sleep(0.2)
 
-        exhaustion_results['cpu'] = {
-            'peak_cpu_percent': max(cpu_loads),
-            'avg_cpu_percent': statistics.mean(cpu_loads),
-            'system_responsive': statistics.mean(cpu_loads) < 95  # Leave some headroom
+        exhaustion_results["cpu"] = {
+            "peak_cpu_percent": max(cpu_loads),
+            "avg_cpu_percent": statistics.mean(cpu_loads),
+            "system_responsive": statistics.mean(cpu_loads) < 95,  # Leave some headroom
         }
 
         # Test thread exhaustion
@@ -581,18 +608,17 @@ class StressTestRunner:
             thread_counts.append(threading.active_count())
             await asyncio.sleep(0.1)
 
-        exhaustion_results['threads'] = {
-            'max_threads': max(thread_counts),
-            'thread_limit_reached': max(thread_counts) > 50  # Arbitrary limit
+        exhaustion_results["threads"] = {
+            "max_threads": max(thread_counts),
+            "thread_limit_reached": max(thread_counts) > 50,  # Arbitrary limit
         }
 
-        self.test_results['resource_exhaustion'] = {
-            'success': True,
-            'test_duration': time.time() - start_time,
-            'results': exhaustion_results
+        self.test_results["resource_exhaustion"] = {
+            "success": True,
+            "test_duration": time.time() - start_time,
+            "results": exhaustion_results,
         }
 
-        
     async def test_environmental_stress(self):
         """Test environmental stress conditions."""
         print("\n🌍 Testing Environmental Stress...")
@@ -602,7 +628,7 @@ class StressTestRunner:
             "mars_dust_storm",
             "extreme_temperature",
             "radiation_burst",
-            "low_atmospheric_pressure"
+            "low_atmospheric_pressure",
         ]
 
         scenario_results = {}
@@ -637,33 +663,38 @@ class StressTestRunner:
             performance_samples = []
             while time.time() - scenario_start < test_duration:
                 process = psutil.Process()
-                performance_samples.append({
-                    'cpu': process.cpu_percent(),
-                    'memory': process.memory_info().rss / 1024 / 1024,
-                    'latency': self.network_sim.simulate_latency()
-                })
+                performance_samples.append(
+                    {
+                        "cpu": process.cpu_percent(),
+                        "memory": process.memory_info().rss / 1024 / 1024,
+                        "latency": self.network_sim.simulate_latency(),
+                    }
+                )
                 await asyncio.sleep(0.1)
 
             scenario_results[scenario] = {
-                'test_duration': test_duration,
-                'avg_cpu': statistics.mean([s['cpu'] for s in performance_samples]),
-                'avg_memory': statistics.mean([s['memory'] for s in performance_samples]),
-                'avg_latency': statistics.mean([s['latency'] for s in performance_samples]),
-                'system_stable': True  # Would check for crashes in real scenario
+                "test_duration": test_duration,
+                "avg_cpu": statistics.mean([s["cpu"] for s in performance_samples]),
+                "avg_memory": statistics.mean(
+                    [s["memory"] for s in performance_samples]
+                ),
+                "avg_latency": statistics.mean(
+                    [s["latency"] for s in performance_samples]
+                ),
+                "system_stable": True,  # Would check for crashes in real scenario
             }
 
             # Clear environmental conditions
             if scenario == "mars_dust_storm":
                 self.network_sim.remove_condition("weather")
 
-        self.test_results['environmental_stress'] = {
-            'success': True,
-            'scenarios_tested': len(environmental_scenarios),
-            'test_duration': time.time() - start_time,
-            'results': scenario_results
+        self.test_results["environmental_stress"] = {
+            "success": True,
+            "scenarios_tested": len(environmental_scenarios),
+            "test_duration": time.time() - start_time,
+            "results": scenario_results,
         }
 
-        
     async def test_system_recovery(self):
         """Test system recovery from various failure states."""
         print("\n🔄 Testing System Recovery...")
@@ -673,7 +704,7 @@ class StressTestRunner:
             "complete_power_cycle",
             "software_crash_recovery",
             "network_reconnection",
-            "hardware_hotswap"
+            "hardware_hotswap",
         ]
 
         recovery_results = {}
@@ -694,7 +725,9 @@ class StressTestRunner:
 
             elif scenario == "network_reconnection":
                 # Simulate network dropout and reconnection
-                self.network_sim.apply_condition("packet_loss", rate=1.0)  # Complete loss
+                self.network_sim.apply_condition(
+                    "packet_loss", rate=1.0
+                )  # Complete loss
                 await asyncio.sleep(2)
                 self.network_sim.remove_condition("packet_loss")
                 recovery_time = random.uniform(1, 5)
@@ -709,23 +742,32 @@ class StressTestRunner:
             recovery_successful = random.random() < success_rate
 
             recovery_results[scenario] = {
-                'recovery_time_seconds': recovery_time,
-                'recovery_successful': recovery_successful,
-                'data_loss': random.random() < 0.05 if scenario != "complete_power_cycle" else True
+                "recovery_time_seconds": recovery_time,
+                "recovery_successful": recovery_successful,
+                "data_loss": (
+                    random.random() < 0.05
+                    if scenario != "complete_power_cycle"
+                    else True
+                ),
             }
 
             await asyncio.sleep(0.5)
 
-        self.test_results['system_recovery'] = {
-            'success': True,
-            'scenarios_tested': len(recovery_scenarios),
-            'test_duration': time.time() - start_time,
-            'results': recovery_results,
-            'overall_recovery_rate': len([r for r in recovery_results.values() if r['recovery_successful']]) / len(recovery_scenarios)
+        self.test_results["system_recovery"] = {
+            "success": True,
+            "scenarios_tested": len(recovery_scenarios),
+            "test_duration": time.time() - start_time,
+            "results": recovery_results,
+            "overall_recovery_rate": len(
+                [r for r in recovery_results.values() if r["recovery_successful"]]
+            )
+            / len(recovery_scenarios),
         }
 
-        successful_recoveries = len([r for r in recovery_results.values() if r['recovery_successful']])
-        
+        successful_recoveries = len(
+            [r for r in recovery_results.values() if r["recovery_successful"]]
+        )
+
     def generate_stress_report(self):
         """Generate comprehensive stress test report."""
         total_time = time.time() - self.test_start_time
@@ -735,7 +777,9 @@ class StressTestRunner:
         print("=" * 60)
 
         # Overall summary
-        successful_tests = len([r for r in self.test_results.values() if r.get('success', False)])
+        successful_tests = len(
+            [r for r in self.test_results.values() if r.get("success", False)]
+        )
         total_tests = len(self.test_results)
 
         print(f"\n🎯 OVERALL RESULTS:")
@@ -747,47 +791,47 @@ class StressTestRunner:
         # Detailed results
         print("\n📊 DETAILED STRESS TEST RESULTS:")
         for test_name, results in self.test_results.items():
-            status = "✅ PASS" if results.get('success', False) else "❌ FAIL"
-            duration = results.get('test_duration', 0)
+            status = "✅ PASS" if results.get("success", False) else "❌ FAIL"
+            duration = results.get("test_duration", 0)
 
             print(f"\n{status} {test_name.replace('_', ' ').title()}")
             print(".2f")
 
-            if not results.get('success', False):
+            if not results.get("success", False):
                 print("   Error: Test failed")
             else:
                 # Print key metrics
-                if test_name == 'network_resilience':
-                    conditions = results.get('conditions_tested', 0)
+                if test_name == "network_resilience":
+                    conditions = results.get("conditions_tested", 0)
                     print(f"   Network Conditions Tested: {conditions}")
 
-                elif test_name == 'hardware_failure_recovery':
-                    motor_tests = results.get('motor_failures_tested', 0)
-                    can_test = results.get('can_bus_tested', False)
+                elif test_name == "hardware_failure_recovery":
+                    motor_tests = results.get("motor_failures_tested", 0)
+                    can_test = results.get("can_bus_tested", False)
                     print(f"   Motor Failures Tested: {motor_tests}")
                     print(f"   CAN Bus Tested: {can_test}")
 
-                elif test_name == 'concurrent_missions':
-                    missions = results.get('missions_created', 0)
-                    max_concurrent = results.get('max_concurrent_missions', 0)
-                    conflicts = results.get('conflicts_detected', 0)
+                elif test_name == "concurrent_missions":
+                    missions = results.get("missions_created", 0)
+                    max_concurrent = results.get("max_concurrent_missions", 0)
+                    conflicts = results.get("conflicts_detected", 0)
                     print(f"   Missions Created: {missions}")
                     print(f"   Max Concurrent: {max_concurrent}")
                     print(f"   Conflicts Detected: {conflicts}")
 
-                elif test_name == 'resource_exhaustion':
-                    memory_results = results.get('results', {}).get('memory', {})
-                    cpu_results = results.get('results', {}).get('cpu', {})
+                elif test_name == "resource_exhaustion":
+                    memory_results = results.get("results", {}).get("memory", {})
+                    cpu_results = results.get("results", {}).get("cpu", {})
                     print(".1f")
                     print(".1f")
 
-                elif test_name == 'environmental_stress':
-                    scenarios = results.get('scenarios_tested', 0)
+                elif test_name == "environmental_stress":
+                    scenarios = results.get("scenarios_tested", 0)
                     print(f"   Environmental Scenarios: {scenarios}")
 
-                elif test_name == 'system_recovery':
-                    scenarios = results.get('scenarios_tested', 0)
-                    recovery_rate = results.get('overall_recovery_rate', 0)
+                elif test_name == "system_recovery":
+                    scenarios = results.get("scenarios_tested", 0)
+                    recovery_rate = results.get("overall_recovery_rate", 0)
                     print(f"   Recovery Scenarios: {scenarios}")
                     print(".1f")
 
@@ -804,7 +848,9 @@ class StressTestRunner:
         print("\n💡 STRESS TESTING RECOMMENDATIONS:")
         print("   • Network: Implement adaptive frequency hopping for interference")
         print("   • Hardware: Add redundant motor controllers for critical operations")
-        print("   • Missions: Implement mission priority queuing for conflict resolution")
+        print(
+            "   • Missions: Implement mission priority queuing for conflict resolution"
+        )
         print("   • Resources: Monitor memory usage in long-duration missions")
         print("   • Environment: Add dust-resistant vision system protections")
         print("   • Recovery: Implement automatic failover mechanisms")
@@ -812,7 +858,9 @@ class StressTestRunner:
         if successful_tests == total_tests:
             print("\n🎉 ALL STRESS TESTS PASSED - SYSTEM IS COMPETITION-READY!")
         else:
-            print(f"\n⚠️ {total_tests - successful_tests} STRESS TESTS FAILED - REVIEW ISSUES BEFORE COMPETITION")
+            print(
+                f"\n⚠️ {total_tests - successful_tests} STRESS TESTS FAILED - REVIEW ISSUES BEFORE COMPETITION"
+            )
 
         print("=" * 60)
 
@@ -825,4 +873,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

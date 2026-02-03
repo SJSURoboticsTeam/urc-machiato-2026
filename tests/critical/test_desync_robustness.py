@@ -25,7 +25,7 @@ import sys
 import os
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from src.core.synchronization_engine import (
     SynchronizationEngine,
@@ -33,7 +33,7 @@ from src.core.synchronization_engine import (
     SyncMode,
     CameraFrameSynchronizer,
     get_sync_engine,
-    initialize_sync_engine
+    initialize_sync_engine,
 )
 
 
@@ -43,9 +43,7 @@ class TestDesyncRobustness:
     def setup_method(self):
         """Setup test environment."""
         self.camera_config = CameraSyncConfig(
-            num_cameras=4,
-            max_sync_delay_ms=50.0,
-            stereo_baseline_ms=1.0
+            num_cameras=4, max_sync_delay_ms=50.0, stereo_baseline_ms=1.0
         )
         self.sync_engine = SynchronizationEngine(self.camera_config)
         self.frame_sync = CameraFrameSynchronizer(self.sync_engine)
@@ -76,20 +74,20 @@ class TestDesyncRobustness:
         for i in range(10):
             frame_time = base_time + i * 0.033  # 30 FPS
 
-            for cam_id in ['front', 'rear', 'left', 'right']:
+            for cam_id in ["front", "rear", "left", "right"]:
                 frame_data = {
-                    'timestamp': frame_time,
-                    'frame_number': i,
-                    'camera_id': cam_id,
-                    'data': f'frame_{cam_id}_{i}'
+                    "timestamp": frame_time,
+                    "frame_number": i,
+                    "camera_id": cam_id,
+                    "data": f"frame_{cam_id}_{i}",
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
 
             # Synchronize and verify
             sync_result = await self.sync_engine.synchronize_cameras()
             assert sync_result is not None, f"Failed to sync frame {i}"
-            assert len(sync_result['cameras']) == 4, "Missing camera frames"
-            assert sync_result['sync_delay_ms'] == 0.0, "Unexpected sync delay"
+            assert len(sync_result["cameras"]) == 4, "Missing camera frames"
+            assert sync_result["sync_delay_ms"] == 0.0, "Unexpected sync delay"
 
         # Check statistics
         stats = self.sync_engine.get_sync_statistics()
@@ -106,9 +104,9 @@ class TestDesyncRobustness:
             master_time = base_time + i * 0.033
 
             # Add frames with small timing variations (±5ms)
-            for cam_id in ['front', 'rear', 'left', 'right']:
+            for cam_id in ["front", "rear", "left", "right"]:
                 # Front camera is master reference
-                if cam_id == 'front':
+                if cam_id == "front":
                     frame_time = master_time
                 else:
                     # Add random jitter up to 5ms
@@ -116,18 +114,20 @@ class TestDesyncRobustness:
                     frame_time = master_time + jitter
 
                 frame_data = {
-                    'timestamp': frame_time,
-                    'frame_number': i,
-                    'camera_id': cam_id
+                    "timestamp": frame_time,
+                    "frame_number": i,
+                    "camera_id": cam_id,
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
 
             # Should successfully synchronize
             sync_result = await self.sync_engine.synchronize_cameras()
             assert sync_result is not None, f"Failed to sync with jitter frame {i}"
-            assert sync_result['sync_delay_ms'] <= 50.0, "Excessive sync delay"
+            assert sync_result["sync_delay_ms"] <= 50.0, "Excessive sync delay"
 
-        assert len(self.desync_events) == 0, "Unexpected desync events with acceptable jitter"
+        assert (
+            len(self.desync_events) == 0
+        ), "Unexpected desync events with acceptable jitter"
 
     @pytest.mark.asyncio
     async def test_camera_desync_timeout_handling(self):
@@ -135,32 +135,30 @@ class TestDesyncRobustness:
         base_time = time.time() - 1.0  # Use past timestamps
 
         # Add frames for only 3 cameras (missing one)
-        for cam_id in ['front', 'rear', 'left']:  # Missing 'right'
-            frame_data = {
-                'timestamp': base_time,
-                'camera_id': cam_id
-            }
+        for cam_id in ["front", "rear", "left"]:  # Missing 'right'
+            frame_data = {"timestamp": base_time, "camera_id": cam_id}
             self.sync_engine.add_camera_frame(cam_id, frame_data)
 
         # Synchronization should fail due to missing camera (need at least 2)
         sync_result = await self.sync_engine.synchronize_cameras()
-        assert sync_result is not None, "Should succeed with 3 cameras (front is master)"
-        assert len(sync_result['cameras']) == 3, "Should have 3 camera frames"
+        assert (
+            sync_result is not None
+        ), "Should succeed with 3 cameras (front is master)"
+        assert len(sync_result["cameras"]) == 3, "Should have 3 camera frames"
 
         # Add the missing camera frame (but too late)
         late_time = base_time + 0.1  # 100ms late
-        frame_data = {
-            'timestamp': late_time,
-            'camera_id': 'right'
-        }
-        self.sync_engine.add_camera_frame('right', frame_data)
+        frame_data = {"timestamp": late_time, "camera_id": "right"}
+        self.sync_engine.add_camera_frame("right", frame_data)
 
         # Should still fail due to timeout
         sync_result = await self.sync_engine.synchronize_cameras()
         assert sync_result is None, "Should fail with late frame"
 
         # Check for desync events
-        timeout_events = [e for e in self.desync_events if e['type'] == 'camera_sync_timeout']
+        timeout_events = [
+            e for e in self.desync_events if e["type"] == "camera_sync_timeout"
+        ]
         assert len(timeout_events) > 0, "Should detect sync timeouts"
 
     def test_buffer_overflow_protection(self):
@@ -172,39 +170,41 @@ class TestDesyncRobustness:
 
         # Fill buffer beyond capacity
         for i in range(8):  # More than buffer capacity (5)
-            frame_data = {
-                'timestamp': time.time() + i * 0.001,
-                'frame_number': i
-            }
+            frame_data = {"timestamp": time.time() + i * 0.001, "frame_number": i}
             success = test_buffer.add_item(frame_data)
 
             # Should fail when buffer is full
             if i >= 5:
-                assert not success, f"Should reject frames beyond buffer capacity at frame {i}"
+                assert (
+                    not success
+                ), f"Should reject frames beyond buffer capacity at frame {i}"
 
         # Buffer should still have only 5 items
-        assert test_buffer.size() == 5, f"Buffer should have 5 items, has {test_buffer.size()}"
+        assert (
+            test_buffer.size() == 5
+        ), f"Buffer should have 5 items, has {test_buffer.size()}"
 
         # Test with drop_oldest policy
         old_buffer = SyncBuffer(max_size=5, overflow_policy="drop_oldest")
 
         # Fill buffer beyond capacity
         for i in range(8):
-            frame_data = {
-                'timestamp': time.time() + i * 0.001,
-                'frame_number': i
-            }
+            frame_data = {"timestamp": time.time() + i * 0.001, "frame_number": i}
             success = old_buffer.add_item(frame_data)
-            assert success, f"Should accept all frames with drop_oldest policy at frame {i}"
+            assert (
+                success
+            ), f"Should accept all frames with drop_oldest policy at frame {i}"
 
         # Buffer should still have only 5 items (oldest dropped)
-        assert old_buffer.size() == 5, f"Buffer should have 5 items with drop_oldest, has {old_buffer.size()}"
+        assert (
+            old_buffer.size() == 5
+        ), f"Buffer should have 5 items with drop_oldest, has {old_buffer.size()}"
 
     @pytest.mark.asyncio
     async def test_ros2_message_synchronization(self):
         """Test ROS2 message temporal synchronization."""
         base_time = time.time()
-        topics = ['/odom', '/imu/data', '/gps/fix']
+        topics = ["/odom", "/imu/data", "/gps/fix"]
 
         # Add messages with slight timing variations
         for i in range(3):
@@ -214,18 +214,20 @@ class TestDesyncRobustness:
                 # Add small random jitter
                 jitter = np.random.uniform(-0.001, 0.001)  # ±1ms
                 message = {
-                    'timestamp': msg_time + jitter,
-                    'topic': topic,
-                    'seq': i,
-                    'data': f'message_{topic}_{i}'
+                    "timestamp": msg_time + jitter,
+                    "topic": topic,
+                    "seq": i,
+                    "data": f"message_{topic}_{i}",
                 }
                 self.sync_engine.add_ros2_message(topic, message)
 
         # Synchronize messages
-        sync_result = await self.sync_engine.synchronize_ros2_topics(topics, timeout_ms=50.0)
+        sync_result = await self.sync_engine.synchronize_ros2_topics(
+            topics, timeout_ms=50.0
+        )
         assert sync_result is not None, "Failed to sync ROS2 messages"
-        assert len(sync_result['messages']) == 3, "Missing synchronized messages"
-        assert sync_result['sync_delay_ms'] <= 50.0, "Excessive ROS2 sync delay"
+        assert len(sync_result["messages"]) == 3, "Missing synchronized messages"
+        assert sync_result["sync_delay_ms"] <= 50.0, "Excessive ROS2 sync delay"
 
     @pytest.mark.asyncio
     async def test_temporal_consistency_validation(self):
@@ -236,37 +238,34 @@ class TestDesyncRobustness:
 
         for i in range(10):
             event_time = base_time + i * 0.033  # 30 FPS
-            events.append({
-                'timestamp': event_time,
-                'sequence': i,
-                'data': f'event_{i}'
-            })
+            events.append(
+                {"timestamp": event_time, "sequence": i, "data": f"event_{i}"}
+            )
 
         # Check consistency
         result = self.sync_engine.check_temporal_consistency(events)
-        assert result['consistent'], "Should be temporally consistent"
-        assert result['score'] > 0.9, "Should have high consistency score"
+        assert result["consistent"], "Should be temporally consistent"
+        assert result["score"] > 0.9, "Should have high consistency score"
 
         # Create sequence with poor temporal consistency
         inconsistent_events = []
         for i in range(10):
             # Add large random variations
             event_time = base_time + i * 0.033 + np.random.uniform(-0.1, 0.1)
-            inconsistent_events.append({
-                'timestamp': event_time,
-                'sequence': i
-            })
+            inconsistent_events.append({"timestamp": event_time, "sequence": i})
 
         result = self.sync_engine.check_temporal_consistency(inconsistent_events)
-        assert not result['consistent'], "Should detect inconsistency"
-        assert result['score'] < 0.5, "Should have low consistency score"
+        assert not result["consistent"], "Should detect inconsistency"
+        assert result["score"] < 0.5, "Should have low consistency score"
 
     def test_clock_synchronization(self):
         """Test distributed clock synchronization."""
         # Perform clock sync
         status = self.sync_engine.synchronize_clocks()
 
-        assert isinstance(status.offset_ns, int), "Clock offset should be integer nanoseconds"
+        assert isinstance(
+            status.offset_ns, int
+        ), "Clock offset should be integer nanoseconds"
         assert isinstance(status.drift_rate_ppm, float), "Drift rate should be float"
         assert status.last_sync_time > 0, "Should have sync timestamp"
         assert status.sync_accuracy_ns >= 0, "Accuracy should be non-negative"
@@ -286,34 +285,38 @@ class TestDesyncRobustness:
 
             # Left camera
             left_frame = {
-                'timestamp': frame_time,
-                'camera_id': 'left',
-                'frame_number': i
+                "timestamp": frame_time,
+                "camera_id": "left",
+                "frame_number": i,
             }
-            self.sync_engine.add_camera_frame('left', left_frame)
+            self.sync_engine.add_camera_frame("left", left_frame)
 
             # Right camera (perfectly aligned)
             right_frame = {
-                'timestamp': frame_time,
-                'camera_id': 'right',
-                'frame_number': i
+                "timestamp": frame_time,
+                "camera_id": "right",
+                "frame_number": i,
             }
-            self.sync_engine.add_camera_frame('right', right_frame)
+            self.sync_engine.add_camera_frame("right", right_frame)
 
             # Add other cameras for complete sync
-            for cam_id in ['front', 'rear']:
+            for cam_id in ["front", "rear"]:
                 frame = {
-                    'timestamp': frame_time,
-                    'camera_id': cam_id,
-                    'frame_number': i
+                    "timestamp": frame_time,
+                    "camera_id": cam_id,
+                    "frame_number": i,
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame)
 
             # Test stereo synchronization
-            stereo_result = await self.frame_sync.wait_for_stereo_pair('left', 'right', timeout_ms=100.0)
+            stereo_result = await self.frame_sync.wait_for_stereo_pair(
+                "left", "right", timeout_ms=100.0
+            )
             assert stereo_result is not None, f"Failed stereo sync for frame {i}"
-            assert 'left' in stereo_result and 'right' in stereo_result
-            assert stereo_result['stereo_alignment_us'] <= 1000, "Stereo alignment too poor"  # 1ms = 1000µs
+            assert "left" in stereo_result and "right" in stereo_result
+            assert (
+                stereo_result["stereo_alignment_us"] <= 1000
+            ), "Stereo alignment too poor"  # 1ms = 1000µs
 
     def test_deadline_monitoring(self):
         """Test real-time deadline monitoring."""
@@ -322,7 +325,9 @@ class TestDesyncRobustness:
             time.sleep(0.05)  # 50ms - within deadline
 
         # Should not have desync events
-        deadline_violations = [e for e in self.desync_events if e['type'] == 'deadline_violation']
+        deadline_violations = [
+            e for e in self.desync_events if e["type"] == "deadline_violation"
+        ]
         assert len(deadline_violations) == 0, "Should not detect deadline violation"
 
         # Test operation that exceeds deadline
@@ -330,9 +335,13 @@ class TestDesyncRobustness:
             time.sleep(0.05)  # 50ms - exceeds 10ms deadline
 
         # Should detect deadline violation
-        deadline_violations = [e for e in self.desync_events if e['type'] == 'deadline_violation']
+        deadline_violations = [
+            e for e in self.desync_events if e["type"] == "deadline_violation"
+        ]
         assert len(deadline_violations) == 1, "Should detect deadline violation"
-        assert deadline_violations[0]['violation_ms'] > 35, "Should calculate violation correctly"
+        assert (
+            deadline_violations[0]["violation_ms"] > 35
+        ), "Should calculate violation correctly"
 
     @pytest.mark.asyncio
     async def test_concurrent_camera_operations(self):
@@ -342,11 +351,13 @@ class TestDesyncRobustness:
         def add_frames_concurrent(cam_id: str, num_frames: int, base_time: float):
             """Add frames from multiple cameras concurrently."""
             for i in range(num_frames):
-                frame_time = base_time + i * 0.033 + np.random.uniform(-0.005, 0.005)  # Add jitter
+                frame_time = (
+                    base_time + i * 0.033 + np.random.uniform(-0.005, 0.005)
+                )  # Add jitter
                 frame_data = {
-                    'timestamp': frame_time,
-                    'camera_id': cam_id,
-                    'frame_number': i
+                    "timestamp": frame_time,
+                    "camera_id": cam_id,
+                    "frame_number": i,
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
                 time.sleep(0.001)  # Small delay to simulate processing
@@ -357,7 +368,7 @@ class TestDesyncRobustness:
         # Run concurrent frame addition
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             futures = []
-            for cam_id in ['front', 'rear', 'left', 'right']:
+            for cam_id in ["front", "rear", "left", "right"]:
                 future = executor.submit(add_frames_concurrent, cam_id, 10, base_time)
                 futures.append(future)
 
@@ -371,10 +382,14 @@ class TestDesyncRobustness:
             sync_result = await self.sync_engine.synchronize_cameras()
             if sync_result is not None:
                 successful_syncs += 1
-                assert len(sync_result['cameras']) >= 2, f"Should sync at least 2 cameras, got {len(sync_result['cameras'])}"
+                assert (
+                    len(sync_result["cameras"]) >= 2
+                ), f"Should sync at least 2 cameras, got {len(sync_result['cameras'])}"
             await asyncio.sleep(0.001)
 
-        assert successful_syncs > 2, f"Should have multiple successful syncs, got {successful_syncs}"
+        assert (
+            successful_syncs > 2
+        ), f"Should have multiple successful syncs, got {successful_syncs}"
 
     @pytest.mark.asyncio
     async def test_network_induced_desync_recovery(self):
@@ -385,11 +400,11 @@ class TestDesyncRobustness:
         # Phase 1: Normal operation
         for i in range(3):
             frame_time = base_time + i * 0.033
-            for cam_id in ['front', 'rear', 'left', 'right']:
+            for cam_id in ["front", "rear", "left", "right"]:
                 frame_data = {
-                    'timestamp': frame_time,
-                    'camera_id': cam_id,
-                    'frame_number': i
+                    "timestamp": frame_time,
+                    "camera_id": cam_id,
+                    "frame_number": i,
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
 
@@ -402,14 +417,16 @@ class TestDesyncRobustness:
             master_time = base_time + i * 0.033
 
             # Simulate network delay exceeding sync threshold (50ms)
-            for cam_id in ['front', 'rear', 'left', 'right']:
-                delay = 0.08 if cam_id in ['left', 'right'] else 0.0  # 80ms delay exceeds 50ms threshold
+            for cam_id in ["front", "rear", "left", "right"]:
+                delay = (
+                    0.08 if cam_id in ["left", "right"] else 0.0
+                )  # 80ms delay exceeds 50ms threshold
                 frame_time = master_time + delay
 
                 frame_data = {
-                    'timestamp': frame_time,
-                    'camera_id': cam_id,
-                    'frame_number': i
+                    "timestamp": frame_time,
+                    "camera_id": cam_id,
+                    "frame_number": i,
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
 
@@ -422,11 +439,11 @@ class TestDesyncRobustness:
         recovery_base = base_time + 10 * 0.033
         for i in range(3):
             frame_time = recovery_base + i * 0.033
-            for cam_id in ['front', 'rear', 'left', 'right']:
+            for cam_id in ["front", "rear", "left", "right"]:
                 frame_data = {
-                    'timestamp': frame_time,
-                    'camera_id': cam_id,
-                    'frame_number': i + 10
+                    "timestamp": frame_time,
+                    "camera_id": cam_id,
+                    "frame_number": i + 10,
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
 
@@ -452,16 +469,16 @@ class TestDesyncRobustness:
             current_time = base_time + frame_count * frame_interval
 
             # Add frames from all cameras with realistic timing variations
-            for cam_id in ['front', 'rear', 'left', 'right']:
+            for cam_id in ["front", "rear", "left", "right"]:
                 # Add realistic camera timing jitter (±2ms)
                 jitter = np.random.normal(0, 0.002)
                 frame_time = current_time + jitter
 
                 frame_data = {
-                    'timestamp': frame_time,
-                    'camera_id': cam_id,
-                    'frame_number': frame_count,
-                    'data': f'high_load_frame_{cam_id}_{frame_count}'
+                    "timestamp": frame_time,
+                    "camera_id": cam_id,
+                    "frame_number": frame_count,
+                    "data": f"high_load_frame_{cam_id}_{frame_count}",
                 }
                 self.sync_engine.add_camera_frame(cam_id, frame_data)
 
@@ -471,18 +488,26 @@ class TestDesyncRobustness:
                 sync_result = await self.sync_engine.synchronize_cameras()
                 if sync_result is not None:
                     successful_syncs += 1
-                    assert len(sync_result['cameras']) >= 2, "Should sync at least 2 cameras under load"
-                    assert sync_result['sync_delay_ms'] <= 50.0, "Excessive delay under load"
+                    assert (
+                        len(sync_result["cameras"]) >= 2
+                    ), "Should sync at least 2 cameras under load"
+                    assert (
+                        sync_result["sync_delay_ms"] <= 50.0
+                    ), "Excessive delay under load"
 
             await asyncio.sleep(0.001)  # Small delay between frames
 
         # Performance requirements under load
         sync_success_rate = successful_syncs / sync_attempts if sync_attempts > 0 else 0
-        assert sync_success_rate > 0.5, f"Sync success rate too low: {sync_success_rate:.2%}"
+        assert (
+            sync_success_rate > 0.5
+        ), f"Sync success rate too low: {sync_success_rate:.2%}"
 
         # Check system statistics
         stats = self.sync_engine.get_sync_statistics()
-        assert stats.messages_processed >= frame_count * 4, f"Frames not processed: {stats.messages_processed} vs expected {frame_count * 4}"
+        assert (
+            stats.messages_processed >= frame_count * 4
+        ), f"Frames not processed: {stats.messages_processed} vs expected {frame_count * 4}"
 
         print(f"High load test results:")
         print(f"  Frames processed: {frame_count}")
@@ -518,7 +543,7 @@ if __name__ == "__main__":
         test_suite.test_deadline_monitoring,
         test_suite.test_concurrent_camera_operations,
         test_suite.test_network_induced_desync_recovery,
-        test_suite.test_system_desync_under_load
+        test_suite.test_system_desync_under_load,
     ]
 
     passed = 0
@@ -540,7 +565,11 @@ if __name__ == "__main__":
     print(f"\n📊 DESYNC ROBUSTNESS TEST RESULTS:")
     print(f"   ✅ Passed: {passed}")
     print(f"   ❌ Failed: {failed}")
-    print(f"   📈 Success Rate: {(passed/(passed+failed)*100):.1f}%" if (passed+failed) > 0 else "   📈 Success Rate: N/A")
+    print(
+        f"   📈 Success Rate: {(passed/(passed+failed)*100):.1f}%"
+        if (passed + failed) > 0
+        else "   📈 Success Rate: N/A"
+    )
     print(f"   🎯 Overall Status: {'ROBUST' if failed == 0 else 'NEEDS IMPROVEMENT'}")
 
     if failed == 0:

@@ -49,11 +49,7 @@ class TestRunner:
         try:
             start = time.time()
             result = subprocess.run(
-                cmd,
-                cwd=PROJECT_ROOT,
-                timeout=timeout,
-                capture_output=False,
-                text=True
+                cmd, cwd=PROJECT_ROOT, timeout=timeout, capture_output=False, text=True
             )
             duration = time.time() - start
 
@@ -81,35 +77,56 @@ class TestRunner:
 
         # 1. Unit tests (fastest, most important)
         total_tests += 1
-        if self.run_command([
-            "python", "-m", "pytest",
-            "tests/unit/",
-            "-v", "--tb=short",
-            "--maxfail=3",
-            "-x"  # Stop on first failure for fast feedback
-        ], "Unit Tests (Fast Feedback)", timeout=30):
+        if self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/",
+                "-v",
+                "--tb=short",
+                "--maxfail=3",
+                "-x",  # Stop on first failure for fast feedback
+            ],
+            "Unit Tests (Fast Feedback)",
+            timeout=30,
+        ):
             tests_passed += 1
 
         # 2. Quick integration smoke tests
         total_tests += 1
-        if self.run_command([
-            "python", "-m", "pytest",
-            "tests/integration/unit_level/",
-            "-v", "--tb=line",
-            "--maxfail=1",
-            "-k", "not slow"
-        ], "Integration Smoke Tests", timeout=20):
+        if self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/integration/unit_level/",
+                "-v",
+                "--tb=line",
+                "--maxfail=1",
+                "-k",
+                "not slow",
+            ],
+            "Integration Smoke Tests",
+            timeout=20,
+        ):
             tests_passed += 1
 
         # 3. Basic linting check
         total_tests += 1
-        if self.run_command([
-            "python", "-m", "flake8",
-            "src/autonomy/core/",
-            "--max-line-length=88",
-            "--extend-ignore=E203,W503",
-            "--max-complexity=10"
-        ], "Code Quality Check", timeout=15):
+        if self.run_command(
+            [
+                "python",
+                "-m",
+                "flake8",
+                "src/autonomy/core/",
+                "--max-line-length=88",
+                "--extend-ignore=E203,W503",
+                "--max-complexity=10",
+            ],
+            "Code Quality Check",
+            timeout=15,
+        ):
             tests_passed += 1
 
         return tests_passed == total_tests
@@ -124,32 +141,53 @@ class TestRunner:
 
         # 1. All unit tests
         total_tests += 1
-        if self.run_command([
-            "python", "-m", "pytest",
-            "tests/unit/",
-            "-v", "--tb=short",
-            "--cov=src", "--cov-report=term-missing",
-            "--cov-fail-under=85",
-            "-n", "auto"
-        ], "Unit Tests with Coverage", timeout=60):
+        if self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/",
+                "-v",
+                "--tb=short",
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--cov-fail-under=85",
+                "-n",
+                "auto",
+            ],
+            "Unit Tests with Coverage",
+            timeout=60,
+        ):
             tests_passed += 1
 
         # 2. Fast integration tests
         total_tests += 1
-        if self.run_command([
-            "python", "-m", "pytest",
-            "tests/integration/",
-            "-k", "not (slow or hardware or endurance)",
-            "-v", "--tb=short",
-            "--maxfail=5",
-            "-n", "2"
-        ], "Integration Tests (Fast)", timeout=60):
+        if self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/integration/",
+                "-k",
+                "not (slow or hardware or endurance)",
+                "-v",
+                "--tb=short",
+                "--maxfail=5",
+                "-n",
+                "2",
+            ],
+            "Integration Tests (Fast)",
+            timeout=60,
+        ):
             tests_passed += 1
 
         # 3. Code quality checks
         total_tests += 1
-        if self.run_command([
-            "python", "-c", """
+        if self.run_command(
+            [
+                "python",
+                "-c",
+                """
 import subprocess
 import sys
 checks = [
@@ -163,8 +201,11 @@ for cmd in checks:
         print(f'❌ {\" \".join(cmd)} failed')
         sys.exit(1)
 print('✅ All code quality checks passed')
-"""
-        ], "Code Quality Suite", timeout=45):
+""",
+            ],
+            "Code Quality Suite",
+            timeout=45,
+        ):
             tests_passed += 1
 
         return tests_passed == total_tests
@@ -179,37 +220,58 @@ print('✅ All code quality checks passed')
 
         # 1. Complete test suite with coverage
         total_tests += 1
-        if self.run_command([
-            "python", "-m", "pytest",
-            "tests/",
-            "-k", "not (hardware or endurance or chaos)",
-            "--cov=src", "--cov-report=xml",
-            "--cov-fail-under=85",
-            "-n", "auto",
-            "--durations=20"
-        ], "Full Test Suite with Coverage", timeout=480):
+        if self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/",
+                "-k",
+                "not (hardware or endurance or chaos)",
+                "--cov=src",
+                "--cov-report=xml",
+                "--cov-fail-under=85",
+                "-n",
+                "auto",
+                "--durations=20",
+            ],
+            "Full Test Suite with Coverage",
+            timeout=480,
+        ):
             tests_passed += 1
 
         # 2. ROS2 package validation
         total_tests += 1
-        if self.run_command([
-            "bash", "-c", """
+        if self.run_command(
+            [
+                "bash",
+                "-c",
+                """
 source /opt/ros/humble/setup.bash 2>/dev/null || true
 cd /workspace
 colcon build --symlink-install --packages-skip urc-machiato-2026 --parallel-workers 2 --continue-on-error
-"""
-        ], "ROS2 Package Build", timeout=180):
+""",
+            ],
+            "ROS2 Package Build",
+            timeout=180,
+        ):
             tests_passed += 1
 
         # 3. Documentation build
         total_tests += 1
-        if self.run_command([
-            "bash", "-c", """
+        if self.run_command(
+            [
+                "bash",
+                "-c",
+                """
 cd docs
 pip install -r requirements.txt >/dev/null 2>&1 || true
 make html >/dev/null 2>&1
-"""
-        ], "Documentation Build", timeout=60):
+""",
+            ],
+            "Documentation Build",
+            timeout=60,
+        ):
             tests_passed += 1
 
         return tests_passed == total_tests
@@ -219,27 +281,44 @@ make html >/dev/null 2>&1
         print("🔧 Hardware Mode: Tests requiring physical hardware")
         print("   Target: Hardware-dependent validation")
 
-        return self.run_command([
-            "python", "-m", "pytest",
-            "tests/hardware/",
-            "tests/integration/hardware/",
-            "-v", "--tb=short",
-            "-k", "hardware"
-        ], "Hardware Tests", timeout=300)
+        return self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/hardware/",
+                "tests/integration/hardware/",
+                "-v",
+                "--tb=short",
+                "-k",
+                "hardware",
+            ],
+            "Hardware Tests",
+            timeout=300,
+        )
 
     def run_performance_mode(self) -> bool:
         """Performance and load testing."""
         print("⚡ Performance Mode: Load and performance validation")
         print("   Target: System performance under load")
 
-        return self.run_command([
-            "python", "-m", "pytest",
-            "tests/performance/",
-            "-v", "--tb=short",
-            "--durations=0"  # Show all durations
-        ], "Performance Tests", timeout=600)
+        return self.run_command(
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/performance/",
+                "-v",
+                "--tb=short",
+                "--durations=0",  # Show all durations
+            ],
+            "Performance Tests",
+            timeout=600,
+        )
 
-    def run_custom_mode(self, test_path: Optional[str] = None, marker: Optional[str] = None) -> bool:
+    def run_custom_mode(
+        self, test_path: Optional[str] = None, marker: Optional[str] = None
+    ) -> bool:
         """Custom test selection for specific debugging."""
         print("🎯 Custom Mode: Selective test execution")
 
@@ -268,25 +347,18 @@ Examples:
   python scripts/run_tests.py hardware              # Hardware tests
   python scripts/run_tests.py custom tests/unit/    # Specific test path
   python scripts/run_tests.py custom --marker slow  # Tests with marker
-        """
+        """,
     )
 
     parser.add_argument(
         "mode",
         choices=["dev", "pre-commit", "ci", "hardware", "performance", "custom"],
-        help="Test execution mode"
+        help="Test execution mode",
     )
 
-    parser.add_argument(
-        "path",
-        nargs="?",
-        help="Custom test path (for custom mode)"
-    )
+    parser.add_argument("path", nargs="?", help="Custom test path (for custom mode)")
 
-    parser.add_argument(
-        "--marker", "-k",
-        help="Pytest marker for custom mode"
-    )
+    parser.add_argument("--marker", "-k", help="Pytest marker for custom mode")
 
     args = parser.parse_args()
 
@@ -310,7 +382,7 @@ Examples:
     # Report results
     total_time = time.time() - runner.start_time
     print(f"\n⏱️  Total execution time: {total_time:.1f}s")
-    
+
     if success:
         print("🎉 All tests passed!")
         sys.exit(0)
@@ -321,7 +393,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-
-
-
-

@@ -72,12 +72,12 @@ def run_test_sequence():
     print("   1. In dashboard, type 'send_test' to command swerve motors")
     print("   2. Watch simulator output for kinematics updates")
     print("   3. Press Ctrl+C to stop test")
-    
+
     try:
         # Monitor processes
         start_time = time.time()
         test_duration = 30  # 30 second test
-        
+
         while time.time() - start_time < test_duration:
             if dashboard_proc is not None and dashboard_proc.poll() is not None:
                 print("Dashboard process ended")
@@ -86,42 +86,43 @@ def run_test_sequence():
                 print("Simulator process ended")
                 break
             time.sleep(1)
-        
+
         print(f"\n✅ Test completed ({test_duration}s)")
-        
+
     except KeyboardInterrupt:
         print("\n👋 Test stopped by user")
-    
+
     finally:
         # Clean up processes
         print("🧹 Stopping test components...")
-        
+
         if dashboard_proc:
             dashboard_proc.terminate()
             try:
                 dashboard_proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 dashboard_proc.kill()
-        
+
         if simulator_proc:
             simulator_proc.terminate()
             try:
                 simulator_proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 simulator_proc.kill()
-        
+
         print("✅ Test components stopped")
-        
+
     return True
+
 
 def main():
     print("🔧 URC 2026 Swerve Drive Bridge Test")
-    print("="*50)
+    print("=" * 50)
     print("Testing CAN bridge with simulator and dashboard")
-    print("="*50)
-    
+    print("=" * 50)
+
     success = run_test_sequence()
-    
+
     if success:
         print("\n🎉 TEST SEQUENCE COMPLETED")
         print("✅ CAN bridge tested with simulator")
@@ -131,6 +132,7 @@ def main():
     else:
         print("\n❌ TEST SEQUENCE FAILED")
         print("Check error messages above")
+
 
 if __name__ == "__main__":
     main()

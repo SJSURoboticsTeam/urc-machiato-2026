@@ -396,9 +396,9 @@ class BaseRover(ABC):
                 if self.distance_traveled > 0
                 else 0
             ),
-            "motor_temperature_max": max(self.motor_temperatures)
-            if self.motor_temperatures
-            else 0,
+            "motor_temperature_max": (
+                max(self.motor_temperatures) if self.motor_temperatures else 0
+            ),
             "battery_discharge_rate_percent_per_hour": (
                 (100 - self.battery_percentage)
                 / max(0.001, self.distance_traveled / (self.max_velocity * 3600))

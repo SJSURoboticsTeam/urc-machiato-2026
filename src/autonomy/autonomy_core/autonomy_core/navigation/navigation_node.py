@@ -9,6 +9,7 @@ AR tag precision approaches, obstacle avoidance, and mission progress tracking.
 import math
 import os
 import sys
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -20,16 +21,23 @@ ros2_env = get_ros2_environment_manager()
 optimized_imports = ros2_env.get_optimized_imports()
 
 # Import with fallbacks
-rclpy = optimized_imports.get('rclpy')
-NavigateToPose = optimized_imports.get('NavigateToPose')
-PoseStamped = optimized_imports.get('PoseStamped')
-Twist = optimized_imports.get('Twist')
-Imu = optimized_imports.get('Imu')
-NavSatFix = optimized_imports.get('NavSatFix')
-String = optimized_imports.get('String')
-Trigger = optimized_imports.get('Trigger')
-LifecycleState = optimized_imports.get('LifecycleState')
-TransitionCallbackReturn = optimized_imports.get('TransitionCallbackReturn')
+rclpy = optimized_imports.get("rclpy")
+NavigateToPose = optimized_imports.get("NavigateToPose")
+PoseStamped = optimized_imports.get("PoseStamped")
+Twist = optimized_imports.get("Twist")
+Imu = optimized_imports.get("Imu")
+NavSatFix = optimized_imports.get("NavSatFix")
+String = optimized_imports.get("String")
+Trigger = optimized_imports.get("Trigger")
+LifecycleState = optimized_imports.get("LifecycleState")
+TransitionCallbackReturn = optimized_imports.get("TransitionCallbackReturn")
+# SLAM/odom types (for navigation-SLAM integration)
+try:
+    from geometry_msgs.msg import PoseWithCovarianceStamped
+    from nav_msgs.msg import Odometry
+except ImportError:
+    PoseWithCovarianceStamped = None
+    Odometry = None
 
 # Use optimized node utilities and unified systems
 from autonomy.core.node_utils import BaseURCNode
@@ -47,6 +55,22 @@ except ImportError:
     from path_planner import PathPlanner
 
 sys.path.insert(0, os.path.dirname(__file__))
+
+# Unified blackboard client and key constants
+_workspace_src = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../../../src")
+)
+if _workspace_src not in sys.path:
+    sys.path.insert(0, _workspace_src)
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    UNIFIED_BLACKBOARD_AVAILABLE = True
+except ImportError:
+    UNIFIED_BLACKBOARD_AVAILABLE = False
+    UnifiedBlackboardClient = None
+    BlackboardKeys = None
 
 
 @dataclass
@@ -93,11 +117,11 @@ class NavigationNode(BaseURCNode):
         # Register component loaders for heavy dependencies
         # These will be loaded lazily when first accessed
         self._component_loaders = {
-            'gnss_processor': self._load_gnss_processor,
-            'path_planner': self._load_path_planner,
-            'motion_controller': self._load_motion_controller,
-            'terrain_analyzer': self._load_terrain_analyzer,
-            'ml_analyzer': self._load_ml_analyzer
+            "gnss_processor": self._load_gnss_processor,
+            "path_planner": self._load_path_planner,
+            "motion_controller": self._load_motion_controller,
+            "terrain_analyzer": self._load_terrain_analyzer,
+            "ml_analyzer": self._load_ml_analyzer,
         }
 
         # Subsystems - loaded lazily
@@ -108,37 +132,47 @@ class NavigationNode(BaseURCNode):
         self.ml_analyzer = None
 
         # Lazy loading methods for heavy components
+
     def _load_gnss_processor(self):
         """Lazy load GNSS processor."""
         try:
             from autonomy_navigation.gnss_processor import GNSSProcessor
+
             return GNSSProcessor()
         except ImportError:
             from gnss_processor import GNSSProcessor
+
             return GNSSProcessor()
 
     def _load_path_planner(self):
         """Lazy load path planner."""
         try:
             from autonomy_navigation.path_planner import PathPlanner
+
             return PathPlanner()
         except ImportError:
             from path_planner import PathPlanner
+
             return PathPlanner()
 
     def _load_motion_controller(self):
         """Lazy load motion controller."""
         try:
             from autonomy_navigation.motion_controller import MotionController
+
             return MotionController()
         except ImportError:
             from motion_controller import MotionController
+
             return MotionController()
 
     def _load_terrain_analyzer(self):
         """Lazy load terrain analyzer (heavy dependency)."""
         try:
-            from autonomy.core.terrain_intelligence.terrain_analyzer import TerrainAnalyzer
+            from autonomy.core.terrain_intelligence.terrain_analyzer import (
+                TerrainAnalyzer,
+            )
+
             return TerrainAnalyzer()
         except ImportError:
             logger.warning("Terrain analyzer not available")
@@ -147,7 +181,10 @@ class NavigationNode(BaseURCNode):
     def _load_ml_analyzer(self):
         """Lazy load ML analyzer (very heavy dependency)."""
         try:
-            from autonomy.core.terrain_intelligence.terrain_ml_analyzer import TerrainMLAnalyzer
+            from autonomy.core.terrain_intelligence.terrain_ml_analyzer import (
+                TerrainMLAnalyzer,
+            )
+
             return TerrainMLAnalyzer()
         except ImportError:
             logger.warning("ML analyzer not available")
@@ -160,6 +197,19 @@ class NavigationNode(BaseURCNode):
         self.last_imu: Optional[Imu] = None
         self.is_navigating = False
         self.control_timer = None
+        # SLAM/odom integration: prefer SLAM pose when recent and confident, else odom
+        self._slam_pose: Optional[Tuple[float, float, float]] = None
+        self._slam_pose_stamp_ns: int = 0
+        self._slam_confidence: float = 0.0
+        self._odom_pose: Optional[Tuple[float, float, float]] = None
+        self._odom_pose_stamp_ns: int = 0
+        self._slam_pose_max_age_ns: int = int(1.0 * 1e9)  # 1s
+        self._slam_confidence_min: float = 0.3
+        # Costmap-driven replan: obstacles (x, y, radius), rate limit
+        self._obstacle_list: List[Tuple[float, float, float]] = []
+        self._last_replan_time: float = 0.0
+        self._max_replan_interval_sec: float = 2.0
+        self._replan_timer = None
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handle transition to configured state with lazy loading."""
@@ -179,20 +229,24 @@ class NavigationNode(BaseURCNode):
 
         # Log memory usage after configuration
         memory_info = self.get_memory_usage()
-        self.logger.info(f"Navigation node configured. Memory: {memory_info['total_memory_mb']:.1f}MB "
-                        f"(+{memory_info['memory_delta_mb']:.1f}MB)")
+        self.logger.info(
+            f"Navigation node configured. Memory: {memory_info['total_memory_mb']:.1f}MB "
+            f"(+{memory_info['memory_delta_mb']:.1f}MB)"
+        )
 
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handle transition to active state."""
         self.logger.info("Activating Navigation Control...")
-        
+
         # Start control loop timer
         self.control_timer = self.create_timer(
             1.0 / self.params.update_rate, self._control_loop
         )
-        
+        # Replan timer: periodic costmap-driven replan (max rate limited)
+        self._replan_timer = self.create_timer(1.0, self._try_replan)
+
         return TransitionCallbackReturn.SUCCESS
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -201,6 +255,8 @@ class NavigationNode(BaseURCNode):
         self.stop_navigation()
         if self.control_timer:
             self.control_timer.cancel()
+        if self._replan_timer:
+            self._replan_timer.cancel()
         return TransitionCallbackReturn.SUCCESS
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -216,9 +272,29 @@ class NavigationNode(BaseURCNode):
             NavSatFix, "/gnss/fix", self._gnss_callback
         )
         self.interface_factory.create_subscriber(Imu, "/imu/data", self._imu_callback)
+        # SLAM and odom for unified pose (fallback when GPS poor)
+        if PoseWithCovarianceStamped is not None:
+            self.interface_factory.create_subscriber(
+                PoseWithCovarianceStamped, "slam/pose", self._slam_pose_callback
+            )
+        if Odometry is not None:
+            self.interface_factory.create_subscriber(
+                Odometry, "/odom", self._odom_callback
+            )
+        # Costmap/obstacles for dynamic replanning (optional)
+        try:
+            from nav_msgs.msg import OccupancyGrid
+
+            self.interface_factory.create_subscriber(
+                OccupancyGrid, "/costmap", self._costmap_callback
+            )
+        except ImportError:
+            pass  # No OccupancyGrid: replan uses empty obstacle list
 
         # Publishers - Updated to use Twist Mux autonomy topic
-        self.cmd_vel_pub = self.interface_factory.create_publisher(Twist, "/cmd_vel/autonomy")
+        self.cmd_vel_pub = self.interface_factory.create_publisher(
+            Twist, "/cmd_vel/autonomy"
+        )
         self.waypoint_pub = self.interface_factory.create_publisher(
             PoseStamped, "/navigation/current_waypoint"
         )
@@ -248,7 +324,9 @@ class NavigationNode(BaseURCNode):
                 self.blackboard = None
         else:
             self.blackboard = None
-            self.logger.warning("Unified blackboard not available - navigation state won't be written to blackboard")
+            self.logger.warning(
+                "Unified blackboard not available - navigation state won't be written to blackboard"
+            )
 
     def _setup_processing_pipeline(self) -> None:
         """Setup data processing pipeline."""
@@ -280,9 +358,9 @@ class NavigationNode(BaseURCNode):
             # Update progress along path
             progress = self._calculate_path_progress(data["fused_pose"])
             data["progress"] = progress
-            
+
             # Update unified blackboard with navigation state
-            if self.blackboard:
+            if self.blackboard and BlackboardKeys:
                 # Calculate distance to target
                 if self.current_waypoint and "fused_pose" in data:
                     # Simplified distance calculation
@@ -290,10 +368,12 @@ class NavigationNode(BaseURCNode):
                         (self.current_waypoint.latitude - data["fused_pose"][0]) ** 2
                         + (self.current_waypoint.longitude - data["fused_pose"][1]) ** 2
                     )
-                    self.blackboard.set("distance_to_target", distance)
-                
+                    self.blackboard.set(BlackboardKeys.DISTANCE_TO_TARGET, distance)
+
                 # Update path clear status (simplified - check if path exists)
-                self.blackboard.set("path_clear", len(self.current_path) > 0)
+                self.blackboard.set(
+                    BlackboardKeys.PATH_CLEAR, len(self.current_path) > 0
+                )
         return data
 
     def _gnss_callback(self, msg: NavSatFix) -> None:
@@ -303,12 +383,14 @@ class NavigationNode(BaseURCNode):
         # Lazy load GNSS processor on first GPS message
         if self.gnss_processor is None:
             try:
-                if 'gnss_processor' in self._component_loaders:
-                    self.gnss_processor = self._component_loaders['gnss_processor']()
+                if "gnss_processor" in self._component_loaders:
+                    self.gnss_processor = self._component_loaders["gnss_processor"]()
                     self.logger.info("GNSS processor loaded on-demand")
                 else:
                     # Fallback to registry
-                    self.gnss_processor = self.component_registry.get_component('gnss_processor')
+                    self.gnss_processor = self.component_registry.get_component(
+                        "gnss_processor"
+                    )
             except Exception as e:
                 self.logger.error(f"Failed to load GNSS processor: {e}")
                 return
@@ -331,6 +413,135 @@ class NavigationNode(BaseURCNode):
         self.last_imu = msg
         self.trace_data("imu_received", msg)
 
+    def _slam_pose_callback(self, msg) -> None:
+        """Handle SLAM pose updates for unified pose and fallback."""
+        self._slam_pose = (
+            msg.pose.pose.position.x,
+            msg.pose.pose.position.y,
+            msg.pose.pose.position.z,
+        )
+        stamp = msg.header.stamp
+        self._slam_pose_stamp_ns = stamp.sec * (10**9) + stamp.nanosec
+        # Covariance-based confidence (trace of position block)
+        cov = getattr(msg.pose, "covariance", None)
+        if cov and len(cov) >= 9:
+            self._slam_confidence = 1.0 / (1.0 + (cov[0] + cov[7] + cov[14]) / 3.0)
+        else:
+            self._slam_confidence = 0.8
+        try:
+            from ..perception.sensor_health import get_sensor_health_tracker
+
+            get_sensor_health_tracker().update("slam_pose", valid=True)
+        except ImportError:
+            try:
+                from autonomy_core.perception.sensor_health import (
+                    get_sensor_health_tracker,
+                )
+
+                get_sensor_health_tracker().update("slam_pose", valid=True)
+            except ImportError:
+                pass
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(BlackboardKeys.SLAM_CONFIDENCE, self._slam_confidence)
+        self._update_current_pose_from_unified()
+
+    def _odom_callback(self, msg) -> None:
+        """Handle odometry updates for fallback when SLAM is lost."""
+        self._odom_pose = (
+            msg.pose.pose.position.x,
+            msg.pose.pose.position.y,
+            msg.pose.pose.position.z,
+        )
+        stamp = msg.header.stamp
+        self._odom_pose_stamp_ns = stamp.sec * (10**9) + stamp.nanosec
+        try:
+            from ..perception.sensor_health import get_sensor_health_tracker
+
+            get_sensor_health_tracker().update("odom", valid=True)
+        except ImportError:
+            try:
+                from autonomy_core.perception.sensor_health import (
+                    get_sensor_health_tracker,
+                )
+
+                get_sensor_health_tracker().update("odom", valid=True)
+            except ImportError:
+                pass
+        self._update_current_pose_from_unified()
+
+    def _costmap_callback(self, msg) -> None:
+        """Convert OccupancyGrid to obstacle list (x, y, radius) for path planner."""
+        try:
+            from nav_msgs.msg import OccupancyGrid
+        except ImportError:
+            return
+        res = getattr(msg.info, "resolution", 0.5)
+        if res <= 0:
+            res = 0.5
+        ox = msg.info.origin.position.x
+        oy = msg.info.origin.position.y
+        w = msg.info.width
+        h = msg.info.height
+        obstacles: List[Tuple[float, float, float]] = []
+        occupied_threshold = 80
+        for i in range(min(w * h, len(msg.data))):
+            if msg.data[i] > occupied_threshold:
+                gx = i % w
+                gy = i // w
+                wx = ox + (gx + 0.5) * res
+                wy = oy + (gy + 0.5) * res
+                obstacles.append((wx, wy, res * 0.6))
+        self._obstacle_list = obstacles
+
+    def _try_replan(self) -> None:
+        """Rate-limited replan using current costmap/obstacles; replace current path."""
+        if (
+            not self.is_navigating
+            or not self.current_pose
+            or not self.current_waypoint
+            or self.path_planner is None
+        ):
+            return
+        now = time.time()
+        if now - self._last_replan_time < self._max_replan_interval_sec:
+            return
+        self._last_replan_time = now
+        try:
+            self.path_planner.update_costmap(self._obstacle_list)
+            goal_xy = (self.current_waypoint.latitude, self.current_waypoint.longitude)
+            new_path = self.path_planner.plan_path(
+                self.current_pose, goal_xy, self.params.node_specific_params
+            )
+            if new_path:
+                self.current_path = new_path
+                self.logger.debug("Replanned path (%d points)", len(new_path))
+        except Exception as e:
+            self.logger.debug("Replan skipped: %s", e)
+
+    def _get_unified_pose(self) -> Optional[Tuple[float, float]]:
+        """Return best available (x, y) in map frame: prefer SLAM when recent and confident, else odom (fallback fusion)."""
+        now_ns = self.get_clock().now().nanoseconds
+        # Prefer SLAM if recent and confident
+        if (
+            self._slam_pose is not None
+            and (now_ns - self._slam_pose_stamp_ns) <= self._slam_pose_max_age_ns
+        ):
+            if self._slam_confidence >= self._slam_confidence_min:
+                return (self._slam_pose[0], self._slam_pose[1])
+        # Fallback to odom when SLAM is lost or stale (one valid source drives degraded pose)
+        if (
+            self._odom_pose is not None
+            and (now_ns - self._odom_pose_stamp_ns) <= self._slam_pose_max_age_ns
+        ):
+            return (self._odom_pose[0], self._odom_pose[1])
+        return None
+
+    def _update_current_pose_from_unified(self) -> None:
+        """Update current_pose from unified pose (SLAM or odom) for path planning and goal check."""
+        unified = self._get_unified_pose()
+        if unified is not None:
+            self.current_pose = unified
+
     def _navigate_to_pose_callback(self, goal_handle) -> NavigateToPose.Result:
         """Handle navigation action requests."""
         self.profiler.start_timer("navigate_to_pose")
@@ -344,7 +555,9 @@ class NavigationNode(BaseURCNode):
             )
 
             if isinstance(validation, Failure):
-                self.logger.error("Navigation validation failed", error=validation.error)
+                self.logger.error(
+                    "Navigation validation failed", error=validation.error
+                )
                 goal_handle.abort()
                 return NavigateToPose.Result()
 
@@ -378,6 +591,8 @@ class NavigationNode(BaseURCNode):
 
     def _control_loop(self) -> None:
         """Main navigation control loop."""
+        # Keep current_pose updated from SLAM/odom for path following
+        self._update_current_pose_from_unified()
         if not self.is_navigating:
             return
 
@@ -392,12 +607,16 @@ class NavigationNode(BaseURCNode):
             # Lazy load motion controller on first movement command
             if self.motion_controller is None:
                 try:
-                    if 'motion_controller' in self._component_loaders:
-                        self.motion_controller = self._component_loaders['motion_controller']()
+                    if "motion_controller" in self._component_loaders:
+                        self.motion_controller = self._component_loaders[
+                            "motion_controller"
+                        ]()
                         self.logger.info("Motion controller loaded on-demand")
                     else:
                         # Fallback to registry
-                        self.motion_controller = self.component_registry.get_component('motion_controller')
+                        self.motion_controller = self.component_registry.get_component(
+                            "motion_controller"
+                        )
                 except Exception as e:
                     self.logger.error(f"Failed to load motion controller: {e}")
                     return
@@ -419,9 +638,7 @@ class NavigationNode(BaseURCNode):
             self.logger.error("Control loop error", error=e)
             self.transition_to("error", f"Control loop failed: {str(e)}")
 
-    def start_navigation_to_pose(
-        self, target_pose: PoseStamped
-    ) -> OperationResult:
+    def start_navigation_to_pose(self, target_pose: PoseStamped) -> OperationResult:
         """Start navigation to target pose with validation."""
         try:
             # Convert to waypoint
@@ -435,12 +652,14 @@ class NavigationNode(BaseURCNode):
             # Lazy load path planner on first navigation request
             if self.path_planner is None:
                 try:
-                    if 'path_planner' in self._component_loaders:
-                        self.path_planner = self._component_loaders['path_planner']()
+                    if "path_planner" in self._component_loaders:
+                        self.path_planner = self._component_loaders["path_planner"]()
                         self.logger.info("Path planner loaded on-demand")
                     else:
                         # Fallback to registry
-                        self.path_planner = self.component_registry.get_component('path_planner')
+                        self.path_planner = self.component_registry.get_component(
+                            "path_planner"
+                        )
                 except Exception as e:
                     self.logger.error(f"Failed to load path planner: {e}")
                     return failure(
@@ -448,7 +667,8 @@ class NavigationNode(BaseURCNode):
                         operation="start_navigation",
                     )
 
-            # Plan path
+            # Plan path (use unified pose so SLAM/odom drives start point)
+            self._update_current_pose_from_unified()
             path_result = self.path_planner.plan_path(
                 self.current_pose, waypoint, self.params.node_specific_params
             )
@@ -487,9 +707,9 @@ class NavigationNode(BaseURCNode):
             self.transition_to("idle", "Navigation stopped")
 
             # Update unified blackboard
-            if self.blackboard:
-                self.blackboard.set("navigation_status", "idle")
-                self.blackboard.set("path_clear", True)
+            if self.blackboard and BlackboardKeys:
+                self.blackboard.set(BlackboardKeys.NAVIGATION_STATUS, "idle")
+                self.blackboard.set(BlackboardKeys.PATH_CLEAR, True)
 
             # Publish zero velocity to stop
             stop_cmd = Twist()
@@ -529,9 +749,7 @@ class NavigationNode(BaseURCNode):
             name=f"waypoint_{int(pose.header.stamp.sec)}",
         )
 
-    def _validate_waypoint(
-        self, waypoint: Waypoint
-    ) -> OperationResult:
+    def _validate_waypoint(self, waypoint: Waypoint) -> OperationResult:
         """Validate waypoint parameters."""
         if not (-90 <= waypoint.latitude <= 90):
             return failure(

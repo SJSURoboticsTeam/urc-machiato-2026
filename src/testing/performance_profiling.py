@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class PerformanceMetric(Enum):
     """Performance metrics to track."""
+
     MOTION_CONTROL_LATENCY = "motion_control_latency"
     SENSOR_FUSION_LATENCY = "sensor_fusion_latency"
     NETWORK_LATENCY = "network_latency"
@@ -47,6 +48,7 @@ class PerformanceMetric(Enum):
 @dataclass
 class LatencyMeasurement:
     """Individual latency measurement."""
+
     timestamp: float
     value_ms: float
     operation: str
@@ -56,6 +58,7 @@ class LatencyMeasurement:
 @dataclass
 class PerformanceProfile:
     """Performance profile for an operation."""
+
     operation_name: str
     measurements: List[LatencyMeasurement] = field(default_factory=list)
     max_samples: int = 10000  # Keep last 10k samples
@@ -66,7 +69,7 @@ class PerformanceProfile:
             timestamp=time.time(),
             value_ms=value_ms,
             operation=self.operation_name,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self.measurements.append(measurement)
@@ -78,7 +81,7 @@ class PerformanceProfile:
     def get_statistics(self) -> Dict[str, Any]:
         """Calculate latency statistics."""
         if not self.measurements:
-            return {'count': 0, 'message': 'No measurements'}
+            return {"count": 0, "message": "No measurements"}
 
         values = [m.value_ms for m in self.measurements]
         values.sort()
@@ -100,24 +103,27 @@ class PerformanceProfile:
         std_dev = statistics.stdev(values) if count > 1 else 0
 
         return {
-            'count': count,
-            'mean_ms': mean,
-            'median_ms': median,
-            'p50_ms': p50,
-            'p90_ms': p90,
-            'p95_ms': p95,
-            'p99_ms': p99,
-            'p999_ms': p999,
-            'min_ms': min_val,
-            'max_ms': max_val,
-            'std_dev_ms': std_dev,
-            'last_measurement_time': self.measurements[-1].timestamp if self.measurements else None
+            "count": count,
+            "mean_ms": mean,
+            "median_ms": median,
+            "p50_ms": p50,
+            "p90_ms": p90,
+            "p95_ms": p95,
+            "p99_ms": p99,
+            "p999_ms": p999,
+            "min_ms": min_val,
+            "max_ms": max_val,
+            "std_dev_ms": std_dev,
+            "last_measurement_time": (
+                self.measurements[-1].timestamp if self.measurements else None
+            ),
         }
 
 
 @dataclass
 class PerformanceRequirement:
     """Performance requirement specification."""
+
     metric: PerformanceMetric
     operation: str
     max_latency_ms: float
@@ -141,43 +147,43 @@ class PerformanceProfiler:
             "motion_control_loop",
             max_latency_ms=20.0,
             percentile="p99",
-            description="Motion control must complete within 20ms (50Hz loop)"
+            description="Motion control must complete within 20ms (50Hz loop)",
         ),
         PerformanceRequirement(
             PerformanceMetric.SENSOR_FUSION_LATENCY,
             "sensor_fusion_update",
             max_latency_ms=50.0,
             percentile="p95",
-            description="Sensor fusion within 50ms for 20Hz update rate"
+            description="Sensor fusion within 50ms for 20Hz update rate",
         ),
         PerformanceRequirement(
             PerformanceMetric.NETWORK_LATENCY,
             "websocket_message_roundtrip",
             max_latency_ms=100.0,
             percentile="p95",
-            description="WebSocket message processing within 100ms"
+            description="WebSocket message processing within 100ms",
         ),
         PerformanceRequirement(
             PerformanceMetric.SERIALIZATION_LATENCY,
             "binary_sensor_encoding",
             max_latency_ms=5.0,
             percentile="p99",
-            description="Binary serialization under 5ms"
+            description="Binary serialization under 5ms",
         ),
         PerformanceRequirement(
             PerformanceMetric.CPU_USAGE,
             "system_cpu_usage",
             max_latency_ms=75.0,  # % CPU
             percentile="p95",
-            description="CPU usage under 75% sustained"
+            description="CPU usage under 75% sustained",
         ),
         PerformanceRequirement(
             PerformanceMetric.MEMORY_USAGE,
             "system_memory_usage",
             max_latency_ms=700.0,  # MB
             percentile="max",
-            description="Memory usage under 700MB"
-        )
+            description="Memory usage under 700MB",
+        ),
     ]
 
     def __init__(self, requirements: List[PerformanceRequirement] = None):
@@ -197,7 +203,9 @@ class PerformanceProfiler:
             if req.enabled:
                 self.profiles[req.operation] = PerformanceProfile(req.operation)
 
-        logger.info(f"PerformanceProfiler initialized with {len(self.requirements)} requirements")
+        logger.info(
+            f"PerformanceProfiler initialized with {len(self.requirements)} requirements"
+        )
 
     def measure_latency(self, operation: str, func: Callable, *args, **kwargs) -> Any:
         """
@@ -222,11 +230,12 @@ class PerformanceProfiler:
 
         except Exception as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
-            self.record_measurement(operation, latency_ms, {'exception': str(e)})
+            self.record_measurement(operation, latency_ms, {"exception": str(e)})
             raise
 
-    def record_measurement(self, operation: str, latency_ms: float,
-                          metadata: Dict[str, Any] = None):
+    def record_measurement(
+        self, operation: str, latency_ms: float, metadata: Dict[str, Any] = None
+    ):
         """
         Record a latency measurement.
 
@@ -255,10 +264,12 @@ class PerformanceProfiler:
                 target=self._system_monitor_loop,
                 args=(interval_seconds,),
                 name="performance_monitor",
-                daemon=True
+                daemon=True,
             )
             self.system_monitor_thread.start()
-            logger.info(f"System performance monitoring started (interval: {interval_seconds}s)")
+            logger.info(
+                f"System performance monitoring started (interval: {interval_seconds}s)"
+            )
 
     def stop_system_monitoring(self):
         """Stop system resource monitoring."""
@@ -312,43 +323,45 @@ class PerformanceProfiler:
                     continue
 
                 stats = profile.get_statistics()
-                if 'count' not in stats or stats['count'] == 0:
+                if "count" not in stats or stats["count"] == 0:
                     continue
 
                 # Check the specified percentile
                 if req.percentile not in stats:
                     continue
 
-                threshold_value = stats[req.percentile + '_ms']
+                threshold_value = stats[req.percentile + "_ms"]
 
                 if threshold_value > req.max_latency_ms:
                     violation = {
-                        'timestamp': time.time(),
-                        'operation': operation,
-                        'requirement': req.description,
-                        'threshold_ms': req.max_latency_ms,
-                        'actual_ms': threshold_value,
-                        'percentile': req.percentile,
-                        'violation_amount_ms': threshold_value - req.max_latency_ms,
-                        'sample_count': stats['count']
+                        "timestamp": time.time(),
+                        "operation": operation,
+                        "requirement": req.description,
+                        "threshold_ms": req.max_latency_ms,
+                        "actual_ms": threshold_value,
+                        "percentile": req.percentile,
+                        "violation_amount_ms": threshold_value - req.max_latency_ms,
+                        "sample_count": stats["count"],
                     }
 
                     self.violations.append(violation)
 
-                    logger.warning(f"PERFORMANCE VIOLATION: {operation} "
-                                 f"{req.percentile}={threshold_value:.1f}ms > "
-                                 f"required {req.max_latency_ms:.1f}ms "
-                                 f"(+{violation['violation_amount_ms']:.1f}ms)")
+                    logger.warning(
+                        f"PERFORMANCE VIOLATION: {operation} "
+                        f"{req.percentile}={threshold_value:.1f}ms > "
+                        f"required {req.max_latency_ms:.1f}ms "
+                        f"(+{violation['violation_amount_ms']:.1f}ms)"
+                    )
 
     def get_performance_report(self) -> Dict[str, Any]:
         """Generate comprehensive performance report."""
         with self.lock:
             report = {
-                'timestamp': time.time(),
-                'requirements': [],
-                'profiles': {},
-                'violations': self.violations[-50:],  # Last 50 violations
-                'summary': {}
+                "timestamp": time.time(),
+                "requirements": [],
+                "profiles": {},
+                "violations": self.violations[-50:],  # Last 50 violations
+                "summary": {},
             }
 
             # Requirements status
@@ -358,44 +371,55 @@ class PerformanceProfiler:
 
                 profile = self.profiles.get(req.operation)
                 if not profile:
-                    status = 'no_data'
+                    status = "no_data"
                     compliant = False
                 else:
                     stats = profile.get_statistics()
-                    if stats.get('count', 0) == 0:
-                        status = 'no_data'
+                    if stats.get("count", 0) == 0:
+                        status = "no_data"
                         compliant = False
                     else:
-                        percentile_key = req.percentile + '_ms'
-                        actual_value = stats.get(percentile_key, float('inf'))
+                        percentile_key = req.percentile + "_ms"
+                        actual_value = stats.get(percentile_key, float("inf"))
                         compliant = actual_value <= req.max_latency_ms
-                        status = 'compliant' if compliant else 'violating'
+                        status = "compliant" if compliant else "violating"
 
-                report['requirements'].append({
-                    'operation': req.operation,
-                    'description': req.description,
-                    'required_max_ms': req.max_latency_ms,
-                    'percentile': req.percentile,
-                    'status': status,
-                    'compliant': compliant
-                })
+                report["requirements"].append(
+                    {
+                        "operation": req.operation,
+                        "description": req.description,
+                        "required_max_ms": req.max_latency_ms,
+                        "percentile": req.percentile,
+                        "status": status,
+                        "compliant": compliant,
+                    }
+                )
 
             # Profile statistics
             for operation, profile in self.profiles.items():
-                report['profiles'][operation] = profile.get_statistics()
+                report["profiles"][operation] = profile.get_statistics()
 
             # Summary statistics
-            total_measurements = sum(len(p.measurements) for p in self.profiles.values())
-            compliant_requirements = sum(1 for r in report['requirements'] if r['compliant'])
-            total_requirements = len([r for r in report['requirements'] if r['status'] != 'no_data'])
+            total_measurements = sum(
+                len(p.measurements) for p in self.profiles.values()
+            )
+            compliant_requirements = sum(
+                1 for r in report["requirements"] if r["compliant"]
+            )
+            total_requirements = len(
+                [r for r in report["requirements"] if r["status"] != "no_data"]
+            )
 
-            report['summary'] = {
-                'total_measurements': total_measurements,
-                'total_violations': len(self.violations),
-                'compliant_requirements': compliant_requirements,
-                'total_requirements': total_requirements,
-                'compliance_rate_percent': (compliant_requirements / max(total_requirements, 1)) * 100,
-                'monitoring_active': self.system_monitoring_active
+            report["summary"] = {
+                "total_measurements": total_measurements,
+                "total_violations": len(self.violations),
+                "compliant_requirements": compliant_requirements,
+                "total_requirements": total_requirements,
+                "compliance_rate_percent": (
+                    compliant_requirements / max(total_requirements, 1)
+                )
+                * 100,
+                "monitoring_active": self.system_monitoring_active,
             }
 
             return report
@@ -407,7 +431,9 @@ class PerformanceProfiler:
         Args:
             measurement_period_seconds: How long to measure baseline
         """
-        logger.info(f"Establishing performance baseline for {measurement_period_seconds}s...")
+        logger.info(
+            f"Establishing performance baseline for {measurement_period_seconds}s..."
+        )
 
         # Start monitoring if not active
         was_monitoring = self.system_monitoring_active
@@ -419,14 +445,16 @@ class PerformanceProfiler:
 
         # Capture current stats as baseline
         report = self.get_performance_report()
-        self.baseline_stats = report['profiles'].copy()
+        self.baseline_stats = report["profiles"].copy()
 
         logger.info("Performance baseline established")
         for operation, stats in self.baseline_stats.items():
-            if stats.get('count', 0) > 0:
-                logger.info(f"  {operation}: p50={stats.get('p50_ms', 0):.1f}ms, "
-                           f"p95={stats.get('p95_ms', 0):.1f}ms, "
-                           f"p99={stats.get('p99_ms', 0):.1f}ms")
+            if stats.get("count", 0) > 0:
+                logger.info(
+                    f"  {operation}: p50={stats.get('p50_ms', 0):.1f}ms, "
+                    f"p95={stats.get('p95_ms', 0):.1f}ms, "
+                    f"p99={stats.get('p99_ms', 0):.1f}ms"
+                )
 
         # Stop monitoring if we started it
         if not was_monitoring:
@@ -445,28 +473,30 @@ class PerformanceProfiler:
         regressions = []
         current_report = self.get_performance_report()
 
-        for operation, current_stats in current_report['profiles'].items():
+        for operation, current_stats in current_report["profiles"].items():
             if operation not in self.baseline_stats:
                 continue
 
             baseline_stats = self.baseline_stats[operation]
 
             # Check for significant regression in key percentiles
-            for percentile in ['p50_ms', 'p95_ms', 'p99_ms']:
+            for percentile in ["p50_ms", "p95_ms", "p99_ms"]:
                 if percentile in current_stats and percentile in baseline_stats:
                     current_value = current_stats[percentile]
                     baseline_value = baseline_stats[percentile]
 
                     # 50% increase or more is a regression
                     if current_value > baseline_value * 1.5:
-                        regressions.append({
-                            'operation': operation,
-                            'percentile': percentile,
-                            'baseline_value_ms': baseline_value,
-                            'current_value_ms': current_value,
-                            'regression_factor': current_value / baseline_value,
-                            'timestamp': time.time()
-                        })
+                        regressions.append(
+                            {
+                                "operation": operation,
+                                "percentile": percentile,
+                                "baseline_value_ms": baseline_value,
+                                "current_value_ms": current_value,
+                                "regression_factor": current_value / baseline_value,
+                                "timestamp": time.time(),
+                            }
+                        )
 
         return regressions
 
@@ -477,9 +507,9 @@ class PerformanceProfiler:
             filename = f"performance_report_{timestamp}.json"
 
         report = self.get_performance_report()
-        report['regressions'] = self.detect_regression()
+        report["regressions"] = self.detect_regression()
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(report, f, indent=2, default=str)
 
         logger.info(f"Performance report exported to {filename}")
@@ -518,7 +548,9 @@ def measure_latency(operation: str, func: Callable, *args, **kwargs) -> Any:
     return profiler.measure_latency(operation, func, *args, **kwargs)
 
 
-def record_measurement(operation: str, latency_ms: float, metadata: Dict[str, Any] = None):
+def record_measurement(
+    operation: str, latency_ms: float, metadata: Dict[str, Any] = None
+):
     """Convenience function to record a measurement."""
     profiler = get_performance_profiler()
     profiler.record_measurement(operation, latency_ms, metadata)
@@ -545,7 +577,7 @@ def stop_performance_monitoring():
 def check_performance_violations() -> List[Dict[str, Any]]:
     """Check for current performance violations."""
     report = get_performance_report()
-    return [req for req in report['requirements'] if not req['compliant']]
+    return [req for req in report["requirements"] if not req["compliant"]]
 
 
 # Motion control specific benchmarking
@@ -553,8 +585,9 @@ class MotionControlBenchmark:
     """Specialized benchmark for motion control performance."""
 
     @staticmethod
-    def benchmark_motion_control_loop(iterations: int = 1000,
-                                    target_frequency_hz: float = 50.0) -> Dict[str, Any]:
+    def benchmark_motion_control_loop(
+        iterations: int = 1000, target_frequency_hz: float = 50.0
+    ) -> Dict[str, Any]:
         """
         Benchmark motion control loop performance.
 
@@ -571,7 +604,9 @@ class MotionControlBenchmark:
         latencies = []
         violations = 0
 
-        logger.info(f"Benchmarking motion control loop: {iterations} iterations at {target_frequency_hz}Hz")
+        logger.info(
+            f"Benchmarking motion control loop: {iterations} iterations at {target_frequency_hz}Hz"
+        )
 
         for i in range(iterations):
             # Simulate motion control loop
@@ -603,17 +638,19 @@ class MotionControlBenchmark:
         p99_latency = latencies[int(len(latencies) * 0.99)]
 
         result = {
-            'iterations': iterations,
-            'target_period_ms': target_period_ms,
-            'p99_latency_ms': p99_latency,
-            'deadline_violations': violations,
-            'violation_rate_percent': (violations / iterations) * 100,
-            'deadline_met': p99_latency <= target_period_ms,
-            'margin_ms': target_period_ms - p99_latency
+            "iterations": iterations,
+            "target_period_ms": target_period_ms,
+            "p99_latency_ms": p99_latency,
+            "deadline_violations": violations,
+            "violation_rate_percent": (violations / iterations) * 100,
+            "deadline_met": p99_latency <= target_period_ms,
+            "margin_ms": target_period_ms - p99_latency,
         }
 
-        logger.info(f"Motion control benchmark complete: "
-                   f"p99={p99_latency:.1f}ms, target={target_period_ms:.1f}ms, "
-                   f"violations={violations}/{iterations} ({result['violation_rate_percent']:.1f}%)")
+        logger.info(
+            f"Motion control benchmark complete: "
+            f"p99={p99_latency:.1f}ms, target={target_period_ms:.1f}ms, "
+            f"violations={violations}/{iterations} ({result['violation_rate_percent']:.1f}%)"
+        )
 
         return result

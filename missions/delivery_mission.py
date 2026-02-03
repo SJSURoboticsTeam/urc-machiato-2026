@@ -21,13 +21,23 @@ from typing import Any, Dict, Optional
 import rclpy
 
 # ROS2 Messages
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool, Float32, String
 
 # Using std_srvs for basic service calls
 from std_srvs.srv import Trigger
+
+# Unified blackboard (optional)
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    _BLACKBOARD_AVAILABLE = True
+except ImportError:
+    _BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class DeliveryState(Enum):
@@ -74,6 +84,7 @@ class DeliveryMission(Node):
         self.delivery_location: Optional[Dict[str, Any]] = None
         self.mission_start_time = None
         self.current_location = None
+        self.slam_pose = None  # (x, y, z) from slam/pose for precision approach
 
         # Mission parameters
         self.declare_parameter("pickup_timeout", 30.0)  # seconds
@@ -109,6 +120,17 @@ class DeliveryMission(Node):
         self.delivery_complete_pub = self.create_publisher(
             Bool, "/mission/delivery/delivery_complete", qos_reliable
         )
+        # SLAM pose for precision approach (optional)
+        self.slam_pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped, "slam/pose", self._slam_pose_callback, 10
+        )
+        # Unified blackboard (optional)
+        self._blackboard = None
+        if _BLACKBOARD_AVAILABLE:
+            try:
+                self._blackboard = UnifiedBlackboardClient(self)
+            except Exception:
+                self._blackboard = None
 
         # Mission control services
         self.start_srv = self.create_service(
@@ -132,6 +154,24 @@ class DeliveryMission(Node):
 
         self.get_logger().info("Delivery Mission initialized")
 
+    def _slam_pose_callback(self, msg: PoseWithCovarianceStamped) -> None:
+        """Store SLAM pose for precision approach."""
+        self.slam_pose = (
+            msg.pose.pose.position.x,
+            msg.pose.pose.position.y,
+            msg.pose.pose.position.z,
+        )
+
+    def _sync_blackboard(self) -> None:
+        """Write current_mission_phase to blackboard."""
+        if self._blackboard and BlackboardKeys:
+            try:
+                self._blackboard.set(
+                    BlackboardKeys.CURRENT_MISSION_PHASE, self.state.value
+                )
+            except Exception:
+                pass
+
     # Mission control callbacks
     def start_mission_callback(self, request, response):
         """Start delivery mission"""
@@ -152,6 +192,7 @@ class DeliveryMission(Node):
         """Stop delivery mission"""
         self.stop_execution = True
         self.state = DeliveryState.IDLE
+        self._sync_blackboard()
         response.success = True
         response.message = "Delivery mission stopped"
         return response
@@ -201,6 +242,7 @@ class DeliveryMission(Node):
 
         self.stop_execution = False
         self.state = DeliveryState.NAVIGATING_PICKUP
+        self._sync_blackboard()
         self.mission_start_time = time.time()
 
         # Start mission execution thread
@@ -239,6 +281,7 @@ class DeliveryMission(Node):
 
             # Mission complete
             self.state = DeliveryState.COMPLETED
+            self._sync_blackboard()
             self.get_logger().info("Delivery mission completed successfully!")
 
         except Exception as e:

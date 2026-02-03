@@ -41,28 +41,28 @@ class SensorSimulator(Node):
             "gps_noise_std": {
                 "default": 0.5,  # Reduced for better test consistency
                 "type": float,
-                "description": "GPS position noise standard deviation (meters)"
+                "description": "GPS position noise standard deviation (meters)",
             },
             "imu_noise_std": {
                 "default": 0.01,
                 "type": float,
-                "description": "IMU noise standard deviation (rad/s, m/s²)"
+                "description": "IMU noise standard deviation (rad/s, m/s²)",
             },
             "camera_width": {
                 "default": 640,
                 "type": int,
-                "description": "Camera image width in pixels"
+                "description": "Camera image width in pixels",
             },
             "camera_height": {
                 "default": 480,
                 "type": int,
-                "description": "Camera image height in pixels"
+                "description": "Camera image height in pixels",
             },
             "camera_fps": {
                 "default": 30.0,
                 "type": float,
-                "description": "Camera frame rate"
-            }
+                "description": "Camera frame rate",
+            },
         }
 
         # Declare and get parameters
@@ -96,9 +96,7 @@ class SensorSimulator(Node):
         sensor_qos = QoSProfiles.sensor_data()
 
         # Publishers
-        self.gps_publisher = self.create_publisher(
-            NavSatFix, "/gps/fix", sensor_qos
-        )
+        self.gps_publisher = self.create_publisher(NavSatFix, "/gps/fix", sensor_qos)
         self.imu_publisher = self.create_publisher(Imu, "/imu", sensor_qos)
         self.camera_publisher = self.create_publisher(
             Image, "/rover/camera/image_raw", sensor_qos

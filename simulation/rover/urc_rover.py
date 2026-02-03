@@ -329,14 +329,16 @@ class URCRover(BaseRover):
             / (self.motor_max_torque * self.gear_ratio),
             "thermal_margin": 100 - max(self.motor_temperatures),  # °C margin to limit
             "battery_range_estimate_km": (
-                self.battery_percentage
-                / 100
-                * 500
-                * self.friction_coefficient
-                / max(0.001, base_metrics["efficiency_wh_per_km"])
-            )
-            if base_metrics["efficiency_wh_per_km"] > 0
-            else 0,
+                (
+                    self.battery_percentage
+                    / 100
+                    * 500
+                    * self.friction_coefficient
+                    / max(0.001, base_metrics["efficiency_wh_per_km"])
+                )
+                if base_metrics["efficiency_wh_per_km"] > 0
+                else 0
+            ),
             "terrain_capability_score": (
                 self.ground_clearance * 10
                 + (1 - np.mean(self.wheel_slip_ratios)) * 50  # cm to score

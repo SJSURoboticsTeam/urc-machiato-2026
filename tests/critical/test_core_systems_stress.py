@@ -58,43 +58,47 @@ class CoreSystemsStressTester:
             self.test_power_management_stress,
             self.test_data_persistence_stress,
             self.test_monitoring_observability_stress,
-            self.test_end_to_end_integration_stress
+            self.test_end_to_end_integration_stress,
         ]
 
         for test_func in test_scenarios:
-            test_name = test_func.__name__.replace('test_', '').replace('_stress', '')
+            test_name = test_func.__name__.replace("test_", "").replace("_stress", "")
             print(f"\n🔬 Testing: {test_name.upper()}")
 
             try:
                 test_result = await test_func()
                 results[test_name] = test_result
-                status = "✅ PASS" if test_result['success'] else "❌ FAIL"
+                status = "✅ PASS" if test_result["success"] else "❌ FAIL"
                 print(f"   {status}: {test_result.get('message', 'Completed')}")
 
-                if not test_result['success']:
+                if not test_result["success"]:
                     print(f"   🚨 ISSUES: {test_result.get('issues', [])}")
 
             except Exception as e:
                 results[test_name] = {
-                    'success': False,
-                    'message': f'Test crashed: {str(e)}',
-                    'issues': ['Test execution failure']
+                    "success": False,
+                    "message": f"Test crashed: {str(e)}",
+                    "issues": ["Test execution failure"],
                 }
                 print(f"   💥 CRASH: {str(e)}")
 
         # Overall assessment
         total_tests = len(results)
-        passed_tests = sum(1 for r in results.values() if r['success'])
+        passed_tests = sum(1 for r in results.values() if r["success"])
         success_rate = passed_tests / total_tests
 
         assessment = {
-            'total_tests': total_tests,
-            'passed_tests': passed_tests,
-            'success_rate': success_rate,
-            'total_duration': time.time() - start_time,
-            'results': results,
-            'overall_status': 'CRITICAL_SYSTEMS_HEALTHY' if success_rate >= 0.9 else 'SYSTEMS_NEED_ATTENTION',
-            'recommendations': self.generate_recommendations(results)
+            "total_tests": total_tests,
+            "passed_tests": passed_tests,
+            "success_rate": success_rate,
+            "total_duration": time.time() - start_time,
+            "results": results,
+            "overall_status": (
+                "CRITICAL_SYSTEMS_HEALTHY"
+                if success_rate >= 0.9
+                else "SYSTEMS_NEED_ATTENTION"
+            ),
+            "recommendations": self.generate_recommendations(results),
         }
 
         print(f"\n🎯 STRESS TEST COMPLETE")
@@ -102,7 +106,7 @@ class CoreSystemsStressTester:
         print(f"   Duration: {assessment['total_duration']:.1f}s")
         print(f"   Status: {assessment['overall_status']}")
 
-        if assessment['recommendations']:
+        if assessment["recommendations"]:
             print(f"   Recommendations: {len(assessment['recommendations'])} items")
 
         return assessment
@@ -119,9 +123,9 @@ class CoreSystemsStressTester:
                 try:
                     # Simulate ROS2 topic publication
                     message = {
-                        'seq': i,
-                        'timestamp': time.time(),
-                        'data': f'test_message_{i}' * 10  # Large payload
+                        "seq": i,
+                        "timestamp": time.time(),
+                        "data": f"test_message_{i}" * 10,  # Large payload
                     }
 
                     # Simulate network delay and processing
@@ -143,7 +147,7 @@ class CoreSystemsStressTester:
             for i in range(100):
                 try:
                     # Simulate ROS2 service call
-                    request = {'action': 'get_status', 'component': f'comp_{i}'}
+                    request = {"action": "get_status", "component": f"comp_{i}"}
                     await asyncio.sleep(0.005)  # Service call latency
                     service_calls += 1
 
@@ -154,25 +158,27 @@ class CoreSystemsStressTester:
                     service_errors += 1
                     issues.append(f"Service call {i} failed: {str(e)}")
 
-            success_rate = (message_count + service_calls) / (message_count + service_calls + error_count + service_errors)
+            success_rate = (message_count + service_calls) / (
+                message_count + service_calls + error_count + service_errors
+            )
 
             return {
-                'success': success_rate > 0.95,  # Must maintain 95% success rate
-                'message': f'ROS2 communication: {success_rate:.1%} success rate ({message_count} msgs, {service_calls} services)',
-                'issues': issues[:5],  # Limit reported issues
-                'metrics': {
-                    'messages_sent': message_count,
-                    'services_called': service_calls,
-                    'total_errors': error_count + service_errors,
-                    'success_rate': success_rate
-                }
+                "success": success_rate > 0.95,  # Must maintain 95% success rate
+                "message": f"ROS2 communication: {success_rate:.1%} success rate ({message_count} msgs, {service_calls} services)",
+                "issues": issues[:5],  # Limit reported issues
+                "metrics": {
+                    "messages_sent": message_count,
+                    "services_called": service_calls,
+                    "total_errors": error_count + service_errors,
+                    "success_rate": success_rate,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'ROS2 stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"ROS2 stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_state_machine_stress(self) -> Dict[str, Any]:
@@ -183,28 +189,32 @@ class CoreSystemsStressTester:
 
         # State machine states: boot -> idle -> autonomous/teleop -> emergency
         valid_transitions = [
-            ('boot', 'idle'),
-            ('idle', 'autonomous'),
-            ('idle', 'teleoperation'),
-            ('autonomous', 'idle'),
-            ('teleoperation', 'idle'),
-            ('autonomous', 'emergency_stop'),
-            ('teleoperation', 'emergency_stop'),
-            ('emergency_stop', 'idle')
+            ("boot", "idle"),
+            ("idle", "autonomous"),
+            ("idle", "teleoperation"),
+            ("autonomous", "idle"),
+            ("teleoperation", "idle"),
+            ("autonomous", "emergency_stop"),
+            ("teleoperation", "emergency_stop"),
+            ("emergency_stop", "idle"),
         ]
 
-        current_state = 'boot'
+        current_state = "boot"
 
         try:
             # Test rapid state transitions
             for i in range(200):  # 200 rapid transitions
                 # Pick random valid transition from current state
-                possible_transitions = [t for t in valid_transitions if t[0] == current_state]
+                possible_transitions = [
+                    t for t in valid_transitions if t[0] == current_state
+                ]
 
                 if not possible_transitions:
                     # Reset to idle if stuck
-                    current_state = 'idle'
-                    possible_transitions = [t for t in valid_transitions if t[0] == current_state]
+                    current_state = "idle"
+                    possible_transitions = [
+                        t for t in valid_transitions if t[0] == current_state
+                    ]
 
                 if possible_transitions:
                     transition = random.choice(possible_transitions)
@@ -223,11 +233,11 @@ class CoreSystemsStressTester:
 
                 # Periodic emergency stop injection
                 if random.random() < 0.05:  # 5% chance
-                    if current_state != 'emergency_stop':
+                    if current_state != "emergency_stop":
                         old_state = current_state
-                        current_state = 'emergency_stop'
+                        current_state = "emergency_stop"
                         await asyncio.sleep(0.1)  # Emergency handling time
-                        current_state = 'idle'  # Recovery
+                        current_state = "idle"  # Recovery
                         transitions_tested += 2  # Count emergency cycle
 
             # Test concurrent state queries
@@ -252,25 +262,30 @@ class CoreSystemsStressTester:
             workers = [state_query_worker(i) for i in range(10)]
             await asyncio.gather(*workers)
 
-            success_rate = (transitions_tested + concurrent_queries) / (transitions_tested + concurrent_queries + transition_failures + query_errors)
+            success_rate = (transitions_tested + concurrent_queries) / (
+                transitions_tested
+                + concurrent_queries
+                + transition_failures
+                + query_errors
+            )
 
             return {
-                'success': success_rate > 0.98,  # Must maintain 98% reliability
-                'message': f'State machine: {success_rate:.1%} reliability ({transitions_tested} transitions, {concurrent_queries} queries)',
-                'issues': issues[:3],
-                'metrics': {
-                    'transitions_tested': transitions_tested,
-                    'transition_failures': transition_failures,
-                    'concurrent_queries': concurrent_queries,
-                    'query_errors': query_errors
-                }
+                "success": success_rate > 0.98,  # Must maintain 98% reliability
+                "message": f"State machine: {success_rate:.1%} reliability ({transitions_tested} transitions, {concurrent_queries} queries)",
+                "issues": issues[:3],
+                "metrics": {
+                    "transitions_tested": transitions_tested,
+                    "transition_failures": transition_failures,
+                    "concurrent_queries": concurrent_queries,
+                    "query_errors": query_errors,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'State machine stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"State machine stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_mission_execution_stress(self) -> Dict[str, Any]:
@@ -279,7 +294,7 @@ class CoreSystemsStressTester:
         missions_completed = 0
         mission_failures = 0
 
-        mission_types = ['sample_collection', 'navigation', 'delivery']
+        mission_types = ["sample_collection", "navigation", "delivery"]
 
         try:
             # Test concurrent mission execution
@@ -291,21 +306,23 @@ class CoreSystemsStressTester:
                     mission_duration = random.uniform(10, 60)  # 10-60 seconds
 
                     # Mission phases with potential failure points
-                    phases = ['initialization', 'planning', 'execution', 'completion']
+                    phases = ["initialization", "planning", "execution", "completion"]
                     for phase in phases:
                         await asyncio.sleep(mission_duration / len(phases))
 
                         # Random failure injection
                         if random.random() < 0.08:  # 8% failure rate per phase
-                            raise Exception(f"Mission {mission_id} failed in {phase} phase")
+                            raise Exception(
+                                f"Mission {mission_id} failed in {phase} phase"
+                            )
 
                     missions_completed += 1
-                    return {'success': True, 'duration': mission_duration}
+                    return {"success": True, "duration": mission_duration}
 
                 except Exception as e:
                     mission_failures += 1
                     issues.append(f"Mission {mission_id} ({mission_type}): {str(e)}")
-                    return {'success': False, 'error': str(e)}
+                    return {"success": False, "error": str(e)}
 
             # Run 20 concurrent missions of different types
             mission_tasks = []
@@ -317,7 +334,9 @@ class CoreSystemsStressTester:
             mission_results = await asyncio.gather(*mission_tasks)
 
             # Analyze results
-            successful_missions = sum(1 for r in mission_results if r.get('success', False))
+            successful_missions = sum(
+                1 for r in mission_results if r.get("success", False)
+            )
             success_rate = successful_missions / len(mission_results)
 
             # Mission type breakdown
@@ -325,29 +344,29 @@ class CoreSystemsStressTester:
             for i, result in enumerate(mission_results):
                 mission_type = mission_types[i % len(mission_types)]
                 if mission_type not in type_results:
-                    type_results[mission_type] = {'total': 0, 'success': 0}
-                type_results[mission_type]['total'] += 1
-                if result.get('success', False):
-                    type_results[mission_type]['success'] += 1
+                    type_results[mission_type] = {"total": 0, "success": 0}
+                type_results[mission_type]["total"] += 1
+                if result.get("success", False):
+                    type_results[mission_type]["success"] += 1
 
             return {
-                'success': success_rate > 0.85,  # Must complete 85% of missions
-                'message': f'Mission execution: {success_rate:.1%} success rate ({successful_missions}/{len(mission_results)} missions)',
-                'issues': issues[:5],
-                'metrics': {
-                    'missions_attempted': len(mission_results),
-                    'missions_completed': successful_missions,
-                    'mission_failures': mission_failures,
-                    'success_rate': success_rate,
-                    'type_breakdown': type_results
-                }
+                "success": success_rate > 0.85,  # Must complete 85% of missions
+                "message": f"Mission execution: {success_rate:.1%} success rate ({successful_missions}/{len(mission_results)} missions)",
+                "issues": issues[:5],
+                "metrics": {
+                    "missions_attempted": len(mission_results),
+                    "missions_completed": successful_missions,
+                    "mission_failures": mission_failures,
+                    "success_rate": success_rate,
+                    "type_breakdown": type_results,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Mission execution stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Mission execution stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_safety_systems_stress(self) -> Dict[str, Any]:
@@ -360,11 +379,11 @@ class CoreSystemsStressTester:
         try:
             # Test emergency stop triggering under various conditions
             emergency_scenarios = [
-                'collision_detected',
-                'motor_overload',
-                'communication_loss',
-                'power_critical',
-                'manual_emergency'
+                "collision_detected",
+                "motor_overload",
+                "communication_loss",
+                "power_critical",
+                "manual_emergency",
             ]
 
             for i in range(100):  # 100 emergency scenarios
@@ -402,7 +421,12 @@ class CoreSystemsStressTester:
                     await asyncio.sleep(0.1)  # 100ms monitoring interval
 
                     # Check multiple safety parameters
-                    safety_checks = ['motor_temp', 'battery_voltage', 'communication_status', 'geofence']
+                    safety_checks = [
+                        "motor_temp",
+                        "battery_voltage",
+                        "communication_status",
+                        "geofence",
+                    ]
                     for check in safety_checks:
                         if random.random() < 0.02:  # 2% check failure rate
                             raise Exception(f"Safety check failed: {check}")
@@ -413,36 +437,38 @@ class CoreSystemsStressTester:
                     monitoring_failures += 1
                     issues.append(f"Safety monitoring cycle {i} failed: {str(e)}")
 
-            avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+            avg_response_time = (
+                sum(response_times) / len(response_times) if response_times else 0
+            )
             max_response_time = max(response_times) if response_times else 0
 
             # Safety requirements: < 100ms average, < 150ms max, < 5% false positives
             safety_compliant = (
-                avg_response_time < 0.1 and
-                max_response_time < 0.15 and
-                (false_positives / emergency_triggers) < 0.05
+                avg_response_time < 0.1
+                and max_response_time < 0.15
+                and (false_positives / emergency_triggers) < 0.05
             )
 
             return {
-                'success': safety_compliant,
-                'message': f'Safety systems: {avg_response_time:.1%} avg response ({max_response_time:.1%} max), {false_positives}/{emergency_triggers} false positives',
-                'issues': issues[:5],
-                'metrics': {
-                    'emergency_triggers': emergency_triggers,
-                    'false_positives': false_positives,
-                    'avg_response_time': avg_response_time,
-                    'max_response_time': max_response_time,
-                    'monitoring_cycles': monitoring_cycles,
-                    'monitoring_failures': monitoring_failures,
-                    'safety_compliant': safety_compliant
-                }
+                "success": safety_compliant,
+                "message": f"Safety systems: {avg_response_time:.1%} avg response ({max_response_time:.1%} max), {false_positives}/{emergency_triggers} false positives",
+                "issues": issues[:5],
+                "metrics": {
+                    "emergency_triggers": emergency_triggers,
+                    "false_positives": false_positives,
+                    "avg_response_time": avg_response_time,
+                    "max_response_time": max_response_time,
+                    "monitoring_cycles": monitoring_cycles,
+                    "monitoring_failures": monitoring_failures,
+                    "safety_compliant": safety_compliant,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Safety systems stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Safety systems stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_hardware_interfaces_stress(self) -> Dict[str, Any]:
@@ -517,7 +543,14 @@ class CoreSystemsStressTester:
                 tasks.append(motor_control_worker(i))
 
             # 6 sensor reading workers (IMU, GPS, cameras, etc.)
-            sensor_types = ['imu', 'gps', 'camera_left', 'camera_right', 'lidar', 'battery']
+            sensor_types = [
+                "imu",
+                "gps",
+                "camera_left",
+                "camera_right",
+                "lidar",
+                "battery",
+            ]
             for sensor_type in sensor_types:
                 tasks.append(sensor_reading_worker(sensor_type))
 
@@ -531,24 +564,25 @@ class CoreSystemsStressTester:
             success_rate = total_operations / (total_operations + hardware_errors)
 
             return {
-                'success': success_rate > 0.98,  # Must maintain 98% hardware reliability
-                'message': f'Hardware interfaces: {success_rate:.1%} reliability ({total_operations} operations, {hardware_errors} errors)',
-                'issues': issues[:5],
-                'metrics': {
-                    'motor_commands': motor_commands,
-                    'sensor_reads': sensor_reads,
-                    'can_messages': can_messages,
-                    'total_operations': total_operations,
-                    'hardware_errors': hardware_errors,
-                    'success_rate': success_rate
-                }
+                "success": success_rate
+                > 0.98,  # Must maintain 98% hardware reliability
+                "message": f"Hardware interfaces: {success_rate:.1%} reliability ({total_operations} operations, {hardware_errors} errors)",
+                "issues": issues[:5],
+                "metrics": {
+                    "motor_commands": motor_commands,
+                    "sensor_reads": sensor_reads,
+                    "can_messages": can_messages,
+                    "total_operations": total_operations,
+                    "hardware_errors": hardware_errors,
+                    "success_rate": success_rate,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Hardware interfaces stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Hardware interfaces stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_navigation_system_stress(self) -> Dict[str, Any]:
@@ -567,9 +601,9 @@ class CoreSystemsStressTester:
                     try:
                         # Simulate waypoint navigation
                         waypoint = {
-                            'id': f'wp_{worker_id}_{waypoint_num}',
-                            'x': random.uniform(-100, 100),
-                            'y': random.uniform(-100, 100)
+                            "id": f"wp_{worker_id}_{waypoint_num}",
+                            "x": random.uniform(-100, 100),
+                            "y": random.uniform(-100, 100),
                         }
 
                         # Navigation time based on distance and conditions
@@ -591,11 +625,15 @@ class CoreSystemsStressTester:
 
                         # Occasional navigation failure
                         if random.random() < 0.04:  # 4% navigation failure rate
-                            raise Exception(f"Navigation timeout to waypoint {waypoint['id']}")
+                            raise Exception(
+                                f"Navigation timeout to waypoint {waypoint['id']}"
+                            )
 
                     except Exception as e:
                         navigation_errors += 1
-                        issues.append(f"Worker {worker_id} waypoint {waypoint_num}: {str(e)}")
+                        issues.append(
+                            f"Worker {worker_id} waypoint {waypoint_num}: {str(e)}"
+                        )
 
             # Test GPS-denied navigation
             async def gps_denied_navigation():
@@ -609,7 +647,9 @@ class CoreSystemsStressTester:
 
                         # Higher failure rate without GPS
                         if random.random() < 0.08:  # 8% failure rate
-                            raise Exception(f"GPS-denied navigation lost at waypoint {i}")
+                            raise Exception(
+                                f"GPS-denied navigation lost at waypoint {i}"
+                            )
 
                         waypoints_navigated += 1
 
@@ -648,27 +688,30 @@ class CoreSystemsStressTester:
                     issues.append(f"Localization {i}: {str(e)}")
 
             total_operations = waypoints_navigated + localization_updates
-            success_rate = total_operations / (total_operations + navigation_errors + localization_errors)
+            success_rate = total_operations / (
+                total_operations + navigation_errors + localization_errors
+            )
 
             return {
-                'success': success_rate > 0.92,  # Must maintain 92% navigation reliability
-                'message': f'Navigation system: {success_rate:.1%} reliability ({waypoints_navigated} waypoints, {localization_updates} localization updates)',
-                'issues': issues[:5],
-                'metrics': {
-                    'waypoints_navigated': waypoints_navigated,
-                    'navigation_errors': navigation_errors,
-                    'obstacles_avoided': obstacles_avoided,
-                    'localization_updates': localization_updates,
-                    'localization_errors': localization_errors,
-                    'success_rate': success_rate
-                }
+                "success": success_rate
+                > 0.92,  # Must maintain 92% navigation reliability
+                "message": f"Navigation system: {success_rate:.1%} reliability ({waypoints_navigated} waypoints, {localization_updates} localization updates)",
+                "issues": issues[:5],
+                "metrics": {
+                    "waypoints_navigated": waypoints_navigated,
+                    "navigation_errors": navigation_errors,
+                    "obstacles_avoided": obstacles_avoided,
+                    "localization_updates": localization_updates,
+                    "localization_errors": localization_errors,
+                    "success_rate": success_rate,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Navigation system stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Navigation system stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_communication_bridges_stress(self) -> Dict[str, Any]:
@@ -686,7 +729,9 @@ class CoreSystemsStressTester:
                 for _ in range(300):
                     try:
                         # Simulate ROS2 message publishing
-                        topic = random.choice(['/odom', '/imu', '/cmd_vel', '/diagnostics'])
+                        topic = random.choice(
+                            ["/odom", "/imu", "/cmd_vel", "/diagnostics"]
+                        )
                         message_size = random.randint(50, 500)  # Variable message sizes
                         await asyncio.sleep(0.003)  # 3ms publishing interval
                         ros2_messages += 1
@@ -704,7 +749,7 @@ class CoreSystemsStressTester:
                 for _ in range(250):
                     try:
                         # Simulate WebSocket message handling
-                        message_type = random.choice(['telemetry', 'command', 'status'])
+                        message_type = random.choice(["telemetry", "command", "status"])
                         payload_size = random.randint(100, 2000)  # Larger payloads
                         await asyncio.sleep(0.005)  # 5ms message interval
                         websocket_messages += 1
@@ -740,16 +785,18 @@ class CoreSystemsStressTester:
                 for _ in range(150):
                     try:
                         # Simulate message routing between different bridge types
-                        source_bridge = random.choice(['ros2', 'websocket', 'can'])
-                        dest_bridge = random.choice(['ros2', 'websocket', 'can'])
+                        source_bridge = random.choice(["ros2", "websocket", "can"])
+                        dest_bridge = random.choice(["ros2", "websocket", "can"])
                         while dest_bridge == source_bridge:  # Ensure different bridges
-                            dest_bridge = random.choice(['ros2', 'websocket', 'can'])
+                            dest_bridge = random.choice(["ros2", "websocket", "can"])
 
                         # Routing simulation
                         await asyncio.sleep(0.008)  # 8ms routing time
 
                         if random.random() < 0.025:  # 2.5% routing failure rate
-                            raise Exception(f"Bridge routing failed: {source_bridge}->{dest_bridge}")
+                            raise Exception(
+                                f"Bridge routing failed: {source_bridge}->{dest_bridge}"
+                            )
 
                     except Exception as e:
                         bridge_errors += 1
@@ -760,7 +807,7 @@ class CoreSystemsStressTester:
                 ros2_bridge_worker(),
                 websocket_bridge_worker(),
                 can_bridge_worker(),
-                bridge_routing_worker()
+                bridge_routing_worker(),
             ]
 
             await asyncio.gather(*tasks)
@@ -769,24 +816,24 @@ class CoreSystemsStressTester:
             success_rate = total_messages / (total_messages + bridge_errors)
 
             return {
-                'success': success_rate > 0.96,  # Must maintain 96% bridge reliability
-                'message': f'Communication bridges: {success_rate:.1%} reliability ({total_messages} messages routed)',
-                'issues': issues[:5],
-                'metrics': {
-                    'ros2_messages': ros2_messages,
-                    'websocket_messages': websocket_messages,
-                    'can_messages': can_messages,
-                    'total_messages': total_messages,
-                    'bridge_errors': bridge_errors,
-                    'success_rate': success_rate
-                }
+                "success": success_rate > 0.96,  # Must maintain 96% bridge reliability
+                "message": f"Communication bridges: {success_rate:.1%} reliability ({total_messages} messages routed)",
+                "issues": issues[:5],
+                "metrics": {
+                    "ros2_messages": ros2_messages,
+                    "websocket_messages": websocket_messages,
+                    "can_messages": can_messages,
+                    "total_messages": total_messages,
+                    "bridge_errors": bridge_errors,
+                    "success_rate": success_rate,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Communication bridges stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Communication bridges stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_power_management_stress(self) -> Dict[str, Any]:
@@ -799,13 +846,13 @@ class CoreSystemsStressTester:
         try:
             # Test power monitoring under various loads
             power_draws = {
-                'idle': 5.0,      # 5A idle
-                'navigation': 12.0,  # 12A navigating
-                'sampling': 15.0,   # 15A collecting samples
-                'communication': 8.0  # 8A with radio
+                "idle": 5.0,  # 5A idle
+                "navigation": 12.0,  # 12A navigating
+                "sampling": 15.0,  # 15A collecting samples
+                "communication": 8.0,  # 8A with radio
             }
 
-            current_load = 'idle'
+            current_load = "idle"
 
             for cycle in range(500):  # 500 power monitoring cycles
                 # Change load occasionally
@@ -818,7 +865,9 @@ class CoreSystemsStressTester:
                 power_watts = voltage * current
 
                 # Battery discharge
-                discharge_rate = power_watts / 3600.0  # Convert to Ah (assuming 1 hour = 3600 seconds)
+                discharge_rate = (
+                    power_watts / 3600.0
+                )  # Convert to Ah (assuming 1 hour = 3600 seconds)
                 battery_capacity -= discharge_rate
 
                 # Battery regeneration (solar panels)
@@ -846,7 +895,7 @@ class CoreSystemsStressTester:
             component_power_tests = 0
             power_distribution_errors = 0
 
-            components = ['motors', 'sensors', 'computer', 'communication', 'lighting']
+            components = ["motors", "sensors", "computer", "communication", "lighting"]
 
             for component in components:
                 for _ in range(20):  # 20 power distribution tests per component
@@ -866,35 +915,45 @@ class CoreSystemsStressTester:
 
             # Assess power system health
             battery_final = max(0, battery_capacity)  # Can't go below 0
-            power_efficiency = (power_readings - power_alerts) / power_readings if power_readings > 0 else 0
-            distribution_reliability = component_power_tests / (component_power_tests + power_distribution_errors) if component_power_tests > 0 else 0
+            power_efficiency = (
+                (power_readings - power_alerts) / power_readings
+                if power_readings > 0
+                else 0
+            )
+            distribution_reliability = (
+                component_power_tests
+                / (component_power_tests + power_distribution_errors)
+                if component_power_tests > 0
+                else 0
+            )
 
             power_system_healthy = (
-                battery_final > 15.0 and  # At least 15% battery remaining
-                power_alerts < 50 and     # Less than 50 low battery alerts
-                distribution_reliability > 0.98  # 98% power distribution reliability
+                battery_final > 15.0
+                and power_alerts < 50  # At least 15% battery remaining
+                and distribution_reliability  # Less than 50 low battery alerts
+                > 0.98  # 98% power distribution reliability
             )
 
             return {
-                'success': power_system_healthy,
-                'message': f'Power management: {battery_final:.1f}% battery remaining, {power_alerts} alerts, {distribution_reliability:.1%} distribution reliability',
-                'issues': issues[:5],
-                'metrics': {
-                    'power_readings': power_readings,
-                    'battery_final': battery_final,
-                    'power_alerts': power_alerts,
-                    'component_power_tests': component_power_tests,
-                    'power_distribution_errors': power_distribution_errors,
-                    'power_efficiency': power_efficiency,
-                    'distribution_reliability': distribution_reliability
-                }
+                "success": power_system_healthy,
+                "message": f"Power management: {battery_final:.1f}% battery remaining, {power_alerts} alerts, {distribution_reliability:.1%} distribution reliability",
+                "issues": issues[:5],
+                "metrics": {
+                    "power_readings": power_readings,
+                    "battery_final": battery_final,
+                    "power_alerts": power_alerts,
+                    "component_power_tests": component_power_tests,
+                    "power_distribution_errors": power_distribution_errors,
+                    "power_efficiency": power_efficiency,
+                    "distribution_reliability": distribution_reliability,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Power management stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Power management stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_data_persistence_stress(self) -> Dict[str, Any]:
@@ -912,19 +971,31 @@ class CoreSystemsStressTester:
                     try:
                         # Simulate storing telemetry/mission data
                         record = {
-                            'worker_id': worker_id,
-                            'timestamp': time.time(),
-                            'position': {'x': random.uniform(-100, 100), 'y': random.uniform(-100, 100)},
-                            'sensors': {
-                                'imu': {'accel': [random.gauss(0, 1) for _ in range(3)]},
-                                'gps': {'lat': random.uniform(35, 40), 'lon': random.uniform(-110, -105)}
+                            "worker_id": worker_id,
+                            "timestamp": time.time(),
+                            "position": {
+                                "x": random.uniform(-100, 100),
+                                "y": random.uniform(-100, 100),
                             },
-                            'battery': random.uniform(10, 100),
-                            'data_size': random.randint(100, 2000)  # Variable data sizes
+                            "sensors": {
+                                "imu": {
+                                    "accel": [random.gauss(0, 1) for _ in range(3)]
+                                },
+                                "gps": {
+                                    "lat": random.uniform(35, 40),
+                                    "lon": random.uniform(-110, -105),
+                                },
+                            },
+                            "battery": random.uniform(10, 100),
+                            "data_size": random.randint(
+                                100, 2000
+                            ),  # Variable data sizes
                         }
 
                         # Storage simulation with latency
-                        await asyncio.sleep(random.uniform(0.001, 0.005))  # 1-5ms storage time
+                        await asyncio.sleep(
+                            random.uniform(0.001, 0.005)
+                        )  # 1-5ms storage time
                         records_stored += 1
 
                         # Occasional storage failure
@@ -941,16 +1012,22 @@ class CoreSystemsStressTester:
                 for _ in range(100):  # 100 retrieval operations
                     try:
                         # Simulate data queries
-                        query_type = random.choice(['by_time', 'by_position', 'by_sensor', 'latest'])
+                        query_type = random.choice(
+                            ["by_time", "by_position", "by_sensor", "latest"]
+                        )
                         result_count = random.randint(1, 50)  # Variable result sizes
 
                         # Retrieval simulation
-                        await asyncio.sleep(random.uniform(0.002, 0.015))  # 2-15ms query time
+                        await asyncio.sleep(
+                            random.uniform(0.002, 0.015)
+                        )  # 2-15ms query time
                         records_retrieved += result_count
 
                         # Occasional retrieval failure
                         if random.random() < 0.012:  # 1.2% retrieval failure rate
-                            raise Exception(f"Data retrieval failed for {query_type} query")
+                            raise Exception(
+                                f"Data retrieval failed for {query_type} query"
+                            )
 
                     except Exception as e:
                         storage_errors += 1
@@ -962,8 +1039,12 @@ class CoreSystemsStressTester:
                 for _ in range(10):  # 10 backup operations
                     try:
                         # Simulate backup creation
-                        backup_size = random.randint(100000, 1000000)  # 100KB-1MB backups
-                        await asyncio.sleep(random.uniform(0.5, 2.0))  # 0.5-2s backup time
+                        backup_size = random.randint(
+                            100000, 1000000
+                        )  # 100KB-1MB backups
+                        await asyncio.sleep(
+                            random.uniform(0.5, 2.0)
+                        )  # 0.5-2s backup time
 
                         # Occasional backup failure
                         if random.random() < 0.05:  # 5% backup failure rate
@@ -1008,28 +1089,30 @@ class CoreSystemsStressTester:
                     issues.append(f"Integrity check {i}: {str(e)}")
 
             total_operations = records_stored + records_retrieved + integrity_checks
-            success_rate = total_operations / (total_operations + storage_errors + integrity_failures)
+            success_rate = total_operations / (
+                total_operations + storage_errors + integrity_failures
+            )
 
             return {
-                'success': success_rate > 0.97,  # Must maintain 97% data reliability
-                'message': f'Data persistence: {success_rate:.1%} reliability ({total_operations} operations)',
-                'issues': issues[:5],
-                'metrics': {
-                    'records_stored': records_stored,
-                    'records_retrieved': records_retrieved,
-                    'storage_errors': storage_errors,
-                    'integrity_checks': integrity_checks,
-                    'integrity_failures': integrity_failures,
-                    'total_operations': total_operations,
-                    'success_rate': success_rate
-                }
+                "success": success_rate > 0.97,  # Must maintain 97% data reliability
+                "message": f"Data persistence: {success_rate:.1%} reliability ({total_operations} operations)",
+                "issues": issues[:5],
+                "metrics": {
+                    "records_stored": records_stored,
+                    "records_retrieved": records_retrieved,
+                    "storage_errors": storage_errors,
+                    "integrity_checks": integrity_checks,
+                    "integrity_failures": integrity_failures,
+                    "total_operations": total_operations,
+                    "success_rate": success_rate,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Data persistence stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Data persistence stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_monitoring_observability_stress(self) -> Dict[str, Any]:
@@ -1044,7 +1127,14 @@ class CoreSystemsStressTester:
             # Test metrics collection under high frequency
             async def metrics_collection_worker(component: str):
                 nonlocal metrics_collected, monitoring_errors
-                metrics_types = ['cpu', 'memory', 'disk', 'network', 'temperature', 'power']
+                metrics_types = [
+                    "cpu",
+                    "memory",
+                    "disk",
+                    "network",
+                    "temperature",
+                    "power",
+                ]
 
                 for _ in range(100):  # 100 metrics per component
                     try:
@@ -1057,15 +1147,17 @@ class CoreSystemsStressTester:
                         metrics_collected += 1
 
                         # Generate alerts for critical values
-                        if metric_type == 'cpu' and value > 90:
+                        if metric_type == "cpu" and value > 90:
                             alerts_generated += 1
-                        elif metric_type == 'memory' and value > 95:
+                        elif metric_type == "memory" and value > 95:
                             alerts_generated += 1
-                        elif metric_type == 'temperature' and value > 80:
+                        elif metric_type == "temperature" and value > 80:
                             alerts_generated += 1
 
                         if random.random() < 0.005:  # 0.5% metrics failure rate
-                            raise Exception(f"Metrics collection failed for {component}")
+                            raise Exception(
+                                f"Metrics collection failed for {component}"
+                            )
 
                     except Exception as e:
                         monitoring_errors += 1
@@ -1074,12 +1166,25 @@ class CoreSystemsStressTester:
             # Test health check system
             async def health_check_worker():
                 nonlocal health_checks, monitoring_errors, alerts_generated
-                components = ['navigation', 'communication', 'power', 'sensors', 'motors']
+                components = [
+                    "navigation",
+                    "communication",
+                    "power",
+                    "sensors",
+                    "motors",
+                ]
 
                 for _ in range(80):  # 80 health checks
                     try:
                         component = random.choice(components)
-                        check_type = random.choice(['connectivity', 'performance', 'resource_usage', 'error_rate'])
+                        check_type = random.choice(
+                            [
+                                "connectivity",
+                                "performance",
+                                "resource_usage",
+                                "error_rate",
+                            ]
+                        )
 
                         # Health check simulation
                         await asyncio.sleep(0.01)  # 10ms check time
@@ -1088,10 +1193,14 @@ class CoreSystemsStressTester:
                         # Generate alerts for failed health checks
                         if random.random() < 0.03:  # 3% health check failure rate
                             alerts_generated += 1
-                            issues.append(f"Health check failed: {component} {check_type}")
+                            issues.append(
+                                f"Health check failed: {component} {check_type}"
+                            )
 
                         if random.random() < 0.008:  # 0.8% health check system failure
-                            raise Exception(f"Health check system error for {component}")
+                            raise Exception(
+                                f"Health check system error for {component}"
+                            )
 
                     except Exception as e:
                         monitoring_errors += 1
@@ -1100,8 +1209,8 @@ class CoreSystemsStressTester:
             # Test log aggregation under load
             async def logging_worker():
                 nonlocal monitoring_errors
-                log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-                components = ['navigation', 'communication', 'control', 'sensors']
+                log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+                components = ["navigation", "communication", "control", "sensors"]
 
                 for _ in range(200):  # 200 log entries
                     try:
@@ -1138,49 +1247,50 @@ class CoreSystemsStressTester:
             tasks = []
 
             # Metrics collection for multiple components
-            components = ['cpu', 'memory', 'network', 'storage', 'power']
+            components = ["cpu", "memory", "network", "storage", "power"]
             for component in components:
                 tasks.append(metrics_collection_worker(component))
 
-            tasks.extend([
-                health_check_worker(),
-                logging_worker(),
-                dashboard_worker()
-            ])
+            tasks.extend([health_check_worker(), logging_worker(), dashboard_worker()])
 
             await asyncio.gather(*tasks)
 
             # Calculate monitoring system effectiveness
             total_monitoring_ops = metrics_collected + health_checks
-            monitoring_success_rate = total_monitoring_ops / (total_monitoring_ops + monitoring_errors)
+            monitoring_success_rate = total_monitoring_ops / (
+                total_monitoring_ops + monitoring_errors
+            )
 
             # Alert effectiveness (should catch real issues without too many false positives)
-            alert_effectiveness = min(1.0, alerts_generated / max(1, monitoring_errors))  # Alerts per error
+            alert_effectiveness = min(
+                1.0, alerts_generated / max(1, monitoring_errors)
+            )  # Alerts per error
 
             monitoring_system_healthy = (
-                monitoring_success_rate > 0.98 and  # 98% monitoring reliability
-                alert_effectiveness > 0.5  # At least 50% of errors should trigger alerts
+                monitoring_success_rate > 0.98
+                and alert_effectiveness  # 98% monitoring reliability
+                > 0.5  # At least 50% of errors should trigger alerts
             )
 
             return {
-                'success': monitoring_system_healthy,
-                'message': f'Monitoring system: {monitoring_success_rate:.1%} reliability, {alerts_generated} alerts generated',
-                'issues': issues[:5],
-                'metrics': {
-                    'metrics_collected': metrics_collected,
-                    'health_checks': health_checks,
-                    'alerts_generated': alerts_generated,
-                    'monitoring_errors': monitoring_errors,
-                    'monitoring_success_rate': monitoring_success_rate,
-                    'alert_effectiveness': alert_effectiveness
-                }
+                "success": monitoring_system_healthy,
+                "message": f"Monitoring system: {monitoring_success_rate:.1%} reliability, {alerts_generated} alerts generated",
+                "issues": issues[:5],
+                "metrics": {
+                    "metrics_collected": metrics_collected,
+                    "health_checks": health_checks,
+                    "alerts_generated": alerts_generated,
+                    "monitoring_errors": monitoring_errors,
+                    "monitoring_success_rate": monitoring_success_rate,
+                    "alert_effectiveness": alert_effectiveness,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'Monitoring system stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"Monitoring system stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     async def test_end_to_end_integration_stress(self) -> Dict[str, Any]:
@@ -1256,16 +1366,25 @@ class CoreSystemsStressTester:
             for cycle in range(20):  # 20 failure injection cycles
                 try:
                     # Inject random component failure
-                    failed_component = random.choice([
-                        'navigation', 'communication', 'motor', 'sensor',
-                        'data_storage', 'power', 'monitoring'
-                    ])
+                    failed_component = random.choice(
+                        [
+                            "navigation",
+                            "communication",
+                            "motor",
+                            "sensor",
+                            "data_storage",
+                            "power",
+                            "monitoring",
+                        ]
+                    )
 
                     # Allow system to detect and recover
                     await asyncio.sleep(0.1)  # Recovery time
 
                     # Check if system recovered (simplified)
-                    recovery_success = random.random() > 0.15  # 85% recovery success rate
+                    recovery_success = (
+                        random.random() > 0.15
+                    )  # 85% recovery success rate
 
                     if recovery_success:
                         failure_recovery_success += 1
@@ -1277,35 +1396,38 @@ class CoreSystemsStressTester:
 
             # Calculate end-to-end integration success
             total_integration_ops = integration_cycles + failure_injection_cycles
-            integration_success_rate = total_integration_ops / (total_integration_ops + integration_errors)
-
-            # End-to-end requirements: >90% success rate, >80% failure recovery
-            recovery_rate = failure_recovery_success / failure_injection_cycles if failure_injection_cycles > 0 else 0
-
-            end_to_end_success = (
-                integration_success_rate > 0.9 and
-                recovery_rate > 0.8
+            integration_success_rate = total_integration_ops / (
+                total_integration_ops + integration_errors
             )
 
+            # End-to-end requirements: >90% success rate, >80% failure recovery
+            recovery_rate = (
+                failure_recovery_success / failure_injection_cycles
+                if failure_injection_cycles > 0
+                else 0
+            )
+
+            end_to_end_success = integration_success_rate > 0.9 and recovery_rate > 0.8
+
             return {
-                'success': end_to_end_success,
-                'message': f'End-to-end integration: {integration_success_rate:.1%} success rate, {recovery_rate:.1%} recovery rate',
-                'issues': issues[:5],
-                'metrics': {
-                    'integration_cycles': integration_cycles,
-                    'integration_errors': integration_errors,
-                    'failure_injection_cycles': failure_injection_cycles,
-                    'failure_recovery_success': failure_recovery_success,
-                    'integration_success_rate': integration_success_rate,
-                    'recovery_rate': recovery_rate
-                }
+                "success": end_to_end_success,
+                "message": f"End-to-end integration: {integration_success_rate:.1%} success rate, {recovery_rate:.1%} recovery rate",
+                "issues": issues[:5],
+                "metrics": {
+                    "integration_cycles": integration_cycles,
+                    "integration_errors": integration_errors,
+                    "failure_injection_cycles": failure_injection_cycles,
+                    "failure_recovery_success": failure_recovery_success,
+                    "integration_success_rate": integration_success_rate,
+                    "recovery_rate": recovery_rate,
+                },
             }
 
         except Exception as e:
             return {
-                'success': False,
-                'message': f'End-to-end integration stress test failed: {str(e)}',
-                'issues': [str(e)]
+                "success": False,
+                "message": f"End-to-end integration stress test failed: {str(e)}",
+                "issues": [str(e)],
             }
 
     def generate_recommendations(self, results: Dict[str, Any]) -> List[str]:
@@ -1314,39 +1436,67 @@ class CoreSystemsStressTester:
 
         # Analyze each system
         for system_name, result in results.items():
-            if not result['success']:
-                if 'ros2' in system_name:
-                    recommendations.append("Improve ROS2 message reliability and reduce communication latency")
-                elif 'state_machine' in system_name:
-                    recommendations.append("Enhance state transition validation and concurrent access handling")
-                elif 'mission' in system_name:
-                    recommendations.append("Improve mission execution error handling and resource management")
-                elif 'safety' in system_name:
-                    recommendations.append("Optimize emergency stop response times and reduce false positives")
-                elif 'hardware' in system_name:
-                    recommendations.append("Implement hardware error recovery and improve interface reliability")
-                elif 'navigation' in system_name:
-                    recommendations.append("Enhance GPS-denied navigation and obstacle avoidance")
-                elif 'communication' in system_name:
-                    recommendations.append("Strengthen bridge message routing and protocol handling")
-                elif 'power' in system_name:
-                    recommendations.append("Improve battery monitoring and power distribution")
-                elif 'data' in system_name:
-                    recommendations.append("Enhance data persistence reliability and query performance")
-                elif 'monitoring' in system_name:
-                    recommendations.append("Optimize metrics collection and alert generation")
-                elif 'end_to_end' in system_name:
-                    recommendations.append("Strengthen system integration and failure recovery")
+            if not result["success"]:
+                if "ros2" in system_name:
+                    recommendations.append(
+                        "Improve ROS2 message reliability and reduce communication latency"
+                    )
+                elif "state_machine" in system_name:
+                    recommendations.append(
+                        "Enhance state transition validation and concurrent access handling"
+                    )
+                elif "mission" in system_name:
+                    recommendations.append(
+                        "Improve mission execution error handling and resource management"
+                    )
+                elif "safety" in system_name:
+                    recommendations.append(
+                        "Optimize emergency stop response times and reduce false positives"
+                    )
+                elif "hardware" in system_name:
+                    recommendations.append(
+                        "Implement hardware error recovery and improve interface reliability"
+                    )
+                elif "navigation" in system_name:
+                    recommendations.append(
+                        "Enhance GPS-denied navigation and obstacle avoidance"
+                    )
+                elif "communication" in system_name:
+                    recommendations.append(
+                        "Strengthen bridge message routing and protocol handling"
+                    )
+                elif "power" in system_name:
+                    recommendations.append(
+                        "Improve battery monitoring and power distribution"
+                    )
+                elif "data" in system_name:
+                    recommendations.append(
+                        "Enhance data persistence reliability and query performance"
+                    )
+                elif "monitoring" in system_name:
+                    recommendations.append(
+                        "Optimize metrics collection and alert generation"
+                    )
+                elif "end_to_end" in system_name:
+                    recommendations.append(
+                        "Strengthen system integration and failure recovery"
+                    )
 
         # Overall system recommendations
-        success_rate = sum(1 for r in results.values() if r['success']) / len(results)
+        success_rate = sum(1 for r in results.values() if r["success"]) / len(results)
 
         if success_rate < 0.8:
-            recommendations.append("CRITICAL: Overall system reliability below acceptable threshold")
+            recommendations.append(
+                "CRITICAL: Overall system reliability below acceptable threshold"
+            )
         elif success_rate < 0.9:
-            recommendations.append("WARNING: System reliability needs improvement for competition")
+            recommendations.append(
+                "WARNING: System reliability needs improvement for competition"
+            )
         else:
-            recommendations.append("System reliability acceptable for competition deployment")
+            recommendations.append(
+                "System reliability acceptable for competition deployment"
+            )
 
         return recommendations[:10]  # Limit to top 10 recommendations
 
@@ -1371,13 +1521,13 @@ class TestCoreSystemsStress:
         state_result = await stress_tester.test_state_machine_stress()
 
         # Verify test structure
-        assert 'success' in ros2_result
-        assert 'message' in ros2_result
-        assert 'metrics' in ros2_result
+        assert "success" in ros2_result
+        assert "message" in ros2_result
+        assert "metrics" in ros2_result
 
-        assert 'success' in state_result
-        assert 'message' in state_result
-        assert 'metrics' in state_result
+        assert "success" in state_result
+        assert "message" in state_result
+        assert "metrics" in state_result
 
         print("✅ Core systems stress testing framework validated")
 
@@ -1385,18 +1535,15 @@ class TestCoreSystemsStress:
         """Test recommendation generation based on results."""
         # Sample test results with some failures
         sample_results = {
-            'ros2_communication': {'success': False, 'issues': ['high latency']},
-            'state_machine': {'success': True, 'issues': []},
-            'safety_systems': {'success': False, 'issues': ['slow response']}
+            "ros2_communication": {"success": False, "issues": ["high latency"]},
+            "state_machine": {"success": True, "issues": []},
+            "safety_systems": {"success": False, "issues": ["slow response"]},
         }
 
         recommendations = stress_tester.generate_recommendations(sample_results)
 
         assert len(recommendations) > 0
-        assert any('ROS2' in rec for rec in recommendations)
-        assert any('safety' in rec.lower() for rec in recommendations)
+        assert any("ROS2" in rec for rec in recommendations)
+        assert any("safety" in rec.lower() for rec in recommendations)
 
         print("✅ Stress test recommendations generation working")
-
-
-

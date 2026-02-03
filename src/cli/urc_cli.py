@@ -27,22 +27,44 @@ try:
     from rich.tree import Tree
     from rich.columns import Columns
     from rich.text import Text
+
     CLI_AVAILABLE = True
 except ImportError:
     CLI_AVAILABLE = False
+
     # Fallback implementations
     class Console:
-        def print(self, *args, **kwargs): print(*args)
-        def status(self, *args, **kwargs): return lambda: None
+        def print(self, *args, **kwargs):
+            print(*args)
+
+        def status(self, *args, **kwargs):
+            return lambda: None
+
     class Table:
-        def __init__(self, **kwargs): pass
-        def add_column(self, *args, **kwargs): pass
-        def add_row(self, *args, **kwargs): pass
-    class Panel: pass
-    class Progress: pass
-    class Tree: pass
-    def typer_option(*args, **kwargs): return lambda x: x
-    def typer_argument(*args, **kwargs): return lambda x: x
+        def __init__(self, **kwargs):
+            pass
+
+        def add_column(self, *args, **kwargs):
+            pass
+
+        def add_row(self, *args, **kwargs):
+            pass
+
+    class Panel:
+        pass
+
+    class Progress:
+        pass
+
+    class Tree:
+        pass
+
+    def typer_option(*args, **kwargs):
+        return lambda x: x
+
+    def typer_argument(*args, **kwargs):
+        return lambda x: x
+
 
 if CLI_AVAILABLE:
     # Typer decorators
@@ -50,13 +72,17 @@ if CLI_AVAILABLE:
         name="urc-cli",
         help="URC 2026 Rover Command Line Interface",
         add_completion=True,
-        rich_markup_mode="rich"
+        rich_markup_mode="rich",
     )
     console = Console()
 
     # CLI options
-    verbose_option = typer.Option(False, "--verbose", "-v", help="Enable verbose output")
-    config_option = typer.Option("config/rover.yaml", "--config", "-c", help="Configuration file path")
+    verbose_option = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose output"
+    )
+    config_option = typer.Option(
+        "config/rover.yaml", "--config", "-c", help="Configuration file path"
+    )
     dry_run_option = typer.Option(False, "--dry-run", help="Validate without executing")
 else:
     # Fallback
@@ -69,29 +95,42 @@ else:
 
 # Import URC modules (simplified/core only; stubs when unavailable)
 import json as _json
+
 loads = _json.loads
 dumps = _json.dumps
+
 
 def _stub_robust_stats(data):
     """Stub for robust_stats when numpy unavailable."""
     n = len(data) if hasattr(data, "__len__") else 0
     return {
-        "count": n, "mean": 0.0, "median": 0.0, "std": 0.0, "mad": 0.0,
-        "iqr": 0.0, "skewness": 0.0, "kurtosis": 0.0, "coefficient_of_variation": 0.0,
+        "count": n,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "mad": 0.0,
+        "iqr": 0.0,
+        "skewness": 0.0,
+        "kurtosis": 0.0,
+        "coefficient_of_variation": 0.0,
     }
+
 
 def _stub_detect_outliers(data):
     """Stub for detect_outliers."""
     return {"outliers": [], "outlier_percentage": 0.0}
 
+
 try:
     from src.core.config_models import load_urc_config, validate_config_data, RoverMode
     from src.core.simplified_state_manager import get_state_manager, SystemState
     from src.core.data_manager import get_data_manager
+
     _dm = get_data_manager()
     CircularBuffer = _dm.create_circular_buffer(100, float).__class__
     try:
         import numpy as np
+
         def robust_stats(data):
             a = np.asarray(data)
             n = len(a)
@@ -101,54 +140,86 @@ try:
                 "median": float(np.median(a)),
                 "std": float(np.std(a)) if n > 0 else 0.0,
                 "mad": float(np.median(np.abs(a - np.median(a)))) if n > 0 else 0.0,
-                "iqr": float(np.percentile(a, 75) - np.percentile(a, 25)) if n > 0 else 0.0,
+                "iqr": (
+                    float(np.percentile(a, 75) - np.percentile(a, 25)) if n > 0 else 0.0
+                ),
                 "skewness": 0.0,
                 "kurtosis": 0.0,
-                "coefficient_of_variation": float(np.std(a) / np.mean(a)) if n and np.mean(a) else 0.0,
+                "coefficient_of_variation": (
+                    float(np.std(a) / np.mean(a)) if n and np.mean(a) else 0.0
+                ),
             }
+
         def detect_outliers(data):
             a = np.asarray(data)
             q1, q3 = np.percentile(a, [25, 75])
             iqr = q3 - q1
             lo, hi = q1 - 1.5 * iqr, q3 + 1.5 * iqr
             out = a[(a < lo) | (a > hi)]
-            return {"outliers": out.tolist(), "outlier_percentage": 100.0 * len(out) / len(a) if len(a) else 0.0}
+            return {
+                "outliers": out.tolist(),
+                "outlier_percentage": 100.0 * len(out) / len(a) if len(a) else 0.0,
+            }
+
     except ImportError:
         robust_stats = _stub_robust_stats
         detect_outliers = _stub_detect_outliers
     try:
         import transforms3d.euler as t3d_euler
+
         def euler_to_quat(euler_rad):
             return list(t3d_euler.euler2quat(euler_rad[0], euler_rad[1], euler_rad[2]))
+
         def quat_to_euler(q):
             return list(t3d_euler.quat2euler(q))
+
     except ImportError:
+
         def euler_to_quat(_):
             return [0.0, 0.0, 0.0, 1.0]
+
         def quat_to_euler(_):
             return [0.0, 0.0, 0.0]
+
     def create_state_machine(name, initial_state="idle"):
         return None
+
     def create_behavior_tree(name, root=None):
         return None
+
     class URCStateMachine:
         def __init__(self):
             self._sm = get_state_manager()
+
         @property
         def state(self):
-            return getattr(self._sm, "current_state", None) and self._sm.current_state.value or "idle"
+            return (
+                getattr(self._sm, "current_state", None)
+                and self._sm.current_state.value
+                or "idle"
+            )
+
         def startup_complete(self):
             self._sm.transition_to(SystemState.IDLE, "startup")
+
         def calibration_complete(self):
             self._sm.transition_to(SystemState.IDLE, "calibration")
+
         def start_teleop(self):
             self._sm.transition_to(SystemState.TELEOPERATION, "teleop")
+
         def emergency_stop(self):
             self._sm.transition_to(SystemState.EMERGENCY_STOP, "e-stop")
+
     def get_state_machine_status(sm):
-        return {"State": getattr(sm, "state", "unknown"), "Manager": "UnifiedStateManager"}
+        return {
+            "State": getattr(sm, "state", "unknown"),
+            "Manager": "UnifiedStateManager",
+        }
+
     def create_urc_behavior_tree(mission_type):
         return None
+
     URC_MODULES_AVAILABLE = True
 except (ImportError, AttributeError):
     URC_MODULES_AVAILABLE = False
@@ -172,8 +243,7 @@ def setup_logging(verbose: bool = False):
     """Setup logging based on verbosity."""
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
 
@@ -202,16 +272,14 @@ def display_config_validation_errors(errors: List[str]):
 
 # CLI Commands
 if CLI_AVAILABLE:
+
     @app.callback()
     def callback():
         """URC 2026 Rover Command Line Interface"""
         pass
 
     @app.command()
-    def status(
-        verbose: bool = verbose_option,
-        config_file: str = config_option
-    ):
+    def status(verbose: bool = verbose_option, config_file: str = config_option):
         """Display rover system status."""
         setup_logging(verbose)
 
@@ -224,7 +292,7 @@ if CLI_AVAILABLE:
             "Battery Level": "85%",
             "Communication": "Connected",
             "GPS Fix": "RTK Fixed",
-            "Mission Status": "Ready"
+            "Mission Status": "Ready",
         }
 
         console.print(create_status_table("System Status", system_status))
@@ -237,7 +305,9 @@ if CLI_AVAILABLE:
                 console.print()
                 console.print(create_status_table("State Machine", sm_status))
             except Exception as e:
-                console.print(f"[yellow]⚠️ State machine status unavailable: {e}[/yellow]")
+                console.print(
+                    f"[yellow]⚠️ State machine status unavailable: {e}[/yellow]"
+                )
         else:
             console.print("[yellow]⚠️ URC modules not available[/yellow]")
 
@@ -247,7 +317,7 @@ if CLI_AVAILABLE:
             "2024-01-04 10:30:15 - Mission started",
             "2024-01-04 10:25:42 - System calibrated",
             "2024-01-04 10:20:18 - GPS fix acquired",
-            "2024-01-04 10:15:33 - Power system initialized"
+            "2024-01-04 10:15:33 - Power system initialized",
         ]
 
         for activity in activities:
@@ -257,8 +327,10 @@ if CLI_AVAILABLE:
     def config(
         action: str = typer.Argument(..., help="Action: validate, show, schema"),
         config_file: str = config_option,
-        output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file for schema"),
-        verbose: bool = verbose_option
+        output: Optional[str] = typer.Option(
+            None, "--output", "-o", help="Output file for schema"
+        ),
+        verbose: bool = verbose_option,
     ):
         """Configuration management commands."""
         setup_logging(verbose)
@@ -267,11 +339,13 @@ if CLI_AVAILABLE:
             console.print(f"[bold]Validating configuration:[/bold] {config_file}")
 
             if not Path(config_file).exists():
-                console.print(f"[red]✗ Configuration file not found: {config_file}[/red]")
+                console.print(
+                    f"[red]✗ Configuration file not found: {config_file}[/red]"
+                )
                 raise typer.Exit(1)
 
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config_data = json.load(f)
 
                 errors = validate_config_data(config_data)
@@ -288,11 +362,13 @@ if CLI_AVAILABLE:
             console.print(f"[bold]Configuration:[/bold] {config_file}")
 
             if not Path(config_file).exists():
-                console.print(f"[red]✗ Configuration file not found: {config_file}[/red]")
+                console.print(
+                    f"[red]✗ Configuration file not found: {config_file}[/red]"
+                )
                 raise typer.Exit(1)
 
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     config_data = json.load(f)
 
                 # Pretty print configuration
@@ -310,7 +386,7 @@ if CLI_AVAILABLE:
                 schema_json = json.dumps(schema, indent=2)
 
                 if output:
-                    with open(output, 'w') as f:
+                    with open(output, "w") as f:
                         f.write(schema_json)
                     console.print(f"[green]✓ Schema saved to: {output}[/green]")
                 else:
@@ -328,11 +404,15 @@ if CLI_AVAILABLE:
     @app.command()
     def mission(
         action: str = typer.Argument(..., help="Action: start, stop, status, list"),
-        mission_type: str = typer.Option("autonomous_navigation", "--type", "-t",
-                                        help="Mission type: autonomous_navigation, delivery"),
+        mission_type: str = typer.Option(
+            "autonomous_navigation",
+            "--type",
+            "-t",
+            help="Mission type: autonomous_navigation, delivery",
+        ),
         config_file: str = config_option,
         dry_run: bool = dry_run_option,
-        verbose: bool = verbose_option
+        verbose: bool = verbose_option,
     ):
         """Mission control commands."""
         setup_logging(verbose)
@@ -341,15 +421,19 @@ if CLI_AVAILABLE:
             console.print(f"[bold]Starting mission:[/bold] {mission_type}")
 
             if dry_run:
-                console.print("[yellow]🔍 Dry run mode - validating mission configuration[/yellow]")
+                console.print(
+                    "[yellow]🔍 Dry run mode - validating mission configuration[/yellow]"
+                )
 
                 # Validate configuration
                 if not Path(config_file).exists():
-                    console.print(f"[red]✗ Configuration file not found: {config_file}[/red]")
+                    console.print(
+                        f"[red]✗ Configuration file not found: {config_file}[/red]"
+                    )
                     raise typer.Exit(1)
 
                 try:
-                    with open(config_file, 'r') as f:
+                    with open(config_file, "r") as f:
                         config_data = json.load(f)
 
                     errors = validate_config_data(config_data)
@@ -368,11 +452,15 @@ if CLI_AVAILABLE:
 
             # Start actual mission
             if not URC_MODULES_AVAILABLE:
-                console.print("[red]✗ URC modules not available for mission execution[/red]")
+                console.print(
+                    "[red]✗ URC modules not available for mission execution[/red]"
+                )
                 raise typer.Exit(1)
 
             try:
-                with console.status("[bold green]Starting behavior tree...[/bold green]") as status:
+                with console.status(
+                    "[bold green]Starting behavior tree...[/bold green]"
+                ) as status:
                     bt = create_urc_behavior_tree(mission_type)
 
                 console.print("[green]✓ Mission started successfully[/green]")
@@ -402,7 +490,7 @@ if CLI_AVAILABLE:
                 "Progress": "65%",
                 "Waypoints Completed": "3/5",
                 "Time Elapsed": "12m 34s",
-                "Estimated Completion": "8m 26s"
+                "Estimated Completion": "8m 26s",
             }
 
             console.print(create_status_table("Mission Status", mission_status))
@@ -411,9 +499,18 @@ if CLI_AVAILABLE:
             console.print("[bold]Available Missions[/bold]")
 
             missions = [
-                {"name": "autonomous_navigation", "description": "Full autonomous navigation with GNSS waypoints"},
-                {"name": "delivery", "description": "Delivery mission to specified location"},
-                {"name": "sample_collection", "description": "Sample collection with multiple sites"}
+                {
+                    "name": "autonomous_navigation",
+                    "description": "Full autonomous navigation with GNSS waypoints",
+                },
+                {
+                    "name": "delivery",
+                    "description": "Delivery mission to specified location",
+                },
+                {
+                    "name": "sample_collection",
+                    "description": "Sample collection with multiple sites",
+                },
             ]
 
             table = Table(show_header=True, header_style="bold magenta")
@@ -432,9 +529,11 @@ if CLI_AVAILABLE:
 
     @app.command()
     def calibrate(
-        sensor: str = typer.Argument(..., help="Sensor to calibrate: imu, gps, camera, all"),
+        sensor: str = typer.Argument(
+            ..., help="Sensor to calibrate: imu, gps, camera, all"
+        ),
         config_file: str = config_option,
-        verbose: bool = verbose_option
+        verbose: bool = verbose_option,
     ):
         """Sensor calibration commands."""
         setup_logging(verbose)
@@ -446,7 +545,7 @@ if CLI_AVAILABLE:
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
-            console=console
+            console=console,
         ) as progress:
 
             for sensor_name in sensors_to_calibrate:
@@ -458,7 +557,7 @@ if CLI_AVAILABLE:
                     "Collecting calibration data",
                     "Computing calibration parameters",
                     "Validating calibration",
-                    "Saving calibration data"
+                    "Saving calibration data",
                 ]
 
                 for i, step in enumerate(steps):
@@ -472,8 +571,13 @@ if CLI_AVAILABLE:
 
     @app.command()
     def diagnostics(
-        system: str = typer.Option("all", "--system", "-s", help="System to diagnose: nav, sensors, motors, all"),
-        verbose: bool = verbose_option
+        system: str = typer.Option(
+            "all",
+            "--system",
+            "-s",
+            help="System to diagnose: nav, sensors, motors, all",
+        ),
+        verbose: bool = verbose_option,
     ):
         """Run system diagnostics."""
         setup_logging(verbose)
@@ -484,9 +588,17 @@ if CLI_AVAILABLE:
             "nav": ["GPS accuracy", "IMU stability", "Odometry consistency"],
             "sensors": ["Camera feed", "LIDAR scan", "IMU readings"],
             "motors": ["Motor encoders", "Current draw", "Temperature"],
-            "all": ["GPS accuracy", "IMU stability", "Odometry consistency",
-                   "Camera feed", "LIDAR scan", "IMU readings",
-                   "Motor encoders", "Current draw", "Temperature"]
+            "all": [
+                "GPS accuracy",
+                "IMU stability",
+                "Odometry consistency",
+                "Camera feed",
+                "LIDAR scan",
+                "IMU readings",
+                "Motor encoders",
+                "Current draw",
+                "Temperature",
+            ],
         }
 
         checks = systems_to_check.get(system, systems_to_check["all"])
@@ -510,7 +622,9 @@ if CLI_AVAILABLE:
                 progress.update(task, advance=1)
 
         # Display results
-        table = Table(title="Diagnostic Results", show_header=True, header_style="bold magenta")
+        table = Table(
+            title="Diagnostic Results", show_header=True, header_style="bold magenta"
+        )
         table.add_column("Check", style="cyan")
         table.add_column("Status", style="green")
         table.add_column("Details", style="white")
@@ -525,20 +639,28 @@ if CLI_AVAILABLE:
         total = len(results)
 
         if passed == total:
-            console.print(f"\n[green]✓ All diagnostics passed ({passed}/{total})[/green]")
+            console.print(
+                f"\n[green]✓ All diagnostics passed ({passed}/{total})[/green]"
+            )
         else:
-            console.print(f"\n[yellow]⚠️ Some diagnostics failed ({passed}/{total} passed)[/yellow]")
+            console.print(
+                f"\n[yellow]⚠️ Some diagnostics failed ({passed}/{total} passed)[/yellow]"
+            )
 
     @app.command()
     def stats(
         data_type: str = typer.Argument(..., help="Data type: sensor, nav, system"),
-        samples: int = typer.Option(100, "--samples", "-n", help="Number of samples to analyze"),
-        verbose: bool = verbose_option
+        samples: int = typer.Option(
+            100, "--samples", "-n", help="Number of samples to analyze"
+        ),
+        verbose: bool = verbose_option,
     ):
         """Statistical analysis of system data."""
         setup_logging(verbose)
 
-        console.print(f"[bold]Analyzing {data_type} statistics:[/bold] {samples} samples")
+        console.print(
+            f"[bold]Analyzing {data_type} statistics:[/bold] {samples} samples"
+        )
 
         if not URC_MODULES_AVAILABLE:
             console.print("[red]✗ URC modules not available for statistics[/red]")
@@ -563,23 +685,30 @@ if CLI_AVAILABLE:
             stats_result = robust_stats(data)
 
             console.print("[bold]Statistical Analysis Results:[/bold]")
-            console.print(create_status_table(f"{data_type.title()} Statistics", {
-                "Sample Count": stats_result['count'],
-                "Mean": f"{stats_result['mean']:.3f}",
-                "Median": f"{stats_result['median']:.3f}",
-                "Std Deviation": f"{stats_result['std']:.3f}",
-                "MAD": f"{stats_result['mad']:.3f}",
-                "IQR": f"{stats_result['iqr']:.3f}",
-                "Skewness": f"{stats_result['skewness']:.3f}",
-                "Kurtosis": f"{stats_result['kurtosis']:.3f}",
-                "Coefficient of Variation": f"{stats_result['coefficient_of_variation']:.3f}"
-            }))
+            console.print(
+                create_status_table(
+                    f"{data_type.title()} Statistics",
+                    {
+                        "Sample Count": stats_result["count"],
+                        "Mean": f"{stats_result['mean']:.3f}",
+                        "Median": f"{stats_result['median']:.3f}",
+                        "Std Deviation": f"{stats_result['std']:.3f}",
+                        "MAD": f"{stats_result['mad']:.3f}",
+                        "IQR": f"{stats_result['iqr']:.3f}",
+                        "Skewness": f"{stats_result['skewness']:.3f}",
+                        "Kurtosis": f"{stats_result['kurtosis']:.3f}",
+                        "Coefficient of Variation": f"{stats_result['coefficient_of_variation']:.3f}",
+                    },
+                )
+            )
 
             # Outlier analysis
             outlier_info = detect_outliers(data)
             console.print(f"\n[bold]Outlier Analysis:[/bold]")
             console.print(f"  Outliers detected: {len(outlier_info['outliers'])}")
-            console.print(f"  Outlier percentage: {outlier_info['outlier_percentage']:.1f}%")
+            console.print(
+                f"  Outlier percentage: {outlier_info['outlier_percentage']:.1f}%"
+            )
 
         except Exception as e:
             console.print(f"[red]✗ Statistics analysis failed: {e}[/red]")
@@ -587,9 +716,11 @@ if CLI_AVAILABLE:
 
     @app.command()
     def transform(
-        action: str = typer.Argument(..., help="Action: euler_to_quat, quat_to_euler, demo"),
+        action: str = typer.Argument(
+            ..., help="Action: euler_to_quat, quat_to_euler, demo"
+        ),
         values: List[float] = typer.Argument(None, help="Values to transform"),
-        verbose: bool = verbose_option
+        verbose: bool = verbose_option,
     ):
         """Coordinate transformation utilities."""
         setup_logging(verbose)
@@ -601,7 +732,9 @@ if CLI_AVAILABLE:
         try:
             if action == "euler_to_quat":
                 if len(values) != 3:
-                    console.print("[red]✗ Euler angles require 3 values (roll, pitch, yaw)[/red]")
+                    console.print(
+                        "[red]✗ Euler angles require 3 values (roll, pitch, yaw)[/red]"
+                    )
                     raise typer.Exit(1)
 
                 quat = euler_to_quat(values)
@@ -611,7 +744,9 @@ if CLI_AVAILABLE:
 
             elif action == "quat_to_euler":
                 if len(values) != 4:
-                    console.print("[red]✗ Quaternion requires 4 values (x, y, z, w)[/red]")
+                    console.print(
+                        "[red]✗ Quaternion requires 4 values (x, y, z, w)[/red]"
+                    )
                     raise typer.Exit(1)
 
                 euler = quat_to_euler(values)
@@ -632,8 +767,16 @@ if CLI_AVAILABLE:
                 table.add_column("Input", style="white")
                 table.add_column("Output", style="green")
 
-                table.add_row("Euler → Quaternion", str(euler_angles), str([f"{x:.4f}" for x in quat]))
-                table.add_row("Quaternion → Euler", str([f"{x:.4f}" for x in quat]), str([f"{x:.4f}" for x in euler_back]))
+                table.add_row(
+                    "Euler → Quaternion",
+                    str(euler_angles),
+                    str([f"{x:.4f}" for x in quat]),
+                )
+                table.add_row(
+                    "Quaternion → Euler",
+                    str([f"{x:.4f}" for x in quat]),
+                    str([f"{x:.4f}" for x in euler_back]),
+                )
 
                 console.print(table)
 
@@ -652,8 +795,10 @@ if CLI_AVAILABLE:
 
     @app.command()
     def demo(
-        component: str = typer.Argument(..., help="Component to demo: all, state_machine, behavior_tree, stats"),
-        verbose: bool = verbose_option
+        component: str = typer.Argument(
+            ..., help="Component to demo: all, state_machine, behavior_tree, stats"
+        ),
+        verbose: bool = verbose_option,
     ):
         """Run demonstration of URC components."""
         setup_logging(verbose)
@@ -687,7 +832,7 @@ def demo_component(component: str):
             ("startup_complete", "BOOT → CALIBRATION"),
             ("calibration_complete", "CALIBRATION → IDLE"),
             ("start_teleop", "IDLE → TELEOPERATION"),
-            ("emergency_stop", "TELEOPERATION → SAFETY")
+            ("emergency_stop", "TELEOPERATION → SAFETY"),
         ]
 
         for trigger, description in transitions:

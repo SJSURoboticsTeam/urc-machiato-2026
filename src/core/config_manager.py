@@ -24,6 +24,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Environment(str, Enum):
     """Deployment environments."""
+
     DEVELOPMENT = "development"
     TESTING = "testing"
     PRODUCTION = "production"
@@ -32,6 +33,7 @@ class Environment(str, Enum):
 
 class LogLevel(str, Enum):
     """Logging levels."""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -41,23 +43,25 @@ class LogLevel(str, Enum):
 
 class SyncConfig(BaseModel):
     """Synchronization engine configuration."""
+
     max_sync_delay_ms: float = Field(default=50.0, gt=0, le=1000)
     temporal_consistency_threshold: float = Field(default=0.05, gt=0, le=1.0)
     buffer_max_size: int = Field(default=30, gt=0, le=1000)
     adaptive_buffering: bool = Field(default=True)
     camera_ids: list[str] = Field(default=["front", "rear", "left", "right"])
 
-    @validator('camera_ids')
+    @validator("camera_ids")
     def validate_camera_ids(cls, v):
         """Validate camera ID format."""
         for cam_id in v:
-            if not cam_id.replace('_', '').replace('-', '').isalnum():
+            if not cam_id.replace("_", "").replace("-", "").isalnum():
                 raise ValueError(f"Invalid camera ID format: {cam_id}")
         return v
 
 
 class NetworkConfig(BaseModel):
     """Network communication configuration."""
+
     retry_attempts: int = Field(default=3, ge=0, le=10)
     retry_backoff_factor: float = Field(default=0.5, gt=0)
     connection_timeout: float = Field(default=5.0, gt=0)
@@ -71,6 +75,7 @@ class NetworkConfig(BaseModel):
 
 class NavigationConfig(BaseModel):
     """Navigation system configuration."""
+
     update_rate_hz: float = Field(default=10.0, ge=1.0, le=100.0)
     waypoint_tolerance_m: float = Field(default=1.0, ge=0.1)
     max_linear_velocity_ms: float = Field(default=2.0, ge=0.1)
@@ -79,6 +84,7 @@ class NavigationConfig(BaseModel):
 
 class SafetyConfig(BaseModel):
     """Safety system configuration."""
+
     emergency_stop_timeout: float = Field(default=1.0, gt=0)
     thermal_warning_threshold: float = Field(default=70.0, gt=0, le=150)
     battery_critical_threshold: float = Field(default=20.0, gt=0, le=100)
@@ -88,6 +94,7 @@ class SafetyConfig(BaseModel):
 
 class MissionConfig(BaseModel):
     """Mission execution configuration."""
+
     max_mission_duration: float = Field(default=1800.0, gt=0)  # 30 minutes
     waypoint_tolerance: float = Field(default=1.0, gt=0)
     sample_collection_timeout: float = Field(default=300.0, gt=0)  # 5 minutes
@@ -97,6 +104,7 @@ class MissionConfig(BaseModel):
 
 class DatabaseConfig(BaseModel):
     """Database configuration."""
+
     url: str = Field(default="sqlite:///urc_missions.db")
     connection_pool_size: int = Field(default=5, gt=0)
     connection_timeout: float = Field(default=30.0, gt=0)
@@ -105,6 +113,7 @@ class DatabaseConfig(BaseModel):
 
 class RedisConfig(BaseModel):
     """Redis cache configuration."""
+
     host: str = Field(default="localhost")
     port: int = Field(default=6379, gt=0, le=65535)
     db: int = Field(default=0, ge=0)
@@ -114,6 +123,7 @@ class RedisConfig(BaseModel):
 
 class APIConfig(BaseModel):
     """REST API configuration."""
+
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8000, gt=0, le=65535)
     cors_origins: list[str] = Field(default=["http://localhost:3000"])
@@ -123,6 +133,7 @@ class APIConfig(BaseModel):
 
 class PerformanceConfig(BaseModel):
     """Performance configuration."""
+
     enable_optimizations: bool = Field(default=True)
     memory_limit_mb: int = Field(default=512, ge=64)
     cpu_limit_percent: int = Field(default=80, ge=10, le=100)
@@ -173,17 +184,17 @@ class RoverConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
     @root_validator(pre=True)
     def load_config_file(cls, values):
         """Load configuration from file if specified."""
-        config_file = values.get('config_file_path') or os.getenv('ROVER_CONFIG_FILE')
+        config_file = values.get("config_file_path") or os.getenv("ROVER_CONFIG_FILE")
 
         if config_file and Path(config_file).exists():
             try:
-                with open(config_file, 'rb') as f:
+                with open(config_file, "rb") as f:
                     file_config = orjson.loads(f.read())
 
                 # Merge file config with environment values
@@ -196,7 +207,7 @@ class RoverConfig(BaseSettings):
 
         return values
 
-    @validator('environment', pre=True)
+    @validator("environment", pre=True)
     def validate_environment(cls, v):
         """Validate environment value."""
         if isinstance(v, str):
@@ -207,26 +218,26 @@ class RoverConfig(BaseSettings):
         """Save current configuration to JSON file."""
         config_dict = self.dict()
         # Remove sensitive data before saving
-        if 'redis' in config_dict and config_dict['redis']:
-            config_dict['redis'].pop('password', None)
+        if "redis" in config_dict and config_dict["redis"]:
+            config_dict["redis"].pop("password", None)
 
         file_path = Path(file_path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(orjson.dumps(config_dict, option=orjson.OPT_INDENT_2))
 
     @classmethod
-    def from_file(cls, file_path: str | Path) -> 'RoverConfig':
+    def from_file(cls, file_path: str | Path) -> "RoverConfig":
         """Load configuration from JSON file."""
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             config_data = orjson.loads(f.read())
 
         return cls(**config_data)
 
     def get_nested_value(self, key_path: str, default=None) -> Any:
         """Get nested configuration value using dot notation."""
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         value = self.dict()
 
         for key in keys:

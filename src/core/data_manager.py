@@ -32,48 +32,78 @@ try:
     import pandas as pd
     import xarray as xr
     import numpy as np
+
     DATA_AVAILABLE = True
 except ImportError:
     DATA_AVAILABLE = False
+
     # Fallback implementations
     class pd:
         DataFrame = dict
         Series = list
         Timestamp = float
-        def read_csv(*args, **kwargs): return {}
-        def to_datetime(*args, **kwargs): return None
-        def concat(*args, **kwargs): return {}
+
+        def read_csv(*args, **kwargs):
+            return {}
+
+        def to_datetime(*args, **kwargs):
+            return None
+
+        def concat(*args, **kwargs):
+            return {}
+
     class xr:
         Dataset = dict
         DataArray = list
+
     class np:
         ndarray = list
         array = list
 
+
 try:
     import scipy.stats as stats
     from scipy import signal
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
+
     # Fallback statistical functions
     class stats:
         @staticmethod
-        def normaltest(x): return (0, 1.0)
+        def normaltest(x):
+            return (0, 1.0)
+
         @staticmethod
-        def shapiro(x): return (0, 1.0)
+        def shapiro(x):
+            return (0, 1.0)
+
         @staticmethod
-        def ttest_ind(a, b): return (0, 1.0)
+        def ttest_ind(a, b):
+            return (0, 1.0)
+
         @staticmethod
-        def pearsonr(x, y): return (0, 1.0)
+        def pearsonr(x, y):
+            return (0, 1.0)
+
         @staticmethod
-        def linregress(x, y): return type('obj', (object,), {'slope': 0, 'intercept': 0, 'rvalue': 0, 'pvalue': 1.0, 'stderr': 0})
+        def linregress(x, y):
+            return type(
+                "obj",
+                (object,),
+                {"slope": 0, "intercept": 0, "rvalue": 0, "pvalue": 1.0, "stderr": 0},
+            )
+
         @staticmethod
-        def zscore(x): return x
+        def zscore(x):
+            return x
+
 
 try:
     import orjson
     import jsonschema
+
     ORJSON_AVAILABLE = True
 except ImportError:
     ORJSON_AVAILABLE = False
@@ -81,6 +111,7 @@ except ImportError:
 
 try:
     import transforms3d
+
     TRANSFORMS_AVAILABLE = True
 except ImportError:
     TRANSFORMS_AVAILABLE = False
@@ -91,6 +122,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DataSchema:
     """Data schema definition for validation."""
+
     name: str
     schema: Dict[str, Any]
     version: str = "1.0"
@@ -101,11 +133,12 @@ class DataSchema:
 @dataclass
 class DataQualityMetrics:
     """Data quality assessment metrics."""
+
     completeness: float = 0.0  # Percentage of non-null values
-    accuracy: float = 0.0      # Data accuracy score
-    consistency: float = 0.0   # Data consistency score
-    timeliness: float = 0.0    # Data timeliness score
-    validity: float = 0.0      # Data validity score
+    accuracy: float = 0.0  # Data accuracy score
+    consistency: float = 0.0  # Data consistency score
+    timeliness: float = 0.0  # Data timeliness score
+    validity: float = 0.0  # Data validity score
     total_records: int = 0
     valid_records: int = 0
     invalid_records: int = 0
@@ -115,6 +148,7 @@ class DataQualityMetrics:
 @dataclass
 class TimeSeriesData:
     """Time series data structure."""
+
     timestamps: List[float] = field(default_factory=list)
     values: Dict[str, List[Any]] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -122,6 +156,7 @@ class TimeSeriesData:
 
 class DataValidationError(Exception):
     """Raised when data validation fails."""
+
     pass
 
 
@@ -172,9 +207,9 @@ class DataManager:
                 "sensor_type": {"type": "string"},
                 "value": {"type": "number"},
                 "unit": {"type": "string"},
-                "quality": {"type": "number", "minimum": 0, "maximum": 1}
+                "quality": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": ["timestamp", "sensor_id", "value"]
+            "required": ["timestamp", "sensor_id", "value"],
         }
 
         # GPS data schema
@@ -186,18 +221,24 @@ class DataManager:
                 "longitude": {"type": "number", "minimum": -180, "maximum": 180},
                 "altitude": {"type": "number"},
                 "accuracy": {"type": "number", "minimum": 0},
-                "satellites": {"type": "integer", "minimum": 0}
+                "satellites": {"type": "integer", "minimum": 0},
             },
-            "required": ["timestamp", "latitude", "longitude"]
+            "required": ["timestamp", "latitude", "longitude"],
         }
 
-        self.register_schema("telemetry", telemetry_schema, ["timestamp", "sensor_id", "value"])
+        self.register_schema(
+            "telemetry", telemetry_schema, ["timestamp", "sensor_id", "value"]
+        )
         self.register_schema("gps", gps_schema, ["timestamp", "latitude", "longitude"])
 
     # Schema Management
-    def register_schema(self, name: str, schema: Dict[str, Any],
-                       required_fields: Optional[List[str]] = None,
-                       version: str = "1.0") -> bool:
+    def register_schema(
+        self,
+        name: str,
+        schema: Dict[str, Any],
+        required_fields: Optional[List[str]] = None,
+        version: str = "1.0",
+    ) -> bool:
         """
         Register a data schema for validation.
 
@@ -216,14 +257,17 @@ class DataManager:
                 schema=schema,
                 version=version,
                 required_fields=required_fields or [],
-                optional_fields=[k for k in schema.get("properties", {}).keys()
-                               if k not in (required_fields or [])]
+                optional_fields=[
+                    k
+                    for k in schema.get("properties", {}).keys()
+                    if k not in (required_fields or [])
+                ],
             )
 
             self.schemas[name] = data_schema
 
             # Create validation function if jsonschema available
-            if ORJSON_AVAILABLE and 'jsonschema' in globals():
+            if ORJSON_AVAILABLE and "jsonschema" in globals():
                 try:
                     self.validation_functions[name] = jsonschema.validate
                 except:
@@ -264,7 +308,9 @@ class DataManager:
         except Exception as e:
             return False, [str(e)]
 
-    def _basic_validation(self, data: Any, schema: DataSchema) -> Tuple[bool, List[str]]:
+    def _basic_validation(
+        self, data: Any, schema: DataSchema
+    ) -> Tuple[bool, List[str]]:
         """Basic data validation without jsonschema."""
         errors = []
 
@@ -308,8 +354,11 @@ class DataManager:
         return len(errors) == 0, errors
 
     # Data Processing
-    def process_telemetry_data(self, raw_data: Union[Dict[str, Any], List[Dict[str, Any]]],
-                              schema_name: str = "telemetry") -> Tuple[Any, DataQualityMetrics]:
+    def process_telemetry_data(
+        self,
+        raw_data: Union[Dict[str, Any], List[Dict[str, Any]]],
+        schema_name: str = "telemetry",
+    ) -> Tuple[Any, DataQualityMetrics]:
         """
         Process telemetry data with validation and quality assessment.
 
@@ -357,7 +406,7 @@ class DataManager:
             valid_records=len(valid_data),
             invalid_records=invalid_count,
             completeness=len(valid_data) / len(data_list) if data_list else 0,
-            validity=len(valid_data) / len(data_list) if data_list else 0
+            validity=len(valid_data) / len(data_list) if data_list else 0,
         )
 
         processing_time = time.time() - start_time
@@ -365,7 +414,9 @@ class DataManager:
 
         return processed_data, quality
 
-    def analyze_statistics(self, data: Any, analysis_type: str = "basic") -> Dict[str, Any]:
+    def analyze_statistics(
+        self, data: Any, analysis_type: str = "basic"
+    ) -> Dict[str, Any]:
         """
         Perform statistical analysis on data.
 
@@ -384,7 +435,7 @@ class DataManager:
             # Convert data to numpy array
             if DATA_AVAILABLE and isinstance(data, pd.DataFrame):
                 numeric_data = data.select_dtypes(include=[np.number]).values
-            elif hasattr(data, '__iter__') and not isinstance(data, str):
+            elif hasattr(data, "__iter__") and not isinstance(data, str):
                 numeric_data = np.array(data)
             else:
                 numeric_data = np.array([data])
@@ -405,10 +456,12 @@ class DataManager:
                     # Normality tests
                     if len(numeric_data) >= 3:
                         _, p_normal = stats.normaltest(numeric_data.flatten())
-                        _, p_shapiro = stats.shapiro(numeric_data.flatten()[:5000])  # Shapiro limited to 5000
+                        _, p_shapiro = stats.shapiro(
+                            numeric_data.flatten()[:5000]
+                        )  # Shapiro limited to 5000
                         results["normality_tests"] = {
                             "normaltest_p": float(p_normal),
-                            "shapiro_p": float(p_shapiro)
+                            "shapiro_p": float(p_shapiro),
                         }
 
                 elif analysis_type == "correlation":
@@ -421,7 +474,7 @@ class DataManager:
                 outliers = np.abs(z_scores) > 3
                 results["outliers"] = {
                     "count": int(np.sum(outliers)),
-                    "percentage": float(np.sum(outliers) / len(outliers) * 100)
+                    "percentage": float(np.sum(outliers) / len(outliers) * 100),
                 }
 
         except Exception as e:
@@ -433,8 +486,9 @@ class DataManager:
 
         return results
 
-    def transform_coordinates(self, data: Dict[str, Any],
-                            from_frame: str = "world", to_frame: str = "robot") -> Dict[str, Any]:
+    def transform_coordinates(
+        self, data: Dict[str, Any], from_frame: str = "world", to_frame: str = "robot"
+    ) -> Dict[str, Any]:
         """
         Transform coordinates between reference frames.
 
@@ -452,32 +506,36 @@ class DataManager:
 
         try:
             # Extract pose data
-            x = data.get('x', 0.0)
-            y = data.get('y', 0.0)
-            z = data.get('z', 0.0)
-            roll = data.get('roll', 0.0)
-            pitch = data.get('pitch', 0.0)
-            yaw = data.get('yaw', 0.0)
+            x = data.get("x", 0.0)
+            y = data.get("y", 0.0)
+            z = data.get("z", 0.0)
+            roll = data.get("roll", 0.0)
+            pitch = data.get("pitch", 0.0)
+            yaw = data.get("yaw", 0.0)
 
             # Create transformation matrix
             import transforms3d
+
             rotation_matrix = transforms3d.euler.euler2mat(roll, pitch, yaw)
-            transform_matrix = transforms3d.affines.compose([x, y, z], rotation_matrix, [1, 1, 1])
+            transform_matrix = transforms3d.affines.compose(
+                [x, y, z], rotation_matrix, [1, 1, 1]
+            )
 
             # For now, return the matrix - in a real implementation,
             # you'd apply different transformations based on frames
             return {
                 **data,
                 "transform_matrix": transform_matrix.tolist(),
-                "transformed_at": time.time()
+                "transformed_at": time.time(),
             }
 
         except Exception as e:
             logger.error(f"Coordinate transformation failed: {e}")
             return data
 
-    def process_time_series(self, data: Dict[str, Any],
-                           window_size: Optional[int] = None) -> Dict[str, Any]:
+    def process_time_series(
+        self, data: Dict[str, Any], window_size: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Process time series data with filtering and analysis.
 
@@ -489,8 +547,8 @@ class DataManager:
             Processed time series data
         """
         try:
-            timestamps = data.get('timestamps', [])
-            values = data.get('values', {})
+            timestamps = data.get("timestamps", [])
+            values = data.get("values", {})
 
             if not timestamps or not values:
                 return {"error": "Missing timestamps or values"}
@@ -498,7 +556,7 @@ class DataManager:
             results = {
                 "original_count": len(timestamps),
                 "processed_at": time.time(),
-                "metrics": {}
+                "metrics": {},
             }
 
             # Process each value series
@@ -513,17 +571,19 @@ class DataManager:
                     "mean": float(np.mean(value_array)),
                     "std": float(np.std(value_array)),
                     "min": float(np.min(value_array)),
-                    "max": float(np.max(value_array))
+                    "max": float(np.max(value_array)),
                 }
 
                 # Moving averages if window specified
                 if window_size and len(value_array) > window_size:
                     if SCIPY_AVAILABLE:
                         try:
-                            moving_avg = signal.savgol_filter(value_array,
-                                                             window_size,
-                                                             min(3, window_size-1))
-                            results["metrics"][key]["moving_average"] = moving_avg.tolist()
+                            moving_avg = signal.savgol_filter(
+                                value_array, window_size, min(3, window_size - 1)
+                            )
+                            results["metrics"][key][
+                                "moving_average"
+                            ] = moving_avg.tolist()
                         except:
                             pass
 
@@ -547,7 +607,7 @@ class DataManager:
         """
         try:
             if ORJSON_AVAILABLE:
-                return orjson.dumps(data, **kwargs).decode('utf-8')
+                return orjson.dumps(data, **kwargs).decode("utf-8")
             else:
                 return json.dumps(data, **kwargs)
         except Exception as e:
@@ -586,6 +646,7 @@ class DataManager:
         Returns:
             Circular buffer implementation
         """
+
         class CircularBuffer:
             def __init__(self, size, dtype=float):
                 self.size = size
@@ -601,9 +662,9 @@ class DataManager:
 
             def get_all(self):
                 if self.full:
-                    return self.buffer[self.index:] + self.buffer[:self.index]
+                    return self.buffer[self.index :] + self.buffer[: self.index]
                 else:
-                    return self.buffer[:self.index]
+                    return self.buffer[: self.index]
 
             def get_last_n(self, n: int):
                 all_data = self.get_all()
@@ -621,6 +682,7 @@ class DataManager:
         Returns:
             LRU cache implementation
         """
+
         class LRUCache:
             def __init__(self, capacity):
                 self.capacity = capacity
@@ -656,11 +718,7 @@ class DataManager:
             data: Data to cache
             ttl_seconds: Time to live in seconds
         """
-        cache_entry = {
-            "data": data,
-            "timestamp": time.time(),
-            "ttl": ttl_seconds
-        }
+        cache_entry = {"data": data, "timestamp": time.time(), "ttl": ttl_seconds}
 
         self.data_cache[key] = cache_entry
 
@@ -697,20 +755,24 @@ class DataManager:
             "cache_stats": {
                 "hits": self.cache_hits,
                 "misses": self.cache_misses,
-                "hit_rate": self.cache_hits / (self.cache_hits + self.cache_misses) if (self.cache_hits + self.cache_misses) > 0 else 0
+                "hit_rate": (
+                    self.cache_hits / (self.cache_hits + self.cache_misses)
+                    if (self.cache_hits + self.cache_misses) > 0
+                    else 0
+                ),
             },
             "processing_times": {
                 operation: {
                     "avg_time": sum(times) / len(times),
                     "min_time": min(times),
                     "max_time": max(times),
-                    "count": len(times)
+                    "count": len(times),
                 }
                 for operation, times in self.processing_times.items()
             },
             "cache_size": len(self.data_cache),
             "schemas_registered": len(self.schemas),
-            "quality_checks": len(self.quality_metrics)
+            "quality_checks": len(self.quality_metrics),
         }
 
     def cleanup_cache(self, max_age_seconds: int = 3600):
@@ -738,6 +800,7 @@ class DataManager:
 # Global data manager instance
 _data_manager = None
 
+
 def get_data_manager() -> DataManager:
     """Get global data manager instance."""
     global _data_manager
@@ -745,42 +808,44 @@ def get_data_manager() -> DataManager:
         _data_manager = DataManager()
     return _data_manager
 
+
 # Convenience functions
 def validate_data(data: Any, schema_name: str) -> Tuple[bool, List[str]]:
     """Validate data against schema."""
     return get_data_manager().validate_data(data, schema_name)
 
+
 def process_telemetry(raw_data: Any) -> Tuple[Any, DataQualityMetrics]:
     """Process telemetry data."""
     return get_data_manager().process_telemetry_data(raw_data)
+
 
 def analyze_statistics(data: Any, analysis_type: str = "basic") -> Dict[str, Any]:
     """Perform statistical analysis."""
     return get_data_manager().analyze_statistics(data, analysis_type)
 
+
 def json_dumps(data: Any) -> str:
     """JSON serialization."""
     return get_data_manager().json_dumps(data)
+
 
 def json_loads(data: str) -> Any:
     """JSON deserialization."""
     return get_data_manager().json_loads(data)
 
+
 # Export key components
 __all__ = [
-    'DataManager',
-    'DataSchema',
-    'DataQualityMetrics',
-    'TimeSeriesData',
-    'DataValidationError',
-    'get_data_manager',
-    'validate_data',
-    'process_telemetry',
-    'analyze_statistics',
-    'json_dumps',
-    'json_loads'
+    "DataManager",
+    "DataSchema",
+    "DataQualityMetrics",
+    "TimeSeriesData",
+    "DataValidationError",
+    "get_data_manager",
+    "validate_data",
+    "process_telemetry",
+    "analyze_statistics",
+    "json_dumps",
+    "json_loads",
 ]
-
-
-
-

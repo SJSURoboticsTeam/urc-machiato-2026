@@ -63,6 +63,8 @@ set(srv_files
   "srv/GetAdaptationHistory.srv"
   "srv/GetBlackboardValue.srv"
   "srv/SetBlackboardValue.srv"
+  "srv/SaveBlackboardSnapshot.srv"
+  "srv/LoadBlackboardSnapshot.srv"
 )
 
 set(action_files

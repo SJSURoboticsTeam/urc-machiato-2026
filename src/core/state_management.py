@@ -38,8 +38,10 @@ if TYPE_CHECKING:
 try:
     from transitions import Machine, State
     from transitions.extensions import HierarchicalMachine, GraphMachine, LockedMachine
+
     try:
         import graphviz
+
         GRAPHVIZ_AVAILABLE = True
     except ImportError:
         GRAPHVIZ_AVAILABLE = False
@@ -47,14 +49,27 @@ try:
 except ImportError:
     TRANSITIONS_AVAILABLE = False
     GRAPHVIZ_AVAILABLE = False
+
     # Fallback implementations
     class Machine:
-        def __init__(self, *args, **kwargs): pass
-        def add_transition(self, *args, **kwargs): pass
-        def to_state(self, *args): pass
-    class State: pass
-    class HierarchicalMachine: pass
-    class GraphMachine: pass
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def add_transition(self, *args, **kwargs):
+            pass
+
+        def to_state(self, *args):
+            pass
+
+    class State:
+        pass
+
+    class HierarchicalMachine:
+        pass
+
+    class GraphMachine:
+        pass
+
 
 try:
     import py_trees
@@ -63,28 +78,46 @@ try:
     from py_trees.trees import BehaviourTree
     from py_trees.common import Status
     from py_trees.display import render_dot_tree
+
     PY_TREES_AVAILABLE = True
 except ImportError:
     PY_TREES_AVAILABLE = False
+
     # Fallback implementations
     class Behaviour:
-        def __init__(self, name): self.name = name
-        def update(self): return "SUCCESS"
-        def tick(self): pass
+        def __init__(self, name):
+            self.name = name
+
+        def update(self):
+            return "SUCCESS"
+
+        def tick(self):
+            pass
+
     class Status:
         SUCCESS = "SUCCESS"
         FAILURE = "FAILURE"
         RUNNING = "RUNNING"
-    class Sequence: pass
-    class Selector: pass
-    class Parallel: pass
-    class BehaviourTree: pass
+
+    class Sequence:
+        pass
+
+    class Selector:
+        pass
+
+    class Parallel:
+        pass
+
+    class BehaviourTree:
+        pass
+
 
 logger = logging.getLogger(__name__)
 
 
 class StateType(Enum):
     """Types of state management systems."""
+
     HIERARCHICAL_STATE_MACHINE = "hierarchical_state_machine"
     BEHAVIOR_TREE = "behavior_tree"
     FINITE_STATE_MACHINE = "finite_state_machine"
@@ -93,6 +126,7 @@ class StateType(Enum):
 
 class StateStatus(Enum):
     """State execution status."""
+
     IDLE = "idle"
     RUNNING = "running"
     SUCCESS = "success"
@@ -105,6 +139,7 @@ class StateStatus(Enum):
 @dataclass
 class StateDefinition:
     """Definition of a state."""
+
     name: str
     type: StateType
     description: str = ""
@@ -119,6 +154,7 @@ class StateDefinition:
 @dataclass
 class StateInstance:
     """Runtime instance of a state."""
+
     definition: StateDefinition
     status: StateStatus = StateStatus.IDLE
     entered_at: Optional[float] = None
@@ -131,6 +167,7 @@ class StateInstance:
 @dataclass
 class TransitionEvent:
     """State transition event."""
+
     from_state: str
     to_state: str
     event: str
@@ -160,7 +197,7 @@ class HierarchicalStateMachine:
                 model=self,
                 states=[],
                 initial=initial_state,
-                model_attribute='current_state'
+                model_attribute="current_state",
             )
         else:
             self.machine = None
@@ -169,10 +206,14 @@ class HierarchicalStateMachine:
         self.add_state("idle", "Idle state")
         self.current_state = initial_state
 
-    def add_state(self, name: str, description: str = "",
-                  entry_actions: Optional[List[Callable]] = None,
-                  exit_actions: Optional[List[Callable]] = None,
-                  parent: Optional[str] = None) -> StateDefinition:
+    def add_state(
+        self,
+        name: str,
+        description: str = "",
+        entry_actions: Optional[List[Callable]] = None,
+        exit_actions: Optional[List[Callable]] = None,
+        parent: Optional[str] = None,
+    ) -> StateDefinition:
         """Add a state to the machine."""
 
         state_def = StateDefinition(
@@ -181,7 +222,7 @@ class HierarchicalStateMachine:
             description=description,
             entry_actions=entry_actions or [],
             exit_actions=exit_actions or [],
-            parent=parent
+            parent=parent,
         )
 
         self.states[name] = state_def
@@ -193,16 +234,23 @@ class HierarchicalStateMachine:
         # Add to transitions machine if available
         if self.machine:
             try:
-                self.machine.add_state(name, on_enter=entry_actions, on_exit=exit_actions)
+                self.machine.add_state(
+                    name, on_enter=entry_actions, on_exit=exit_actions
+                )
             except Exception as e:
                 logger.warning(f"Failed to add state to transitions machine: {e}")
 
         return state_def
 
-    def add_transition(self, event: str, source: str, target: str,
-                      conditions: Optional[List[Callable]] = None,
-                      before: Optional[List[Callable]] = None,
-                      after: Optional[List[Callable]] = None):
+    def add_transition(
+        self,
+        event: str,
+        source: str,
+        target: str,
+        conditions: Optional[List[Callable]] = None,
+        before: Optional[List[Callable]] = None,
+        after: Optional[List[Callable]] = None,
+    ):
         """Add a transition between states."""
 
         if source in self.states:
@@ -211,10 +259,14 @@ class HierarchicalStateMachine:
         # Add to transitions machine if available
         if self.machine:
             try:
-                self.machine.add_transition(event, source, target,
-                                          conditions=conditions,
-                                          before=before,
-                                          after=after)
+                self.machine.add_transition(
+                    event,
+                    source,
+                    target,
+                    conditions=conditions,
+                    before=before,
+                    after=after,
+                )
             except Exception as e:
                 logger.warning(f"Failed to add transition to machine: {e}")
 
@@ -249,7 +301,7 @@ class HierarchicalStateMachine:
                 to_state=self.current_state,  # Will be updated by transition
                 event=event,
                 data=kwargs,
-                success=success
+                success=success,
             )
             self.transition_history.append(transition)
 
@@ -331,30 +383,33 @@ class BehaviorTree:
     Consolidates functionality from behavior_tree.py.
     """
 
-    def __init__(self, name: str, root: Optional[Any] = None, node: Optional['Node'] = None):
+    def __init__(
+        self, name: str, root: Optional[Any] = None, node: Optional["Node"] = None
+    ):
         """
         Initialize behavior tree with unified blackboard.
-        
+
         Args:
             name: Name of the behavior tree
             root: Root behavior node (optional)
             node: ROS2 node (REQUIRED for unified blackboard access)
-        
+
         Raises:
             ValueError: If node is None (unified blackboard requires ROS2 node)
         """
         self.name = name
         self.root = root
-        
+
         # Unified blackboard is REQUIRED - no fallback to legacy blackboards
         if node is None:
             raise ValueError(
                 "ROS2 node is required for unified blackboard access. "
                 "Pass a Node instance to use the unified blackboard system."
             )
-        
+
         try:
             from src.core.unified_blackboard_client import UnifiedBlackboardClient
+
             self.blackboard = UnifiedBlackboardClient(node)
             logger.info(f"BehaviorTree '{name}' using unified blackboard")
         except ImportError as e:
@@ -363,7 +418,7 @@ class BehaviorTree:
                 "This is required - legacy blackboard fallbacks have been removed. "
                 f"Original error: {e}"
             )
-        
+
         self.tree: Optional[BehaviourTree] = None
         self.status = Status.INVALID
         self.execution_count = 0
@@ -395,7 +450,7 @@ class BehaviorTree:
             return self.status.name
         else:
             # Fallback execution
-            if self.root and hasattr(self.root, 'update'):
+            if self.root and hasattr(self.root, "update"):
                 try:
                     result = self.root.update()
                     self.status = getattr(Status, result, Status.INVALID)
@@ -409,7 +464,7 @@ class BehaviorTree:
 
     def get_status(self) -> str:
         """Get current tree status."""
-        return self.status.name if hasattr(self.status, 'name') else str(self.status)
+        return self.status.name if hasattr(self.status, "name") else str(self.status)
 
     def get_blackboard_value(self, key: str, default: Any = None) -> Any:
         """Get value from unified blackboard."""
@@ -425,7 +480,7 @@ class BehaviorTree:
             "execution_count": self.execution_count,
             "last_execution_time": self.last_execution_time,
             "average_execution_time": self.last_execution_time,  # Simplified
-            "status": self.get_status()
+            "status": self.get_status(),
         }
 
 
@@ -530,21 +585,27 @@ class StateManager:
         self.error_count = 0
         self.last_activity = time.time()
 
-    def create_state_machine(self, name: str, initial_state: str = "idle") -> HierarchicalStateMachine:
+    def create_state_machine(
+        self, name: str, initial_state: str = "idle"
+    ) -> HierarchicalStateMachine:
         """Create a new hierarchical state machine."""
         machine = HierarchicalStateMachine(name, initial_state)
         self.state_machines[name] = machine
         logger.info(f"Created state machine: {name}")
         return machine
 
-    def create_behavior_tree(self, name: str, root: Optional[Any] = None) -> BehaviorTree:
+    def create_behavior_tree(
+        self, name: str, root: Optional[Any] = None
+    ) -> BehaviorTree:
         """Create a new behavior tree."""
         tree = BehaviorTree(name, root)
         self.behavior_trees[name] = tree
         logger.info(f"Created behavior tree: {name}")
         return tree
 
-    def register_state_instance(self, name: str, definition: StateDefinition) -> StateInstance:
+    def register_state_instance(
+        self, name: str, definition: StateDefinition
+    ) -> StateInstance:
         """Register a state instance."""
         instance = StateInstance(definition=definition)
         self.state_instances[name] = instance
@@ -630,10 +691,10 @@ class StateManager:
                 },
                 "synchronized_states": self.sync_manager.get_all_states(),
                 "transition_count": self.transition_count,
-                "error_count": self.error_count
+                "error_count": self.error_count,
             }
 
-            with open(self.persistence_file, 'w') as f:
+            with open(self.persistence_file, "w") as f:
                 json.dump(state_data, f, indent=2, default=str)
 
         except Exception as e:
@@ -645,7 +706,7 @@ class StateManager:
             return
 
         try:
-            with open(self.persistence_file, 'r') as f:
+            with open(self.persistence_file, "r") as f:
                 state_data = json.load(f)
 
             # Restore synchronized states
@@ -659,7 +720,7 @@ class StateManager:
                         try:
                             # This is simplified - real restoration would be more complex
                             machine = self.state_machines[name]
-                            if hasattr(machine, 'to_state'):
+                            if hasattr(machine, "to_state"):
                                 machine.to_state(state)
                         except Exception as e:
                             logger.error(f"Failed to restore state machine {name}: {e}")
@@ -681,7 +742,7 @@ class StateManager:
                 name: {
                     "current_state": machine.get_current_state(),
                     "states_count": len(machine.states),
-                    "transitions_count": len(machine.transition_history)
+                    "transitions_count": len(machine.transition_history),
                 }
                 for name, machine in self.state_machines.items()
             },
@@ -694,14 +755,16 @@ class StateManager:
             "event_handlers": len(self.event_handlers),
             "persistence": {
                 "enabled": self.persistence_enabled,
-                "file": self.persistence_file
+                "file": self.persistence_file,
             },
             "metrics": {
                 "transition_count": self.transition_count,
                 "error_count": self.error_count,
                 "last_activity": self.last_activity,
-                "uptime_seconds": time.time() - self.last_activity if self.last_activity else 0
-            }
+                "uptime_seconds": (
+                    time.time() - self.last_activity if self.last_activity else 0
+                ),
+            },
         }
 
     def shutdown(self):
@@ -716,6 +779,7 @@ class StateManager:
 # Global state manager instance
 _state_manager = None
 
+
 def get_state_manager() -> StateManager:
     """Get global state manager instance."""
     global _state_manager
@@ -723,41 +787,44 @@ def get_state_manager() -> StateManager:
         _state_manager = StateManager()
     return _state_manager
 
+
 # Convenience functions
-def create_state_machine(name: str, initial_state: str = "idle") -> HierarchicalStateMachine:
+def create_state_machine(
+    name: str, initial_state: str = "idle"
+) -> HierarchicalStateMachine:
     """Create a state machine."""
     return get_state_manager().create_state_machine(name, initial_state)
+
 
 def create_behavior_tree(name: str, root: Optional[Any] = None) -> BehaviorTree:
     """Create a behavior tree."""
     return get_state_manager().create_behavior_tree(name, root)
 
+
 def update_state(name: str, value: Any) -> bool:
     """Update a synchronized state."""
     return get_state_manager().update_state(name, value)
+
 
 def get_state(name: str) -> Any:
     """Get a synchronized state."""
     return get_state_manager().get_state(name)
 
+
 # Export key components
 __all__ = [
-    'StateManager',
-    'HierarchicalStateMachine',
-    'BehaviorTree',
-    'StateSynchronizationManager',
-    'StateType',
-    'StateStatus',
-    'StateDefinition',
-    'StateInstance',
-    'TransitionEvent',
-    'get_state_manager',
-    'create_state_machine',
-    'create_behavior_tree',
-    'update_state',
-    'get_state'
+    "StateManager",
+    "HierarchicalStateMachine",
+    "BehaviorTree",
+    "StateSynchronizationManager",
+    "StateType",
+    "StateStatus",
+    "StateDefinition",
+    "StateInstance",
+    "TransitionEvent",
+    "get_state_manager",
+    "create_state_machine",
+    "create_behavior_tree",
+    "update_state",
+    "get_state",
 ]
-
-
-
-

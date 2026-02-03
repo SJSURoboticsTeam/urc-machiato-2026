@@ -4,6 +4,10 @@ Depth Processing Node for RGB-D SLAM
 
 Handles depth data cleaning, filtering, and synchronization for robust SLAM
 in low-feature desert environments with sand/dust noise.
+
+Expects camera/rgb/image_raw, camera/depth/image_raw (16UC1, depth in mm;
+e.g. RealSense D435), and camera/depth/camera_info. D435-specific range
+is handled by min_depth_mm and max_depth_mm parameters.
 """
 
 import logging

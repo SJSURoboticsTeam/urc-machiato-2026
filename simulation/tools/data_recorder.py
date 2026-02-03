@@ -197,9 +197,9 @@ class DataRecorder:
 
         return {
             "total_records": len(self.data),
-            "recording_duration": max(timestamps) - min(timestamps)
-            if timestamps
-            else 0,
+            "recording_duration": (
+                max(timestamps) - min(timestamps) if timestamps else 0
+            ),
             "records_per_second": self.records_per_second,
             "data_size_mb": self._estimate_data_size() / (1024 * 1024),
             "memory_usage_mb": len(self.data) * 0.001,  # Rough estimate

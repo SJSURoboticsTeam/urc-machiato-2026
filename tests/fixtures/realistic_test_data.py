@@ -24,6 +24,7 @@ def _load_rover_yaml() -> Dict[str, Any]:
         return {}
     try:
         import yaml
+
         with open(_CONFIG_PATH) as f:
             return yaml.safe_load(f) or {}
     except Exception:
@@ -105,6 +106,7 @@ def generate_imu_data(
     if gyro_bounds is not None:
         gyro_max = min(gyro_max, max(abs(b) for b in gyro_bounds))
     import random
+
     random.seed(42)
     return {
         "linear_acceleration_x": random.uniform(-accel_max * 0.5, accel_max * 0.5),

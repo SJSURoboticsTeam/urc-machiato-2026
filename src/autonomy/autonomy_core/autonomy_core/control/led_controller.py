@@ -394,12 +394,12 @@ class LEDController(StateMachineNode):
             "interfaces": self.interfaces.get_active_interfaces(),
             "timers": self.timers.get_timer_info(),
             "led_state": {
-                "current_color": self.current_color.value
-                if self.current_color
-                else None,
-                "current_pattern": self.current_pattern.value
-                if self.current_pattern
-                else None,
+                "current_color": (
+                    self.current_color.value if self.current_color else None
+                ),
+                "current_pattern": (
+                    self.current_pattern.value if self.current_pattern else None
+                ),
                 "led_info": self.current_led_info,
                 "system_state": self.current_system_state,
                 "mission_status": self.current_mission_status,

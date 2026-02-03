@@ -12,8 +12,7 @@ from typing import Any, Dict, List, Optional, Protocol
 class ROS2Message(Protocol):
     """Protocol for ROS2 message types."""
 
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
 
 class Header(Protocol):

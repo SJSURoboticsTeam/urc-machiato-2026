@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class SafetySeverity(Enum):
     """Safety trigger severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -34,6 +35,7 @@ class SafetySeverity(Enum):
 
 class SafetyTrigger(Enum):
     """Types of safety triggers."""
+
     MOTOR_OVERTEMP = "motor_overtemp"
     BATTERY_LOW = "battery_low"
     IMU_SHOCK = "imu_shock"
@@ -44,9 +46,25 @@ class SafetyTrigger(Enum):
     SYSTEM_HANG = "system_hang"
 
 
+class DegradedMode(Enum):
+    """
+    Graceful degradation modes.
+
+    When timeouts or health checks fail with acceptable severity,
+    switch to a degraded mode instead of immediate full stop.
+    """
+
+    FULL = "full"  # All sensors and fusion nominal
+    ODOM_ONLY_NO_GPS = "odom_only_no_gps"  # No GPS: use odom-only for pose
+    SENSOR_STALE_EXCLUDE_FUSION = (
+        "sensor_stale_exclude_fusion"  # One or more sensors stale: exclude from fusion
+    )
+
+
 @dataclass
 class SafetyThreshold:
     """Safety threshold configuration."""
+
     name: str
     trigger: SafetyTrigger
     severity: SafetySeverity
@@ -60,6 +78,7 @@ class SafetyThreshold:
 @dataclass
 class SafetyEvent:
     """Safety event record."""
+
     trigger: SafetyTrigger
     severity: SafetySeverity
     value: float
@@ -104,9 +123,9 @@ class SafetyMonitor:
 
         # Cascading failure prevention
         self.safety_layers = {
-            'primary': True,    # Main safety checks
-            'secondary': True,  # Backup safety checks
-            'tertiary': True    # Emergency safety checks
+            "primary": True,  # Main safety checks
+            "secondary": True,  # Backup safety checks
+            "tertiary": True,  # Emergency safety checks
         }
         self.layer_health = {layer: 1.0 for layer in self.safety_layers}
 
@@ -125,6 +144,12 @@ class SafetyMonitor:
         self.last_recovery_attempt = 0
         self.recovery_cooldown = 30.0  # seconds
 
+        # Graceful degradation: switch modes instead of full stop when acceptable
+        self.current_degraded_mode = DegradedMode.FULL
+        self.enable_graceful_degradation = (
+            True  # When True, use degraded modes for MEDIUM-severity triggers
+        )
+
         # Initialize redundant safety checks
         self._initialize_redundant_checks()
 
@@ -133,17 +158,27 @@ class SafetyMonitor:
     def _initialize_redundant_checks(self):
         """Initialize redundant safety check layers."""
         # Primary layer - main safety checks
-        self.redundant_safety_checks['primary_motor_temp'] = self._check_motor_temperature_primary
-        self.redundant_safety_checks['primary_battery'] = self._check_battery_level_primary
-        self.redundant_safety_checks['primary_imu'] = self._check_imu_safety_primary
+        self.redundant_safety_checks["primary_motor_temp"] = (
+            self._check_motor_temperature_primary
+        )
+        self.redundant_safety_checks["primary_battery"] = (
+            self._check_battery_level_primary
+        )
+        self.redundant_safety_checks["primary_imu"] = self._check_imu_safety_primary
 
         # Secondary layer - backup checks with different methods
-        self.redundant_safety_checks['secondary_motor_temp'] = self._check_motor_temperature_secondary
-        self.redundant_safety_checks['secondary_battery'] = self._check_battery_level_secondary
-        self.redundant_safety_checks['secondary_imu'] = self._check_imu_safety_secondary
+        self.redundant_safety_checks["secondary_motor_temp"] = (
+            self._check_motor_temperature_secondary
+        )
+        self.redundant_safety_checks["secondary_battery"] = (
+            self._check_battery_level_secondary
+        )
+        self.redundant_safety_checks["secondary_imu"] = self._check_imu_safety_secondary
 
         # Tertiary layer - emergency checks with minimal dependencies
-        self.redundant_safety_checks['tertiary_watchdog'] = self._check_system_watchdog_tertiary
+        self.redundant_safety_checks["tertiary_watchdog"] = (
+            self._check_system_watchdog_tertiary
+        )
 
     def _load_redundant_thresholds(self) -> Dict[SafetyTrigger, SafetyThreshold]:
         """Load more conservative thresholds for redundant checks."""
@@ -155,7 +190,7 @@ class SafetyMonitor:
                 threshold_value=65.0,  # Lower threshold for redundancy
                 hysteresis=3.0,
                 description="Redundant motor temperature check",
-                auto_clear=True
+                auto_clear=True,
             ),
             SafetyTrigger.BATTERY_LOW: SafetyThreshold(
                 name="Redundant Battery Low",
@@ -165,7 +200,7 @@ class SafetyMonitor:
                 hysteresis=1.0,
                 description="Redundant battery level check",
                 auto_clear=False,
-                requires_ack=True
+                requires_ack=True,
             ),
             SafetyTrigger.IMU_SHOCK: SafetyThreshold(
                 name="Redundant IMU Shock Detection",
@@ -174,8 +209,8 @@ class SafetyMonitor:
                 threshold_value=40.0,  # Lower threshold for redundancy
                 hysteresis=5.0,
                 description="Redundant acceleration check",
-                auto_clear=True
-            )
+                auto_clear=True,
+            ),
         }
 
     def _load_default_thresholds(self) -> Dict[SafetyTrigger, SafetyThreshold]:
@@ -188,7 +223,7 @@ class SafetyMonitor:
                 threshold_value=70.0,  # Celsius
                 hysteresis=5.0,
                 description="Motor temperature exceeds safe limit",
-                auto_clear=True
+                auto_clear=True,
             ),
             SafetyTrigger.BATTERY_LOW: SafetyThreshold(
                 name="Battery Low",
@@ -198,7 +233,7 @@ class SafetyMonitor:
                 hysteresis=2.0,
                 description="Battery level critically low",
                 auto_clear=False,
-                requires_ack=True
+                requires_ack=True,
             ),
             SafetyTrigger.IMU_SHOCK: SafetyThreshold(
                 name="IMU Shock Detection",
@@ -207,7 +242,7 @@ class SafetyMonitor:
                 threshold_value=50.0,  # m/s²
                 hysteresis=10.0,
                 description="Excessive acceleration detected",
-                auto_clear=True
+                auto_clear=True,
             ),
             SafetyTrigger.GPS_LOSS: SafetyThreshold(
                 name="GPS Signal Loss",
@@ -215,7 +250,7 @@ class SafetyMonitor:
                 severity=SafetySeverity.MEDIUM,
                 threshold_value=self.watchdog_timeout,
                 description="GPS signal lost for extended period",
-                auto_clear=True
+                auto_clear=True,
             ),
             SafetyTrigger.COMM_TIMEOUT: SafetyThreshold(
                 name="Communication Timeout",
@@ -223,7 +258,7 @@ class SafetyMonitor:
                 severity=SafetySeverity.HIGH,
                 threshold_value=5.0,  # seconds
                 description="Communication with base station lost",
-                auto_clear=True
+                auto_clear=True,
             ),
             SafetyTrigger.OBSTACLE_CLOSE: SafetyThreshold(
                 name="Obstacle Too Close",
@@ -232,7 +267,7 @@ class SafetyMonitor:
                 threshold_value=0.3,  # meters
                 hysteresis=0.1,
                 description="Obstacle dangerously close",
-                auto_clear=True
+                auto_clear=True,
             ),
             SafetyTrigger.CURRENT_SPIKE: SafetyThreshold(
                 name="Current Spike",
@@ -241,8 +276,8 @@ class SafetyMonitor:
                 threshold_value=15.0,  # Amperes
                 hysteresis=2.0,
                 description="Motor current spike detected",
-                auto_clear=True
-            )
+                auto_clear=True,
+            ),
         }
 
     def start_monitoring(self) -> bool:
@@ -253,13 +288,19 @@ class SafetyMonitor:
         self.monitoring_active = True
 
         # Start primary monitoring thread
-        self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True, name="primary_safety_monitor")
+        self.monitor_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True, name="primary_safety_monitor"
+        )
         self.monitor_thread.start()
 
         # Start backup monitoring thread (delayed start to prevent resource contention)
         def start_backup_monitor():
             time.sleep(1.0)  # Delay backup thread start
-            self.backup_monitor_thread = threading.Thread(target=self._backup_monitoring_loop, daemon=True, name="backup_safety_monitor")
+            self.backup_monitor_thread = threading.Thread(
+                target=self._backup_monitoring_loop,
+                daemon=True,
+                name="backup_safety_monitor",
+            )
             self.backup_monitor_thread.start()
 
         backup_starter = threading.Thread(target=start_backup_monitor, daemon=True)
@@ -292,10 +333,14 @@ class SafetyMonitor:
                 time.sleep(self.monitoring_interval)
             except Exception as e:
                 consecutive_errors += 1
-                self.logger.error(f"Safety monitoring error ({consecutive_errors}/{max_consecutive_errors}): {e}")
+                self.logger.error(
+                    f"Safety monitoring error ({consecutive_errors}/{max_consecutive_errors}): {e}"
+                )
 
                 if consecutive_errors >= max_consecutive_errors:
-                    self.logger.critical("Primary safety monitoring failed repeatedly, escalating")
+                    self.logger.critical(
+                        "Primary safety monitoring failed repeatedly, escalating"
+                    )
                     self._escalate_monitoring_failure()
                     break  # Exit loop, let backup thread take over
 
@@ -309,7 +354,9 @@ class SafetyMonitor:
             try:
                 # Check if primary thread is still alive
                 if self.monitor_thread and not self.monitor_thread.is_alive():
-                    self.logger.warning("Primary safety monitoring thread died, backup taking over")
+                    self.logger.warning(
+                        "Primary safety monitoring thread died, backup taking over"
+                    )
 
                     # Take over safety monitoring
                     self._check_safety_limits()
@@ -325,16 +372,18 @@ class SafetyMonitor:
 
     def _check_layer_health(self):
         """Check health of safety layers and trigger recovery if needed."""
-        degraded_layers = [layer for layer, health in self.layer_health.items() if health < 0.8]
+        degraded_layers = [
+            layer for layer, health in self.layer_health.items() if health < 0.8
+        ]
 
         if degraded_layers:
             self.logger.warning(f"Degraded safety layers detected: {degraded_layers}")
 
             # Attempt layer recovery
             for layer in degraded_layers:
-                if layer == 'primary' and self.layer_health[layer] < 0.5:
+                if layer == "primary" and self.layer_health[layer] < 0.5:
                     self._recover_primary_layer()
-                elif layer == 'secondary' and self.layer_health[layer] < 0.5:
+                elif layer == "secondary" and self.layer_health[layer] < 0.5:
                     self._recover_secondary_layer()
 
     def _escalate_monitoring_failure(self):
@@ -344,18 +393,26 @@ class SafetyMonitor:
         # Force emergency stop as fail-safe
         if not self.emergency_stop_active:
             self._execute_emergency_stop(
-                type('Event', (), {
-                    'description': 'Safety monitoring system failure',
-                    'trigger': SafetyTrigger.SYSTEM_HANG,
-                    'severity': SafetySeverity.CRITICAL
-                })()
+                type(
+                    "Event",
+                    (),
+                    {
+                        "description": "Safety monitoring system failure",
+                        "trigger": SafetyTrigger.SYSTEM_HANG,
+                        "severity": SafetySeverity.CRITICAL,
+                    },
+                )()
             )
 
     def _attempt_monitor_restart(self):
         """Attempt to restart the primary monitoring thread."""
         try:
             self.logger.info("Attempting to restart primary safety monitoring thread")
-            self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True, name="restarted_primary_monitor")
+            self.monitor_thread = threading.Thread(
+                target=self._monitoring_loop,
+                daemon=True,
+                name="restarted_primary_monitor",
+            )
             self.monitor_thread.start()
         except Exception as e:
             self.logger.error(f"Failed to restart primary monitoring thread: {e}")
@@ -365,8 +422,8 @@ class SafetyMonitor:
         try:
             self.logger.info("Attempting to recover primary safety layer")
             self._initialize_redundant_checks()
-            self.safety_layers['primary'] = True
-            self.layer_health['primary'] = 0.9  # Near full recovery
+            self.safety_layers["primary"] = True
+            self.layer_health["primary"] = 0.9  # Near full recovery
         except Exception as e:
             self.logger.error(f"Primary layer recovery failed: {e}")
 
@@ -375,42 +432,46 @@ class SafetyMonitor:
         try:
             self.logger.info("Attempting to recover secondary safety layer")
             # Reinitialize secondary checks
-            self.safety_layers['secondary'] = True
-            self.layer_health['secondary'] = 0.8
+            self.safety_layers["secondary"] = True
+            self.layer_health["secondary"] = 0.8
         except Exception as e:
             self.logger.error(f"Secondary layer recovery failed: {e}")
 
     def _check_safety_limits(self):
         """Check all safety thresholds with redundant layers."""
         # Execute primary safety checks
-        if self.safety_layers['primary']:
+        if self.safety_layers["primary"]:
             try:
                 self._execute_primary_safety_checks()
-                self.layer_health['primary'] = 1.0
+                self.layer_health["primary"] = 1.0
             except Exception as e:
                 self.logger.error(f"Primary safety layer failed: {e}")
-                self.layer_health['primary'] = 0.0
-                self.safety_layers['primary'] = False
+                self.layer_health["primary"] = 0.0
+                self.safety_layers["primary"] = False
 
         # Execute secondary safety checks if primary is degraded
-        if not self.safety_layers['primary'] and self.safety_layers['secondary']:
+        if not self.safety_layers["primary"] and self.safety_layers["secondary"]:
             try:
                 self._execute_secondary_safety_checks()
-                self.layer_health['secondary'] = 1.0
+                self.layer_health["secondary"] = 1.0
             except Exception as e:
                 self.logger.error(f"Secondary safety layer failed: {e}")
-                self.layer_health['secondary'] = 0.0
-                self.safety_layers['secondary'] = False
+                self.layer_health["secondary"] = 0.0
+                self.safety_layers["secondary"] = False
 
         # Execute tertiary safety checks if both primary and secondary fail
-        if not self.safety_layers['primary'] and not self.safety_layers['secondary'] and self.safety_layers['tertiary']:
+        if (
+            not self.safety_layers["primary"]
+            and not self.safety_layers["secondary"]
+            and self.safety_layers["tertiary"]
+        ):
             try:
                 self._execute_tertiary_safety_checks()
-                self.layer_health['tertiary'] = 1.0
+                self.layer_health["tertiary"] = 1.0
             except Exception as e:
                 self.logger.critical(f"Tertiary safety layer failed: {e}")
-                self.layer_health['tertiary'] = 0.0
-                self.safety_layers['tertiary'] = False
+                self.layer_health["tertiary"] = 0.0
+                self.safety_layers["tertiary"] = False
 
         # Update overall system health
         self._update_system_health_score()
@@ -418,41 +479,45 @@ class SafetyMonitor:
     def _execute_primary_safety_checks(self):
         """Execute primary safety checks (original implementation)."""
         # Motor temperature checks
-        if hasattr(self, '_check_motor_temperature_primary'):
+        if hasattr(self, "_check_motor_temperature_primary"):
             self._check_motor_temperature_primary()
 
         # Battery checks
-        if hasattr(self, '_check_battery_level_primary'):
+        if hasattr(self, "_check_battery_level_primary"):
             self._check_battery_level_primary()
 
         # IMU safety checks
-        if hasattr(self, '_check_imu_safety_primary'):
+        if hasattr(self, "_check_imu_safety_primary"):
             self._check_imu_safety_primary()
 
     def _execute_secondary_safety_checks(self):
         """Execute secondary safety checks with different methods."""
-        self.logger.warning("Executing secondary safety checks - primary layer degraded")
+        self.logger.warning(
+            "Executing secondary safety checks - primary layer degraded"
+        )
 
-        if hasattr(self, '_check_motor_temperature_secondary'):
+        if hasattr(self, "_check_motor_temperature_secondary"):
             self._check_motor_temperature_secondary()
 
-        if hasattr(self, '_check_battery_level_secondary'):
+        if hasattr(self, "_check_battery_level_secondary"):
             self._check_battery_level_secondary()
 
-        if hasattr(self, '_check_imu_safety_secondary'):
+        if hasattr(self, "_check_imu_safety_secondary"):
             self._check_imu_safety_secondary()
 
     def _execute_tertiary_safety_checks(self):
         """Execute tertiary emergency safety checks."""
-        self.logger.critical("Executing tertiary safety checks - multiple layers failed")
+        self.logger.critical(
+            "Executing tertiary safety checks - multiple layers failed"
+        )
 
-        if hasattr(self, '_check_system_watchdog_tertiary'):
+        if hasattr(self, "_check_system_watchdog_tertiary"):
             self._check_system_watchdog_tertiary()
 
     def _update_system_health_score(self):
         """Update overall system health score based on layer health."""
         # Weighted average of layer health
-        weights = {'primary': 0.6, 'secondary': 0.3, 'tertiary': 0.1}
+        weights = {"primary": 0.6, "secondary": 0.3, "tertiary": 0.1}
         self.system_health_score = sum(
             self.layer_health[layer] * weights[layer]
             for layer in self.safety_layers.keys()
@@ -474,8 +539,8 @@ class SafetyMonitor:
         # Try to restore primary layer
         try:
             self._initialize_redundant_checks()
-            self.safety_layers['primary'] = True
-            self.layer_health['primary'] = 0.8  # Partially recovered
+            self.safety_layers["primary"] = True
+            self.layer_health["primary"] = 0.8  # Partially recovered
             self.logger.info("Primary safety layer recovered")
         except Exception as e:
             self.logger.error(f"Failed to recover primary safety layer: {e}")
@@ -527,7 +592,7 @@ class SafetyMonitor:
             self._trigger_safety_event(
                 SafetyTrigger.SYSTEM_HANG,
                 current_time - self.last_sensor_update,
-                self.watchdog_timeout * 2
+                self.watchdog_timeout * 2,
             )
 
     def _check_watchdog(self):
@@ -536,10 +601,16 @@ class SafetyMonitor:
 
         # Check sensor update watchdog
         if current_time - self.last_sensor_update > self.watchdog_timeout:
+            # GPS_LOSS is MEDIUM severity: optionally switch to degraded mode instead of full stop
+            if self.enable_graceful_degradation:
+                self.current_degraded_mode = DegradedMode.ODOM_ONLY_NO_GPS
+                self.logger.warning(
+                    "Sensor/watchdog timeout: switching to degraded mode ODOM_ONLY_NO_GPS"
+                )
             self._trigger_safety_event(
                 SafetyTrigger.GPS_LOSS,
                 current_time - self.last_sensor_update,
-                self.watchdog_timeout
+                self.watchdog_timeout,
             )
 
     def update_sensor_data(self, sensor_data: Dict[str, Any]):
@@ -550,29 +621,41 @@ class SafetyMonitor:
             sensor_data: Dictionary containing sensor readings
         """
         self.last_sensor_update = time.time()
+        # When we receive fresh sensor data and were in a stale-based degraded mode, consider restoring
+        if self.current_degraded_mode == DegradedMode.SENSOR_STALE_EXCLUDE_FUSION:
+            self.current_degraded_mode = DegradedMode.FULL
+            self.logger.info("Sensor data restored: degraded mode cleared to FULL")
 
         # Check motor temperatures
-        if 'motor_temps' in sensor_data:
-            for i, temp in enumerate(sensor_data['motor_temps']):
-                self._check_threshold(SafetyTrigger.MOTOR_OVERTEMP, temp, f"Motor {i+1}")
+        if "motor_temps" in sensor_data:
+            for i, temp in enumerate(sensor_data["motor_temps"]):
+                self._check_threshold(
+                    SafetyTrigger.MOTOR_OVERTEMP, temp, f"Motor {i+1}"
+                )
 
         # Check battery level
-        if 'battery_level' in sensor_data:
-            self._check_threshold(SafetyTrigger.BATTERY_LOW, sensor_data['battery_level'])
+        if "battery_level" in sensor_data:
+            self._check_threshold(
+                SafetyTrigger.BATTERY_LOW, sensor_data["battery_level"]
+            )
 
         # Check IMU acceleration
-        if 'imu_accel' in sensor_data:
-            accel_magnitude = sum(x**2 for x in sensor_data['imu_accel'])**0.5
+        if "imu_accel" in sensor_data:
+            accel_magnitude = sum(x**2 for x in sensor_data["imu_accel"]) ** 0.5
             self._check_threshold(SafetyTrigger.IMU_SHOCK, accel_magnitude)
 
         # Check motor currents
-        if 'motor_currents' in sensor_data:
-            for i, current in enumerate(sensor_data['motor_currents']):
-                self._check_threshold(SafetyTrigger.CURRENT_SPIKE, current, f"Motor {i+1}")
+        if "motor_currents" in sensor_data:
+            for i, current in enumerate(sensor_data["motor_currents"]):
+                self._check_threshold(
+                    SafetyTrigger.CURRENT_SPIKE, current, f"Motor {i+1}"
+                )
 
         # Check obstacle distance
-        if 'min_obstacle_distance' in sensor_data:
-            self._check_threshold(SafetyTrigger.OBSTACLE_CLOSE, sensor_data['min_obstacle_distance'])
+        if "min_obstacle_distance" in sensor_data:
+            self._check_threshold(
+                SafetyTrigger.OBSTACLE_CLOSE, sensor_data["min_obstacle_distance"]
+            )
 
     def _check_threshold(self, trigger: SafetyTrigger, value: float, context: str = ""):
         """Check if a value exceeds a safety threshold."""
@@ -590,11 +673,16 @@ class SafetyMonitor:
         else:
             # Check hysteresis for clearing
             clear_value = threshold_value - threshold.hysteresis
-            if trigger in self.active_triggers and value < clear_value and threshold.auto_clear:
+            if (
+                trigger in self.active_triggers
+                and value < clear_value
+                and threshold.auto_clear
+            ):
                 self._clear_safety_event(trigger)
 
-    def _trigger_safety_event(self, trigger: SafetyTrigger, value: float,
-                            threshold: float, context: str = ""):
+    def _trigger_safety_event(
+        self, trigger: SafetyTrigger, value: float, threshold: float, context: str = ""
+    ):
         """Trigger a safety event."""
         threshold_config = self.thresholds[trigger]
 
@@ -604,15 +692,21 @@ class SafetyMonitor:
             value=value,
             threshold=threshold,
             timestamp=time.time(),
-            description=f"{threshold_config.description}: {value:.2f} > {threshold:.2f} {context}".strip()
+            description=f"{threshold_config.description}: {value:.2f} > {threshold:.2f} {context}".strip(),
         )
 
         self.active_triggers[trigger] = event
 
         self.logger.warning(f"Safety trigger activated: {event.description}")
 
-        # Execute emergency stop for critical/high severity
-        if event.severity in [SafetySeverity.CRITICAL, SafetySeverity.HIGH]:
+        # For MEDIUM severity (e.g. GPS_LOSS), optionally only set degraded mode, no emergency stop
+        if event.severity == SafetySeverity.MEDIUM and self.enable_graceful_degradation:
+            if trigger == SafetyTrigger.GPS_LOSS:
+                self.current_degraded_mode = DegradedMode.ODOM_ONLY_NO_GPS
+            else:
+                self.current_degraded_mode = DegradedMode.SENSOR_STALE_EXCLUDE_FUSION
+            # Do not call _execute_emergency_stop for MEDIUM when graceful degradation is on
+        elif event.severity in [SafetySeverity.CRITICAL, SafetySeverity.HIGH]:
             self._execute_emergency_stop(event)
 
         # Call warning callbacks
@@ -630,9 +724,11 @@ class SafetyMonitor:
 
             # Remove after a delay if auto-clear is enabled
             if self.thresholds[trigger].auto_clear:
+
                 def delayed_remove():
                     time.sleep(1.0)  # Keep in history briefly
                     self.active_triggers.pop(trigger, None)
+
                 threading.Thread(target=delayed_remove, daemon=True).start()
 
             self.logger.info(f"Safety trigger cleared: {trigger.value}")
@@ -669,12 +765,12 @@ class SafetyMonitor:
         """
         active_triggers = [
             {
-                'trigger': event.trigger.value,
-                'severity': event.severity.value,
-                'value': event.value,
-                'threshold': event.threshold,
-                'description': event.description,
-                'timestamp': event.timestamp
+                "trigger": event.trigger.value,
+                "severity": event.severity.value,
+                "value": event.value,
+                "threshold": event.threshold,
+                "description": event.description,
+                "timestamp": event.timestamp,
             }
             for event in self.active_triggers.values()
             if event.active
@@ -682,17 +778,17 @@ class SafetyMonitor:
 
         highest_severity = None
         if active_triggers:
-            severities = [t['severity'] for t in active_triggers]
-            severity_order = {'low': 0, 'medium': 1, 'high': 2, 'critical': 3}
+            severities = [t["severity"] for t in active_triggers]
+            severity_order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
             highest_severity = max(severities, key=lambda s: severity_order[s])
 
         # Calculate overall safety score
         safety_score = 1.0
         if active_triggers:
             # Reduce score based on severity and count
-            severity_penalty = {'low': 0.1, 'medium': 0.2, 'high': 0.4, 'critical': 0.8}
+            severity_penalty = {"low": 0.1, "medium": 0.2, "high": 0.4, "critical": 0.8}
             for trigger in active_triggers:
-                safety_score -= severity_penalty.get(trigger['severity'], 0.1)
+                safety_score -= severity_penalty.get(trigger["severity"], 0.1)
             safety_score = max(0.0, safety_score)
 
         # Factor in system health
@@ -700,25 +796,33 @@ class SafetyMonitor:
         safety_score = max(0.0, min(1.0, safety_score))
 
         return {
-            'safety_enabled': self.safety_enabled,
-            'system_safe': len(active_triggers) == 0 and self.system_health_score > 0.8,
-            'emergency_stop_active': self.emergency_stop_active,
-            'active_triggers': active_triggers,
-            'highest_severity': highest_severity,
-            'monitoring_active': self.monitoring_active,
-            'last_sensor_update': self.last_sensor_update,
+            "safety_enabled": self.safety_enabled,
+            "system_safe": len(active_triggers) == 0 and self.system_health_score > 0.8,
+            "emergency_stop_active": self.emergency_stop_active,
+            "active_triggers": active_triggers,
+            "highest_severity": highest_severity,
+            "monitoring_active": self.monitoring_active,
+            "last_sensor_update": self.last_sensor_update,
+            "degraded_mode": self.current_degraded_mode.value,
+            "enable_graceful_degradation": self.enable_graceful_degradation,
             # Enhanced status information
-            'safety_score': safety_score,
-            'system_health_score': self.system_health_score,
-            'safety_layers': self.safety_layers.copy(),
-            'layer_health': self.layer_health.copy(),
-            'redundant_checks_active': len(self.redundant_safety_checks) > 0,
-            'recovery_available': len(self.recovery_actions) > 0,
-            'last_recovery_attempt': self.last_recovery_attempt,
-            'thread_health': {
-                'primary_monitor_alive': self.monitor_thread.is_alive() if self.monitor_thread else False,
-                'backup_monitor_alive': self.backup_monitor_thread.is_alive() if self.backup_monitor_thread else False
-            }
+            "safety_score": safety_score,
+            "system_health_score": self.system_health_score,
+            "safety_layers": self.safety_layers.copy(),
+            "layer_health": self.layer_health.copy(),
+            "redundant_checks_active": len(self.redundant_safety_checks) > 0,
+            "recovery_available": len(self.recovery_actions) > 0,
+            "last_recovery_attempt": self.last_recovery_attempt,
+            "thread_health": {
+                "primary_monitor_alive": (
+                    self.monitor_thread.is_alive() if self.monitor_thread else False
+                ),
+                "backup_monitor_alive": (
+                    self.backup_monitor_thread.is_alive()
+                    if self.backup_monitor_thread
+                    else False
+                ),
+            },
         }
 
     def acknowledge_safety_event(self, trigger: SafetyTrigger) -> bool:
@@ -754,10 +858,10 @@ class SafetyMonitor:
 # Global safety monitor instance
 _safety_monitor = None
 
+
 def get_safety_monitor(node=None) -> SafetyMonitor:
     """Get global safety monitor instance."""
     global _safety_monitor
     if _safety_monitor is None:
         _safety_monitor = SafetyMonitor(node)
     return _safety_monitor
-

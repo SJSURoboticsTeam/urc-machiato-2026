@@ -23,7 +23,7 @@ import numpy as np
 import rclpy
 
 # ROS2 Messages
-from geometry_msgs.msg import Point, PoseStamped, Twist
+from geometry_msgs.msg import Point, PoseStamped, PoseWithCovarianceStamped, Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
@@ -31,6 +31,16 @@ from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Float32, String
 from std_srvs.srv import Trigger
 from visualization_msgs.msg import Marker, MarkerArray
+
+# Unified blackboard (optional)
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    _BLACKBOARD_AVAILABLE = True
+except ImportError:
+    _BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class FollowMeState(Enum):
@@ -134,7 +144,7 @@ class FollowMeMission(Node):
             CameraInfo, "/camera/camera_info", self.camera_info_callback, 10
         )
         self.pose_sub = self.create_subscription(
-            PoseStamped, "/slam/pose", self.pose_callback, 10
+            PoseWithCovarianceStamped, "slam/pose", self.pose_callback, 10
         )
         self.odom_sub = self.create_subscription(
             Odometry, "/odom", self.odom_callback, 10
@@ -155,6 +165,13 @@ class FollowMeMission(Node):
         self.current_image: Optional[np.ndarray] = None
         self.camera_info: Optional[CameraInfo] = None
         self.current_pose: Optional[PoseStamped] = None
+        # Unified blackboard (optional)
+        self._blackboard = None
+        if _BLACKBOARD_AVAILABLE:
+            try:
+                self._blackboard = UnifiedBlackboardClient(self)
+            except Exception:
+                self._blackboard = None
         self.current_odom: Optional[Odometry] = None
 
         # Status update timer
@@ -183,9 +200,12 @@ class FollowMeMission(Node):
         """Update camera calibration info"""
         self.camera_info = msg
 
-    def pose_callback(self, msg: PoseStamped):
-        """Update SLAM pose"""
-        self.current_pose = msg
+    def pose_callback(self, msg: PoseWithCovarianceStamped):
+        """Update SLAM pose (convert to PoseStamped for internal use)."""
+        ps = PoseStamped()
+        ps.header = msg.header
+        ps.pose = msg.pose.pose
+        self.current_pose = ps
 
     def odom_callback(self, msg: Odometry):
         """Update odometry"""
@@ -208,6 +228,7 @@ class FollowMeMission(Node):
         """Stop follow-me mission"""
         self.stop_execution = True
         self.state = FollowMeState.IDLE
+        self._sync_blackboard()
         self.target_pose = None
 
         # Stop robot

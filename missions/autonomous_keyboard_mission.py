@@ -28,6 +28,22 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from tf2_ros import Buffer, TransformListener
 
+# Optional: vision detections and blackboard
+try:
+    from autonomy_interfaces.msg import VisionDetection
+
+    _VISION_DETECTION_AVAILABLE = True
+except ImportError:
+    _VISION_DETECTION_AVAILABLE = False
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    _BLACKBOARD_AVAILABLE = True
+except ImportError:
+    _BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
+
 from src.autonomy.perception.autonomous_typing.autonomy_autonomous_typing.arm_controller import (
     ArmController,
 )
@@ -121,6 +137,22 @@ class AutonomousKeyboardMission(Node):
             self.keyboard_pose_callback,
             QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=3),
         )
+        # Optional: keyboard from computer_vision_node detections
+        self._vision_detection_sub = None
+        if _VISION_DETECTION_AVAILABLE:
+            self._vision_detection_sub = self.create_subscription(
+                VisionDetection,
+                "vision/detections",
+                self._vision_detection_callback,
+                QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=5),
+            )
+        # Unified blackboard for mission phase (optional)
+        self._blackboard = None
+        if _BLACKBOARD_AVAILABLE:
+            try:
+                self._blackboard = UnifiedBlackboardClient(self)
+            except Exception:
+                self._blackboard = None
 
         self.odom_sub = self.create_subscription(
             Odometry,
@@ -150,6 +182,24 @@ class AutonomousKeyboardMission(Node):
 
         self.get_logger().info("Autonomous Keyboard Mission initialized")
         self.get_logger().info(f"Target sequence: '{self.target_sequence}'")
+
+    def _vision_detection_callback(self, msg: "VisionDetection") -> None:
+        """Use computer_vision_node keyboard detection for localization."""
+        if (
+            getattr(msg, "class_name", "") == "keyboard"
+            and getattr(msg, "confidence", 0.0) > 0.5
+        ):
+            self.keyboard_detected = True
+            if hasattr(msg, "pose") and msg.pose:
+                self.keyboard_pose = msg.pose
+
+    def _sync_blackboard(self, phase: str) -> None:
+        """Write current_mission_phase to blackboard."""
+        if self._blackboard and BlackboardKeys:
+            try:
+                self._blackboard.set(BlackboardKeys.CURRENT_MISSION_PHASE, phase)
+            except Exception:
+                pass
 
     def mission_command_callback(self, msg: String):
         """Handle keyboard mission specific commands."""
@@ -184,6 +234,7 @@ class AutonomousKeyboardMission(Node):
             return
 
         self.get_logger().info("[IGNITE] Starting Autonomous Keyboard Typing Mission")
+        self._sync_blackboard("keyboard_typing")
         self.state = KeyboardMissionState.SEARCHING
         self.start_time = time.time()
         self.keyboard_detected = False
@@ -202,6 +253,7 @@ class AutonomousKeyboardMission(Node):
         """Stop the current mission."""
         self.get_logger().info(" Stopping Autonomous Keyboard Mission")
         self.state = KeyboardMissionState.IDLE
+        self._sync_blackboard("idle")
         self.cleanup_timers()
         self.publish_status()
 

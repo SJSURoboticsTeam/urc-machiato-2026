@@ -1,0 +1,9 @@
+# Save blackboard state to a JSON file (subset of keys for mission progress / mode / safety)
+
+# Request
+string path             # File path (empty = use default data/blackboard_snapshot.json)
+
+---
+# Response
+bool success
+string message          # Error message if success=false

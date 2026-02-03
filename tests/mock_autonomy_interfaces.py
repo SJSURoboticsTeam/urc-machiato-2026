@@ -79,6 +79,7 @@ srv.ChangeState = ChangeState
 srv.DetectAruco = DetectAruco
 srv.StartTyping = StartTyping
 
+
 # Mock action types
 class ExecuteMission:
     class Goal:

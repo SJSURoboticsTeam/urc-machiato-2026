@@ -1,0 +1,41 @@
+# Intel RealSense D435 camera configuration for URC 2026 SLAM pipeline
+# Used by realsense_driver node and depth_processor presets
+# Compatible with depth_processor topics: camera/rgb/image_raw, camera/depth/image_raw, camera/depth/camera_info
+
+realsense_d435:
+  # Stream configuration
+  width: 640
+  height: 480
+  fps: 30
+  depth_width: 640
+  depth_height: 480
+  depth_fps: 30
+
+  # Depth preset: one of "Default", "Hand", "HighAccuracy", "HighDensity", "MediumDensity"
+  depth_preset: "HighAccuracy"
+
+  # Depth scale: meters per unit (D435 reports in mm, so 0.001)
+  depth_scale: 0.001
+  # Depth units in driver output: "mm" (16UC1) for compatibility with depth_processor min/max_depth_mm
+  depth_units: "mm"
+
+  # Frame IDs (must match TF and slam_node expectations)
+  optical_frame_id: "camera_depth_optical_frame"
+  base_frame_id: "camera_link"
+
+  # Align depth to color (recommended for RGB-D SLAM)
+  align_depth_to_color: true
+
+  # Desert preset for depth_processor: sand/dust noise reduction
+  depth_processor:
+    min_depth_mm: 200
+    max_depth_mm: 4000
+    temporal_smoothing_window: 5
+    enable_dust_detection: true
+    depth_sigma_color: 75.0
+    depth_sigma_space: 75.0
+
+  # Exposure and gain (optional; leave unset for auto)
+  # enable_auto_exposure: true
+  # exposure: 166
+  # gain: 64

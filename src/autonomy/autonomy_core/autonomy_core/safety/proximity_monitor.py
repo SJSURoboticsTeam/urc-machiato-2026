@@ -35,13 +35,16 @@ try:
 except ImportError:
     SafetyStatus = None
 
-# Unified blackboard client
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../src'))
+# Unified blackboard client and key constants
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../src"))
 try:
     from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
     UNIFIED_BLACKBOARD_AVAILABLE = True
 except ImportError:
     UNIFIED_BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class ProximitySensorType(Enum):
@@ -138,13 +141,17 @@ class ProximityMonitor(Node):
         if UNIFIED_BLACKBOARD_AVAILABLE:
             try:
                 self.blackboard = UnifiedBlackboardClient(self)
-                self.logger.info("Unified blackboard client initialized for proximity monitor")
+                self.logger.info(
+                    "Unified blackboard client initialized for proximity monitor"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to initialize blackboard client: {e}")
                 self.blackboard = None
         else:
             self.blackboard = None
-            self.logger.warning("Unified blackboard not available - obstacle data won't be written to blackboard")
+            self.logger.warning(
+                "Unified blackboard not available - obstacle data won't be written to blackboard"
+            )
 
         self.logger.info("Proximity Monitor initialized")
 
@@ -470,10 +477,14 @@ class ProximityMonitor(Node):
         self.proximity_violation_active = True
 
         # Update unified blackboard with obstacle data
-        if self.blackboard:
-            self.blackboard.set("closest_obstacle_distance", reading.distance)
-            self.blackboard.set("obstacle_detected", True)
-            self.blackboard.set("proximity_violation_distance", reading.distance)
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(
+                BlackboardKeys.CLOSEST_OBSTACLE_DISTANCE, reading.distance
+            )
+            self.blackboard.set(BlackboardKeys.OBSTACLE_DETECTED, True)
+            self.blackboard.set(
+                BlackboardKeys.PROXIMITY_VIOLATION_DISTANCE, reading.distance
+            )
 
         severity_map = {
             "WARNING": "WARNING",
@@ -518,20 +529,25 @@ class ProximityMonitor(Node):
     def _publish_proximity_status(self):
         """Publish current proximity status."""
         # Update unified blackboard with current obstacle status
-        if self.blackboard:
+        if self.blackboard and BlackboardKeys:
             # Find closest obstacle across all zones
             closest_distance = 999.0
             for zone in self.safety_zones:
                 closest = self._find_closest_in_zone(zone)
                 if closest:
                     closest_distance = min(closest_distance, closest.distance)
-            
-            self.blackboard.set("closest_obstacle_distance", closest_distance)
-            self.blackboard.set("obstacle_detected", closest_distance < self.auto_safe_distance)
-            
+
+            self.blackboard.set(
+                BlackboardKeys.CLOSEST_OBSTACLE_DISTANCE, closest_distance
+            )
+            self.blackboard.set(
+                BlackboardKeys.OBSTACLE_DETECTED,
+                closest_distance < self.auto_safe_distance,
+            )
+
             # Clear violation distance if no active violation
             if not self.proximity_violation_active:
-                self.blackboard.set("proximity_violation_distance", 999.0)
+                self.blackboard.set(BlackboardKeys.PROXIMITY_VIOLATION_DISTANCE, 999.0)
 
         status_data = {
             "timestamp": time.time(),

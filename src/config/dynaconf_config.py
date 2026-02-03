@@ -21,6 +21,7 @@ import logging
 try:
     from dynaconf import Dynaconf, ValidationError
     from dynaconf.utils.boxing import DynaBox
+
     DYNAONF_AVAILABLE = True
 except ImportError:
     DYNAONF_AVAILABLE = False
@@ -64,9 +65,9 @@ class URCDynaconf:
         """Initialize Dynaconf with URC-specific settings."""
         # Define configuration sources in priority order
         settings_files = [
-            self.config_dir / "rover.yaml",           # Base configuration
+            self.config_dir / "rover.yaml",  # Base configuration
             self.config_dir / f"{self.environment}.yaml",  # Environment-specific
-            self.config_dir / "local.yaml",           # Local overrides (optional)
+            self.config_dir / "local.yaml",  # Local overrides (optional)
         ]
 
         # Filter to existing files
@@ -81,8 +82,8 @@ class URCDynaconf:
             load_dotenv=True,
             dotenv_path=self.config_dir / ".env",
             secrets=self.config_dir / "secrets.yaml",  # For sensitive data
-            includes=[self.config_dir / "includes"],   # Include additional config files
-            preload=["src.config.validators"],         # Load validation rules
+            includes=[self.config_dir / "includes"],  # Include additional config files
+            preload=["src.config.validators"],  # Load validation rules
         )
 
         # Set environment
@@ -91,7 +92,9 @@ class URCDynaconf:
         # Add custom validators
         self._setup_validators()
 
-        logger.info(f"Dynaconf configuration initialized for environment: {self.environment}")
+        logger.info(
+            f"Dynaconf configuration initialized for environment: {self.environment}"
+        )
 
     def _setup_validators(self):
         """Setup configuration validators."""
@@ -104,68 +107,60 @@ class URCDynaconf:
                     must_exist=True,
                     gte=1,
                     lte=100,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
                 ValidationError(
                     "simulation_odom_noise",
                     must_exist=True,
                     gte=0.0,
                     lte=1.0,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
-
                 # Mission parameters
                 ValidationError(
                     "mission_execution_rate_hz",
                     must_exist=True,
                     gte=1,
                     lte=50,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
                 ValidationError(
                     "mission_max_speed_mps",
                     must_exist=True,
                     gte=0.0,
                     lte=5.0,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
-
                 # Safety parameters
                 ValidationError(
                     "safety_distance_meters",
                     must_exist=True,
                     gt=0.0,
                     lte=2.0,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
                 ValidationError(
                     "safety_max_speed_mps",
                     must_exist=True,
                     gte=0.0,
                     lte=5.0,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
                 ValidationError(
                     "safety_thermal_limit_celsius",
                     must_exist=True,
                     gte=50,
                     lte=100,
-                    is_type_of=(int, float)
+                    is_type_of=(int, float),
                 ),
-
                 # Hardware settings
-                ValidationError(
-                    "hardware_use_mock",
-                    must_exist=True,
-                    is_type_of=bool
-                ),
-
+                ValidationError("hardware_use_mock", must_exist=True, is_type_of=bool),
                 # Waypoints validation
                 ValidationError(
                     "waypoints",
                     is_type_of=list,
-                    when=ValidationError("waypoints", must_exist=True)
-                )
+                    when=ValidationError("waypoints", must_exist=True),
+                ),
             )
 
         except Exception as e:
@@ -258,7 +253,8 @@ class URCDynaconf:
             config_dict = dict(self._config)
 
             import yaml
-            with open(output_path, 'w') as f:
+
+            with open(output_path, "w") as f:
                 yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
 
             logger.info(f"Configuration saved to {output_path}")
@@ -336,13 +332,12 @@ class URCDynaconf:
         use_mock = self.get("hardware_use_mock", True)
         if not use_mock:
             # Check that real hardware endpoints are configured
-            required_hw = [
-                "hardware_camera_front_url",
-                "hardware_camera_rear_url"
-            ]
+            required_hw = ["hardware_camera_front_url", "hardware_camera_rear_url"]
             for hw_param in required_hw:
                 if not self.get(hw_param):
-                    errors.append(f"Hardware parameter {hw_param} required when not using mock hardware")
+                    errors.append(
+                        f"Hardware parameter {hw_param} required when not using mock hardware"
+                    )
 
         return errors
 
@@ -354,11 +349,15 @@ class URCDynaconf:
             Dictionary of environment configuration
         """
         return {
-            'environment': self.environment,
-            'config_dir': str(self.config_dir),
-            'config_files': [str(f) for f in (self.config_dir / f"{self.environment}.yaml",) if f.exists()],
-            'validation_errors': self.validate_config(),
-            'is_valid': len(self.validate_config()) == 0
+            "environment": self.environment,
+            "config_dir": str(self.config_dir),
+            "config_files": [
+                str(f)
+                for f in (self.config_dir / f"{self.environment}.yaml",)
+                if f.exists()
+            ],
+            "validation_errors": self.validate_config(),
+            "is_valid": len(self.validate_config()) == 0,
         }
 
     def export_config(self, format: str = "yaml") -> str:
@@ -375,13 +374,16 @@ class URCDynaconf:
 
         if format.lower() == "yaml":
             import yaml
+
             return yaml.dump(config_dict, default_flow_style=False, sort_keys=False)
         elif format.lower() == "json":
             import json
+
             return json.dumps(config_dict, indent=2)
         elif format.lower() == "toml":
             try:
                 import toml
+
                 return toml.dumps(config_dict)
             except ImportError:
                 raise ImportError("toml package required for TOML export")
@@ -413,7 +415,10 @@ class URCDynaconf:
 # Global configuration instance
 _config_instance = None
 
-def get_urc_config(config_dir: str = "config", environment: str = "development") -> URCDynaconf:
+
+def get_urc_config(
+    config_dir: str = "config", environment: str = "development"
+) -> URCDynaconf:
     """
     Get global URC configuration instance.
 

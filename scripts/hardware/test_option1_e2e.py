@@ -14,14 +14,17 @@ WORKSPACE = Path(__file__).resolve().parents[2]
 
 def inspect_implementation():
     """Inspect the implementation to verify Option 1 is correctly implemented."""
-    
-    hw_path = WORKSPACE / "src/autonomy/autonomy_core/autonomy_core/control/hardware_interface_node.py"
-    
-    with open(hw_path, 'r') as f:
+
+    hw_path = (
+        WORKSPACE
+        / "src/autonomy/autonomy_core/autonomy_core/control/hardware_interface_node.py"
+    )
+
+    with open(hw_path, "r") as f:
         code = f.read()
-    
+
     print("=== Option 1 Implementation Verification ===\n")
-    
+
     # Extract key code sections
     sections = {
         "Battery State Write": None,
@@ -29,47 +32,49 @@ def inspect_implementation():
         "Position Write": None,
         "Emergency Stop Write": None,
     }
-    
+
     # Check battery state write
-    if 'def read_battery_state(self):' in code:
-        start = code.find('def read_battery_state(self):')
-        end = code.find('\n    def ', start + 1)
+    if "def read_battery_state(self):" in code:
+        start = code.find("def read_battery_state(self):")
+        end = code.find("\n    def ", start + 1)
         battery_code = code[start:end]
-        
-        if 'self.blackboard.set(BlackboardKeys.BATTERY_LEVEL' in battery_code or \
-           'blackboard.set("battery_level"' in battery_code:
+
+        if (
+            "self.blackboard.set(BlackboardKeys.BATTERY_LEVEL" in battery_code
+            or 'blackboard.set("battery_level"' in battery_code
+        ):
             sections["Battery State Write"] = True
         else:
             sections["Battery State Write"] = False
-    
+
     # Check velocity write
-    if 'def read_chassis_velocity(self):' in code:
-        start = code.find('def read_chassis_velocity(self):')
-        end = code.find('\n    def ', start + 1)
+    if "def read_chassis_velocity(self):" in code:
+        start = code.find("def read_chassis_velocity(self):")
+        end = code.find("\n    def ", start + 1)
         velocity_code = code[start:end]
-        
-        if 'self.blackboard.set(BlackboardKeys.ROBOT_VELOCITY_X' in velocity_code:
+
+        if "self.blackboard.set(BlackboardKeys.ROBOT_VELOCITY_X" in velocity_code:
             sections["Velocity Write"] = True
         else:
             sections["Velocity Write"] = False
-    
+
     # Check position write
-    if 'self.blackboard.set(BlackboardKeys.ROBOT_X' in code:
+    if "self.blackboard.set(BlackboardKeys.ROBOT_X" in code:
         sections["Position Write"] = True
     else:
         sections["Position Write"] = False
-    
+
     # Check emergency stop write
-    if 'def emergency_stop_callback' in code:
-        start = code.find('def emergency_stop_callback')
-        end = code.find('\n    def ', start + 1)
+    if "def emergency_stop_callback" in code:
+        start = code.find("def emergency_stop_callback")
+        end = code.find("\n    def ", start + 1)
         estop_code = code[start:end]
-        
-        if 'self.blackboard.set(BlackboardKeys.EMERGENCY_STOP_ACTIVE' in estop_code:
+
+        if "self.blackboard.set(BlackboardKeys.EMERGENCY_STOP_ACTIVE" in estop_code:
             sections["Emergency Stop Write"] = True
         else:
             sections["Emergency Stop Write"] = False
-    
+
     # Print results
     all_passed = True
     for section, status in sections.items():
@@ -81,15 +86,15 @@ def inspect_implementation():
         else:
             print(f"[SKIP] {section} - not found")
             all_passed = False
-    
+
     return all_passed
 
 
 def trace_data_flow():
     """Trace the data flow to show the architecture."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Data Flow Architecture (Option 1)")
-    print("="*60)
+    print("=" * 60)
     print()
     print("CAN Hardware (STM32)")
     print("  |")
@@ -124,9 +129,9 @@ def trace_data_flow():
 
 def print_simulator_test_plan():
     """Print the test plan for simulator validation."""
-    print("="*60)
+    print("=" * 60)
     print("Testing with Simulator (No Hardware Required)")
-    print("="*60)
+    print("=" * 60)
     print()
     print("OPTION A: Quick Validation (No Build)")
     print("-" * 40)
@@ -135,7 +140,9 @@ def print_simulator_test_plan():
     print()
     print("2. Inspect code manually:")
     print("   # Check battery write")
-    print('   grep -A 5 "def read_battery_state" src/autonomy/autonomy_core/autonomy_core/control/hardware_interface_node.py')
+    print(
+        '   grep -A 5 "def read_battery_state" src/autonomy/autonomy_core/autonomy_core/control/hardware_interface_node.py'
+    )
     print()
     print("OPTION B: Full ROS2 Integration Test")
     print("-" * 40)
@@ -172,7 +179,7 @@ def print_simulator_test_plan():
 
 def main():
     print("\nValidating Option 1: Direct CAN → Blackboard Implementation\n")
-    
+
     if inspect_implementation():
         print("\n[SUCCESS] Implementation verified - all blackboard writes present")
         trace_data_flow()

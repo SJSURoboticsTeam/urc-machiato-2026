@@ -226,9 +226,7 @@ def print_report_summary(report):
         status_icon = (
             "[PASS]"
             if phase_data["status"] == "COMPLETED"
-            else "[REFRESH]"
-            if phase_data["status"] == "IN_PROGRESS"
-            else "⏳"
+            else "[REFRESH]" if phase_data["status"] == "IN_PROGRESS" else "⏳"
         )
         print(f"   {status_icon} {phase_data['title']} - {phase_data['status']}")
 
@@ -272,9 +270,7 @@ def print_report_summary(report):
         severity_icon = (
             ""
             if finding["severity"] == "RESOLVED"
-            else ""
-            if finding["severity"] == "MINOR"
-            else ""
+            else "" if finding["severity"] == "MINOR" else ""
         )
         print(f"   {severity_icon} {finding['severity']}: {finding['issue']}")
 

@@ -57,7 +57,10 @@ class HardwareInterfaceSimulator:
         self.config = {**base, **(config or {})}
         # Merge nested rover_config so required keys exist
         if config and "rover_config" in config:
-            self.config["rover_config"] = {**base.get("rover_config", {}), **config["rover_config"]}
+            self.config["rover_config"] = {
+                **base.get("rover_config", {}),
+                **config["rover_config"],
+            }
         self.running = False
         self.thread = None
 

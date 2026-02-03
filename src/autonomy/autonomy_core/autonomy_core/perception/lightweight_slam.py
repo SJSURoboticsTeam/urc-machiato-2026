@@ -40,8 +40,7 @@ class LightweightVisualOdometry:
 
         # Feature detection and tracking
         self.feature_detector = cv2.FastFeatureDetector_create(
-            threshold=20,
-            nonmaxSuppression=True
+            threshold=20, nonmaxSuppression=True
         )
         self.feature_tracker = cv2.TrackerKCF_create()
 
@@ -49,7 +48,7 @@ class LightweightVisualOdometry:
         self.lk_params = dict(
             winSize=(21, 21),
             maxLevel=3,
-            criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01)
+            criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01),
         )
 
         # State tracking
@@ -69,6 +68,7 @@ class LightweightVisualOdometry:
     def get_logger(self):
         """Get logger (compatibility with ROS nodes)."""
         import logging
+
         return logging.getLogger(__name__)
 
     def process_frame(self, frame: np.ndarray) -> Dict[str, Any]:
@@ -88,12 +88,12 @@ class LightweightVisualOdometry:
             gray = frame
 
         result = {
-            'pose': self.current_pose.copy(),
-            'keyframe_added': False,
-            'features_tracked': 0,
-            'translation': np.zeros(3),
-            'rotation': np.zeros(3),
-            'confidence': 0.0
+            "pose": self.current_pose.copy(),
+            "keyframe_added": False,
+            "features_tracked": 0,
+            "translation": np.zeros(3),
+            "rotation": np.zeros(3),
+            "confidence": 0.0,
         }
 
         if self.prev_frame is None:
@@ -101,7 +101,7 @@ class LightweightVisualOdometry:
             self.prev_frame = gray.copy()
             self.prev_keypoints = self._detect_features(gray)
             self._add_keyframe(gray, self.current_pose)
-            result['confidence'] = 1.0
+            result["confidence"] = 1.0
             return result
 
         # Track features from previous frame
@@ -123,31 +123,35 @@ class LightweightVisualOdometry:
                     self.current_pose = self.current_pose @ transformation
 
                     # Extract translation and rotation
-                    result['translation'] = transformation[:3, 3]
-                    result['rotation'] = self._rotation_matrix_to_euler_angles(transformation[:3, :3])
-                    result['features_tracked'] = len(good_curr)
-                    result['confidence'] = min(len(good_curr) / self.min_features, 1.0)
+                    result["translation"] = transformation[:3, 3]
+                    result["rotation"] = self._rotation_matrix_to_euler_angles(
+                        transformation[:3, :3]
+                    )
+                    result["features_tracked"] = len(good_curr)
+                    result["confidence"] = min(len(good_curr) / self.min_features, 1.0)
 
                     # Check if we should add a keyframe
                     if self._should_add_keyframe(transformation):
                         self._add_keyframe(gray, self.current_pose)
-                        result['keyframe_added'] = True
+                        result["keyframe_added"] = True
 
                     # Update for next iteration
                     self.prev_frame = gray.copy()
-                    self.prev_keypoints = self._detect_features(gray)  # Redetect features
+                    self.prev_keypoints = self._detect_features(
+                        gray
+                    )  # Redetect features
                 else:
-                    result['confidence'] = 0.0
+                    result["confidence"] = 0.0
             else:
                 # Too few features tracked, reset
                 self.prev_frame = gray.copy()
                 self.prev_keypoints = self._detect_features(gray)
-                result['confidence'] = 0.0
+                result["confidence"] = 0.0
         else:
             # Redetect features
             self.prev_frame = gray.copy()
             self.prev_keypoints = self._detect_features(gray)
-            result['confidence'] = 0.5
+            result["confidence"] = 0.5
 
         return result
 
@@ -162,13 +166,15 @@ class LightweightVisualOdometry:
             if len(points) > self.max_features:
                 # Sort by response and take top features
                 responses = np.array([kp.response for kp in keypoints])
-                indices = np.argsort(responses)[-self.max_features:]
+                indices = np.argsort(responses)[-self.max_features :]
                 points = points[indices]
             return points.reshape(-1, 1, 2)
         else:
             return np.array([]).reshape(0, 1, 2)
 
-    def _estimate_motion(self, prev_points: np.ndarray, curr_points: np.ndarray) -> Optional[np.ndarray]:
+    def _estimate_motion(
+        self, prev_points: np.ndarray, curr_points: np.ndarray
+    ) -> Optional[np.ndarray]:
         """
         Estimate 3D motion from 2D feature correspondences.
 
@@ -231,10 +237,12 @@ class LightweightVisualOdometry:
     def _add_keyframe(self, image: np.ndarray, pose: np.ndarray):
         """Add current frame as a keyframe."""
         keyframe = {
-            'image': image.copy(),
-            'pose': pose.copy(),
-            'timestamp': time.time(),
-            'features': self.prev_keypoints.copy() if self.prev_keypoints is not None else None
+            "image": image.copy(),
+            "pose": pose.copy(),
+            "timestamp": time.time(),
+            "features": (
+                self.prev_keypoints.copy() if self.prev_keypoints is not None else None
+            ),
         }
 
         self.keyframes.append(keyframe)
@@ -262,7 +270,7 @@ class LightweightVisualOdometry:
 
     def get_trajectory(self) -> List[np.ndarray]:
         """Get the estimated trajectory from keyframes."""
-        return [kf['pose'][:3, 3] for kf in self.keyframes]
+        return [kf["pose"][:3, 3] for kf in self.keyframes]
 
     def reset(self):
         """Reset the visual odometry system."""
@@ -303,8 +311,12 @@ class LightweightOccupancyMapper:
         self.min_y = self.robot_y
         self.max_y = self.robot_y
 
-    def update_from_scan(self, ranges: List[float], angles: List[float],
-                        robot_pose: Tuple[float, float, float]):
+    def update_from_scan(
+        self,
+        ranges: List[float],
+        angles: List[float],
+        robot_pose: Tuple[float, float, float],
+    ):
         """
         Update map from laser scan data.
 
@@ -372,10 +384,12 @@ class LightweightOccupancyMapper:
     def expand_map(self):
         """Expand map if robot is near boundaries."""
         # Simple expansion - double size if needed
-        if (self.robot_x - self.min_x < 20 or
-            self.max_x - self.robot_x < 20 or
-            self.robot_y - self.min_y < 20 or
-            self.max_y - self.robot_y < 20):
+        if (
+            self.robot_x - self.min_x < 20
+            or self.max_x - self.robot_x < 20
+            or self.robot_y - self.min_y < 20
+            or self.max_y - self.robot_y < 20
+        ):
 
             # Double map size
             new_width = self.width * 2
@@ -386,7 +400,9 @@ class LightweightOccupancyMapper:
             # Copy existing map to center
             offset_x = (new_width - self.width) // 2
             offset_y = (new_height - self.height) // 2
-            new_grid[offset_y:offset_y+self.height, offset_x:offset_x+self.width] = self.grid
+            new_grid[
+                offset_y : offset_y + self.height, offset_x : offset_x + self.width
+            ] = self.grid
 
             self.grid = new_grid
             self.width = new_width
@@ -418,18 +434,18 @@ class LightweightSLAMSystem:
         """
         # Update visual odometry
         vo_result = self.vo.process_frame(image)
-        self.current_pose = vo_result['pose']
+        self.current_pose = vo_result["pose"]
 
         # Extract 2D pose for mapping
         x, y = self.current_pose[0, 3], self.current_pose[1, 3]
         theta = math.atan2(self.current_pose[1, 0], self.current_pose[0, 0])
 
         result = {
-            'pose_3d': self.current_pose,
-            'pose_2d': (x, y, theta),
-            'confidence': vo_result['confidence'],
-            'keyframes': len(self.vo.keyframes),
-            'features_tracked': vo_result['features_tracked']
+            "pose_3d": self.current_pose,
+            "pose_2d": (x, y, theta),
+            "confidence": vo_result["confidence"],
+            "keyframes": len(self.vo.keyframes),
+            "features_tracked": vo_result["features_tracked"],
         }
 
         return result
@@ -438,8 +454,9 @@ class LightweightSLAMSystem:
         """Get current occupancy map."""
         return self.mapper.get_map()
 
-    def check_path_clear(self, start: Tuple[float, float],
-                        end: Tuple[float, float]) -> bool:
+    def check_path_clear(
+        self, start: Tuple[float, float], end: Tuple[float, float]
+    ) -> bool:
         """
         Check if path between two points is clear.
 
@@ -451,7 +468,7 @@ class LightweightSLAMSystem:
             True if path is clear
         """
         # Simple line-of-sight check (could be improved with A* or similar)
-        distance = math.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
+        distance = math.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
         steps = int(distance / self.mapper.resolution)
 
         if steps == 0:
@@ -466,6 +483,3 @@ class LightweightSLAMSystem:
                 return False
 
         return True
-
-
-

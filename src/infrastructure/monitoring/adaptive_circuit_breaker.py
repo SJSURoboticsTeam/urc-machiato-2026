@@ -27,16 +27,18 @@ logger = logging.getLogger(__name__)
 
 class CircuitBreakerState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, requests rejected
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, requests rejected
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
 @dataclass
 class AvailabilityRequirement:
     """Service availability requirements."""
+
     required_availability_percent: float  # 99.9 = 99.9% uptime required
-    acceptable_downtime_seconds: float    # Max acceptable downtime per incident
+    acceptable_downtime_seconds: float  # Max acceptable downtime per incident
     service_name: str
     description: str = ""
 
@@ -44,6 +46,7 @@ class AvailabilityRequirement:
 @dataclass
 class CircuitBreakerConfig:
     """Calculated circuit breaker configuration."""
+
     failure_threshold: int
     recovery_timeout_seconds: float
     success_threshold: int
@@ -61,46 +64,49 @@ class AdaptiveCircuitBreaker:
 
     # Predefined availability profiles
     AVAILABILITY_PROFILES = {
-        'motion_control': AvailabilityRequirement(
+        "motion_control": AvailabilityRequirement(
             required_availability_percent=99.9,
             acceptable_downtime_seconds=0.5,  # 500ms max downtime
-            service_name='motion_control',
-            description='Critical motion control - <20ms latency required'
+            service_name="motion_control",
+            description="Critical motion control - <20ms latency required",
         ),
-        'sensor_fusion': AvailabilityRequirement(
+        "sensor_fusion": AvailabilityRequirement(
             required_availability_percent=99.5,
             acceptable_downtime_seconds=2.0,  # 2s max downtime
-            service_name='sensor_fusion',
-            description='Sensor fusion - <100ms latency required'
+            service_name="sensor_fusion",
+            description="Sensor fusion - <100ms latency required",
         ),
-        'navigation': AvailabilityRequirement(
+        "navigation": AvailabilityRequirement(
             required_availability_percent=99.0,
             acceptable_downtime_seconds=10.0,  # 10s max downtime
-            service_name='navigation',
-            description='Navigation planning - <500ms latency acceptable'
+            service_name="navigation",
+            description="Navigation planning - <500ms latency acceptable",
         ),
-        'telemetry': AvailabilityRequirement(
+        "telemetry": AvailabilityRequirement(
             required_availability_percent=95.0,
             acceptable_downtime_seconds=300.0,  # 5min max downtime
-            service_name='telemetry',
-            description='Telemetry logging - best effort'
+            service_name="telemetry",
+            description="Telemetry logging - best effort",
         ),
-        'camera': AvailabilityRequirement(
+        "camera": AvailabilityRequirement(
             required_availability_percent=98.0,
             acceptable_downtime_seconds=5.0,  # 5s max downtime
-            service_name='camera',
-            description='Camera processing - 30Hz required'
+            service_name="camera",
+            description="Camera processing - 30Hz required",
         ),
-        'gps': AvailabilityRequirement(
+        "gps": AvailabilityRequirement(
             required_availability_percent=90.0,
             acceptable_downtime_seconds=30.0,  # 30s max downtime
-            service_name='gps',
-            description='GPS positioning - occasional dropouts acceptable'
-        )
+            service_name="gps",
+            description="GPS positioning - occasional dropouts acceptable",
+        ),
     }
 
-    def __init__(self, service_name: str,
-                 availability_requirement: Optional[AvailabilityRequirement] = None):
+    def __init__(
+        self,
+        service_name: str,
+        availability_requirement: Optional[AvailabilityRequirement] = None,
+    ):
         """
         Initialize adaptive circuit breaker.
 
@@ -117,8 +123,10 @@ class AdaptiveCircuitBreaker:
             self.requirement = self.AVAILABILITY_PROFILES[service_name]
         else:
             # Default to telemetry profile for unknown services
-            logger.warning(f"No availability profile for {service_name}, using telemetry defaults")
-            self.requirement = self.AVAILABILITY_PROFILES['telemetry']
+            logger.warning(
+                f"No availability profile for {service_name}, using telemetry defaults"
+            )
+            self.requirement = self.AVAILABILITY_PROFILES["telemetry"]
 
         # Calculate configuration from requirements
         self.config = self._calculate_config_from_requirement(self.requirement)
@@ -140,16 +148,22 @@ class AdaptiveCircuitBreaker:
         self.last_state_change_time = time.time()
 
         # Callbacks
-        self.state_change_callbacks: list[Callable[[CircuitBreakerState, CircuitBreakerState, str], None]] = []
+        self.state_change_callbacks: list[
+            Callable[[CircuitBreakerState, CircuitBreakerState, str], None]
+        ] = []
 
         self.lock = threading.RLock()
 
-        logger.info(f"AdaptiveCircuitBreaker initialized for {service_name}: "
-                   f"{self.config.failure_threshold} failures, "
-                   f"{self.config.recovery_timeout_seconds:.1f}s recovery timeout, "
-                   f"{self.requirement.required_availability_percent:.1f}% availability required")
+        logger.info(
+            f"AdaptiveCircuitBreaker initialized for {service_name}: "
+            f"{self.config.failure_threshold} failures, "
+            f"{self.config.recovery_timeout_seconds:.1f}s recovery timeout, "
+            f"{self.requirement.required_availability_percent:.1f}% availability required"
+        )
 
-    def _calculate_config_from_requirement(self, req: AvailabilityRequirement) -> CircuitBreakerConfig:
+    def _calculate_config_from_requirement(
+        self, req: AvailabilityRequirement
+    ) -> CircuitBreakerConfig:
         """
         Calculate circuit breaker parameters from availability requirements.
 
@@ -168,9 +182,9 @@ class AdaptiveCircuitBreaker:
             failure_threshold = 2  # Very sensitive
         elif required_availability >= 0.995:  # 99.5%+
             failure_threshold = 3
-        elif required_availability >= 0.99:   # 99%+
+        elif required_availability >= 0.99:  # 99%+
             failure_threshold = 5
-        elif required_availability >= 0.95:   # 95%+
+        elif required_availability >= 0.95:  # 95%+
             failure_threshold = 10
         else:  # <95%
             failure_threshold = 20  # Very tolerant
@@ -191,9 +205,9 @@ class AdaptiveCircuitBreaker:
 
         # Calculate timeout
         # Based on expected service response time
-        if req.service_name in ['motion_control', 'sensor_fusion']:
+        if req.service_name in ["motion_control", "sensor_fusion"]:
             timeout_seconds = 0.1  # 100ms for real-time services
-        elif req.service_name in ['navigation', 'camera']:
+        elif req.service_name in ["navigation", "camera"]:
             timeout_seconds = 1.0  # 1s for soft real-time
         else:
             timeout_seconds = 5.0  # 5s for best-effort services
@@ -207,7 +221,7 @@ class AdaptiveCircuitBreaker:
             success_threshold=success_threshold,
             timeout_seconds=timeout_seconds,
             monitoring_window_seconds=monitoring_window,
-            name=f"{req.service_name}_circuit_breaker"
+            name=f"{req.service_name}_circuit_breaker",
         )
 
     def call(self, func: Callable, *args, **kwargs):
@@ -230,11 +244,13 @@ class AdaptiveCircuitBreaker:
 
             if self.state == CircuitBreakerState.OPEN:
                 if self._should_attempt_reset():
-                    self._change_state(CircuitBreakerState.HALF_OPEN,
-                                     "attempting_recovery")
+                    self._change_state(
+                        CircuitBreakerState.HALF_OPEN, "attempting_recovery"
+                    )
                 else:
                     raise CircuitBreakerOpenException(
-                        f"Circuit breaker {self.service_name} is OPEN")
+                        f"Circuit breaker {self.service_name} is OPEN"
+                    )
 
         try:
             start_time = time.time()
@@ -263,8 +279,10 @@ class AdaptiveCircuitBreaker:
 
         if self.state == CircuitBreakerState.HALF_OPEN:
             if self.consecutive_successes >= self.config.success_threshold:
-                self._change_state(CircuitBreakerState.CLOSED,
-                                 f"recovered_after_{self.consecutive_successes}_successes")
+                self._change_state(
+                    CircuitBreakerState.CLOSED,
+                    f"recovered_after_{self.consecutive_successes}_successes",
+                )
 
     def _record_failure(self):
         """Record a failed call."""
@@ -274,18 +292,26 @@ class AdaptiveCircuitBreaker:
         self.last_failure_time = time.time()
 
         if self.state == CircuitBreakerState.HALF_OPEN:
-            self._change_state(CircuitBreakerState.OPEN,
-                             f"failure_during_recovery_{self.consecutive_failures}_consecutive")
-        elif (self.state == CircuitBreakerState.CLOSED and
-              self.consecutive_failures >= self.config.failure_threshold):
-            self._change_state(CircuitBreakerState.OPEN,
-                             f"failure_threshold_exceeded_{self.consecutive_failures}_consecutive")
+            self._change_state(
+                CircuitBreakerState.OPEN,
+                f"failure_during_recovery_{self.consecutive_failures}_consecutive",
+            )
+        elif (
+            self.state == CircuitBreakerState.CLOSED
+            and self.consecutive_failures >= self.config.failure_threshold
+        ):
+            self._change_state(
+                CircuitBreakerState.OPEN,
+                f"failure_threshold_exceeded_{self.consecutive_failures}_consecutive",
+            )
 
     def _record_timeout(self, execution_time: float):
         """Record a timeout."""
         self.total_timeouts += 1
-        logger.warning(f"Circuit breaker {self.service_name} timeout: "
-                      f"{execution_time:.1f}s > {self.config.timeout_seconds:.1f}s")
+        logger.warning(
+            f"Circuit breaker {self.service_name} timeout: "
+            f"{execution_time:.1f}s > {self.config.timeout_seconds:.1f}s"
+        )
 
     def _should_attempt_reset(self) -> bool:
         """Check if circuit breaker should attempt to reset."""
@@ -312,8 +338,10 @@ class AdaptiveCircuitBreaker:
             self.consecutive_failures = 0
             self.consecutive_successes = 0
 
-        logger.info(f"Circuit breaker {self.service_name}: {old_state.value} -> {new_state.value} "
-                   f"({reason})")
+        logger.info(
+            f"Circuit breaker {self.service_name}: {old_state.value} -> {new_state.value} "
+            f"({reason})"
+        )
 
         # Notify callbacks
         for callback in self.state_change_callbacks:
@@ -322,7 +350,9 @@ class AdaptiveCircuitBreaker:
             except Exception as e:
                 logger.error(f"State change callback failed: {e}")
 
-    def register_state_change_callback(self, callback: Callable[[CircuitBreakerState, CircuitBreakerState, str], None]):
+    def register_state_change_callback(
+        self, callback: Callable[[CircuitBreakerState, CircuitBreakerState, str], None]
+    ):
         """Register callback for state changes."""
         with self.lock:
             self.state_change_callbacks.append(callback)
@@ -332,39 +362,43 @@ class AdaptiveCircuitBreaker:
         with self.lock:
             success_rate = 0.0
             if self.total_requests > 0:
-                success_rate = ((self.total_requests - self.total_failures) / self.total_requests) * 100
+                success_rate = (
+                    (self.total_requests - self.total_failures) / self.total_requests
+                ) * 100
 
             availability_percent = 0.0
             if self.total_requests > 0:
-                availability_percent = ((self.total_requests - self.total_failures) /
-                                      self.total_requests) * 100
+                availability_percent = (
+                    (self.total_requests - self.total_failures) / self.total_requests
+                ) * 100
 
             return {
-                'service_name': self.service_name,
-                'state': self.state.value,
-                'required_availability_percent': self.requirement.required_availability_percent,
-                'acceptable_downtime_seconds': self.requirement.acceptable_downtime_seconds,
-                'config': {
-                    'failure_threshold': self.config.failure_threshold,
-                    'recovery_timeout_seconds': self.config.recovery_timeout_seconds,
-                    'success_threshold': self.config.success_threshold,
-                    'timeout_seconds': self.config.timeout_seconds,
+                "service_name": self.service_name,
+                "state": self.state.value,
+                "required_availability_percent": self.requirement.required_availability_percent,
+                "acceptable_downtime_seconds": self.requirement.acceptable_downtime_seconds,
+                "config": {
+                    "failure_threshold": self.config.failure_threshold,
+                    "recovery_timeout_seconds": self.config.recovery_timeout_seconds,
+                    "success_threshold": self.config.success_threshold,
+                    "timeout_seconds": self.config.timeout_seconds,
                 },
-                'counters': {
-                    'total_requests': self.total_requests,
-                    'total_failures': self.total_failures,
-                    'total_timeouts': self.total_timeouts,
-                    'consecutive_failures': self.consecutive_failures,
-                    'consecutive_successes': self.consecutive_successes,
-                    'state_changes': self.state_change_count,
+                "counters": {
+                    "total_requests": self.total_requests,
+                    "total_failures": self.total_failures,
+                    "total_timeouts": self.total_timeouts,
+                    "consecutive_failures": self.consecutive_failures,
+                    "consecutive_successes": self.consecutive_successes,
+                    "state_changes": self.state_change_count,
                 },
-                'metrics': {
-                    'success_rate_percent': success_rate,
-                    'current_availability_percent': availability_percent,
-                    'time_since_last_failure': time.time() - self.last_failure_time,
-                    'time_since_last_state_change': time.time() - self.last_state_change_time,
+                "metrics": {
+                    "success_rate_percent": success_rate,
+                    "current_availability_percent": availability_percent,
+                    "time_since_last_failure": time.time() - self.last_failure_time,
+                    "time_since_last_state_change": time.time()
+                    - self.last_state_change_time,
                 },
-                'timestamp': time.time()
+                "timestamp": time.time(),
             }
 
     def reset_stats(self):
@@ -393,16 +427,18 @@ class AdaptiveCircuitBreaker:
     def get_effective_availability(self) -> float:
         """Calculate effective availability based on recent performance."""
         stats = self.get_stats()
-        return stats['metrics']['current_availability_percent']
+        return stats["metrics"]["current_availability_percent"]
 
 
 class CircuitBreakerOpenException(Exception):
     """Raised when circuit breaker is open."""
+
     pass
 
 
 class CircuitBreakerTimeoutException(Exception):
     """Raised when operation times out."""
+
     pass
 
 
@@ -411,8 +447,10 @@ _circuit_breakers: Dict[str, AdaptiveCircuitBreaker] = {}
 _circuit_breakers_lock = threading.Lock()
 
 
-def get_adaptive_circuit_breaker(service_name: str,
-                                availability_requirement: Optional[AvailabilityRequirement] = None) -> AdaptiveCircuitBreaker:
+def get_adaptive_circuit_breaker(
+    service_name: str,
+    availability_requirement: Optional[AvailabilityRequirement] = None,
+) -> AdaptiveCircuitBreaker:
     """Get or create adaptive circuit breaker for service."""
     global _circuit_breakers
 
@@ -435,7 +473,9 @@ def get_circuit_breaker_stats(service_name: Optional[str] = None) -> Dict[str, A
             else:
                 return {}
         else:
-            return {name: breaker.get_stats() for name, breaker in _circuit_breakers.items()}
+            return {
+                name: breaker.get_stats() for name, breaker in _circuit_breakers.items()
+            }
 
 
 def reset_all_circuit_breakers():
@@ -448,29 +488,29 @@ def reset_all_circuit_breakers():
 # Convenience functions for common services
 def get_motion_control_breaker() -> AdaptiveCircuitBreaker:
     """Get circuit breaker for motion control (99.9% availability required)."""
-    return get_adaptive_circuit_breaker('motion_control')
+    return get_adaptive_circuit_breaker("motion_control")
 
 
 def get_sensor_fusion_breaker() -> AdaptiveCircuitBreaker:
     """Get circuit breaker for sensor fusion (99.5% availability required)."""
-    return get_adaptive_circuit_breaker('sensor_fusion')
+    return get_adaptive_circuit_breaker("sensor_fusion")
 
 
 def get_navigation_breaker() -> AdaptiveCircuitBreaker:
     """Get circuit breaker for navigation (99.0% availability required)."""
-    return get_adaptive_circuit_breaker('navigation')
+    return get_adaptive_circuit_breaker("navigation")
 
 
 def get_telemetry_breaker() -> AdaptiveCircuitBreaker:
     """Get circuit breaker for telemetry (95.0% availability required)."""
-    return get_adaptive_circuit_breaker('telemetry')
+    return get_adaptive_circuit_breaker("telemetry")
 
 
 def get_camera_breaker() -> AdaptiveCircuitBreaker:
     """Get circuit breaker for camera (98.0% availability required)."""
-    return get_adaptive_circuit_breaker('camera')
+    return get_adaptive_circuit_breaker("camera")
 
 
 def get_gps_breaker() -> AdaptiveCircuitBreaker:
     """Get circuit breaker for GPS (90.0% availability required)."""
-    return get_adaptive_circuit_breaker('gps')
+    return get_adaptive_circuit_breaker("gps")

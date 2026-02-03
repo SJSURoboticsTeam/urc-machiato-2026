@@ -1,0 +1,488 @@
+# Unified Docker Compose for URC 2026 - Test, Deploy, Simulate
+# Environment-based service orchestration with unified profiles
+# Usage examples:
+#   Development: docker-compose -f docker-compose.unified.yml up --profile dev
+#   Testing: docker-compose -f docker-compose.unified.yml up --profile test
+#   Production: docker-compose -f docker-compose.unified.yml up --profile prod
+#   Simulation: docker-compose -f docker-compose.unified.yml up --profile sim
+
+version: "3.8"
+
+# ==================================================
+# SHARED CONFIGURATION
+# ==================================================
+x-common-environment: &common-environment
+  PYTHONPATH: /home/urc
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  URC_ENV: ${URC_ENV:-development}
+  URC_CONFIG_FILE: ${URC_CONFIG_FILE:-config/development.yaml}
+
+x-common-config: &common-config
+  environment: *common-environment
+  networks:
+    - urc-network
+  restart: unless-stopped
+
+x-build-config: &build-config
+  context: ..
+  dockerfile: docker/Dockerfile.unified
+
+# ==================================================
+# INFRASTRUCTURE SERVICES
+# ==================================================
+services:
+  # ROS2 Core Service (shared across all environments)
+  ros2-core:
+    image: ros:${ROS_DISTRO:-humble}-ros-core
+    container_name: urc2026-${URC_ENV:-dev}-ros2-core
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      - URC_ENV=${URC_ENV:-development}
+    healthcheck:
+      test: ["CMD", "ros2", "node", "list"]
+      interval: ${HEALTHCHECK_INTERVAL:-30}s
+      timeout: ${HEALTHCHECK_TIMEOUT:-10}s
+      retries: 3
+      start_period: ${HEALTHCHECK_START_PERIOD:-15}s
+    networks:
+      - urc-network
+    restart: unless-stopped
+    profiles:
+      - dev
+      - test
+      - prod
+      - sim
+
+  # Configuration Service (unified config management)
+  config-service:
+    <<: *common-config
+    build:
+      <<: *build-config
+      target: config-service
+    container_name: urc2026-${URC_ENV:-dev}-config
+    volumes:
+      - ../config:/home/urc/config:ro
+      - config_cache:/home/urc/.cache/config
+    command: ["python3", "-m", "services.config_service", "--config-file", "${URC_CONFIG_FILE:-config/development.yaml}"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      ros2-core:
+        condition: service_healthy
+    profiles:
+      - dev
+      - test
+      - prod
+      - sim
+
+# ==================================================
+# MOCK SYSTEMS (Development & Testing)
+# ==================================================
+  can-mock-simulator:
+    <<: *common-config
+    build:
+      <<: *build-config
+      target: can-mock-service
+    container_name: urc2026-${URC_ENV:-dev}-can-mock
+    ports:
+      - "${CAN_MOCK_PORT:-8766}:8766"
+    volumes:
+      - ../simulation:/home/urc/simulation:ro
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); from bridges.can_mock_simulator import CANBusMockSimulator; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - dev
+      - test
+
+  websocket-bridge:
+    <<: *common-config
+    build:
+      <<: *build-config
+      target: websocket-bridge-service
+    container_name: urc2026-${URC_ENV:-dev}-websocket
+    ports:
+      - "${WEBSOCKET_PORT:-8765}:8765"
+    depends_on:
+      - can-mock-simulator
+      - config-service
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import asyncio, websockets; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - dev
+      - test
+
+# ==================================================
+# CORE ROBOTICS SERVICES
+# ==================================================
+  state-management:
+    <<: *common-config
+    build:
+      <<: *build-config
+      target: state-management-service
+    container_name: urc2026-${URC_ENV:-dev}-state
+    volumes:
+      - ../config:/home/urc/config:ro
+      - state_data:/home/urc/data/state
+    depends_on:
+      ros2-core:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "ros2", "node", "list", "|", "grep", "-q", "state_machine"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - dev
+      - test
+      - prod
+      - sim
+
+  safety-system:
+    build:
+      <<: *build-config
+      target: safety-service
+    container_name: urc2026-${URC_ENV:-dev}-safety
+    volumes:
+      - ../config:/home/urc/config:ro
+      - safety_logs:/home/urc/logs/safety
+    environment:
+      <<: *common-environment
+      SAFETY_MODE: ${SAFETY_MODE:-standard}
+    networks:
+      - urc-network
+    restart: unless-stopped
+    depends_on:
+      - state-management
+      - config-service
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); from safety_system.safety_manager import SafetyManager; print('OK')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - dev
+      - test
+      - prod
+      - sim
+
+  navigation-system:
+    build:
+      <<: *build-config
+      target: navigation-service
+    container_name: urc2026-${URC_ENV:-dev}-navigation
+    volumes:
+      - ../config:/home/urc/config:ro
+      - navigation_maps:/home/urc/data/maps
+    environment:
+      <<: *common-environment
+      NAVIGATION_MODE: ${NAVIGATION_MODE:-standard}
+    networks:
+      - urc-network
+    restart: unless-stopped
+    depends_on:
+      - state-management
+      - config-service
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.path.append('.'); import navigation; print('OK')"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - dev
+      - test
+      - prod
+      - sim
+
+  computer-vision:
+    build:
+      <<: *build-config
+      target: vision-service
+    container_name: urc2026-${URC_ENV:-dev}-vision
+    volumes:
+      - ../config:/home/urc/config:ro
+      - vision_cache:/home/urc/.cache/vision
+      - vision_models:/home/urc/models/vision
+    environment:
+      <<: *common-environment
+      VISION_USE_GPU: ${VISION_USE_GPU:-false}
+      VISION_MODEL_PATH: ${VISION_MODEL_PATH:-models/vision/}
+    networks:
+      - urc-network
+    restart: unless-stopped
+    depends_on:
+      - state-management
+      - config-service
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import cv2; import torch; print('OK')"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+    profiles:
+      - dev
+      - test
+      - prod
+      - sim
+
+# ==================================================
+# TESTING SERVICES
+# ==================================================
+  # Unified Test Runner
+  test-runner:
+    build:
+      <<: *build-config
+      target: test-runner
+    container_name: urc2026-test-runner
+    environment:
+      <<: *common-environment
+      PYTEST_CURRENT_TEST: unified
+      TEST_TYPE: ${TEST_TYPE:-all}
+      TEST_PARALLEL_WORKERS: ${TEST_PARALLEL_WORKERS:-4}
+    volumes:
+      - ../test_results:/home/urc/test_results
+      - ../test_reports:/home/urc/test_reports
+      - ../config:/home/urc/config:ro
+    command: ["python3", "-m", "pytest", "tests/${TEST_TYPE}/", "-v", "--tb=short", "--junitxml=/home/urc/test_results/unified-junit.xml", "--cov=src", "--cov-report=html:/home/urc/test_reports/unified-coverage", "-n", "${TEST_PARALLEL_WORKERS:-4}", "--dist=loadfile"]
+    depends_on:
+      ros2-core:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    networks:
+      - urc-network
+    deploy:
+      resources:
+        limits:
+          memory: ${TEST_MEMORY_LIMIT:-4G}
+          cpus: "${TEST_CPU_LIMIT:-2.0}"
+    profiles:
+      - test
+
+  # Performance Test Runner
+  performance-tester:
+    build:
+      <<: *build-config
+      target: test-runner
+    container_name: urc2026-performance-tester
+    environment:
+      <<: *common-environment
+      PYTEST_CURRENT_TEST: performance
+    volumes:
+      - ../test_results:/home/urc/test_results
+      - ../test_reports:/home/urc/test_reports
+    command: ["python3", "-m", "pytest", "tests/performance/", "-v", "--tb=short", "--benchmark-only", "--junitxml=/home/urc/test_results/performance-junit.xml", "--benchmark-json=/home/urc/test_results/performance-benchmarks.json"]
+    depends_on:
+      - ros2-core
+      - config-service
+    networks:
+      - urc-network
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: "4.0"
+    profiles:
+      - test
+      - perf
+
+# ==================================================
+# SIMULATION SERVICES
+# ==================================================
+  # Gazebo Simulation Service
+  simulation-service:
+    build:
+      <<: *build-config
+      target: simulation-service
+    container_name: urc2026-${URC_ENV:-dev}-simulation
+    ports:
+      - "${GAZEBO_GUI_PORT:-11345}:11345"
+      - "${GAZEBO_MASTER_PORT:-11311}:11311"
+    environment:
+      <<: *common-environment
+      GAZEBO_MASTER_URI: http://localhost:${GAZEBO_MASTER_PORT:-11311}
+      DISPLAY: ${DISPLAY:-:99}
+      USE_SIMULATION: "true"
+      SIMULATION_WORLD: ${SIMULATION_WORLD:-urc_mars_world}
+      SIMULATION_ROBOT: ${SIMULATION_ROBOT:-urc_rover}
+    volumes:
+      - ../simulation/worlds:/home/urc/simulation/worlds:ro
+      - ../simulation/models:/home/urc/simulation/models:ro
+      - ../config:/home/urc/config:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    depends_on:
+      - ros2-core
+      - config-service
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import gazebo_msgs; print('Simulation OK')"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    privileged: true  # Required for Gazebo acceleration
+    profiles:
+      - sim
+      - dev
+
+  # Sensor Simulation Service
+  sensor-simulator:
+    build:
+      <<: *build-config
+      target: sensor-simulator-service
+    container_name: urc2026-${URC_ENV:-dev}-sensor-sim
+    environment:
+      <<: *common-environment
+      SENSOR_SIM_TYPE: ${SENSOR_SIM_TYPE:-complete}
+      SENSOR_UPDATE_RATE: ${SENSOR_UPDATE_RATE:-30.0}
+      SENSOR_NOISE_LEVEL: ${SENSOR_NOISE_LEVEL:-0.1}
+    networks:
+      - urc-network
+    restart: unless-stopped
+    volumes:
+      - ../simulation/scenarios:/home/urc/simulation/scenarios:ro
+      - sensor_sim_data:/home/urc/data/sensors
+    depends_on:
+      - simulation-service
+      - config-service
+    healthcheck:
+      test: ["CMD", "ros2", "topic", "list", "|", "grep", "-q", "/camera"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - sim
+
+# ==================================================
+# FRONTEND SERVICES
+# ==================================================
+  frontend-dev:
+    build:
+      <<: *build-config
+      target: frontend-service
+    container_name: urc2026-${URC_ENV:-dev}-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - REACT_APP_WS_URL=ws://localhost:${WEBSOCKET_PORT:-8765}
+      - REACT_APP_API_URL=http://localhost:${API_PORT:-8080}
+      - REACT_APP_ENV=${URC_ENV:-development}
+    volumes:
+      - ../src/dashboard/src:/app/src
+      - ../src/dashboard/public:/app/public
+      - /app/node_modules
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    depends_on:
+      - websocket-bridge
+      - config-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - dev
+
+  frontend-prod:
+    build:
+      <<: *build-config
+      target: frontend-service
+    container_name: urc2026-${URC_ENV:-prod}-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_WS_URL=ws://rover-control.urc2026.local:${WEBSOCKET_PORT:-8765}
+      - REACT_APP_API_URL=http://rover-control.urc2026.local:${API_PORT:-8080}
+    command: ["npm", "run", "start"]
+    depends_on:
+      - config-service
+      - safety-system
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - prod
+
+# ==================================================
+# MONITORING SERVICES
+# ==================================================
+  monitoring-stack:
+    build:
+      <<: *build-config
+      target: monitoring-service
+    container_name: urc2026-${URC_ENV:-dev}-monitoring
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      <<: *common-environment
+      PROMETHEUS_ENABLED: "true"
+      GRAFANA_ENABLED: "true"
+      METRICS_EXPORT_INTERVAL: ${METRICS_EXPORT_INTERVAL:-5}
+    networks:
+      - urc-network
+    restart: unless-stopped
+    volumes:
+      - prometheus_data:/home/urc/data/prometheus
+      - grafana_data:/home/urc/data/grafana
+      - ../monitoring/dashboards:/home/urc/grafana/dashboards:ro
+    depends_on:
+      - state-management
+      - safety-system
+      - config-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - dev
+      - test
+      - prod
+
+# ==================================================
+# NETWORKS
+# ==================================================
+networks:
+  urc-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ==================================================
+# VOLUMES
+# ==================================================
+volumes:
+  # Configuration and cache
+  config_cache:
+    driver: local
+  state_data:
+    driver: local
+  navigation_maps:
+    driver: local
+  vision_cache:
+    driver: local
+  vision_models:
+    driver: local
+  safety_logs:
+    driver: local
+  sensor_sim_data:
+    driver: local
+  
+  # Monitoring data
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

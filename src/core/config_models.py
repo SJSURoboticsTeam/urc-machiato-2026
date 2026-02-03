@@ -17,22 +17,35 @@ from enum import Enum
 try:
     from pydantic import BaseModel, Field, field_validator, ValidationError, ConfigDict
     from pydantic_settings import BaseSettings
+
     PYDANTIC_AVAILABLE = True
 except ImportError:
     PYDANTIC_AVAILABLE = False
+
     # Fallback implementations
     class BaseModel:
-        def __init__(self, **data): self.__dict__.update(data)
+        def __init__(self, **data):
+            self.__dict__.update(data)
+
         @classmethod
-        def parse_obj(cls, obj): return cls(**obj)
-        def dict(self): return self.__dict__
-    def Field(**kwargs): return None
-    class BaseSettings: pass
+        def parse_obj(cls, obj):
+            return cls(**obj)
+
+        def dict(self):
+            return self.__dict__
+
+    def Field(**kwargs):
+        return None
+
+    class BaseSettings:
+        pass
+
     ValidationError = ValueError
 
 
 class SensorType(str, Enum):
     """Supported sensor types."""
+
     IMU = "imu"
     GPS = "gps"
     CAMERA = "camera"
@@ -42,6 +55,7 @@ class SensorType(str, Enum):
 
 class MotorType(str, Enum):
     """Supported motor types."""
+
     DC_BRUSHED = "dc_brushed"
     DC_BRUSHLESS = "dc_brushless"
     STEPPER = "stepper"
@@ -50,6 +64,7 @@ class MotorType(str, Enum):
 
 class CommunicationProtocol(str, Enum):
     """Supported communication protocols."""
+
     CAN = "can"
     SERIAL = "serial"
     I2C = "i2c"
@@ -59,6 +74,7 @@ class CommunicationProtocol(str, Enum):
 
 class RoverMode(str, Enum):
     """Rover operational modes."""
+
     COMPETITION = "competition"
     DEVELOPMENT = "development"
     SIMULATION = "simulation"
@@ -84,7 +100,7 @@ class SensorConfig(BaseModel):
                 "enabled": True,
                 "update_rate_hz": 100.0,
                 "timeout_seconds": 2.0,
-                "calibration_required": True
+                "calibration_required": True,
             }
         }
 
@@ -95,11 +111,16 @@ class IMUConfig(SensorConfig):
     type: Literal[SensorType.IMU] = SensorType.IMU
 
     gyro_bias_stability: float = Field(gt=0, default=0.02)  # degrees/s
-    gyro_noise_density: float = Field(gt=0, default=0.01)   # degrees/s/√Hz
-    accel_bias_stability: float = Field(gt=0, default=2.0)   # mg
-    accel_noise_density: float = Field(gt=0, default=1.0)    # mg/√Hz
+    gyro_noise_density: float = Field(gt=0, default=0.01)  # degrees/s/√Hz
+    accel_bias_stability: float = Field(gt=0, default=2.0)  # mg
+    accel_noise_density: float = Field(gt=0, default=1.0)  # mg/√Hz
 
-    @field_validator('gyro_bias_stability', 'gyro_noise_density', 'accel_bias_stability', 'accel_noise_density')
+    @field_validator(
+        "gyro_bias_stability",
+        "gyro_noise_density",
+        "accel_bias_stability",
+        "accel_noise_density",
+    )
     @classmethod
     def validate_sensor_specs(cls, v):
         if v <= 0:
@@ -113,10 +134,10 @@ class GPSConfig(SensorConfig):
     type: Literal[SensorType.GPS] = SensorType.GPS
 
     position_accuracy_m: float = Field(gt=0, default=2.5)  # meters (95% confidence)
-    velocity_accuracy_ms: float = Field(gt=0, default=0.1) # m/s
+    velocity_accuracy_ms: float = Field(gt=0, default=0.1)  # m/s
     min_satellites: int = Field(ge=4, le=20, default=6)
 
-    @field_validator('position_accuracy_m', 'velocity_accuracy_ms')
+    @field_validator("position_accuracy_m", "velocity_accuracy_ms")
     @classmethod
     def validate_accuracy(cls, v):
         if v <= 0:
@@ -134,7 +155,7 @@ class CameraConfig(SensorConfig):
     depth_accuracy_m: float = Field(gt=0, default=0.02)  # meters at 1m
     rgb_resolution: int = Field(gt=0, default=640)  # pixels
 
-    @field_validator('resolution_width', 'resolution_height')
+    @field_validator("resolution_width", "resolution_height")
     @classmethod
     def validate_resolution(cls, v):
         if v <= 0 or v > 10000:
@@ -147,12 +168,12 @@ class LidarConfig(SensorConfig):
 
     type: Literal[SensorType.LIDAR] = SensorType.LIDAR
 
-    range_accuracy_m: float = Field(gt=0, default=0.03)     # meters
+    range_accuracy_m: float = Field(gt=0, default=0.03)  # meters
     angular_resolution_deg: float = Field(gt=0, le=10, default=0.25)  # degrees
-    max_range_m: float = Field(gt=0, default=30.0)         # meters
-    min_range_m: float = Field(ge=0, default=0.1)          # meters
+    max_range_m: float = Field(gt=0, default=30.0)  # meters
+    min_range_m: float = Field(ge=0, default=0.1)  # meters
 
-    @field_validator('max_range_m')
+    @field_validator("max_range_m")
     @classmethod
     def validate_range(cls, v, info):
         # Note: info.validation_context might be needed for cross-field validation
@@ -178,7 +199,7 @@ class MotorConfig(BaseModel):
     protocol: CommunicationProtocol = CommunicationProtocol.CAN
     can_id: Optional[int] = Field(ge=0, le=2047, default=None)
 
-    @field_validator('can_id')
+    @field_validator("can_id")
     @classmethod
     def validate_can_id(cls, v, info):
         # Cross-field validation would need more complex setup
@@ -198,7 +219,7 @@ class WaypointConfig(BaseModel):
     x: float = Field(ge=-1000, le=1000)  # meters
     y: float = Field(ge=-1000, le=1000)  # meters
     heading: float = Field(ge=-180, le=180, default=0.0)  # degrees
-    tolerance: float = Field(gt=0, le=5.0, default=0.5)   # meters
+    tolerance: float = Field(gt=0, le=5.0, default=0.5)  # meters
 
     description: Optional[str] = Field(max_length=200, default=None)
 
@@ -210,7 +231,7 @@ class WaypointConfig(BaseModel):
                 "y": 25.3,
                 "heading": 90.0,
                 "tolerance": 0.5,
-                "description": "Primary sample collection site"
+                "description": "Primary sample collection site",
             }
         }
 
@@ -220,21 +241,24 @@ class NavigationConfig(BaseModel):
 
     model_config = ConfigDict(strict=True)
 
-    max_linear_velocity: float = Field(gt=0, le=5.0, default=2.0)     # m/s
-    max_angular_velocity: float = Field(gt=0, le=5.0, default=1.5)    # rad/s
-    acceleration_limit: float = Field(gt=0, le=2.0, default=1.0)      # m/s²
-    deceleration_limit: float = Field(gt=0, le=3.0, default=2.0)      # m/s²
+    max_linear_velocity: float = Field(gt=0, le=5.0, default=2.0)  # m/s
+    max_angular_velocity: float = Field(gt=0, le=5.0, default=1.5)  # rad/s
+    acceleration_limit: float = Field(gt=0, le=2.0, default=1.0)  # m/s²
+    deceleration_limit: float = Field(gt=0, le=3.0, default=2.0)  # m/s²
 
-    waypoint_timeout: float = Field(gt=0, default=60.0)               # seconds
+    waypoint_timeout: float = Field(gt=0, default=60.0)  # seconds
     obstacle_avoidance_enabled: bool = True
     path_replanning_enabled: bool = True
 
-    waypoints: List[WaypointConfig] = Field(min_items=1, max_items=50, default_factory=list)
+    waypoints: List[WaypointConfig] = Field(
+        min_items=1, max_items=50, default_factory=list
+    )
 
 
 # Mission Configuration Models
 class MissionType(str, Enum):
     """Mission types."""
+
     AUTONOMOUS_NAVIGATION = "autonomous_navigation"
     SAMPLE_COLLECTION = "sample_collection"
     DELIVERY = "delivery"
@@ -255,10 +279,12 @@ class MissionConfig(BaseModel):
     priority: int = Field(ge=1, le=10, default=5)
 
     waypoints: List[WaypointConfig] = Field(min_items=1, max_items=50)
-    sample_sites: List[str] = Field(default_factory=list)  # For sample collection missions
+    sample_sites: List[str] = Field(
+        default_factory=list
+    )  # For sample collection missions
     delivery_targets: List[str] = Field(default_factory=list)  # For delivery missions
 
-    @field_validator('waypoints')
+    @field_validator("waypoints")
     @classmethod
     def validate_mission_waypoints(cls, v):
         if len(v) < 2:
@@ -269,6 +295,7 @@ class MissionConfig(BaseModel):
 # Safety Configuration Models
 class SafetyLevel(str, Enum):
     """Safety levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -288,7 +315,9 @@ class SafetyConfig(BaseModel):
     battery_critical_threshold: float = Field(gt=0, le=100, default=10.0)  # percentage
     communication_timeout_seconds: float = Field(gt=0, default=30.0)
 
-    allowed_operating_area: Optional[Dict[str, List[float]]] = None  # [min_x, max_x, min_y, max_y]
+    allowed_operating_area: Optional[Dict[str, List[float]]] = (
+        None  # [min_x, max_x, min_y, max_y]
+    )
 
 
 # Communication Configuration Models
@@ -322,7 +351,9 @@ class URCCompetitionConfig(BaseModel):
     description: Optional[str] = None
 
     # Hardware configurations
-    sensors: Dict[str, Union[IMUConfig, GPSConfig, CameraConfig, LidarConfig]] = Field(default_factory=dict)
+    sensors: Dict[str, Union[IMUConfig, GPSConfig, CameraConfig, LidarConfig]] = Field(
+        default_factory=dict
+    )
     motors: Dict[str, MotorConfig] = Field(default_factory=dict)
 
     # System configurations
@@ -333,7 +364,7 @@ class URCCompetitionConfig(BaseModel):
     # Mission configuration
     mission: Optional[MissionConfig] = None
 
-    @field_validator('sensors')
+    @field_validator("sensors")
     @classmethod
     def validate_sensor_configs(cls, v):
         """Validate that all sensor configurations are properly typed."""
@@ -342,7 +373,7 @@ class URCCompetitionConfig(BaseModel):
             raise ValueError("Sensors must be a dictionary")
         return v
 
-    @field_validator('motors')
+    @field_validator("motors")
     @classmethod
     def validate_motor_configs(cls, v):
         """Validate motor configurations."""
@@ -359,21 +390,21 @@ class URCCompetitionConfig(BaseModel):
                     "imu_main": {
                         "type": "imu",
                         "enabled": True,
-                        "update_rate_hz": 100.0
+                        "update_rate_hz": 100.0,
                     },
                     "gps_primary": {
                         "type": "gps",
                         "enabled": True,
-                        "position_accuracy_m": 2.5
-                    }
+                        "position_accuracy_m": 2.5,
+                    },
                 },
                 "navigation": {
                     "max_linear_velocity": 2.0,
                     "waypoints": [
                         {"name": "start", "x": 0.0, "y": 0.0},
-                        {"name": "sample_site", "x": 10.0, "y": 5.0}
-                    ]
-                }
+                        {"name": "sample_site", "x": 10.0, "y": 5.0},
+                    ],
+                },
             }
         }
 
@@ -387,11 +418,15 @@ class URCDevelopmentConfig(BaseModel):
     mode: RoverMode = RoverMode.DEVELOPMENT
 
     # Relaxed constraints for development
-    sensors: Dict[str, Union[IMUConfig, GPSConfig, CameraConfig, LidarConfig]] = Field(default_factory=dict)
+    sensors: Dict[str, Union[IMUConfig, GPSConfig, CameraConfig, LidarConfig]] = Field(
+        default_factory=dict
+    )
     motors: Dict[str, MotorConfig] = Field(default_factory=dict)
 
     navigation: NavigationConfig = Field(default_factory=NavigationConfig)
-    safety: SafetyConfig = Field(default_factory=lambda: SafetyConfig(level=SafetyLevel.MEDIUM))
+    safety: SafetyConfig = Field(
+        default_factory=lambda: SafetyConfig(level=SafetyLevel.MEDIUM)
+    )
     network: NetworkConfig = Field(default_factory=NetworkConfig)
 
     mission: Optional[MissionConfig] = None
@@ -414,22 +449,26 @@ class URCConfigManager:
         self.configs: Dict[str, BaseModel] = {}
         self.schemas: Dict[str, Dict[str, Any]] = {}
 
-    def load_competition_config(self, config_path: Union[str, Path]) -> URCCompetitionConfig:
+    def load_competition_config(
+        self, config_path: Union[str, Path]
+    ) -> URCCompetitionConfig:
         """Load competition configuration with validation."""
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             data = json.load(f)
 
         config = URCCompetitionConfig.parse_obj(data)
-        self.configs['competition'] = config
+        self.configs["competition"] = config
         return config
 
-    def load_development_config(self, config_path: Union[str, Path]) -> URCDevelopmentConfig:
+    def load_development_config(
+        self, config_path: Union[str, Path]
+    ) -> URCDevelopmentConfig:
         """Load development configuration with validation."""
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             data = json.load(f)
 
         config = URCDevelopmentConfig.parse_obj(data)
-        self.configs['development'] = config
+        self.configs["development"] = config
         return config
 
     def validate_config(self, config: BaseModel) -> List[str]:
@@ -442,9 +481,9 @@ class URCConfigManager:
 
     def get_schema(self, config_type: str) -> Dict[str, Any]:
         """Get JSON schema for configuration type."""
-        if config_type == 'competition':
+        if config_type == "competition":
             return URCCompetitionConfig.model_json_schema()
-        elif config_type == 'development':
+        elif config_type == "development":
             return URCDevelopmentConfig.model_json_schema()
         else:
             raise ValueError(f"Unknown config type: {config_type}")
@@ -452,12 +491,14 @@ class URCConfigManager:
     def export_schema(self, config_type: str, output_path: Union[str, Path]):
         """Export JSON schema to file."""
         schema = self.get_schema(config_type)
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(schema, f, indent=2)
 
 
 # Convenience functions
-def load_urc_config(config_path: Union[str, Path], mode: RoverMode = RoverMode.COMPETITION) -> BaseModel:
+def load_urc_config(
+    config_path: Union[str, Path], mode: RoverMode = RoverMode.COMPETITION
+) -> BaseModel:
     """Load URC configuration with automatic validation."""
     manager = URCConfigManager()
 
@@ -469,7 +510,9 @@ def load_urc_config(config_path: Union[str, Path], mode: RoverMode = RoverMode.C
         raise ValueError(f"Unsupported mode: {mode}")
 
 
-def validate_config_data(data: Dict[str, Any], mode: RoverMode = RoverMode.COMPETITION) -> List[str]:
+def validate_config_data(
+    data: Dict[str, Any], mode: RoverMode = RoverMode.COMPETITION
+) -> List[str]:
     """Validate configuration data and return errors."""
     manager = URCConfigManager()
 
@@ -480,7 +523,10 @@ def validate_config_data(data: Dict[str, Any], mode: RoverMode = RoverMode.COMPE
             URCDevelopmentConfig.parse_obj(data)
         return []
     except ValidationError as e:
-        return [f"{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}" for error in e.errors()]
+        return [
+            f"{'.'.join(str(loc) for loc in error['loc'])}: {error['msg']}"
+            for error in e.errors()
+        ]
 
 
 def generate_config_schema(config_type: str = "competition") -> Dict[str, Any]:

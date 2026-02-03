@@ -9,7 +9,7 @@ See: docs/onboarding/PILLAR_2_COGNITION.md, src/core/component_registry.py
 
 from typing import Any, Dict
 
-from src.core.simplified_component_registry import (
+from src.core.component_registry import (
     ComponentPriority,
     component,
     get_component_registry,

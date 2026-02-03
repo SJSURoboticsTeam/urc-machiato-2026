@@ -10,12 +10,18 @@ Py-trees based behavior tree implementation with comprehensive failure handling:
 - Circuit breaker integration for robustness
 - Hierarchical error propagation with recovery
 
+Blackboard alignment with bt_orchestrator (C++): mission_active and current_mission_phase
+are shared state. The mission executor and BT orchestrator both write mission_active and
+current_mission_phase; missions (sample, delivery, waypoint, follow_me, return_to_operator)
+write current_mission_phase when their state changes. See docs/architecture/BLACKBOARD_SYSTEM.md.
+
 Author: URC 2026 Risk Mitigation Team
 """
 
 import time
 import threading
 import logging
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Callable, Union
 from enum import Enum
 from dataclasses import dataclass, field
@@ -28,6 +34,7 @@ try:
     from py_trees.composites import Sequence, Selector, Parallel
     from py_trees.decorators import Timeout, Retry, Condition
     from py_trees.trees import BehaviourTree
+
     PY_TREES_AVAILABLE = True
     PY_TREES_BLACKBOARD_AVAILABLE = True
 except ImportError:
@@ -41,11 +48,13 @@ try:
     from py_trees_ros.behaviours import ToBlackboard, FromBlackboard
     from py_trees_ros.actions import ActionClient
     from py_trees_ros.trees import BehaviourTree as ROSBehaviourTree
+
     PY_TREES_ROS_AVAILABLE = True
 except ImportError:
     PY_TREES_ROS_AVAILABLE = False
     # Logger not yet defined, use print or skip warning
     import warnings
+
     warnings.warn("py-trees-ros not available, ROS2 integration limited", ImportWarning)
 
 from src.core.error_handling import circuitbreaker
@@ -54,6 +63,7 @@ from src.infrastructure.config import get_config
 # Import mission resource manager
 try:
     from src.core.mission_resource_manager import get_mission_resource_manager
+
     RESOURCE_MANAGER_AVAILABLE = True
 except ImportError:
     RESOURCE_MANAGER_AVAILABLE = False
@@ -65,8 +75,10 @@ logger = logging.getLogger(__name__)
 if PY_TREES_AVAILABLE:
     BTNodeStatus = py_trees.common.Status
 else:
+
     class BTNodeStatus(Enum):
         """Behavior tree node execution status."""
+
         SUCCESS = "success"
         FAILURE = "failure"
         RUNNING = "running"
@@ -75,6 +87,7 @@ else:
 
 class BTNodeType(Enum):
     """Behavior tree node types."""
+
     ACTION = "action"
     CONDITION = "condition"
     COMPOSITE = "composite"
@@ -104,8 +117,7 @@ class EnhancedBTNode(py_trees.behaviour.Behaviour if PY_TREES_AVAILABLE else obj
 
         # Circuit breaker for robustness
         self.circuit_breaker = circuitbreaker.CircuitBreaker(
-            failure_threshold=5,
-            recovery_timeout=30.0
+            failure_threshold=5, recovery_timeout=30.0
         )
 
         # Monitoring
@@ -150,14 +162,15 @@ class EnhancedBTNode(py_trees.behaviour.Behaviour if PY_TREES_AVAILABLE else obj
         """Implementation-specific execution logic. Override in subclasses."""
         raise NotImplementedError("Subclasses must implement _execute_impl")
 
-    def _record_execution(self, status: BTNodeStatus, execution_time: float,
-                         context: Dict[str, Any]):
+    def _record_execution(
+        self, status: BTNodeStatus, execution_time: float, context: Dict[str, Any]
+    ):
         """Record execution for monitoring and debugging."""
         record = {
-            'timestamp': time.time(),
-            'status': status.value if hasattr(status, 'value') else str(status),
-            'execution_time': execution_time,
-            'context_snapshot': dict(list(context.items())[:5])  # Limit context size
+            "timestamp": time.time(),
+            "status": status.value if hasattr(status, "value") else str(status),
+            "execution_time": execution_time,
+            "context_snapshot": dict(list(context.items())[:5]),  # Limit context size
         }
 
         self.execution_history.append(record)
@@ -170,17 +183,17 @@ class EnhancedBTNode(py_trees.behaviour.Behaviour if PY_TREES_AVAILABLE else obj
         """Get performance metrics for this node."""
         total_executions = self.execution_count
         if total_executions == 0:
-            return {'success_rate': 0.0, 'avg_execution_time': 0.0}
+            return {"success_rate": 0.0, "avg_execution_time": 0.0}
 
         success_rate = self.success_count / total_executions
         avg_execution_time = self.total_execution_time / total_executions
 
         return {
-            'success_rate': success_rate,
-            'avg_execution_time': avg_execution_time,
-            'total_executions': total_executions,
-            'circuit_breaker_enabled': self.circuit_breaker_enabled,
-            'circuit_breaker_state': self.circuit_breaker.get_state().value
+            "success_rate": success_rate,
+            "avg_execution_time": avg_execution_time,
+            "total_executions": total_executions,
+            "circuit_breaker_enabled": self.circuit_breaker_enabled,
+            "circuit_breaker_state": self.circuit_breaker.get_state().value,
         }
 
     def reset_metrics(self):
@@ -193,6 +206,7 @@ class EnhancedBTNode(py_trees.behaviour.Behaviour if PY_TREES_AVAILABLE else obj
 
     # Py-trees compatibility methods
     if PY_TREES_AVAILABLE:
+
         def update(self):
             """Py-trees update method."""
             context = {}  # Would be passed from tree execution context
@@ -208,13 +222,17 @@ class EnhancedBTNode(py_trees.behaviour.Behaviour if PY_TREES_AVAILABLE else obj
 
     def __str__(self):
         metrics = self.get_performance_metrics()
-        return (f"{self.__class__.__name__}('{self.name}', "
-                ".1f"                f"success_rate={metrics['success_rate']:.1%})")
+        return (
+            f"{self.__class__.__name__}('{self.name}', "
+            ".1f"
+            f"success_rate={metrics['success_rate']:.1%})"
+        )
 
 
 @dataclass
 class BTNodeResult:
     """Result of behavior tree node execution (legacy compatibility)."""
+
     status: BTNodeStatus
     data: Dict[str, Any] = field(default_factory=dict)
     error_message: Optional[str] = None
@@ -225,14 +243,15 @@ class BTNodeResult:
 @dataclass
 class BTExecutionContext:
     """Execution context for behavior tree nodes."""
+
     node_id: str
     start_time: float
     timeout: Optional[float] = None
     retry_count: int = 0
     max_retries: int = 3
-    parent_context: Optional['BTExecutionContext'] = None
+    parent_context: Optional["BTExecutionContext"] = None
     blackboard: Any = field(default=None)  # py_trees.blackboard.Blackboard or dict
-    
+
     def __post_init__(self):
         """Initialize blackboard based on availability."""
         if self.blackboard is None:
@@ -286,7 +305,7 @@ class BTNode(ABC):
             return BTNodeResult(
                 status=BTNodeStatus.FAILURE,
                 error_message="Circuit breaker open",
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
         try:
@@ -300,7 +319,8 @@ class BTNode(ABC):
             execution_time = time.time() - start_time
             self.last_execution_time = execution_time
             self.average_execution_time = (
-                (self.average_execution_time * (self.execution_count - 1)) + execution_time
+                (self.average_execution_time * (self.execution_count - 1))
+                + execution_time
             ) / self.execution_count
 
             # Handle result
@@ -330,7 +350,7 @@ class BTNode(ABC):
             result = BTNodeResult(
                 status=BTNodeStatus.FAILURE,
                 error_message=str(e),
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             # Execute failure handlers
@@ -361,7 +381,7 @@ class BTNode(ABC):
             # Timeout occurred
             return BTNodeResult(
                 status=BTNodeStatus.FAILURE,
-                error_message=f"Execution timeout after {context.timeout}s"
+                error_message=f"Execution timeout after {context.timeout}s",
             )
 
         if exception[0]:
@@ -379,7 +399,9 @@ class BTNode(ABC):
 
         # Check if recovery timeout has passed
         if time.time() - self.last_failure_time > self.recovery_timeout:
-            self.logger.info(f"Circuit breaker recovery timeout passed for {self.node_id}")
+            self.logger.info(
+                f"Circuit breaker recovery timeout passed for {self.node_id}"
+            )
             self._close_circuit()
             return False
 
@@ -391,7 +413,9 @@ class BTNode(ABC):
             return
 
         self.circuit_open = True
-        self.logger.warning(f"Circuit breaker opened for {self.node_id} after {self.consecutive_failures} failures")
+        self.logger.warning(
+            f"Circuit breaker opened for {self.node_id} after {self.consecutive_failures} failures"
+        )
 
     def _close_circuit(self):
         """Close circuit breaker."""
@@ -416,7 +440,9 @@ class BTNode(ABC):
         """Add a recovery action function."""
         self.recovery_actions.append(action)
 
-    def enable_circuit_breaker(self, failure_threshold: int = 5, recovery_timeout: float = 30.0):
+    def enable_circuit_breaker(
+        self, failure_threshold: int = 5, recovery_timeout: float = 30.0
+    ):
         """Enable circuit breaker pattern."""
         self.circuit_breaker_enabled = True
         self.failure_threshold = failure_threshold
@@ -425,7 +451,9 @@ class BTNode(ABC):
     def get_health_status(self) -> Dict[str, Any]:
         """Get node health status."""
         total_executions = self.execution_count
-        success_rate = self.success_count / total_executions if total_executions > 0 else 0
+        success_rate = (
+            self.success_count / total_executions if total_executions > 0 else 0
+        )
 
         health_status = "healthy"
         if success_rate < 0.5:
@@ -434,13 +462,13 @@ class BTNode(ABC):
             health_status = "degraded"
 
         return {
-            'node_id': self.node_id,
-            'health_status': health_status,
-            'success_rate': success_rate,
-            'total_executions': total_executions,
-            'consecutive_failures': self.consecutive_failures,
-            'circuit_breaker_open': self.circuit_open,
-            'average_execution_time': self.average_execution_time
+            "node_id": self.node_id,
+            "health_status": health_status,
+            "success_rate": success_rate,
+            "total_executions": total_executions,
+            "consecutive_failures": self.consecutive_failures,
+            "circuit_breaker_open": self.circuit_open,
+            "average_execution_time": self.average_execution_time,
         }
 
 
@@ -456,19 +484,18 @@ class BTActionNode(BTNode):
         try:
             result = self.action_func(context)
             if isinstance(result, dict):
-                status = result.get('status', BTNodeStatus.SUCCESS)
-                data = result.get('data', {})
+                status = result.get("status", BTNodeStatus.SUCCESS)
+                data = result.get("data", {})
                 return BTNodeResult(status=status, data=data)
             elif isinstance(result, bool):
                 status = BTNodeStatus.SUCCESS if result else BTNodeStatus.FAILURE
                 return BTNodeResult(status=status)
             else:
-                return BTNodeResult(status=BTNodeStatus.SUCCESS, data={'result': result})
+                return BTNodeResult(
+                    status=BTNodeStatus.SUCCESS, data={"result": result}
+                )
         except Exception as e:
-            return BTNodeResult(
-                status=BTNodeStatus.FAILURE,
-                error_message=str(e)
-            )
+            return BTNodeResult(status=BTNodeStatus.FAILURE, error_message=str(e))
 
 
 class BTConditionNode(BTNode):
@@ -486,12 +513,9 @@ class BTConditionNode(BTNode):
                 status = BTNodeStatus.SUCCESS if result else BTNodeStatus.FAILURE
             else:
                 status = BTNodeStatus.SUCCESS  # Assume truthy result is success
-            return BTNodeResult(status=status, data={'condition_result': result})
+            return BTNodeResult(status=status, data={"condition_result": result})
         except Exception as e:
-            return BTNodeResult(
-                status=BTNodeStatus.FAILURE,
-                error_message=str(e)
-            )
+            return BTNodeResult(status=BTNodeStatus.FAILURE, error_message=str(e))
 
 
 class BTCompositeNode(BTNode):
@@ -523,7 +547,7 @@ class BTSequence(BTCompositeNode):
                 start_time=time.time(),
                 timeout=context.timeout,
                 parent_context=context,
-                blackboard=context.blackboard
+                blackboard=context.blackboard,
             )
 
             result = child.execute_with_monitoring(child_context)
@@ -532,19 +556,16 @@ class BTSequence(BTCompositeNode):
             if result.status == BTNodeStatus.FAILURE:
                 return BTNodeResult(
                     status=BTNodeStatus.FAILURE,
-                    data={'failed_child': i, 'results': results},
-                    error_message=f"Child {child.node_id} failed: {result.error_message}"
+                    data={"failed_child": i, "results": results},
+                    error_message=f"Child {child.node_id} failed: {result.error_message}",
                 )
             elif result.status == BTNodeStatus.RUNNING:
                 return BTNodeResult(
                     status=BTNodeStatus.RUNNING,
-                    data={'running_child': i, 'results': results}
+                    data={"running_child": i, "results": results},
                 )
 
-        return BTNodeResult(
-            status=BTNodeStatus.SUCCESS,
-            data={'results': results}
-        )
+        return BTNodeResult(status=BTNodeStatus.SUCCESS, data={"results": results})
 
 
 class BTSelector(BTCompositeNode):
@@ -560,7 +581,7 @@ class BTSelector(BTCompositeNode):
                 start_time=time.time(),
                 timeout=context.timeout,
                 parent_context=context,
-                blackboard=context.blackboard
+                blackboard=context.blackboard,
             )
 
             result = child.execute_with_monitoring(child_context)
@@ -569,18 +590,18 @@ class BTSelector(BTCompositeNode):
             if result.status == BTNodeStatus.SUCCESS:
                 return BTNodeResult(
                     status=BTNodeStatus.SUCCESS,
-                    data={'successful_child': i, 'results': results}
+                    data={"successful_child": i, "results": results},
                 )
             elif result.status == BTNodeStatus.RUNNING:
                 return BTNodeResult(
                     status=BTNodeStatus.RUNNING,
-                    data={'running_child': i, 'results': results}
+                    data={"running_child": i, "results": results},
                 )
 
         return BTNodeResult(
             status=BTNodeStatus.FAILURE,
-            data={'results': results},
-            error_message="All children failed"
+            data={"results": results},
+            error_message="All children failed",
         )
 
 
@@ -611,7 +632,7 @@ class BTRetryDecorator(BTDecorator):
                 retry_count=attempt,
                 max_retries=self.max_retries,
                 parent_context=context,
-                blackboard=context.blackboard
+                blackboard=context.blackboard,
             )
 
             result = self.child.execute_with_monitoring(child_context)
@@ -619,15 +640,11 @@ class BTRetryDecorator(BTDecorator):
 
             if result.status == BTNodeStatus.SUCCESS:
                 return BTNodeResult(
-                    status=BTNodeStatus.SUCCESS,
-                    data=result.data,
-                    retry_count=attempt
+                    status=BTNodeStatus.SUCCESS, data=result.data, retry_count=attempt
                 )
             elif result.status == BTNodeStatus.RUNNING:
                 return BTNodeResult(
-                    status=BTNodeStatus.RUNNING,
-                    data=result.data,
-                    retry_count=attempt
+                    status=BTNodeStatus.RUNNING, data=result.data, retry_count=attempt
                 )
 
         # All retries failed
@@ -635,7 +652,7 @@ class BTRetryDecorator(BTDecorator):
             status=BTNodeStatus.FAILURE,
             data=last_result.data if last_result else {},
             error_message=f"Failed after {self.max_retries + 1} attempts",
-            retry_count=self.max_retries
+            retry_count=self.max_retries,
         )
 
 
@@ -653,7 +670,7 @@ class BTTimeoutDecorator(BTDecorator):
             start_time=time.time(),
             timeout=self.timeout,
             parent_context=context,
-            blackboard=context.blackboard
+            blackboard=context.blackboard,
         )
 
         result = self.child.execute_with_monitoring(child_context)
@@ -668,15 +685,17 @@ class BTInverterDecorator(BTDecorator):
         result = self.child.execute_with_monitoring(context)
 
         inverted_status = (
-            BTNodeStatus.FAILURE if result.status == BTNodeStatus.SUCCESS
-            else BTNodeStatus.SUCCESS if result.status == BTNodeStatus.FAILURE
-            else result.status  # RUNNING remains RUNNING
+            BTNodeStatus.FAILURE
+            if result.status == BTNodeStatus.SUCCESS
+            else (
+                BTNodeStatus.SUCCESS
+                if result.status == BTNodeStatus.FAILURE
+                else result.status
+            )  # RUNNING remains RUNNING
         )
 
         return BTNodeResult(
-            status=inverted_status,
-            data=result.data,
-            error_message=result.error_message
+            status=inverted_status, data=result.data, error_message=result.error_message
         )
 
 
@@ -715,9 +734,7 @@ class BehaviorTree:
 
         # Create execution context
         self.execution_context = BTExecutionContext(
-            node_id=self.name,
-            start_time=time.time(),
-            blackboard=blackboard
+            node_id=self.name, start_time=time.time(), blackboard=blackboard
         )
 
         try:
@@ -739,10 +756,7 @@ class BehaviorTree:
 
         except Exception as e:
             self.logger.error(f"Behavior tree execution failed: {e}")
-            result = BTNodeResult(
-                status=BTNodeStatus.FAILURE,
-                error_message=str(e)
-            )
+            result = BTNodeResult(status=BTNodeStatus.FAILURE, error_message=str(e))
             self.execution_monitor.end_execution(result)
             return result
         finally:
@@ -754,7 +768,10 @@ class BehaviorTree:
             return self.execute()
 
         # Continue execution if running
-        if self.last_execution_result and self.last_execution_result.status == BTNodeStatus.RUNNING:
+        if (
+            self.last_execution_result
+            and self.last_execution_result.status == BTNodeStatus.RUNNING
+        ):
             # Re-execute to continue
             return self.execute(self.execution_context.blackboard)
 
@@ -770,15 +787,31 @@ class BehaviorTree:
         root_health = self.root.get_health_status()
 
         return {
-            'tree_name': self.name,
-            'is_running': self.is_running,
-            'root_health': root_health,
-            'execution_monitor': self.execution_monitor.get_stats(),
-            'last_execution': {
-                'status': self.last_execution_result.status.value if self.last_execution_result else None,
-                'execution_time': self.last_execution_result.execution_time if self.last_execution_result else 0,
-                'error_message': self.last_execution_result.error_message if self.last_execution_result else None
-            } if self.last_execution_result else None
+            "tree_name": self.name,
+            "is_running": self.is_running,
+            "root_health": root_health,
+            "execution_monitor": self.execution_monitor.get_stats(),
+            "last_execution": (
+                {
+                    "status": (
+                        self.last_execution_result.status.value
+                        if self.last_execution_result
+                        else None
+                    ),
+                    "execution_time": (
+                        self.last_execution_result.execution_time
+                        if self.last_execution_result
+                        else 0
+                    ),
+                    "error_message": (
+                        self.last_execution_result.error_message
+                        if self.last_execution_result
+                        else None
+                    ),
+                }
+                if self.last_execution_result
+                else None
+            ),
         }
 
     def enable_state_persistence(self, state_file: Optional[str] = None):
@@ -809,10 +842,11 @@ class BehaviorTree:
         """Load persisted execution state."""
         try:
             import json
-            with open(self.state_file, 'r') as f:
+
+            with open(self.state_file, "r") as f:
                 state = json.load(f)
                 # Restore relevant state
-                self.execution_context.blackboard.update(state.get('blackboard', {}))
+                self.execution_context.blackboard.update(state.get("blackboard", {}))
                 self.logger.info("Execution state loaded successfully")
         except Exception as e:
             self.logger.warning(f"Failed to load execution state: {e}")
@@ -821,16 +855,17 @@ class BehaviorTree:
         """Save execution state for persistence."""
         try:
             import json
+
             state = {
-                'timestamp': time.time(),
-                'blackboard': self.execution_context.blackboard,
-                'last_result': {
-                    'status': result.status.value,
-                    'execution_time': result.execution_time,
-                    'error_message': result.error_message
-                }
+                "timestamp": time.time(),
+                "blackboard": self.execution_context.blackboard,
+                "last_result": {
+                    "status": result.status.value,
+                    "execution_time": result.execution_time,
+                    "error_message": result.error_message,
+                },
             }
-            with open(self.state_file, 'w') as f:
+            with open(self.state_file, "w") as f:
                 json.dump(state, f, indent=2)
         except Exception as e:
             self.logger.error(f"Failed to save execution state: {e}")
@@ -846,18 +881,18 @@ class BTExecutionMonitor:
     def start_execution(self, tree_name: str):
         """Start monitoring execution."""
         self.current_execution = {
-            'tree_name': tree_name,
-            'start_time': time.time(),
-            'status': None,
-            'execution_time': 0
+            "tree_name": tree_name,
+            "start_time": time.time(),
+            "status": None,
+            "execution_time": 0,
         }
 
     def end_execution(self, result: BTNodeResult):
         """End monitoring execution."""
         if self.current_execution:
-            self.current_execution['status'] = result.status.value
-            self.current_execution['execution_time'] = result.execution_time
-            self.current_execution['error_message'] = result.error_message
+            self.current_execution["status"] = result.status.value
+            self.current_execution["execution_time"] = result.execution_time
+            self.current_execution["error_message"] = result.error_message
 
             self.executions.append(self.current_execution)
             self.current_execution = None
@@ -869,18 +904,18 @@ class BTExecutionMonitor:
     def get_stats(self) -> Dict[str, Any]:
         """Get execution statistics."""
         if not self.executions:
-            return {'total_executions': 0}
+            return {"total_executions": 0}
 
-        total_time = sum(ex['execution_time'] for ex in self.executions)
-        success_count = sum(1 for ex in self.executions if ex['status'] == 'success')
-        failure_count = sum(1 for ex in self.executions if ex['status'] == 'failure')
+        total_time = sum(ex["execution_time"] for ex in self.executions)
+        success_count = sum(1 for ex in self.executions if ex["status"] == "success")
+        failure_count = sum(1 for ex in self.executions if ex["status"] == "failure")
 
         return {
-            'total_executions': len(self.executions),
-            'success_rate': success_count / len(self.executions),
-            'failure_rate': failure_count / len(self.executions),
-            'average_execution_time': total_time / len(self.executions),
-            'total_execution_time': total_time
+            "total_executions": len(self.executions),
+            "success_rate": success_count / len(self.executions),
+            "failure_rate": failure_count / len(self.executions),
+            "average_execution_time": total_time / len(self.executions),
+            "total_execution_time": total_time,
         }
 
 
@@ -891,30 +926,33 @@ def create_robust_navigation_tree() -> BehaviorTree:
     # Action nodes with failure handling
     def navigate_to_waypoint(context):
         try:
-            waypoint = context.blackboard.get('current_waypoint')
+            waypoint = context.blackboard.get("current_waypoint")
             if not waypoint:
-                return {'status': BTNodeStatus.FAILURE, 'error': 'No waypoint set'}
+                return {"status": BTNodeStatus.FAILURE, "error": "No waypoint set"}
 
             # Simulate navigation logic
             time.sleep(0.1)  # Simulate work
 
             # Check for navigation success (simplified)
-            if context.blackboard.get('navigation_simulate_failure', False):
-                return {'status': BTNodeStatus.FAILURE, 'error': 'Navigation failed'}
+            if context.blackboard.get("navigation_simulate_failure", False):
+                return {"status": BTNodeStatus.FAILURE, "error": "Navigation failed"}
 
-            return {'status': BTNodeStatus.SUCCESS, 'data': {'waypoint_reached': waypoint}}
+            return {
+                "status": BTNodeStatus.SUCCESS,
+                "data": {"waypoint_reached": waypoint},
+            }
         except Exception as e:
-            return {'status': BTNodeStatus.FAILURE, 'error': str(e)}
+            return {"status": BTNodeStatus.FAILURE, "error": str(e)}
 
     def check_obstacles(context):
-        obstacles = context.blackboard.get('obstacles', [])
+        obstacles = context.blackboard.get("obstacles", [])
         if obstacles:
             return False  # Obstacles detected
         return True
 
     def emergency_stop(context):
-        context.blackboard['emergency_stop_triggered'] = True
-        return {'status': BTNodeStatus.SUCCESS}
+        context.blackboard["emergency_stop_triggered"] = True
+        return {"status": BTNodeStatus.SUCCESS}
 
     # Create nodes
     navigate_action = BTActionNode("navigate_to_waypoint", navigate_to_waypoint)
@@ -927,16 +965,14 @@ def create_robust_navigation_tree() -> BehaviorTree:
     retry_navigate = BTRetryDecorator("retry_navigate", navigate_action, max_retries=2)
 
     # Sequence: Check obstacles -> Navigate with retry -> Emergency stop fallback
-    navigation_sequence = BTSequence("navigation_sequence", [
-        obstacle_condition,
-        retry_navigate
-    ])
+    navigation_sequence = BTSequence(
+        "navigation_sequence", [obstacle_condition, retry_navigate]
+    )
 
     # Selector: Try normal navigation, fallback to emergency stop
-    navigation_selector = BTSelector("navigation_selector", [
-        navigation_sequence,
-        emergency_action
-    ])
+    navigation_selector = BTSelector(
+        "navigation_selector", [navigation_sequence, emergency_action]
+    )
 
     # Create behavior tree
     tree = BehaviorTree(navigation_selector, "RobustNavigationTree")
@@ -958,12 +994,12 @@ if __name__ == "__main__":
     tree = create_robust_navigation_tree()
 
     # Test successful execution
-    blackboard = {'current_waypoint': {'x': 10, 'y': 5}}
+    blackboard = {"current_waypoint": {"x": 10, "y": 5}}
     result = tree.execute(blackboard)
     print(f"Execution result: {result.status}")
 
     # Test failure with recovery
-    blackboard['navigation_simulate_failure'] = True
+    blackboard["navigation_simulate_failure"] = True
     result = tree.execute(blackboard)
     print(f"Failure result: {result.status}")
 
@@ -976,6 +1012,7 @@ if __name__ == "__main__":
 # PY-TREES ENHANCED IMPLEMENTATIONS (HIGH PRIORITY REPLACEMENT)
 # =============================================================================
 
+
 class PyTreesBehaviorTree:
     """
     Py-trees based behavior tree implementation.
@@ -984,9 +1021,15 @@ class PyTreesBehaviorTree:
     providing better reliability, ROS2 integration, and visualization capabilities.
     """
 
-    def __init__(self, root_node: Optional['py_trees.behaviour.Behaviour'] = None, name: str = "URC_BT"):
+    def __init__(
+        self,
+        root_node: Optional["py_trees.behaviour.Behaviour"] = None,
+        name: str = "URC_BT",
+    ):
         if not PY_TREES_AVAILABLE:
-            raise ImportError("py-trees library not available. Install with: pip install py-trees py-trees-ros")
+            raise ImportError(
+                "py-trees library not available. Install with: pip install py-trees py-trees-ros"
+            )
 
         self.name = name
         self.logger = logging.getLogger(f"{__name__}.{name}")
@@ -997,8 +1040,12 @@ class PyTreesBehaviorTree:
 
         # Enhanced monitoring
         self.blackboard = py_trees.blackboard.Client(name=name)
-        self.blackboard.register_key(key="mission_state", access=py_trees.blackboard.Access.WRITE)
-        self.blackboard.register_key(key="health_status", access=py_trees.blackboard.Access.WRITE)
+        self.blackboard.register_key(
+            key="mission_state", access=py_trees.blackboard.Access.WRITE
+        )
+        self.blackboard.register_key(
+            key="health_status", access=py_trees.blackboard.Access.WRITE
+        )
 
         # Mission resource manager integration
         if RESOURCE_MANAGER_AVAILABLE:
@@ -1006,7 +1053,9 @@ class PyTreesBehaviorTree:
             self.logger.info("Mission Resource Manager integrated with behavior tree")
         else:
             self.resource_manager = None
-            self.logger.warning("Mission Resource Manager not available - basic BT operation only")
+            self.logger.warning(
+                "Mission Resource Manager not available - basic BT operation only"
+            )
 
         # Performance tracking
         self.execution_count = 0
@@ -1016,8 +1065,7 @@ class PyTreesBehaviorTree:
 
         # Circuit breaker for tree-level protection
         self.circuit_breaker = circuitbreaker.CircuitBreaker(
-            failure_threshold=10,
-            recovery_timeout=60.0
+            failure_threshold=10, recovery_timeout=60.0
         )
 
         # Setup tree introspection
@@ -1067,8 +1115,10 @@ class PyTreesBehaviorTree:
 
             return BTNodeResult(
                 status=status,
-                data={'tree_status': result, 'blackboard': dict(self.blackboard)},
-                execution_time=self.execution_times[-1] if self.execution_times else 0.0
+                data={"tree_status": result, "blackboard": dict(self.blackboard)},
+                execution_time=(
+                    self.execution_times[-1] if self.execution_times else 0.0
+                ),
             )
 
         except circuitbreaker.CircuitBreakerOpenException:
@@ -1076,7 +1126,7 @@ class PyTreesBehaviorTree:
             return BTNodeResult(
                 status=BTNodeStatus.FAILURE,
                 error_message="Circuit breaker open",
-                execution_time=0.0
+                execution_time=0.0,
             )
 
     def _execute_impl(self) -> py_trees.common.Status:
@@ -1084,7 +1134,11 @@ class PyTreesBehaviorTree:
         self.tree.tick()
         return self.tree.root.status
 
-    def add_node(self, node: 'py_trees.behaviour.Behaviour', parent: Optional['py_trees.behaviour.Behaviour'] = None):
+    def add_node(
+        self,
+        node: "py_trees.behaviour.Behaviour",
+        parent: Optional["py_trees.behaviour.Behaviour"] = None,
+    ):
         """Add a node to the tree."""
         parent = parent or self.root
         if isinstance(parent, py_trees.composites.Composite):
@@ -1102,27 +1156,31 @@ class PyTreesBehaviorTree:
 
         avg_execution_time = (
             sum(self.execution_times) / len(self.execution_times)
-            if self.execution_times else 0.0
+            if self.execution_times
+            else 0.0
         )
 
         return {
-            'overall_health': 'healthy' if success_rate > 0.8 else 'degraded',
-            'success_rate': success_rate,
-            'total_executions': total_executions,
-            'circuit_breaker_state': self.circuit_breaker.get_state().value,
-            'average_execution_time': avg_execution_time,
-            'tree_structure': self._get_tree_structure(),
-            'blackboard_snapshot': dict(self.blackboard)
+            "overall_health": "healthy" if success_rate > 0.8 else "degraded",
+            "success_rate": success_rate,
+            "total_executions": total_executions,
+            "circuit_breaker_state": self.circuit_breaker.get_state().value,
+            "average_execution_time": avg_execution_time,
+            "tree_structure": self._get_tree_structure(),
+            "blackboard_snapshot": dict(self.blackboard),
         }
 
     def _get_tree_structure(self) -> Dict[str, Any]:
         """Get tree structure for debugging."""
+
         def node_to_dict(node):
             return {
-                'name': node.name,
-                'type': type(node).__name__,
-                'status': node.status.value if hasattr(node, 'status') else 'unknown',
-                'children': [node_to_dict(child) for child in getattr(node, 'children', [])]
+                "name": node.name,
+                "type": type(node).__name__,
+                "status": node.status.value if hasattr(node, "status") else "unknown",
+                "children": [
+                    node_to_dict(child) for child in getattr(node, "children", [])
+                ],
             }
 
         return node_to_dict(self.root)
@@ -1136,7 +1194,7 @@ class PyTreesBehaviorTree:
 
         # Reset all nodes
         for node in self.tree.root.iterate():
-            if hasattr(node, 'reset'):
+            if hasattr(node, "reset"):
                 node.reset()
 
         self.logger.info("Behavior tree reset")
@@ -1152,21 +1210,27 @@ class PyTreesBehaviorTree:
             True if profile switch was successful
         """
         if not self.resource_manager:
-            self.logger.warning("Mission Resource Manager not available - cannot switch profiles")
+            self.logger.warning(
+                "Mission Resource Manager not available - cannot switch profiles"
+            )
             return False
 
         # Switch the resource manager to the new profile
         success = self.resource_manager.switch_mission_profile(mission_type)
 
         if success:
-            self.logger.info(f"Switched behavior tree to mission profile: {mission_type}")
+            self.logger.info(
+                f"Switched behavior tree to mission profile: {mission_type}"
+            )
 
             # Update blackboard with new mission state
             self.blackboard.mission_state = mission_type
 
             # Log component status
             resource_status = self.resource_manager.get_resource_status()
-            self.logger.info(f"Active components: {list(resource_status.get('component_status', {}).keys())}")
+            self.logger.info(
+                f"Active components: {list(resource_status.get('component_status', {}).keys())}"
+            )
         else:
             self.logger.error(f"Failed to switch to mission profile: {mission_type}")
 
@@ -1189,6 +1253,7 @@ class PyTreesBehaviorTree:
         if PY_TREES_AVAILABLE:
             try:
                 from py_trees.display import ascii_tree
+
                 return ascii_tree(self.root)
             except ImportError:
                 return "Visualization requires py_trees.display"
@@ -1226,7 +1291,9 @@ class EnhancedActionNode(py_trees.behaviour.Behaviour):
 class EnhancedConditionNode(py_trees.behaviour.Behaviour):
     """Enhanced condition node with caching and monitoring."""
 
-    def __init__(self, name: str, condition_func: Callable[[], bool], cache_timeout: float = 1.0):
+    def __init__(
+        self, name: str, condition_func: Callable[[], bool], cache_timeout: float = 1.0
+    ):
         super().__init__(name)
         self.condition_func = condition_func
         self.cache_timeout = cache_timeout
@@ -1239,7 +1306,10 @@ class EnhancedConditionNode(py_trees.behaviour.Behaviour):
         current_time = time.time()
 
         # Use cached result if recent
-        if current_time - self.last_check_time < self.cache_timeout and self.cached_result is not None:
+        if (
+            current_time - self.last_check_time < self.cache_timeout
+            and self.cached_result is not None
+        ):
             return self.cached_result
 
         self.check_count += 1
@@ -1247,7 +1317,11 @@ class EnhancedConditionNode(py_trees.behaviour.Behaviour):
 
         try:
             result = self.condition_func()
-            status = py_trees.common.Status.SUCCESS if result else py_trees.common.Status.FAILURE
+            status = (
+                py_trees.common.Status.SUCCESS
+                if result
+                else py_trees.common.Status.FAILURE
+            )
             self.cached_result = status
             return status
         except Exception:
@@ -1256,12 +1330,15 @@ class EnhancedConditionNode(py_trees.behaviour.Behaviour):
 
 # ROS2 Integration Nodes (if py_trees_ros available)
 if PY_TREES_ROS_AVAILABLE:
+
     class ROS2ActionNode(py_trees_ros.actions.ActionClient):
         """ROS2 action client as a behavior tree node (proper py_trees_ros integration)."""
-        
-        def __init__(self, name: str, action_type: Any, action_name: str, node: Any = None):
+
+        def __init__(
+            self, name: str, action_type: Any, action_name: str, node: Any = None
+        ):
             """Initialize ROS2 action client node.
-            
+
             Args:
                 name: Node name
                 action_type: ROS2 action type (e.g., NavigateToPose)
@@ -1270,34 +1347,37 @@ if PY_TREES_ROS_AVAILABLE:
             """
             if node is None:
                 raise ValueError("ROS2 node required for py_trees_ros ActionClient")
-            
+
             super().__init__(
-                name=name,
-                action_type=action_type,
-                action_name=action_name,
-                node=node
+                name=name, action_type=action_type, action_name=action_name, node=node
             )
-    
+
     class ROS2ToBlackboard(ToBlackboard):
         """ROS2 topic to blackboard node (proper py_trees_ros integration)."""
+
         pass
-    
+
     class ROS2FromBlackboard(FromBlackboard):
         """Blackboard to ROS2 topic node (proper py_trees_ros integration)."""
+
         pass
 
 elif PY_TREES_AVAILABLE:
     # Fallback implementation if py_trees_ros not available
     class ROS2ActionNode(py_trees.behaviour.Behaviour):
         """Fallback ROS2 action client (limited functionality)."""
-        
-        def __init__(self, name: str, action_type: Any, action_name: str, node: Any = None):
+
+        def __init__(
+            self, name: str, action_type: Any, action_name: str, node: Any = None
+        ):
             super().__init__(name)
             self.action_type = action_type
             self.action_name = action_name
             self.node = node
-            self.logger.warning("py_trees_ros not available, using fallback implementation")
-        
+            self.logger.warning(
+                "py_trees_ros not available, using fallback implementation"
+            )
+
         def update(self) -> py_trees.common.Status:
             """Fallback update - always returns RUNNING."""
             self.logger.warning("ROS2 action not available without py_trees_ros")
@@ -1305,24 +1385,33 @@ elif PY_TREES_AVAILABLE:
 
 
 # Factory functions for easy tree construction
-def create_mission_sequence(name: str = "MissionSequence") -> py_trees.composites.Sequence:
+def create_mission_sequence(
+    name: str = "MissionSequence",
+) -> py_trees.composites.Sequence:
     """Create a mission execution sequence."""
     return py_trees.composites.Sequence(name=name, memory=True)
 
 
-def create_fallback_selector(name: str = "FallbackSelector") -> py_trees.composites.Selector:
+def create_fallback_selector(
+    name: str = "FallbackSelector",
+) -> py_trees.composites.Selector:
     """Create a fallback selector for error recovery."""
     return py_trees.composites.Selector(name=name, memory=False)
 
 
-def create_parallel_tasks(name: str = "ParallelTasks", policy=py_trees.common.ParallelPolicy.SuccessOnAll()) -> py_trees.composites.Parallel:
+def create_parallel_tasks(
+    name: str = "ParallelTasks", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+) -> py_trees.composites.Parallel:
     """Create parallel task execution."""
     return py_trees.composites.Parallel(name=name, policy=policy)
 
 
 # Mission-specific node factories
-def create_navigation_action(name: str, waypoint: Dict[str, float]) -> EnhancedActionNode:
+def create_navigation_action(
+    name: str, waypoint: Dict[str, float]
+) -> EnhancedActionNode:
     """Create navigation action node."""
+
     def navigate():
         # Integration point for navigation system
         config = get_config()
@@ -1334,6 +1423,7 @@ def create_navigation_action(name: str, waypoint: Dict[str, float]) -> EnhancedA
 
 def create_sample_collection_action(name: str, sample_type: str) -> EnhancedActionNode:
     """Create sample collection action node."""
+
     def collect_sample():
         # Integration point for science payload
         config = get_config()
@@ -1343,8 +1433,11 @@ def create_sample_collection_action(name: str, sample_type: str) -> EnhancedActi
     return EnhancedActionNode(name, collect_sample)
 
 
-def create_system_health_condition(name: str = "SystemHealthy") -> EnhancedConditionNode:
+def create_system_health_condition(
+    name: str = "SystemHealthy",
+) -> EnhancedConditionNode:
     """Create system health condition node."""
+
     def check_health():
         # Integration point for health monitoring
         config = get_config()
@@ -1360,7 +1453,9 @@ if __name__ == "__main__":
     print("=" * 50)
 
     if not PY_TREES_AVAILABLE:
-        print("❌ py-trees not available. Install with: pip install py-trees py-trees-ros")
+        print(
+            "❌ py-trees not available. Install with: pip install py-trees py-trees-ros"
+        )
         exit(1)
 
     try:
@@ -1387,12 +1482,14 @@ if __name__ == "__main__":
         print(f"📊 Tree structure: {tree._get_tree_structure()}")
 
         # Execute tree
-        result = tree.execute({'mission_phase': 'exploration'})
+        result = tree.execute({"mission_phase": "exploration"})
         print(f"🎯 Execution result: {result.status}")
 
         # Show health status
         health = tree.get_health_status()
-        print(f"🏥 Tree health: {health['overall_health']} ({health['success_rate']:.1%} success rate)")
+        print(
+            f"🏥 Tree health: {health['overall_health']} ({health['success_rate']:.1%} success rate)"
+        )
 
         # Demonstrate mission profile switching
         print("\n🔄 MISSION PROFILE SWITCHING DEMO")
@@ -1400,22 +1497,26 @@ if __name__ == "__main__":
 
         # Switch to waypoint navigation profile
         print("Switching to 'waypoint_navigation' profile...")
-        success = tree.switch_mission_profile('waypoint_navigation')
+        success = tree.switch_mission_profile("waypoint_navigation")
         if success:
             resource_status = tree.get_resource_status()
             print("✅ Profile switch successful")
-            print(f"📊 Mission profile: {resource_status.get('mission_profile', 'unknown')}")
+            print(
+                f"📊 Mission profile: {resource_status.get('mission_profile', 'unknown')}"
+            )
             print(f"🔧 Component status: {resource_status.get('component_status', {})}")
         else:
             print("❌ Profile switch failed")
 
         # Switch to sample collection profile
         print("\nSwitching to 'sample_collection' profile...")
-        success = tree.switch_mission_profile('sample_collection')
+        success = tree.switch_mission_profile("sample_collection")
         if success:
             resource_status = tree.get_resource_status()
             print("✅ Profile switch successful")
-            print(f"📊 Mission profile: {resource_status.get('mission_profile', 'unknown')}")
+            print(
+                f"📊 Mission profile: {resource_status.get('mission_profile', 'unknown')}"
+            )
             print(f"🔧 Component status: {resource_status.get('component_status', {})}")
         else:
             print("❌ Profile switch failed")
@@ -1429,4 +1530,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()

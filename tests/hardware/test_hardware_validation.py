@@ -19,6 +19,7 @@ from pathlib import Path
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(WORKSPACE_ROOT / "src" / "infrastructure" / "bridges"))
 
+
 def run_protocol_tests() -> bool:
     """Run CAN message encoding/decoding tests (no hardware)."""
     print("=== CAN Protocol Validation (no hardware) ===")
@@ -72,7 +73,9 @@ def run_protocol_tests() -> bool:
     return True
 
 
-def run_hardware_test(device: str, baudrate: int = 115200, timeout_s: float = 2.0) -> bool:
+def run_hardware_test(
+    device: str, baudrate: int = 115200, timeout_s: float = 2.0
+) -> bool:
     """Send SLCAN frames to device and check for no errors (optional reply)."""
     print(f"=== CAN Hardware Validation: {device} ===")
     try:
@@ -82,7 +85,9 @@ def run_hardware_test(device: str, baudrate: int = 115200, timeout_s: float = 2.
         return False
 
     try:
-        port = serial.Serial(port=device, baudrate=baudrate, timeout=0.5, write_timeout=1.0)
+        port = serial.Serial(
+            port=device, baudrate=baudrate, timeout=0.5, write_timeout=1.0
+        )
     except (serial.SerialException, OSError) as e:
         print(f"  [FAIL] Cannot open {device}: {e}")
         return False
@@ -102,7 +107,9 @@ def run_hardware_test(device: str, baudrate: int = 115200, timeout_s: float = 2.
         if reply:
             print(f"  [OK] Heartbeat sent; received {len(reply)} bytes")
         else:
-            print("  [OK] Heartbeat sent (no reply within timeout - device may not echo)")
+            print(
+                "  [OK] Heartbeat sent (no reply within timeout - device may not echo)"
+            )
 
         # Send single chassis velocity (0x00C) zero command
         port.write(b"t00C6000000000000\r")
@@ -125,8 +132,12 @@ def run_hardware_test(device: str, baudrate: int = 115200, timeout_s: float = 2.
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="CAN hardware validation for swerve drive")
-    parser.add_argument("--device", type=str, default="", help="Serial device e.g. /dev/ttyACM0")
+    parser = argparse.ArgumentParser(
+        description="CAN hardware validation for swerve drive"
+    )
+    parser.add_argument(
+        "--device", type=str, default="", help="Serial device e.g. /dev/ttyACM0"
+    )
     parser.add_argument("--baudrate", type=int, default=115200, help="Serial baud rate")
     args = parser.parse_args()
 

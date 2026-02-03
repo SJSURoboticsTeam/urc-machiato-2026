@@ -47,7 +47,7 @@ class JazzyIntegrationTest(Node):
     """
 
     def __init__(self):
-        super().__init__('jazzy_integration_test')
+        super().__init__("jazzy_integration_test")
 
         # Test state
         self.test_results = {}
@@ -57,23 +57,21 @@ class JazzyIntegrationTest(Node):
         # Subscribers for monitoring
         self.health_sub = self.create_subscription(
             String,
-            '/jazzy_component_manager/health',
+            "/jazzy_component_manager/health",
             self._health_callback,
-            get_telemetry_qos()
+            get_telemetry_qos(),
         )
 
         self.state_sub = self.create_subscription(
             String,
-            '/adaptive_state_machine/state',
+            "/adaptive_state_machine/state",
             self._state_callback,
-            get_telemetry_qos()
+            get_telemetry_qos(),
         )
 
         # Publishers for control
         self.command_pub = self.create_publisher(
-            String,
-            '/adaptive_state_machine/commands',
-            get_autonomy_status_qos()
+            String, "/adaptive_state_machine/commands", get_autonomy_status_qos()
         )
 
         # Test timer
@@ -85,21 +83,27 @@ class JazzyIntegrationTest(Node):
         """Monitor component manager health"""
         try:
             health_data = json.loads(msg.data)
-            self.test_results['health_received'] = True
-            self.test_results['system_health'] = health_data.get('overall_health', 'unknown')
-            self.test_results['component_count'] = health_data.get('component_count', 0)
-            self.test_results['healthy_components'] = health_data.get('healthy_components', 0)
+            self.test_results["health_received"] = True
+            self.test_results["system_health"] = health_data.get(
+                "overall_health", "unknown"
+            )
+            self.test_results["component_count"] = health_data.get("component_count", 0)
+            self.test_results["healthy_components"] = health_data.get(
+                "healthy_components", 0
+            )
         except json.JSONDecodeError:
-            self.test_results['health_parse_error'] = True
+            self.test_results["health_parse_error"] = True
 
     def _state_callback(self, msg):
         """Monitor state machine telemetry"""
         try:
             state_data = json.loads(msg.data)
-            self.test_results['state_received'] = True
-            self.test_results['current_state'] = state_data.get('current_state', 'unknown')
+            self.test_results["state_received"] = True
+            self.test_results["current_state"] = state_data.get(
+                "current_state", "unknown"
+            )
         except json.JSONDecodeError:
-            self.test_results['state_parse_error'] = True
+            self.test_results["state_parse_error"] = True
 
     def _run_test_step(self):
         """Execute test steps in sequence"""
@@ -144,10 +148,10 @@ class JazzyIntegrationTest(Node):
         # Check ROS2 node discovery
         try:
             # This would check if our Jazzy components are visible
-            self.test_results['component_discovery'] = True
+            self.test_results["component_discovery"] = True
         except Exception as e:
             logger.error(f"Component discovery test failed: {e}")
-            self.test_results['component_discovery'] = False
+            self.test_results["component_discovery"] = False
 
     def _test_qos_communication(self):
         """Test QoS-based communication"""
@@ -156,13 +160,13 @@ class JazzyIntegrationTest(Node):
         test_cmd.data = "TEST_QOS_COMMUNICATION"
         self.command_pub.publish(test_cmd)
 
-        self.test_results['qos_test_sent'] = True
+        self.test_results["qos_test_sent"] = True
 
         # Check if we received health/state data (QoS working)
-        if self.test_results.get('health_received', False):
-            self.test_results['qos_communication'] = True
+        if self.test_results.get("health_received", False):
+            self.test_results["qos_communication"] = True
         else:
-            self.test_results['qos_communication'] = False
+            self.test_results["qos_communication"] = False
 
     def _test_state_machine_commands(self):
         """Test state machine command processing"""
@@ -175,37 +179,38 @@ class JazzyIntegrationTest(Node):
             self.command_pub.publish(msg)
             time.sleep(0.1)  # Small delay between commands
 
-        self.test_results['state_commands_sent'] = True
+        self.test_results["state_commands_sent"] = True
 
     def _test_performance_monitoring(self):
         """Test performance monitoring capabilities"""
         # Check if we're receiving performance data
-        if (self.test_results.get('health_received', False) and
-            self.test_results.get('state_received', False)):
-            self.test_results['performance_monitoring'] = True
+        if self.test_results.get("health_received", False) and self.test_results.get(
+            "state_received", False
+        ):
+            self.test_results["performance_monitoring"] = True
         else:
-            self.test_results['performance_monitoring'] = False
+            self.test_results["performance_monitoring"] = False
 
     def _test_error_recovery(self):
         """Test error recovery mechanisms"""
         # Simulate a component failure (in real test, would kill a process)
         # For now, just verify the system can handle missing data gracefully
-        self.test_results['error_recovery_tested'] = True
+        self.test_results["error_recovery_tested"] = True
 
     def _generate_test_results(self):
         """Generate comprehensive test results"""
         test_results = {
-            'test_duration_seconds': time.time() - self.start_time,
-            'jazzy_features_tested': [
-                'cyclone_dds_configuration',
-                'iceoryx2_shared_memory',
-                'qos_profiles',
-                'component_lifecycle',
-                'performance_monitoring'
+            "test_duration_seconds": time.time() - self.start_time,
+            "jazzy_features_tested": [
+                "cyclone_dds_configuration",
+                "iceoryx2_shared_memory",
+                "qos_profiles",
+                "component_lifecycle",
+                "performance_monitoring",
             ],
-            'test_results': self.test_results,
-            'overall_success': self._calculate_overall_success(),
-            'recommendations': self._generate_recommendations()
+            "test_results": self.test_results,
+            "overall_success": self._calculate_overall_success(),
+            "recommendations": self._generate_recommendations(),
         }
 
         # Log results
@@ -213,38 +218,50 @@ class JazzyIntegrationTest(Node):
         logger.info(f"   Duration: {test_results['test_duration_seconds']:.1f}s")
         logger.info(f"   Overall Success: {test_results['overall_success']}")
 
-        for feature in test_results['jazzy_features_tested']:
+        for feature in test_results["jazzy_features_tested"]:
             logger.info(f"   ✅ {feature}: Tested")
 
         # Print detailed results
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🎯 JAZZY INTEGRATION TEST RESULTS")
-        print("="*60)
+        print("=" * 60)
         print(f"Test Duration: {test_results['test_duration_seconds']:.1f} seconds")
-        print(f"Overall Success: {'✅ PASS' if test_results['overall_success'] else '❌ FAIL'}")
+        print(
+            f"Overall Success: {'✅ PASS' if test_results['overall_success'] else '❌ FAIL'}"
+        )
         print()
 
         print("Component Status:")
-        print(f"  - Discovery: {'✅' if self.test_results.get('component_discovery', False) else '❌'}")
-        print(f"  - QoS Communication: {'✅' if self.test_results.get('qos_communication', False) else '❌'}")
-        print(f"  - State Commands: {'✅' if self.test_results.get('state_commands_sent', False) else '❌'}")
-        print(f"  - Performance Monitoring: {'✅' if self.test_results.get('performance_monitoring', False) else '❌'}")
-        print(f"  - Health Monitoring: {'✅' if self.test_results.get('health_received', False) else '❌'}")
+        print(
+            f"  - Discovery: {'✅' if self.test_results.get('component_discovery', False) else '❌'}"
+        )
+        print(
+            f"  - QoS Communication: {'✅' if self.test_results.get('qos_communication', False) else '❌'}"
+        )
+        print(
+            f"  - State Commands: {'✅' if self.test_results.get('state_commands_sent', False) else '❌'}"
+        )
+        print(
+            f"  - Performance Monitoring: {'✅' if self.test_results.get('performance_monitoring', False) else '❌'}"
+        )
+        print(
+            f"  - Health Monitoring: {'✅' if self.test_results.get('health_received', False) else '❌'}"
+        )
 
         print()
         print("Jazzy Features Validated:")
-        for feature in test_results['jazzy_features_tested']:
+        for feature in test_results["jazzy_features_tested"]:
             print(f"  ✅ {feature.replace('_', ' ').title()}")
 
         print()
         print("Recommendations:")
-        for rec in test_results['recommendations']:
+        for rec in test_results["recommendations"]:
             print(f"  • {rec}")
 
-        print("="*60)
+        print("=" * 60)
 
         # Save results to file
-        with open('/tmp/jazzy_integration_test_results.json', 'w') as f:
+        with open("/tmp/jazzy_integration_test_results.json", "w") as f:
             json.dump(test_results, f, indent=2)
 
         logger.info("💾 Test results saved to /tmp/jazzy_integration_test_results.json")
@@ -252,10 +269,10 @@ class JazzyIntegrationTest(Node):
     def _calculate_overall_success(self) -> bool:
         """Calculate if the overall test was successful"""
         required_tests = [
-            'component_discovery',
-            'qos_communication',
-            'health_received',
-            'state_received'
+            "component_discovery",
+            "qos_communication",
+            "health_received",
+            "state_received",
         ]
 
         return all(self.test_results.get(test, False) for test in required_tests)
@@ -264,24 +281,26 @@ class JazzyIntegrationTest(Node):
         """Generate recommendations based on test results"""
         recommendations = []
 
-        if not self.test_results.get('component_discovery', False):
+        if not self.test_results.get("component_discovery", False):
             recommendations.append("Improve component auto-discovery mechanism")
 
-        if not self.test_results.get('qos_communication', False):
+        if not self.test_results.get("qos_communication", False):
             recommendations.append("Verify QoS profile configurations and DDS settings")
 
-        if not self.test_results.get('performance_monitoring', False):
+        if not self.test_results.get("performance_monitoring", False):
             recommendations.append("Enhance performance monitoring and telemetry")
 
-        if not self.test_results.get('health_received', False):
+        if not self.test_results.get("health_received", False):
             recommendations.append("Implement comprehensive health monitoring")
 
         # Always include some positive recommendations
-        recommendations.extend([
-            "Consider adding Cyclone DDS for improved real-time performance",
-            "Implement comprehensive error recovery mechanisms",
-            "Add automated performance regression testing"
-        ])
+        recommendations.extend(
+            [
+                "Consider adding Cyclone DDS for improved real-time performance",
+                "Implement comprehensive error recovery mechanisms",
+                "Add automated performance regression testing",
+            ]
+        )
 
         return recommendations
 
@@ -314,6 +333,7 @@ async def run_integration_test():
     except Exception as e:
         logger.error(f"❌ Integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
@@ -328,5 +348,5 @@ def main():
     asyncio.run(run_integration_test())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

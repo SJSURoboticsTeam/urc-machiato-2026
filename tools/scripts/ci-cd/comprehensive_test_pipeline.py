@@ -364,15 +364,21 @@ class ComprehensiveTestPipeline:
             "coverage": self.coverage_data,
             "performance_baselines": self.performance_baselines,
             "summary": {
-                "unit_tests": "passed"
-                if self.test_results.get("unit", {}).get("returncode") == 0
-                else "failed",
-                "integration_tests": "passed"
-                if self.test_results.get("integration", {}).get("returncode") == 0
-                else "failed",
-                "performance_tests": "passed"
-                if self.test_results.get("performance", {}).get("returncode") == 0
-                else "failed",
+                "unit_tests": (
+                    "passed"
+                    if self.test_results.get("unit", {}).get("returncode") == 0
+                    else "failed"
+                ),
+                "integration_tests": (
+                    "passed"
+                    if self.test_results.get("integration", {}).get("returncode") == 0
+                    else "failed"
+                ),
+                "performance_tests": (
+                    "passed"
+                    if self.test_results.get("performance", {}).get("returncode") == 0
+                    else "failed"
+                ),
                 "chaos_tests": "completed",  # Chaos tests always complete
             },
         }

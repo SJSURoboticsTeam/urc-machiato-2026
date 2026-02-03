@@ -28,23 +28,26 @@ logger = logging.getLogger(__name__)
 
 class SyncMode(Enum):
     """Synchronization modes for different requirements."""
+
     HARD_REALTIME = "hard_realtime"  # <1ms jitter tolerance
     SOFT_REALTIME = "soft_realtime"  # <10ms jitter tolerance
-    EVENT_DRIVEN = "event_driven"    # Best effort synchronization
-    ASYNCHRONOUS = "asynchronous"    # No synchronization guarantees
+    EVENT_DRIVEN = "event_driven"  # Best effort synchronization
+    ASYNCHRONOUS = "asynchronous"  # No synchronization guarantees
 
 
 class TemporalConsistency(Enum):
     """Temporal consistency requirements."""
-    STRICT = "strict"         # All messages must be perfectly aligned
+
+    STRICT = "strict"  # All messages must be perfectly aligned
     APPROXIMATE = "approximate"  # Allow small timing variations
-    BEST_EFFORT = "best_effort"   # Process messages as they arrive
-    NONE = "none"            # No temporal requirements
+    BEST_EFFORT = "best_effort"  # Process messages as they arrive
+    NONE = "none"  # No temporal requirements
 
 
 @dataclass
 class CameraSyncConfig:
     """Configuration for multi-camera synchronization."""
+
     num_cameras: int = 4
     max_sync_delay_ms: float = 50.0  # Maximum allowed sync delay
     frame_timeout_ms: float = 100.0  # Frame timeout before drop
@@ -56,6 +59,7 @@ class CameraSyncConfig:
 @dataclass
 class ClockSyncStatus:
     """Distributed clock synchronization status."""
+
     offset_ns: int = 0  # Clock offset in nanoseconds
     drift_rate_ppm: float = 0.0  # Clock drift rate
     last_sync_time: float = 0.0
@@ -67,6 +71,7 @@ class ClockSyncStatus:
 @dataclass
 class SyncBuffer:
     """Thread-safe synchronization buffer with overflow protection and recovery."""
+
     max_size: int = 100
     overflow_policy: str = "drop_oldest"  # drop_oldest, drop_newest, block, adaptive
     items: List[Dict[str, Any]] = field(default_factory=list)
@@ -103,7 +108,9 @@ class SyncBuffer:
         if self.overflow_policy == "drop_oldest":
             if self.items:
                 dropped_item = self.items.pop(0)
-                logger.debug(f"Dropped oldest item from buffer: {dropped_item.get('timestamp', 'unknown')}")
+                logger.debug(
+                    f"Dropped oldest item from buffer: {dropped_item.get('timestamp', 'unknown')}"
+                )
             return True
         elif self.overflow_policy == "drop_newest":
             logger.debug("Buffer full, rejecting new item")
@@ -116,7 +123,9 @@ class SyncBuffer:
             # Emergency expansion
             old_max = self.max_size
             self.max_size = min(self.max_size * 2, 1000)  # Double but cap at 1000
-            logger.warning(f"Buffer overflow, expanding from {old_max} to {self.max_size}")
+            logger.warning(
+                f"Buffer overflow, expanding from {old_max} to {self.max_size}"
+            )
             return True
 
         return False
@@ -127,7 +136,7 @@ class SyncBuffer:
             return False
 
         # Check for required timestamp
-        timestamp = item.get('timestamp')
+        timestamp = item.get("timestamp")
         if timestamp is None:
             return False
 
@@ -138,7 +147,7 @@ class SyncBuffer:
 
         # Check for duplicate timestamps (basic duplicate detection)
         for existing_item in self.items[-10:]:  # Check last 10 items
-            if existing_item.get('timestamp') == timestamp:
+            if existing_item.get("timestamp") == timestamp:
                 return False  # Duplicate timestamp
 
         return True
@@ -159,7 +168,7 @@ class SyncBuffer:
         with self.lock:
             cutoff_index = 0
             for i, item in enumerate(self.items):
-                if item.get('timestamp', 0) > timestamp:
+                if item.get("timestamp", 0) > timestamp:
                     break
                 cutoff_index = i + 1
 
@@ -172,7 +181,9 @@ class SyncBuffer:
 
             return result
 
-    def _filter_quality_items(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _filter_quality_items(
+        self, items: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Filter items based on quality metrics."""
         if not items:
             return items
@@ -183,11 +194,11 @@ class SyncBuffer:
             quality_score = 0
 
             # Check for required fields
-            if 'timestamp' in item:
+            if "timestamp" in item:
                 quality_score += 0.3
-            if 'frame_number' in item:
+            if "frame_number" in item:
                 quality_score += 0.2
-            if 'data' in item and item['data']:
+            if "data" in item and item["data"]:
                 quality_score += 0.5
 
             # Only keep high-quality items when buffer is stressed
@@ -208,11 +219,11 @@ class SyncBuffer:
         """Get buffer statistics."""
         with self.lock:
             return {
-                'current_size': len(self.items),
-                'max_size': self.max_size,
-                'overflow_count': self.overflow_count,
-                'adaptive_mode': self.adaptive_mode,
-                'quality_threshold': self.quality_threshold
+                "current_size": len(self.items),
+                "max_size": self.max_size,
+                "overflow_count": self.overflow_count,
+                "adaptive_mode": self.adaptive_mode,
+                "quality_threshold": self.quality_threshold,
             }
 
     def clear(self):
@@ -233,6 +244,7 @@ class SyncBuffer:
 @dataclass
 class SyncStatistics:
     """Synchronization performance statistics."""
+
     messages_processed: int = 0
     sync_violations: int = 0
     avg_sync_delay_ms: float = 0.0
@@ -266,27 +278,25 @@ class SynchronizationEngine:
         self.ros2_buffers: Dict[str, SyncBuffer] = {}
 
         # Initialize camera buffers
-        camera_ids = ['front', 'rear', 'left', 'right']
+        camera_ids = ["front", "rear", "left", "right"]
         for cam_id in camera_ids:
             self.camera_buffers[cam_id] = SyncBuffer(
-                max_size=30,  # 30 frames buffer
-                overflow_policy="drop_oldest"
+                max_size=30, overflow_policy="drop_oldest"  # 30 frames buffer
             )
 
         # ROS2 topic buffers
         ros2_topics = [
-            '/camera/front/image_raw',
-            '/camera/rear/image_raw',
-            '/camera/left/image_raw',
-            '/camera/right/image_raw',
-            '/odom',
-            '/imu/data',
-            '/gps/fix'
+            "/camera/front/image_raw",
+            "/camera/rear/image_raw",
+            "/camera/left/image_raw",
+            "/camera/right/image_raw",
+            "/odom",
+            "/imu/data",
+            "/gps/fix",
         ]
         for topic in ros2_topics:
             self.ros2_buffers[topic] = SyncBuffer(
-                max_size=50,
-                overflow_policy="drop_oldest"
+                max_size=50, overflow_policy="drop_oldest"
             )
 
         # Synchronization state
@@ -308,41 +318,54 @@ class SynchronizationEngine:
         if self.ros_node:
             try:
                 from std_msgs.msg import String
-                from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+                from diagnostic_msgs.msg import (
+                    DiagnosticArray,
+                    DiagnosticStatus,
+                    KeyValue,
+                )
                 from std_srvs.srv import Trigger
 
                 # Core safety publishers
                 self.safety_publisher = self.ros_node.create_publisher(
-                    String, '/safety/sync_engine_status', 10)
+                    String, "/safety/sync_engine_status", 10
+                )
 
                 self.diagnostics_publisher = self.ros_node.create_publisher(
-                    DiagnosticArray, '/diagnostics/sync_engine', 10)
+                    DiagnosticArray, "/diagnostics/sync_engine", 10
+                )
 
                 # Advanced diagnostic publishers
                 self.health_publisher = self.ros_node.create_publisher(
-                    String, '/safety/sync_engine_health', 10)
+                    String, "/safety/sync_engine_health", 10
+                )
 
                 self.performance_publisher = self.ros_node.create_publisher(
-                    String, '/safety/sync_engine_performance', 10)
+                    String, "/safety/sync_engine_performance", 10
+                )
 
                 # Service servers for advanced control
                 self.reset_service = self.ros_node.create_service(
-                    Trigger, '/safety/sync_engine/reset',
-                    self._handle_reset_service)
+                    Trigger, "/safety/sync_engine/reset", self._handle_reset_service
+                )
 
                 self.diagnostics_service = self.ros_node.create_service(
-                    Trigger, '/safety/sync_engine/request_diagnostics',
-                    self._handle_diagnostics_service)
+                    Trigger,
+                    "/safety/sync_engine/request_diagnostics",
+                    self._handle_diagnostics_service,
+                )
 
                 # Enhanced timers
                 self.safety_timer = self.ros_node.create_timer(
-                    1.0, self._publish_safety_status)
+                    1.0, self._publish_safety_status
+                )
 
                 self.diagnostics_timer = self.ros_node.create_timer(
-                    5.0, self._publish_diagnostics)  # Every 5 seconds
+                    5.0, self._publish_diagnostics
+                )  # Every 5 seconds
 
                 self.performance_timer = self.ros_node.create_timer(
-                    2.0, self._publish_performance_metrics)  # Every 2 seconds
+                    2.0, self._publish_performance_metrics
+                )  # Every 2 seconds
 
                 logger.info("Advanced ROS2 safety monitoring integration enabled")
 
@@ -357,10 +380,13 @@ class SynchronizationEngine:
         if self.ros_node:
             try:
                 from std_msgs.msg import String
+
                 self.safety_publisher = self.ros_node.create_publisher(
-                    String, '/safety/sync_engine_status', 10)
+                    String, "/safety/sync_engine_status", 10
+                )
                 self.safety_timer = self.ros_node.create_timer(
-                    1.0, self._publish_safety_status)
+                    1.0, self._publish_safety_status
+                )
                 logger.info("Basic ROS2 safety monitoring enabled")
             except Exception as e:
                 logger.warning(f"Basic ROS2 safety monitoring setup failed: {e}")
@@ -386,6 +412,7 @@ class SynchronizationEngine:
 
         try:
             from std_msgs.msg import String
+
             health = self.get_health_status()
 
             status_msg = String()
@@ -415,12 +442,12 @@ class SynchronizationEngine:
             sync_diag.hardware_id = "sync_engine_core"
 
             health = self.get_health_status()
-            overall_health = health['overall_health']
+            overall_health = health["overall_health"]
 
-            if overall_health == 'healthy':
+            if overall_health == "healthy":
                 sync_diag.level = DiagnosticStatus.OK
                 sync_diag.message = "Synchronization operating normally"
-            elif overall_health == 'degraded':
+            elif overall_health == "degraded":
                 sync_diag.level = DiagnosticStatus.WARN
                 sync_diag.message = "Synchronization performance degraded"
             else:
@@ -429,11 +456,18 @@ class SynchronizationEngine:
 
             # Add detailed values
             sync_diag.values = [
-                KeyValue(key="sync_violations", value=str(self.statistics.sync_violations)),
+                KeyValue(
+                    key="sync_violations", value=str(self.statistics.sync_violations)
+                ),
                 KeyValue(key="avg_sync_delay_ms", value=".2f"),
-                KeyValue(key="buffer_overflows", value=str(self.statistics.buffer_overflows)),
+                KeyValue(
+                    key="buffer_overflows", value=str(self.statistics.buffer_overflows)
+                ),
                 KeyValue(key="temporal_consistency_score", value=".3f"),
-                KeyValue(key="messages_processed", value=str(self.statistics.messages_processed))
+                KeyValue(
+                    key="messages_processed",
+                    value=str(self.statistics.messages_processed),
+                ),
             ]
 
             diag_array.status = [sync_diag]
@@ -459,7 +493,9 @@ class SynchronizationEngine:
 
             # Sync engine specific metrics
             health = self.get_health_status()
-            active_cameras = len([k for k, v in self.camera_buffers.items() if v.size() > 0])
+            active_cameras = len(
+                [k for k, v in self.camera_buffers.items() if v.size() > 0]
+            )
 
             perf_msg = String()
             perf_msg.data = f"MEMORY:{memory_usage:.1f}MB|CPU:{cpu_usage:.1f}%|CAMERAS:{active_cameras}|HEALTH:{health['overall_health']}"
@@ -553,12 +589,12 @@ Synchronization Engine Diagnostics:
                 continue
 
             # Get most recent frame
-            latest_frame = max(frames, key=lambda f: f.get('timestamp', 0))
+            latest_frame = max(frames, key=lambda f: f.get("timestamp", 0))
             camera_frames[cam_id] = latest_frame
 
             # Use master camera as reference timestamp
             if cam_id == self.camera_config.master_camera_id:
-                master_timestamp = latest_frame.get('timestamp')
+                master_timestamp = latest_frame.get("timestamp")
 
         # Check for minimum viable camera set
         if not master_timestamp:
@@ -567,10 +603,14 @@ Synchronization Engine Diagnostics:
 
         if len(camera_frames) < 2:
             # Only one camera - single camera mode
-            return await self._fallback_camera_sync(camera_frames, "insufficient_cameras")
+            return await self._fallback_camera_sync(
+                camera_frames, "insufficient_cameras"
+            )
 
         # Attempt full synchronization
-        full_sync_result = await self._attempt_full_camera_sync(camera_frames, master_timestamp)
+        full_sync_result = await self._attempt_full_camera_sync(
+            camera_frames, master_timestamp
+        )
 
         if full_sync_result is not None:
             return full_sync_result
@@ -578,8 +618,9 @@ Synchronization Engine Diagnostics:
         # Full sync failed - try degraded modes
         return await self._degraded_camera_sync(camera_frames, master_timestamp)
 
-    async def _attempt_full_camera_sync(self, camera_frames: Dict[str, Any],
-                                       master_timestamp: float) -> Optional[Dict[str, Any]]:
+    async def _attempt_full_camera_sync(
+        self, camera_frames: Dict[str, Any], master_timestamp: float
+    ) -> Optional[Dict[str, Any]]:
         """Attempt full synchronization of all cameras."""
         # Check temporal alignment
         sync_delays = []
@@ -590,7 +631,7 @@ Synchronization Engine Diagnostics:
             if cam_id == self.camera_config.master_camera_id:
                 continue
 
-            frame_time = frame.get('timestamp', 0)
+            frame_time = frame.get("timestamp", 0)
             delay = abs(frame_time - master_timestamp)
             sync_delays.append(delay)
             max_delay = max(max_delay, delay)
@@ -604,12 +645,15 @@ Synchronization Engine Diagnostics:
         # Check sync constraints
         if max_delay_ms > self.camera_config.max_sync_delay_ms:
             self.statistics.sync_violations += 1
-            self._notify_desync("camera_sync_timeout", {
-                'max_delay_ms': max_delay_ms,
-                'threshold_ms': self.camera_config.max_sync_delay_ms,
-                'camera_frames': len(camera_frames),
-                'delayed_cameras': delayed_cameras
-            })
+            self._notify_desync(
+                "camera_sync_timeout",
+                {
+                    "max_delay_ms": max_delay_ms,
+                    "threshold_ms": self.camera_config.max_sync_delay_ms,
+                    "camera_frames": len(camera_frames),
+                    "delayed_cameras": delayed_cameras,
+                },
+            )
             return None
 
         # Full synchronization successful
@@ -620,33 +664,35 @@ Synchronization Engine Diagnostics:
                 self.statistics.avg_sync_delay_ms * 0.9 + avg_delay * 0.1
             )
             self.statistics.max_sync_delay_ms = max(
-                self.statistics.max_sync_delay_ms,
-                max_delay_ms
+                self.statistics.max_sync_delay_ms, max_delay_ms
             )
 
         # Create synchronized camera data
         sync_data = {
-            'timestamp': master_timestamp,
-            'cameras': camera_frames,
-            'sync_delay_ms': max_delay_ms,
-            'sync_quality': 1.0 - (max_delay_ms / self.camera_config.max_sync_delay_ms),
-            'sync_mode': 'full_synchronization'
+            "timestamp": master_timestamp,
+            "cameras": camera_frames,
+            "sync_delay_ms": max_delay_ms,
+            "sync_quality": 1.0 - (max_delay_ms / self.camera_config.max_sync_delay_ms),
+            "sync_mode": "full_synchronization",
         }
 
         self._notify_sync(sync_data)
         return sync_data
 
-    async def _degraded_camera_sync(self, camera_frames: Dict[str, Any],
-                                   master_timestamp: float) -> Optional[Dict[str, Any]]:
+    async def _degraded_camera_sync(
+        self, camera_frames: Dict[str, Any], master_timestamp: float
+    ) -> Optional[Dict[str, Any]]:
         """Attempt degraded synchronization when full sync fails."""
         logger.warning("Full camera synchronization failed, attempting degraded mode")
 
         # Strategy 1: Accept cameras within extended tolerance
-        extended_threshold = self.camera_config.max_sync_delay_ms * 2.0  # Double tolerance
+        extended_threshold = (
+            self.camera_config.max_sync_delay_ms * 2.0
+        )  # Double tolerance
         acceptable_cameras = {}
 
         for cam_id, frame in camera_frames.items():
-            frame_time = frame.get('timestamp', 0)
+            frame_time = frame.get("timestamp", 0)
             delay_ms = abs(frame_time - master_timestamp) * 1000
 
             if delay_ms <= extended_threshold:
@@ -654,17 +700,19 @@ Synchronization Engine Diagnostics:
 
         if len(acceptable_cameras) >= 2:  # At least master + 1 camera
             max_delay = max(
-                abs(frame.get('timestamp', 0) - master_timestamp) * 1000
+                abs(frame.get("timestamp", 0) - master_timestamp) * 1000
                 for frame in acceptable_cameras.values()
             )
 
             sync_data = {
-                'timestamp': master_timestamp,
-                'cameras': acceptable_cameras,
-                'sync_delay_ms': max_delay,
-                'sync_quality': max(0.1, 1.0 - (max_delay / self.camera_config.max_sync_delay_ms)),
-                'sync_mode': 'degraded_synchronization',
-                'degraded_reason': 'extended_tolerance'
+                "timestamp": master_timestamp,
+                "cameras": acceptable_cameras,
+                "sync_delay_ms": max_delay,
+                "sync_quality": max(
+                    0.1, 1.0 - (max_delay / self.camera_config.max_sync_delay_ms)
+                ),
+                "sync_mode": "degraded_synchronization",
+                "degraded_reason": "extended_tolerance",
             }
 
             self._notify_sync(sync_data)
@@ -673,12 +721,16 @@ Synchronization Engine Diagnostics:
         # Strategy 2: Single camera mode with master only
         if self.camera_config.master_camera_id in camera_frames:
             sync_data = {
-                'timestamp': master_timestamp,
-                'cameras': {self.camera_config.master_camera_id: camera_frames[self.camera_config.master_camera_id]},
-                'sync_delay_ms': 0.0,
-                'sync_quality': 0.0,  # Single camera = no synchronization
-                'sync_mode': 'single_camera_fallback',
-                'degraded_reason': 'only_master_available'
+                "timestamp": master_timestamp,
+                "cameras": {
+                    self.camera_config.master_camera_id: camera_frames[
+                        self.camera_config.master_camera_id
+                    ]
+                },
+                "sync_delay_ms": 0.0,
+                "sync_quality": 0.0,  # Single camera = no synchronization
+                "sync_mode": "single_camera_fallback",
+                "degraded_reason": "only_master_available",
             }
 
             logger.warning("Falling back to single camera mode - reduced reliability")
@@ -688,28 +740,34 @@ Synchronization Engine Diagnostics:
         # Strategy 3: Best effort with any available camera
         if camera_frames:
             # Use most recent timestamp as reference
-            best_timestamp = max(frame.get('timestamp', 0) for frame in camera_frames.values())
+            best_timestamp = max(
+                frame.get("timestamp", 0) for frame in camera_frames.values()
+            )
 
             sync_data = {
-                'timestamp': best_timestamp,
-                'cameras': camera_frames,
-                'sync_delay_ms': float('inf'),  # Unknown/unsynchronized
-                'sync_quality': 0.0,
-                'sync_mode': 'unsynchronized_fallback',
-                'degraded_reason': 'no_synchronization_possible'
+                "timestamp": best_timestamp,
+                "cameras": camera_frames,
+                "sync_delay_ms": float("inf"),  # Unknown/unsynchronized
+                "sync_quality": 0.0,
+                "sync_mode": "unsynchronized_fallback",
+                "degraded_reason": "no_synchronization_possible",
             }
 
             logger.error("All synchronization modes failed - using unsynchronized data")
-            self._notify_desync("complete_sync_failure", {
-                'available_cameras': list(camera_frames.keys()),
-                'attempted_modes': ['full', 'degraded', 'single_camera']
-            })
+            self._notify_desync(
+                "complete_sync_failure",
+                {
+                    "available_cameras": list(camera_frames.keys()),
+                    "attempted_modes": ["full", "degraded", "single_camera"],
+                },
+            )
             return sync_data
 
         return None
 
-    async def _fallback_camera_sync(self, camera_frames: Dict[str, Any],
-                                   reason: str) -> Optional[Dict[str, Any]]:
+    async def _fallback_camera_sync(
+        self, camera_frames: Dict[str, Any], reason: str
+    ) -> Optional[Dict[str, Any]]:
         """Handle cases where normal sync preconditions aren't met."""
         if reason == "no_master_camera":
             # Try to select a fallback master from available cameras
@@ -717,22 +775,26 @@ Synchronization Engine Diagnostics:
                 return None
 
             # Use camera with most recent timestamp as master
-            fallback_master = max(camera_frames.keys(),
-                                key=lambda cam: camera_frames[cam].get('timestamp', 0))
+            fallback_master = max(
+                camera_frames.keys(),
+                key=lambda cam: camera_frames[cam].get("timestamp", 0),
+            )
 
-            master_timestamp = camera_frames[fallback_master].get('timestamp')
+            master_timestamp = camera_frames[fallback_master].get("timestamp")
 
             sync_data = {
-                'timestamp': master_timestamp,
-                'cameras': camera_frames,
-                'sync_delay_ms': float('inf'),
-                'sync_quality': 0.0,
-                'sync_mode': 'fallback_master_selection',
-                'fallback_master': fallback_master,
-                'degraded_reason': reason
+                "timestamp": master_timestamp,
+                "cameras": camera_frames,
+                "sync_delay_ms": float("inf"),
+                "sync_quality": 0.0,
+                "sync_mode": "fallback_master_selection",
+                "fallback_master": fallback_master,
+                "degraded_reason": reason,
             }
 
-            logger.warning(f"No master camera available, using {fallback_master} as fallback master")
+            logger.warning(
+                f"No master camera available, using {fallback_master} as fallback master"
+            )
             self._notify_sync(sync_data)
             return sync_data
 
@@ -740,18 +802,20 @@ Synchronization Engine Diagnostics:
             # Single camera operation
             if camera_frames:
                 cam_id = list(camera_frames.keys())[0]
-                timestamp = camera_frames[cam_id].get('timestamp', time.time())
+                timestamp = camera_frames[cam_id].get("timestamp", time.time())
 
                 sync_data = {
-                    'timestamp': timestamp,
-                    'cameras': camera_frames,
-                    'sync_delay_ms': 0.0,
-                    'sync_quality': 0.0,
-                    'sync_mode': 'single_camera_only',
-                    'degraded_reason': reason
+                    "timestamp": timestamp,
+                    "cameras": camera_frames,
+                    "sync_delay_ms": 0.0,
+                    "sync_quality": 0.0,
+                    "sync_mode": "single_camera_only",
+                    "degraded_reason": reason,
                 }
 
-                logger.warning("Only single camera available - no synchronization possible")
+                logger.warning(
+                    "Only single camera available - no synchronization possible"
+                )
                 self._notify_sync(sync_data)
                 return sync_data
 
@@ -770,8 +834,8 @@ Synchronization Engine Diagnostics:
                 return False
 
         # Add timestamp if not present
-        if 'timestamp' not in frame_data:
-            frame_data['timestamp'] = time.time()
+        if "timestamp" not in frame_data:
+            frame_data["timestamp"] = time.time()
 
         buffer = self.camera_buffers[camera_id]
         success = buffer.add_item(frame_data)
@@ -779,32 +843,39 @@ Synchronization Engine Diagnostics:
         if not success:
             self.statistics.buffer_overflows += 1
             logger.debug(f"Buffer overflow for camera {camera_id} - graceful handling")
-            self._notify_desync("camera_buffer_overflow", {
-                'camera_id': camera_id,
-                'buffer_size': buffer.size(),
-                'max_size': buffer.max_size
-            })
+            self._notify_desync(
+                "camera_buffer_overflow",
+                {
+                    "camera_id": camera_id,
+                    "buffer_size": buffer.size(),
+                    "max_size": buffer.max_size,
+                },
+            )
 
         return success
 
     def _validate_camera_id(self, camera_id: str) -> bool:
         """Validate camera ID format and constraints."""
         # Allow flexible camera naming (front, rear, left, right, or custom)
-        valid_prefixes = ['front', 'rear', 'left', 'right', 'camera', 'stereo']
+        valid_prefixes = ["front", "rear", "left", "right", "camera", "stereo"]
         return (
-            isinstance(camera_id, str) and
-            len(camera_id) > 0 and
-            len(camera_id) <= 50 and  # Reasonable length limit
-            any(camera_id.startswith(prefix) for prefix in valid_prefixes) or
-            camera_id.replace('_', '').replace('-', '').isalnum()  # Allow custom names
+            isinstance(camera_id, str)
+            and len(camera_id) > 0
+            and len(camera_id) <= 50
+            and any(  # Reasonable length limit
+                camera_id.startswith(prefix) for prefix in valid_prefixes
+            )
+            or camera_id.replace("_", "")
+            .replace("-", "")
+            .isalnum()  # Allow custom names
         )
 
     def _register_camera(self, camera_id: str):
         """Register a new camera dynamically."""
         from src.core.synchronization_engine import SyncBuffer
+
         self.camera_buffers[camera_id] = SyncBuffer(
-            max_size=100,  # Default buffer size
-            overflow_policy="drop_oldest"
+            max_size=100, overflow_policy="drop_oldest"  # Default buffer size
         )
         self.camera_buffers[camera_id].set_adaptive_mode(True)
 
@@ -812,7 +883,9 @@ Synchronization Engine Diagnostics:
         """Add ROS2 message to synchronization buffer."""
         if topic not in self.ros2_buffers:
             # Create buffer for unknown topic
-            self.ros2_buffers[topic] = SyncBuffer(max_size=50, overflow_policy="drop_oldest")
+            self.ros2_buffers[topic] = SyncBuffer(
+                max_size=50, overflow_policy="drop_oldest"
+            )
 
         buffer = self.ros2_buffers[topic]
         success = buffer.add_item(message)
@@ -822,7 +895,9 @@ Synchronization Engine Diagnostics:
 
         return success
 
-    async def synchronize_ros2_topics(self, topics: List[str], timeout_ms: float = 100.0) -> Optional[Dict[str, Any]]:
+    async def synchronize_ros2_topics(
+        self, topics: List[str], timeout_ms: float = 100.0
+    ) -> Optional[Dict[str, Any]]:
         """Synchronize ROS2 messages from multiple topics."""
         start_time = time.time()
         timeout_s = timeout_ms / 1000.0
@@ -843,7 +918,9 @@ Synchronization Engine Diagnostics:
                         if items:
                             topic_messages[topic] = items[0]
                             if reference_timestamp is None:
-                                reference_timestamp = items[0].get('timestamp', time.time())
+                                reference_timestamp = items[0].get(
+                                    "timestamp", time.time()
+                                )
                         else:
                             all_topics_ready = False
                     else:
@@ -853,42 +930,47 @@ Synchronization Engine Diagnostics:
                 # Check temporal alignment
                 max_delay = 0
                 for topic, message in topic_messages.items():
-                    msg_time = message.get('timestamp', 0)
+                    msg_time = message.get("timestamp", 0)
                     delay = abs(msg_time - reference_timestamp)
                     max_delay = max(max_delay, delay)
 
                 if max_delay * 1000 <= timeout_ms:
                     return {
-                        'timestamp': reference_timestamp,
-                        'messages': topic_messages,
-                        'sync_delay_ms': max_delay * 1000
+                        "timestamp": reference_timestamp,
+                        "messages": topic_messages,
+                        "sync_delay_ms": max_delay * 1000,
                     }
 
             await asyncio.sleep(0.001)  # Small delay to prevent busy waiting
 
         # Timeout
-        self._notify_desync("ros2_sync_timeout", {
-            'topics': topics,
-            'timeout_ms': timeout_ms,
-            'available_messages': list(topic_messages.keys())
-        })
+        self._notify_desync(
+            "ros2_sync_timeout",
+            {
+                "topics": topics,
+                "timeout_ms": timeout_ms,
+                "available_messages": list(topic_messages.keys()),
+            },
+        )
         return None
 
-    def check_temporal_consistency(self, events: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def check_temporal_consistency(
+        self, events: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Check temporal consistency of a sequence of events."""
         if len(events) < 2:
-            return {'consistent': True, 'score': 1.0}
+            return {"consistent": True, "score": 1.0}
 
         # Extract timestamps
         timestamps = []
         for event in events:
-            ts = event.get('timestamp')
+            ts = event.get("timestamp")
             if ts is None:
                 # Try header.stamp for ROS2 messages
-                header = event.get('header', {})
-                stamp = header.get('stamp')
+                header = event.get("header", {})
+                stamp = header.get("stamp")
                 if stamp:
-                    ts = stamp.get('sec', 0) + stamp.get('nanosec', 0) / 1e9
+                    ts = stamp.get("sec", 0) + stamp.get("nanosec", 0) / 1e9
                 else:
                     ts = time.time()  # Fallback
 
@@ -907,12 +989,12 @@ Synchronization Engine Diagnostics:
         consistency_score = max(0, 1.0 - (jitter / max_jitter))
 
         result = {
-            'consistent': consistent,
-            'score': consistency_score,
-            'avg_interval': avg_interval,
-            'jitter': jitter,
-            'max_jitter_allowed': max_jitter,
-            'timestamps': timestamps
+            "consistent": consistent,
+            "score": consistency_score,
+            "avg_interval": avg_interval,
+            "jitter": jitter,
+            "max_jitter_allowed": max_jitter,
+            "timestamps": timestamps,
         }
 
         if not consistent:
@@ -938,7 +1020,9 @@ Synchronization Engine Diagnostics:
 
         return self.clock_status
 
-    def monitor_deadlines(self, operation_name: str, deadline_ms: float) -> 'DeadlineMonitor':
+    def monitor_deadlines(
+        self, operation_name: str, deadline_ms: float
+    ) -> "DeadlineMonitor":
         """Create deadline monitor for real-time operations."""
         return DeadlineMonitor(operation_name, deadline_ms, self)
 
@@ -960,37 +1044,39 @@ Synchronization Engine Diagnostics:
             # Check if camera is healthy (has recent data)
             last_item_time = 0
             if buffer.items:
-                last_item_time = max(item.get('timestamp', 0) for item in buffer.items)
+                last_item_time = max(item.get("timestamp", 0) for item in buffer.items)
 
             is_healthy = (current_time - last_item_time) < 5.0  # 5 second timeout
             camera_status[cam_id] = {
-                'healthy': is_healthy,
-                'last_data_time': last_item_time,
-                'buffer_size': stats['current_size'],
-                'buffer_max': stats['max_size'],
-                'overflows': stats['overflow_count']
+                "healthy": is_healthy,
+                "last_data_time": last_item_time,
+                "buffer_size": stats["current_size"],
+                "buffer_max": stats["max_size"],
+                "overflows": stats["overflow_count"],
             }
 
         sync_health = self._assess_sync_health()
 
         return {
-            'overall_health': sync_health['overall'],
-            'camera_status': camera_status,
-            'sync_statistics': {
-                'messages_processed': self.statistics.messages_processed,
-                'sync_violations': self.statistics.sync_violations,
-                'avg_sync_delay_ms': self.statistics.avg_sync_delay_ms,
-                'max_sync_delay_ms': self.statistics.max_sync_delay_ms,
-                'dropped_frames': self.statistics.dropped_frames,
-                'buffer_overflows': self.statistics.buffer_overflows
+            "overall_health": sync_health["overall"],
+            "camera_status": camera_status,
+            "sync_statistics": {
+                "messages_processed": self.statistics.messages_processed,
+                "sync_violations": self.statistics.sync_violations,
+                "avg_sync_delay_ms": self.statistics.avg_sync_delay_ms,
+                "max_sync_delay_ms": self.statistics.max_sync_delay_ms,
+                "dropped_frames": self.statistics.dropped_frames,
+                "buffer_overflows": self.statistics.buffer_overflows,
             },
-            'clock_status': {
-                'offset_ns': self.clock_status.offset_ns,
-                'drift_rate_ppm': self.clock_status.drift_rate_ppm,
-                'sync_accuracy_ns': self.clock_status.sync_accuracy_ns
+            "clock_status": {
+                "offset_ns": self.clock_status.offset_ns,
+                "drift_rate_ppm": self.clock_status.drift_rate_ppm,
+                "sync_accuracy_ns": self.clock_status.sync_accuracy_ns,
             },
-            'temporal_consistency': self.statistics.temporal_consistency_score,
-            'active_desync_events': len([e for e in self._get_recent_desync_events() if e.get('active', False)])
+            "temporal_consistency": self.statistics.temporal_consistency_score,
+            "active_desync_events": len(
+                [e for e in self._get_recent_desync_events() if e.get("active", False)]
+            ),
         }
 
     def _assess_sync_health(self) -> Dict[str, Any]:
@@ -1010,7 +1096,10 @@ Synchronization Engine Diagnostics:
                 issues.append(f"moderate_sync_violations_{violation_rate:.2%}")
 
         # Check average sync delay
-        if self.statistics.avg_sync_delay_ms > self.camera_config.max_sync_delay_ms * 0.8:
+        if (
+            self.statistics.avg_sync_delay_ms
+            > self.camera_config.max_sync_delay_ms * 0.8
+        ):
             health_score *= 0.8
             issues.append(f"high_avg_delay_{self.statistics.avg_sync_delay_ms:.1f}ms")
 
@@ -1022,7 +1111,9 @@ Synchronization Engine Diagnostics:
         # Check temporal consistency
         if self.statistics.temporal_consistency_score < 0.7:
             health_score *= self.statistics.temporal_consistency_score
-            issues.append(f"poor_temporal_consistency_{self.statistics.temporal_consistency_score:.2f}")
+            issues.append(
+                f"poor_temporal_consistency_{self.statistics.temporal_consistency_score:.2f}"
+            )
 
         # Determine overall health status
         if health_score >= 0.9:
@@ -1034,11 +1125,7 @@ Synchronization Engine Diagnostics:
         else:
             overall = "critical"
 
-        return {
-            'overall': overall,
-            'score': health_score,
-            'issues': issues
-        }
+        return {"overall": overall, "score": health_score, "issues": issues}
 
     def _get_recent_desync_events(self, hours: int = 1) -> List[Dict[str, Any]]:
         """Get recent desynchronization events for monitoring."""
@@ -1060,7 +1147,9 @@ Synchronization Engine Diagnostics:
 
     def set_degraded_sync_mode(self, enabled: bool):
         """Enable or disable degraded synchronization modes."""
-        self.camera_config.sync_mode = SyncMode.EVENT_DRIVEN if enabled else SyncMode.SOFT_REALTIME
+        self.camera_config.sync_mode = (
+            SyncMode.EVENT_DRIVEN if enabled else SyncMode.SOFT_REALTIME
+        )
         if enabled:
             logger.info("Degraded synchronization mode enabled")
         else:
@@ -1086,11 +1175,13 @@ Synchronization Engine Diagnostics:
         self.temporal_consistency_threshold = 0.05
 
         # Step 5: Notify recovery
-        self._notify_sync({
-            'type': 'system_recovery',
-            'timestamp': time.time(),
-            'message': 'Synchronization system recovered from failure'
-        })
+        self._notify_sync(
+            {
+                "type": "system_recovery",
+                "timestamp": time.time(),
+                "message": "Synchronization system recovered from failure",
+            }
+        )
 
         logger.info("Synchronization system recovery completed")
         return True
@@ -1100,43 +1191,55 @@ Synchronization Engine Diagnostics:
         actions = []
         health = self.get_health_status()
 
-        if health['overall_health'] in ['unhealthy', 'critical']:
-            actions.append({
-                'action': 'clear_buffers',
-                'description': 'Clear all camera buffers to remove stale data',
-                'priority': 'high'
-            })
+        if health["overall_health"] in ["unhealthy", "critical"]:
+            actions.append(
+                {
+                    "action": "clear_buffers",
+                    "description": "Clear all camera buffers to remove stale data",
+                    "priority": "high",
+                }
+            )
 
-            actions.append({
-                'action': 'reset_statistics',
-                'description': 'Reset synchronization statistics',
-                'priority': 'medium'
-            })
+            actions.append(
+                {
+                    "action": "reset_statistics",
+                    "description": "Reset synchronization statistics",
+                    "priority": "medium",
+                }
+            )
 
-        if health['sync_statistics']['sync_violations'] > 10:
-            actions.append({
-                'action': 'enable_degraded_mode',
-                'description': 'Enable degraded synchronization with relaxed constraints',
-                'priority': 'high'
-            })
+        if health["sync_statistics"]["sync_violations"] > 10:
+            actions.append(
+                {
+                    "action": "enable_degraded_mode",
+                    "description": "Enable degraded synchronization with relaxed constraints",
+                    "priority": "high",
+                }
+            )
 
-        if health['sync_statistics']['buffer_overflows'] > 5:
-            actions.append({
-                'action': 'enable_adaptive_buffering',
-                'description': 'Enable adaptive buffer sizing to handle load',
-                'priority': 'medium'
-            })
+        if health["sync_statistics"]["buffer_overflows"] > 5:
+            actions.append(
+                {
+                    "action": "enable_adaptive_buffering",
+                    "description": "Enable adaptive buffer sizing to handle load",
+                    "priority": "medium",
+                }
+            )
 
-        if health['temporal_consistency'] < 0.5:
-            actions.append({
-                'action': 'resync_clocks',
-                'description': 'Perform clock synchronization to improve temporal consistency',
-                'priority': 'high'
-            })
+        if health["temporal_consistency"] < 0.5:
+            actions.append(
+                {
+                    "action": "resync_clocks",
+                    "description": "Perform clock synchronization to improve temporal consistency",
+                    "priority": "high",
+                }
+            )
 
         return actions
 
-    def optimize_performance(self, target_fps: float = 30.0, available_memory_mb: float = 512.0):
+    def optimize_performance(
+        self, target_fps: float = 30.0, available_memory_mb: float = 512.0
+    ):
         """
         Optimize synchronization engine performance based on system constraints.
 
@@ -1144,7 +1247,9 @@ Synchronization Engine Diagnostics:
             target_fps: Target frames per second
             available_memory_mb: Available system memory in MB
         """
-        logger.info(f"Optimizing performance for {target_fps} FPS with {available_memory_mb}MB memory")
+        logger.info(
+            f"Optimizing performance for {target_fps} FPS with {available_memory_mb}MB memory"
+        )
 
         # Calculate optimal buffer sizes based on memory constraints
         memory_per_frame_estimate = 0.5  # MB per frame (rough estimate)
@@ -1162,14 +1267,18 @@ Synchronization Engine Diagnostics:
             # Only adjust if significantly different
             if abs(new_size - old_size) > 10:
                 buffer.max_size = new_size
-                logger.info(f"Optimized buffer size for {cam_id}: {old_size} -> {new_size}")
+                logger.info(
+                    f"Optimized buffer size for {cam_id}: {old_size} -> {new_size}"
+                )
 
         # Optimize sync intervals based on target FPS
         target_sync_interval = 1.0 / target_fps
         if target_sync_interval < self.sync_interval:
             old_interval = self.sync_interval
             self.sync_interval = max(target_sync_interval, 0.1)  # Minimum 100ms
-            logger.info(f"Optimized sync interval: {old_interval:.3f}s -> {self.sync_interval:.3f}s")
+            logger.info(
+                f"Optimized sync interval: {old_interval:.3f}s -> {self.sync_interval:.3f}s"
+            )
 
         # Enable adaptive features for dynamic optimization
         self.enable_adaptive_buffering()
@@ -1186,7 +1295,9 @@ Synchronization Engine Diagnostics:
 
     def _log_performance_optimization(self):
         """Log current performance optimization status."""
-        total_buffer_capacity = sum(buffer.max_size for buffer in self.camera_buffers.values())
+        total_buffer_capacity = sum(
+            buffer.max_size for buffer in self.camera_buffers.values()
+        )
         active_cameras = len([b for b in self.camera_buffers.values() if b.size() > 0])
 
         logger.info(f"Performance optimization complete:")
@@ -1207,7 +1318,9 @@ Synchronization Engine Diagnostics:
 
         # Sync engine specific metrics
         health = self.get_health_status()
-        buffer_stats = {cam_id: buffer.get_stats() for cam_id, buffer in self.camera_buffers.items()}
+        buffer_stats = {
+            cam_id: buffer.get_stats() for cam_id, buffer in self.camera_buffers.items()
+        }
 
         # Calculate efficiency metrics
         total_processed = self.statistics.messages_processed
@@ -1215,25 +1328,29 @@ Synchronization Engine Diagnostics:
         efficiency = (total_processed - total_violations) / max(total_processed, 1)
 
         return {
-            'system': {
-                'memory_usage_mb': memory_usage_mb,
-                'cpu_usage_percent': cpu_usage_percent,
-                'timestamp': time.time()
+            "system": {
+                "memory_usage_mb": memory_usage_mb,
+                "cpu_usage_percent": cpu_usage_percent,
+                "timestamp": time.time(),
             },
-            'sync_engine': {
-                'health_status': health['overall_health'],
-                'messages_processed': total_processed,
-                'sync_violations': total_violations,
-                'efficiency': efficiency,
-                'avg_sync_delay_ms': self.statistics.avg_sync_delay_ms,
-                'buffer_overflows': self.statistics.buffer_overflows,
-                'active_cameras': len([b for b in self.camera_buffers.values() if b.size() > 0])
+            "sync_engine": {
+                "health_status": health["overall_health"],
+                "messages_processed": total_processed,
+                "sync_violations": total_violations,
+                "efficiency": efficiency,
+                "avg_sync_delay_ms": self.statistics.avg_sync_delay_ms,
+                "buffer_overflows": self.statistics.buffer_overflows,
+                "active_cameras": len(
+                    [b for b in self.camera_buffers.values() if b.size() > 0]
+                ),
             },
-            'buffers': buffer_stats,
-            'optimization': {
-                'sync_interval': self.sync_interval,
-                'adaptive_buffering_enabled': any(b.get_stats()['adaptive_mode'] for b in self.camera_buffers.values())
-            }
+            "buffers": buffer_stats,
+            "optimization": {
+                "sync_interval": self.sync_interval,
+                "adaptive_buffering_enabled": any(
+                    b.get_stats()["adaptive_mode"] for b in self.camera_buffers.values()
+                ),
+            },
         }
 
     def monitor_performance_trends(self, window_seconds: int = 300) -> Dict[str, Any]:
@@ -1255,41 +1372,56 @@ Synchronization Engine Diagnostics:
 
         # Add trend indicators (simplified)
         trends = {
-            'memory_trend': 'stable',  # Would analyze historical data
-            'cpu_trend': 'stable',
-            'efficiency_trend': 'improving' if metrics['sync_engine']['efficiency'] > 0.8 else 'needs_attention',
-            'violation_trend': 'stable'  # Would analyze violation rate changes
+            "memory_trend": "stable",  # Would analyze historical data
+            "cpu_trend": "stable",
+            "efficiency_trend": (
+                "improving"
+                if metrics["sync_engine"]["efficiency"] > 0.8
+                else "needs_attention"
+            ),
+            "violation_trend": "stable",  # Would analyze violation rate changes
         }
 
         return {
-            'current_metrics': metrics,
-            'trends': trends,
-            'analysis_window': window_seconds,
-            'recommendations': self._generate_performance_recommendations(metrics, trends)
+            "current_metrics": metrics,
+            "trends": trends,
+            "analysis_window": window_seconds,
+            "recommendations": self._generate_performance_recommendations(
+                metrics, trends
+            ),
         }
 
-    def _generate_performance_recommendations(self, metrics: Dict[str, Any],
-                                            trends: Dict[str, Any]) -> List[str]:
+    def _generate_performance_recommendations(
+        self, metrics: Dict[str, Any], trends: Dict[str, Any]
+    ) -> List[str]:
         """Generate performance optimization recommendations."""
         recommendations = []
 
         # Memory-based recommendations
-        if metrics['system']['memory_usage_mb'] > 400:  # High memory usage
-            recommendations.append("Consider reducing buffer sizes or enabling more aggressive cleanup")
+        if metrics["system"]["memory_usage_mb"] > 400:  # High memory usage
+            recommendations.append(
+                "Consider reducing buffer sizes or enabling more aggressive cleanup"
+            )
 
         # CPU-based recommendations
-        if metrics['system']['cpu_usage_percent'] > 80:
-            recommendations.append("High CPU usage detected - consider increasing sync intervals")
+        if metrics["system"]["cpu_usage_percent"] > 80:
+            recommendations.append(
+                "High CPU usage detected - consider increasing sync intervals"
+            )
 
         # Sync efficiency recommendations
-        efficiency = metrics['sync_engine']['efficiency']
+        efficiency = metrics["sync_engine"]["efficiency"]
         if efficiency < 0.7:
-            recommendations.append("Low sync efficiency - check camera timing and network conditions")
+            recommendations.append(
+                "Low sync efficiency - check camera timing and network conditions"
+            )
         elif efficiency > 0.95:
-            recommendations.append("Excellent sync efficiency - system performing optimally")
+            recommendations.append(
+                "Excellent sync efficiency - system performing optimally"
+            )
 
         # Buffer recommendations
-        total_capacity = sum(b['max_size'] for b in metrics['buffers'].values())
+        total_capacity = sum(b["max_size"] for b in metrics["buffers"].values())
         if total_capacity > 1000:
             recommendations.append("High buffer capacity - monitor memory usage")
 
@@ -1305,11 +1437,7 @@ Synchronization Engine Diagnostics:
 
     def _notify_desync(self, desync_type: str, desync_data: Dict[str, Any]):
         """Notify desync callbacks of synchronization failures."""
-        desync_event = {
-            'type': desync_type,
-            'timestamp': time.time(),
-            **desync_data
-        }
+        desync_event = {"type": desync_type, "timestamp": time.time(), **desync_data}
 
         for callback in self.desync_callbacks:
             try:
@@ -1321,7 +1449,12 @@ Synchronization Engine Diagnostics:
 class DeadlineMonitor:
     """Real-time deadline monitoring and violation detection."""
 
-    def __init__(self, operation_name: str, deadline_ms: float, sync_engine: SynchronizationEngine):
+    def __init__(
+        self,
+        operation_name: str,
+        deadline_ms: float,
+        sync_engine: SynchronizationEngine,
+    ):
         self.operation_name = operation_name
         self.deadline_ms = deadline_ms
         self.sync_engine = sync_engine
@@ -1338,12 +1471,15 @@ class DeadlineMonitor:
 
             if elapsed_ms > self.deadline_ms:
                 # Deadline violation
-                self.sync_engine._notify_desync("deadline_violation", {
-                    'operation': self.operation_name,
-                    'elapsed_ms': elapsed_ms,
-                    'deadline_ms': self.deadline_ms,
-                    'violation_ms': elapsed_ms - self.deadline_ms
-                })
+                self.sync_engine._notify_desync(
+                    "deadline_violation",
+                    {
+                        "operation": self.operation_name,
+                        "elapsed_ms": elapsed_ms,
+                        "deadline_ms": self.deadline_ms,
+                        "violation_ms": elapsed_ms - self.deadline_ms,
+                    },
+                )
 
             self.completed = True
 
@@ -1364,8 +1500,9 @@ class CameraFrameSynchronizer:
         self.frame_sequences: Dict[str, List[Dict[str, Any]]] = {}
         self.sequence_numbers: Dict[str, int] = {}
 
-    async def wait_for_stereo_pair(self, left_camera: str, right_camera: str,
-                                 timeout_ms: float = 50.0) -> Optional[Dict[str, Any]]:
+    async def wait_for_stereo_pair(
+        self, left_camera: str, right_camera: str, timeout_ms: float = 50.0
+    ) -> Optional[Dict[str, Any]]:
         """Wait for synchronized stereo camera pair with validation."""
         start_time = time.time()
         timeout_s = timeout_ms / 1000.0
@@ -1385,60 +1522,72 @@ class CameraFrameSynchronizer:
             # Try to get synchronized frames
             sync_data = await self.sync_engine.synchronize_cameras()
 
-            if sync_data and left_camera in sync_data['cameras'] and right_camera in sync_data['cameras']:
-                left_frame = sync_data['cameras'][left_camera]
-                right_frame = sync_data['cameras'][right_camera]
+            if (
+                sync_data
+                and left_camera in sync_data["cameras"]
+                and right_camera in sync_data["cameras"]
+            ):
+                left_frame = sync_data["cameras"][left_camera]
+                right_frame = sync_data["cameras"][right_camera]
 
                 # Validate frame data
                 if not self._validate_stereo_frames(left_frame, right_frame):
                     continue
 
                 # Check stereo temporal alignment
-                time_diff = abs(left_frame['timestamp'] - right_frame['timestamp'])
+                time_diff = abs(left_frame["timestamp"] - right_frame["timestamp"])
                 time_diff_ms = time_diff * 1000
 
                 if time_diff_ms <= stereo_tolerance_ms:
                     return {
-                        'left': left_frame,
-                        'right': right_frame,
-                        'sync_delay_ms': sync_data['sync_delay_ms'],
-                        'stereo_alignment_us': time_diff * 1_000_000,
-                        'stereo_alignment_ms': time_diff_ms,
-                        'stereo_quality': 1.0 - (time_diff_ms / stereo_tolerance_ms)
+                        "left": left_frame,
+                        "right": right_frame,
+                        "sync_delay_ms": sync_data["sync_delay_ms"],
+                        "stereo_alignment_us": time_diff * 1_000_000,
+                        "stereo_alignment_ms": time_diff_ms,
+                        "stereo_quality": 1.0 - (time_diff_ms / stereo_tolerance_ms),
                     }
                 else:
-                    logger.debug(f"Stereo alignment too poor: {time_diff_ms:.2f}ms > {stereo_tolerance_ms}ms")
+                    logger.debug(
+                        f"Stereo alignment too poor: {time_diff_ms:.2f}ms > {stereo_tolerance_ms}ms"
+                    )
 
             await asyncio.sleep(0.001)
 
         # Timeout - try fallback stereo modes
         return await self._fallback_stereo_pair(left_camera, right_camera, timeout_ms)
 
-    def _validate_stereo_frames(self, left_frame: Dict[str, Any],
-                               right_frame: Dict[str, Any]) -> bool:
+    def _validate_stereo_frames(
+        self, left_frame: Dict[str, Any], right_frame: Dict[str, Any]
+    ) -> bool:
         """Validate stereo frame data integrity."""
-        required_fields = ['timestamp', 'frame_number']
+        required_fields = ["timestamp", "frame_number"]
 
         # Check both frames have required fields
-        for frame, name in [(left_frame, 'left'), (right_frame, 'right')]:
+        for frame, name in [(left_frame, "left"), (right_frame, "right")]:
             for field in required_fields:
                 if field not in frame:
                     logger.warning(f"Stereo {name} frame missing {field}")
                     return False
 
             # Validate timestamp is reasonable (not in far future/past)
-            timestamp = frame.get('timestamp', 0)
+            timestamp = frame.get("timestamp", 0)
             current_time = time.time()
             if abs(timestamp - current_time) > 3600:  # 1 hour tolerance
-                logger.warning(f"Stereo {name} frame timestamp unreasonable: {timestamp}")
+                logger.warning(
+                    f"Stereo {name} frame timestamp unreasonable: {timestamp}"
+                )
                 return False
 
         return True
 
-    async def _fallback_stereo_pair(self, left_camera: str, right_camera: str,
-                                   timeout_ms: float) -> Optional[Dict[str, Any]]:
+    async def _fallback_stereo_pair(
+        self, left_camera: str, right_camera: str, timeout_ms: float
+    ) -> Optional[Dict[str, Any]]:
         """Fallback stereo synchronization when normal sync fails."""
-        logger.warning(f"Stereo pair {left_camera}/{right_camera} sync failed, trying fallback")
+        logger.warning(
+            f"Stereo pair {left_camera}/{right_camera} sync failed, trying fallback"
+        )
 
         # Strategy 1: Accept any recent frames from individual buffers
         left_buffer = self.sync_engine.camera_buffers.get(left_camera)
@@ -1451,45 +1600,56 @@ class CameraFrameSynchronizer:
             right_frames = right_buffer.get_items_older_than(current_time)
 
             if left_frames and right_frames:
-                left_frame = max(left_frames, key=lambda f: f.get('timestamp', 0))
-                right_frame = max(right_frames, key=lambda f: f.get('timestamp', 0))
+                left_frame = max(left_frames, key=lambda f: f.get("timestamp", 0))
+                right_frame = max(right_frames, key=lambda f: f.get("timestamp", 0))
 
-                time_diff = abs(left_frame['timestamp'] - right_frame['timestamp'])
+                time_diff = abs(left_frame["timestamp"] - right_frame["timestamp"])
                 time_diff_ms = time_diff * 1000
 
                 # Accept even poorly synchronized frames in fallback mode
-                extended_tolerance = self.sync_engine.camera_config.stereo_baseline_ms * 5.0
+                extended_tolerance = (
+                    self.sync_engine.camera_config.stereo_baseline_ms * 5.0
+                )
 
                 if time_diff_ms <= extended_tolerance:
                     return {
-                        'left': left_frame,
-                        'right': right_frame,
-                        'sync_delay_ms': float('inf'),  # Unknown sync delay
-                        'stereo_alignment_us': time_diff * 1_000_000,
-                        'stereo_alignment_ms': time_diff_ms,
-                        'stereo_quality': max(0.1, 1.0 - (time_diff_ms / self.sync_engine.camera_config.stereo_baseline_ms)),
-                        'fallback_mode': 'extended_tolerance'
+                        "left": left_frame,
+                        "right": right_frame,
+                        "sync_delay_ms": float("inf"),  # Unknown sync delay
+                        "stereo_alignment_us": time_diff * 1_000_000,
+                        "stereo_alignment_ms": time_diff_ms,
+                        "stereo_quality": max(
+                            0.1,
+                            1.0
+                            - (
+                                time_diff_ms
+                                / self.sync_engine.camera_config.stereo_baseline_ms
+                            ),
+                        ),
+                        "fallback_mode": "extended_tolerance",
                     }
 
         # Strategy 2: Single camera fallback (not true stereo)
-        for cam_name, cam_id in [('left', left_camera), ('right', right_camera)]:
+        for cam_name, cam_id in [("left", left_camera), ("right", right_camera)]:
             buffer = self.sync_engine.camera_buffers.get(cam_id)
             if buffer:
                 frames = buffer.get_items_older_than(time.time())
                 if frames:
-                    frame = max(frames, key=lambda f: f.get('timestamp', 0))
+                    frame = max(frames, key=lambda f: f.get("timestamp", 0))
 
                     return {
-                        'left': frame if cam_name == 'left' else None,
-                        'right': frame if cam_name == 'right' else None,
-                        'sync_delay_ms': 0.0,
-                        'stereo_alignment_us': 0.0,
-                        'stereo_alignment_ms': 0.0,
-                        'stereo_quality': 0.0,  # No stereo
-                        'fallback_mode': f'single_camera_{cam_name}'
+                        "left": frame if cam_name == "left" else None,
+                        "right": frame if cam_name == "right" else None,
+                        "sync_delay_ms": 0.0,
+                        "stereo_alignment_us": 0.0,
+                        "stereo_alignment_ms": 0.0,
+                        "stereo_quality": 0.0,  # No stereo
+                        "fallback_mode": f"single_camera_{cam_name}",
                     }
 
-        logger.error(f"Complete stereo fallback failure for {left_camera}/{right_camera}")
+        logger.error(
+            f"Complete stereo fallback failure for {left_camera}/{right_camera}"
+        )
         return None
 
     def add_frame_sequence(self, camera_id: str, frame_data: Dict[str, Any]):
@@ -1498,7 +1658,7 @@ class CameraFrameSynchronizer:
             self.frame_sequences[camera_id] = []
             self.sequence_numbers[camera_id] = 0
 
-        frame_data['sequence_number'] = self.sequence_numbers[camera_id]
+        frame_data["sequence_number"] = self.sequence_numbers[camera_id]
         self.frame_sequences[camera_id].append(frame_data)
         self.sequence_numbers[camera_id] += 1
 
@@ -1510,6 +1670,7 @@ class CameraFrameSynchronizer:
 # Global synchronization engine instance
 _sync_engine = None
 
+
 def get_sync_engine() -> SynchronizationEngine:
     """Get global synchronization engine instance."""
     global _sync_engine
@@ -1517,7 +1678,10 @@ def get_sync_engine() -> SynchronizationEngine:
         _sync_engine = SynchronizationEngine()
     return _sync_engine
 
-def initialize_sync_engine(camera_config: Optional[CameraSyncConfig] = None) -> SynchronizationEngine:
+
+def initialize_sync_engine(
+    camera_config: Optional[CameraSyncConfig] = None,
+) -> SynchronizationEngine:
     """Initialize the global synchronization engine."""
     global _sync_engine
     _sync_engine = SynchronizationEngine(camera_config)

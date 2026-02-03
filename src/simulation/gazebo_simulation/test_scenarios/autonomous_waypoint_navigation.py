@@ -97,9 +97,9 @@ class WaypointNavigationTester(Node):
             {
                 "pose": [x, y, alt],
                 "timestamp": time.time(),
-                "accuracy": msg.position_covariance[0]
-                if msg.position_covariance
-                else 0.0,
+                "accuracy": (
+                    msg.position_covariance[0] if msg.position_covariance else 0.0
+                ),
             }
         )
 

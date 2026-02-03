@@ -633,3 +633,19 @@ class DeliveryMission:
             "message": "Delivery operation completed",
             "duration": 3.0,
         }
+
+
+class SampleCollection:
+    """
+    Sample collection behavior - Thin wrapper for integration tests.
+    Full mission logic lives in sample_collection_mission.py.
+    """
+
+    def __init__(self, node):
+        self.node = node
+
+    def execute(self, config: Dict[str, Any], sensors) -> Dict[str, Any]:
+        """Execute sample collection behavior (stub for tests)."""
+        if self.node and hasattr(self.node, "get_logger"):
+            self.node.get_logger().info("Sample collection behavior (stub)")
+        return {"success": True, "message": "Sample collection stub"}

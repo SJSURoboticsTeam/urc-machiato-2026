@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class FeatureStatus(Enum):
     """Feature operational status."""
+
     ENABLED = "enabled"
     DISABLED = "disabled"
     LIGHTWEIGHT = "lightweight"
@@ -53,39 +54,47 @@ class FeatureFlagManager:
         # Check for ML libraries
         try:
             import torch
-            self.capability_flags['torch_available'] = True
+
+            self.capability_flags["torch_available"] = True
         except ImportError:
-            self.capability_flags['torch_available'] = False
+            self.capability_flags["torch_available"] = False
 
         try:
             import detectron2
-            self.capability_flags['detectron_available'] = True
+
+            self.capability_flags["detectron_available"] = True
         except ImportError:
-            self.capability_flags['detectron_available'] = False
+            self.capability_flags["detectron_available"] = False
 
         try:
             import tensorflow as tf
-            self.capability_flags['tensorflow_available'] = True
+
+            self.capability_flags["tensorflow_available"] = True
         except ImportError:
-            self.capability_flags['tensorflow_available'] = False
+            self.capability_flags["tensorflow_available"] = False
 
         # Check for resource manager
         try:
             from src.core.mission_resource_manager import get_mission_resource_manager
-            self.capability_flags['resource_manager_available'] = True
+
+            self.capability_flags["resource_manager_available"] = True
             self.resource_manager = get_mission_resource_manager()
         except ImportError:
-            self.capability_flags['resource_manager_available'] = False
+            self.capability_flags["resource_manager_available"] = False
             self.resource_manager = None
 
         # Hardware capabilities (would be detected from actual hardware)
-        self.capability_flags['camera_available'] = True  # Assume available for simulation
-        self.capability_flags['slam_capable'] = True
-        self.capability_flags['excavation_available'] = True
+        self.capability_flags["camera_available"] = (
+            True  # Assume available for simulation
+        )
+        self.capability_flags["slam_capable"] = True
+        self.capability_flags["excavation_available"] = True
 
         logger.info(f"Detected capabilities: {self.capability_flags}")
 
-    def set_mission_profile(self, mission_type: str, config: Optional[Dict[str, Any]] = None):
+    def set_mission_profile(
+        self, mission_type: str, config: Optional[Dict[str, Any]] = None
+    ):
         """
         Set the current mission profile and update feature flags accordingly.
 
@@ -101,7 +110,7 @@ class FeatureFlagManager:
             # Load from resource manager if available
             if self.resource_manager:
                 full_config = self.resource_manager.config
-                mission_profiles = full_config.get('mission_profiles', {})
+                mission_profiles = full_config.get("mission_profiles", {})
                 self.mission_config = mission_profiles.get(mission_type, {})
             else:
                 # Fallback defaults
@@ -116,27 +125,27 @@ class FeatureFlagManager:
     def _get_default_mission_config(self, mission_type: str) -> Dict[str, Any]:
         """Get default configuration for a mission type."""
         defaults = {
-            'waypoint_navigation': {
-                'computer_vision_enabled': False,
-                'terrain_analysis_enabled': False,
-                'slam_loop_closure_enabled': False,
-                'excavation_enabled': False,
-                'advanced_path_planning': False,
+            "waypoint_navigation": {
+                "computer_vision_enabled": False,
+                "terrain_analysis_enabled": False,
+                "slam_loop_closure_enabled": False,
+                "excavation_enabled": False,
+                "advanced_path_planning": False,
             },
-            'object_search': {
-                'computer_vision_enabled': True,
-                'terrain_analysis_enabled': False,
-                'slam_loop_closure_enabled': True,
-                'excavation_enabled': False,
-                'advanced_path_planning': False,
+            "object_search": {
+                "computer_vision_enabled": True,
+                "terrain_analysis_enabled": False,
+                "slam_loop_closure_enabled": True,
+                "excavation_enabled": False,
+                "advanced_path_planning": False,
             },
-            'sample_collection': {
-                'computer_vision_enabled': True,
-                'terrain_analysis_enabled': True,
-                'slam_loop_closure_enabled': True,
-                'excavation_enabled': True,
-                'advanced_path_planning': True,
-            }
+            "sample_collection": {
+                "computer_vision_enabled": True,
+                "terrain_analysis_enabled": True,
+                "slam_loop_closure_enabled": True,
+                "excavation_enabled": True,
+                "advanced_path_planning": True,
+            },
         }
         return defaults.get(mission_type, {})
 
@@ -163,31 +172,34 @@ class FeatureFlagManager:
             FeatureStatus enum value
         """
         # Check mission-specific configuration first
-        mission_enabled = self.mission_config.get(f"{feature_name}_enabled",
-                                                self.mission_config.get(feature_name, True))
+        mission_enabled = self.mission_config.get(
+            f"{feature_name}_enabled", self.mission_config.get(feature_name, True)
+        )
 
         # Check capability availability
         capability_required = self._get_capability_requirement(feature_name)
-        if capability_required and not self.capability_flags.get(capability_required, False):
+        if capability_required and not self.capability_flags.get(
+            capability_required, False
+        ):
             return FeatureStatus.UNAVAILABLE
 
         # Check resource manager status if available
         if self.resource_manager:
             resource_status = self.resource_manager.get_resource_status()
-            component_status = resource_status.get('component_status', {})
+            component_status = resource_status.get("component_status", {})
 
             # Map feature names to component names
             component_mapping = {
-                'computer_vision': 'computer_vision',
-                'slam': 'slam_full',
-                'terrain_analysis': 'terrain_analysis',
-                'excavation': 'excavation',
-                'advanced_path_planning': 'advanced_path_planning'
+                "computer_vision": "computer_vision",
+                "slam": "slam_full",
+                "terrain_analysis": "terrain_analysis",
+                "excavation": "excavation",
+                "advanced_path_planning": "advanced_path_planning",
             }
 
             component_name = component_mapping.get(feature_name)
             if component_name:
-                status_str = component_status.get(component_name, 'disabled')
+                status_str = component_status.get(component_name, "disabled")
                 try:
                     return FeatureStatus(status_str)
                 except ValueError:
@@ -202,14 +214,16 @@ class FeatureFlagManager:
     def _get_capability_requirement(self, feature_name: str) -> Optional[str]:
         """Get the capability flag required for a feature."""
         capability_map = {
-            'computer_vision': 'torch_available',  # At least basic vision
-            'ml_vision': 'torch_available',       # Full ML vision
-            'object_detection': 'detectron_available',
-            'terrain_ml': 'tensorflow_available',
+            "computer_vision": "torch_available",  # At least basic vision
+            "ml_vision": "torch_available",  # Full ML vision
+            "object_detection": "detectron_available",
+            "terrain_ml": "tensorflow_available",
         }
         return capability_map.get(feature_name)
 
-    def register_feature_callback(self, feature_name: str, callback: Callable[[FeatureStatus], None]):
+    def register_feature_callback(
+        self, feature_name: str, callback: Callable[[FeatureStatus], None]
+    ):
         """
         Register a callback to be called when a feature's status changes.
 
@@ -228,8 +242,14 @@ class FeatureFlagManager:
         """
         enabled = set()
         common_features = [
-            'computer_vision', 'slam', 'terrain_analysis', 'excavation',
-            'advanced_path_planning', 'ml_vision', 'object_detection', 'terrain_ml'
+            "computer_vision",
+            "slam",
+            "terrain_analysis",
+            "excavation",
+            "advanced_path_planning",
+            "ml_vision",
+            "object_detection",
+            "terrain_ml",
         ]
 
         for feature in common_features:
@@ -252,13 +272,18 @@ class FeatureFlagManager:
         capability_req = self._get_capability_requirement(feature_name)
 
         info = {
-            'name': feature_name,
-            'status': status.value,
-            'mission_enabled': self.mission_config.get(f"{feature_name}_enabled",
-                                                     self.mission_config.get(feature_name, True)),
-            'capability_required': capability_req,
-            'capability_available': self.capability_flags.get(capability_req, False) if capability_req else True,
-            'mission_profile': self.current_mission_profile
+            "name": feature_name,
+            "status": status.value,
+            "mission_enabled": self.mission_config.get(
+                f"{feature_name}_enabled", self.mission_config.get(feature_name, True)
+            ),
+            "capability_required": capability_req,
+            "capability_available": (
+                self.capability_flags.get(capability_req, False)
+                if capability_req
+                else True
+            ),
+            "mission_profile": self.current_mission_profile,
         }
 
         return info
@@ -271,8 +296,14 @@ class FeatureFlagManager:
             Dictionary mapping feature names to their status info
         """
         features = [
-            'computer_vision', 'slam', 'terrain_analysis', 'excavation',
-            'advanced_path_planning', 'ml_vision', 'object_detection', 'terrain_ml'
+            "computer_vision",
+            "slam",
+            "terrain_analysis",
+            "excavation",
+            "advanced_path_planning",
+            "ml_vision",
+            "object_detection",
+            "terrain_ml",
         ]
 
         return {feature: self.get_feature_info(feature) for feature in features}
@@ -280,6 +311,7 @@ class FeatureFlagManager:
 
 # Global instance
 _feature_flag_manager = None
+
 
 def get_feature_flag_manager() -> FeatureFlagManager:
     """Get the global feature flag manager instance."""
@@ -318,7 +350,9 @@ def require_feature(feature_name: str) -> bool:
         RuntimeError: If feature is not enabled
     """
     if not is_feature_enabled(feature_name):
-        raise RuntimeError(f"Required feature '{feature_name}' is not enabled for current mission")
+        raise RuntimeError(
+            f"Required feature '{feature_name}' is not enabled for current mission"
+        )
     return True
 
 
@@ -332,14 +366,19 @@ def with_feature(feature_name: str):
     Returns:
         Decorated function that only executes if feature is enabled
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             if is_feature_enabled(feature_name):
                 return func(*args, **kwargs)
             else:
-                logger.debug(f"Skipping {func.__name__} - feature '{feature_name}' not enabled")
+                logger.debug(
+                    f"Skipping {func.__name__} - feature '{feature_name}' not enabled"
+                )
                 return None
+
         return wrapper
+
     return decorator
 
 
@@ -368,11 +407,11 @@ if __name__ == "__main__":
     print("\n🎯 Testing mission profiles:")
 
     # Test waypoint navigation
-    manager.set_mission_profile('waypoint_navigation')
+    manager.set_mission_profile("waypoint_navigation")
     print(f"Waypoint navigation - enabled features: {get_enabled_features()}")
 
     # Test sample collection
-    manager.set_mission_profile('sample_collection')
+    manager.set_mission_profile("sample_collection")
     print(f"Sample collection - enabled features: {get_enabled_features()}")
 
     # Test feature checking

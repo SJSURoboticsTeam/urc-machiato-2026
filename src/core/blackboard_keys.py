@@ -3,13 +3,35 @@ Blackboard Key Constants (Python)
 
 Centralized definitions for all blackboard keys used in the system.
 This prevents typos, enables IDE autocomplete, and documents ownership.
+Mirrors C++ blackboard_keys.hpp (same key strings).
 
 Author: URC 2026 Autonomy Team
 """
 
 
+class Auto:
+    """Hybrid / autonomous mode keys (dot notation)."""
+
+    MODE = "auto.mode"  # "teleop" | "autonomous" | "emergency"
+    MODE_REQUEST = "auto.mode_request"
+    HUMAN_OVERRIDE_ACTIVE = "auto.human_override_active"  # bool
+    ASSIST_ENABLED = "auto.assist_enabled"  # bool
+
+
+class System:
+    """System health / safety keys (dot notation)."""
+
+    EMERGENCY_STOP = "system.emergency_stop"  # bool
+    BATTERY_PERCENT = "system.battery_percent"  # float 0-100
+    LAST_ERROR = "system.last_error"  # string
+
+
 class BlackboardKeys:
-    """Blackboard key constants for unified access."""
+    """Blackboard key constants for unified access. Flat keys for compatibility."""
+
+    # Hierarchical (dot) namespaces
+    Auto = Auto
+    System = System
 
     # ===== ROBOT STATE (Updated by odometry callback) =====
     ROBOT_X = "robot_x"
@@ -56,4 +78,19 @@ class BlackboardKeys:
     # ===== SYSTEM HEALTH (Updated by sensor checks and watchdogs) =====
     SENSORS_OK = "sensors_ok"  # bool
     NAVIGATION_OK = "navigation_ok"  # bool
-    LAST_ERROR = "last_error"  # string
+    LAST_ERROR = "last_error"  # string (flat key, compatibility)
+
+    # ===== HARDWARE SENSORS (Updated by hardware_interface_node) =====
+    # IMU (double, m/s^2 or rad/s)
+    IMU_LINEAR_ACCEL_X = "imu_linear_accel_x"
+    IMU_LINEAR_ACCEL_Y = "imu_linear_accel_y"
+    IMU_LINEAR_ACCEL_Z = "imu_linear_accel_z"
+    IMU_ANGULAR_VEL_X = "imu_angular_vel_x"
+    IMU_ANGULAR_VEL_Y = "imu_angular_vel_y"
+    IMU_ANGULAR_VEL_Z = "imu_angular_vel_z"
+    # Motor temperatures (double, Celsius)
+    MOTOR_TEMP_MAX = "motor_temp_max"
+    # GPS (double)
+    GPS_LATITUDE = "gps_latitude"
+    GPS_LONGITUDE = "gps_longitude"
+    GPS_ALTITUDE = "gps_altitude"

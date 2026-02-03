@@ -18,13 +18,23 @@ from typing import Any, Dict, Optional, Tuple
 import rclpy
 
 # ROS2 Messages
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from nav_msgs.msg import Odometry, Path
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Float32, String
 from std_srvs.srv import Trigger
+
+# Unified blackboard (optional)
+try:
+    from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
+    _BLACKBOARD_AVAILABLE = True
+except ImportError:
+    _BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class ReturnToOperatorState(Enum):
@@ -197,11 +207,32 @@ class ReturnToOperatorMission(Node):
         # Mission monitoring timer
         self.create_timer(0.5, self.mission_monitor)  # 2Hz monitoring
 
+        # Unified blackboard (optional)
+        self._blackboard = None
+        if _BLACKBOARD_AVAILABLE:
+            try:
+                self._blackboard = UnifiedBlackboardClient(self)
+            except Exception:
+                self._blackboard = None
+
         self.get_logger().info("Return to Operator Mission initialized")
 
-    def pose_callback(self, msg: PoseStamped):
-        """Update rover pose from SLAM."""
-        self.rover_pose = msg
+    def _sync_blackboard(self) -> None:
+        """Write current_mission_phase to blackboard."""
+        if getattr(self, "_blackboard", None) and BlackboardKeys:
+            try:
+                self._blackboard.set(
+                    BlackboardKeys.CURRENT_MISSION_PHASE, self.state.value
+                )
+            except Exception:
+                pass
+
+    def pose_callback(self, msg: PoseWithCovarianceStamped):
+        """Update rover pose from SLAM (convert to PoseStamped for internal use)."""
+        ps = PoseStamped()
+        ps.header = msg.header
+        ps.pose = msg.pose.pose
+        self.rover_pose = ps
 
     def gps_callback(self, msg: NavSatFix):
         """Update rover GPS position."""
@@ -326,6 +357,7 @@ class ReturnToOperatorMission(Node):
         """Stop the return to operator mission."""
         previous_state = self.state
         self.state = ReturnToOperatorState.IDLE
+        self._sync_blackboard()
 
         # Stop motion
         self.publish_velocity(0.0, 0.0)

@@ -33,7 +33,6 @@ __all__ = [
     "get_system_config",
     "reload_config",
     "RoverConfig",
-    
     # Bridges
     "CANBridge",
     "BridgeMessage",

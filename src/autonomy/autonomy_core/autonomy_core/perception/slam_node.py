@@ -7,6 +7,11 @@ Integrates:
 - Depth preprocessing for desert noise reduction
 - GPS fusion for global consistency
 - Health monitoring and fallback mechanisms
+
+Startup order (slam.launch.py): RealSense/depth_processor first; slam/pose from
+RTAB-Map or odom_to_slam_pose_bridge; then this node is configured and activated.
+Subscribes to slam/pose, slam/pose/fused, /odom, and optionally rtabmap/stat for
+loop-closure and feature count.
 """
 
 from collections import deque
@@ -26,13 +31,16 @@ from rclpy.lifecycle import LifecycleNode, LifecycleState, TransitionCallbackRet
 from rclpy.node import Node
 from std_msgs.msg import String
 
-# Unified blackboard client
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../src'))
+# Unified blackboard client and key constants
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../src"))
 try:
     from core.unified_blackboard_client import UnifiedBlackboardClient
+    from core.blackboard_keys import BlackboardKeys
+
     UNIFIED_BLACKBOARD_AVAILABLE = True
 except ImportError:
     UNIFIED_BLACKBOARD_AVAILABLE = False
+    BlackboardKeys = None
 
 
 class SLAMOrchestrator(LifecycleNode):
@@ -43,7 +51,7 @@ class SLAMOrchestrator(LifecycleNode):
     def __init__(self):
         super().__init__("slam_orchestrator")
         self.callback_group = ReentrantCallbackGroup()
-        
+
         # Parameters declared here, values retrieved in on_configure
         self.declare_parameter("enable_depth_processing", True)
         self.declare_parameter("enable_gps_fusion", True)
@@ -51,6 +59,7 @@ class SLAMOrchestrator(LifecycleNode):
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("base_frame", "base_link")
         self.declare_parameter("min_feature_count", 50)
+        self.declare_parameter("rtabmap_stat_topic", "rtabmap/stat")
 
         # State tracking
         self.system_ready = False
@@ -67,16 +76,20 @@ class SLAMOrchestrator(LifecycleNode):
                 self.blackboard = UnifiedBlackboardClient(self)
                 self.get_logger().info("Unified blackboard client initialized for SLAM")
             except Exception as e:
-                self.get_logger().warning(f"Failed to initialize blackboard client: {e}")
+                self.get_logger().warning(
+                    f"Failed to initialize blackboard client: {e}"
+                )
                 self.blackboard = None
         else:
             self.blackboard = None
-            self.get_logger().warning("Unified blackboard not available - perception data won't be written to blackboard")
+            self.get_logger().warning(
+                "Unified blackboard not available - perception data won't be written to blackboard"
+            )
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handle transition to configured state."""
         self.get_logger().info("Configuring SLAM Orchestrator...")
-        
+
         # Get parameters
         self.enable_depth_proc = self.get_parameter("enable_depth_processing").value
         self.enable_gps_fus = self.get_parameter("enable_gps_fusion").value
@@ -98,17 +111,36 @@ class SLAMOrchestrator(LifecycleNode):
 
         # Subscribers
         self.slam_pose_sub = self.create_subscription(
-            PoseWithCovarianceStamped, "slam/pose", self.on_slam_pose, 10,
-            callback_group=self.callback_group
+            PoseWithCovarianceStamped,
+            "slam/pose",
+            self.on_slam_pose,
+            10,
+            callback_group=self.callback_group,
         )
         self.fused_pose_sub = self.create_subscription(
-            PoseWithCovarianceStamped, "slam/pose/fused", self.on_fused_pose, 10,
-            callback_group=self.callback_group
+            PoseWithCovarianceStamped,
+            "slam/pose/fused",
+            self.on_fused_pose,
+            10,
+            callback_group=self.callback_group,
         )
         from nav_msgs.msg import Odometry
+
         self.odom_sub = self.create_subscription(
-            Odometry, "/odom", self.on_odom_received, 10,
-            callback_group=self.callback_group
+            Odometry,
+            "/odom",
+            self.on_odom_received,
+            10,
+            callback_group=self.callback_group,
+        )
+        # RTAB-Map status (Nodes=N Features=F LoopClosures=L) for loop-closure handling
+        rtabmap_stat_topic = self.get_parameter("rtabmap_stat_topic").value
+        self.rtabmap_stat_sub = self.create_subscription(
+            String,
+            rtabmap_stat_topic,
+            self.on_rtabmap_status,
+            10,
+            callback_group=self.callback_group,
         )
 
         return TransitionCallbackReturn.SUCCESS
@@ -116,7 +148,9 @@ class SLAMOrchestrator(LifecycleNode):
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Handle transition to active state."""
         self.get_logger().info("Activating SLAM Monitoring...")
-        self.health_timer = self.create_timer(1.0, self.on_health_check, callback_group=self.callback_group)
+        self.health_timer = self.create_timer(
+            1.0, self.on_health_check, callback_group=self.callback_group
+        )
         return TransitionCallbackReturn.SUCCESS
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
@@ -172,21 +206,27 @@ class SLAMOrchestrator(LifecycleNode):
         """Helper to sync SLAM pose with Odometry for testing."""
         if self.slam_pose is None:
             # Initialize SLAM pose to match Odom
-            self.slam_pose = np.array([
-                msg.pose.pose.position.x,
-                msg.pose.pose.position.y,
-                msg.pose.pose.position.z
-            ])
-            self.feature_count = self.min_features + 10 # Mock readiness
+            self.slam_pose = np.array(
+                [
+                    msg.pose.pose.position.x,
+                    msg.pose.pose.position.y,
+                    msg.pose.pose.position.z,
+                ]
+            )
+            self.feature_count = self.min_features + 10  # Mock readiness
             self.slam_confidence = 0.9
-            
+
             # Update unified blackboard
-            if self.blackboard:
-                self.blackboard.set("feature_count", self.feature_count)
-                self.blackboard.set("slam_confidence", self.slam_confidence)
-                self.blackboard.set("perception_confidence", self.slam_confidence)
+            if self.blackboard and BlackboardKeys:
+                self.blackboard.set(BlackboardKeys.FEATURE_COUNT, self.feature_count)
+                self.blackboard.set(
+                    BlackboardKeys.SLAM_CONFIDENCE, self.slam_confidence
+                )
+                self.blackboard.set(
+                    BlackboardKeys.PERCEPTION_CONFIDENCE, self.slam_confidence
+                )
                 map_quality = min(1.0, self.feature_count / 200.0)
-                self.blackboard.set("map_quality", map_quality)
+                self.blackboard.set(BlackboardKeys.MAP_QUALITY, map_quality)
 
     def on_rtabmap_status(self, msg: String) -> None:
         """Parse RTAB-Map status for feature count and loop closures."""
@@ -197,11 +237,15 @@ class SLAMOrchestrator(LifecycleNode):
                 if part.startswith("Features="):
                     self.feature_count = int(part.split("=")[1])
                     # Update unified blackboard
-                    if self.blackboard:
-                        self.blackboard.set("feature_count", self.feature_count)
+                    if self.blackboard and BlackboardKeys:
+                        self.blackboard.set(
+                            BlackboardKeys.FEATURE_COUNT, self.feature_count
+                        )
                         # Calculate map quality based on feature count (simple heuristic)
-                        map_quality = min(1.0, self.feature_count / 200.0)  # 200 features = perfect quality
-                        self.blackboard.set("map_quality", map_quality)
+                        map_quality = min(
+                            1.0, self.feature_count / 200.0
+                        )  # 200 features = perfect quality
+                        self.blackboard.set(BlackboardKeys.MAP_QUALITY, map_quality)
                 elif part.startswith("LoopClosures="):
                     self.loop_closures = int(part.split("=")[1])
         except Exception as e:
@@ -217,13 +261,15 @@ class SLAMOrchestrator(LifecycleNode):
         self.system_ready = self._check_system_ready()
 
         # Update unified blackboard with perception data
-        if self.blackboard:
-            self.blackboard.set("feature_count", self.feature_count)
-            self.blackboard.set("slam_confidence", self.slam_confidence)
-            self.blackboard.set("perception_confidence", self.slam_confidence)
+        if self.blackboard and BlackboardKeys:
+            self.blackboard.set(BlackboardKeys.FEATURE_COUNT, self.feature_count)
+            self.blackboard.set(BlackboardKeys.SLAM_CONFIDENCE, self.slam_confidence)
+            self.blackboard.set(
+                BlackboardKeys.PERCEPTION_CONFIDENCE, self.slam_confidence
+            )
             # Map quality based on feature count and confidence
             map_quality = min(1.0, (self.feature_count / 200.0) * self.slam_confidence)
-            self.blackboard.set("map_quality", map_quality)
+            self.blackboard.set(BlackboardKeys.MAP_QUALITY, map_quality)
 
         # Publish health status
         self._publish_health_status()
@@ -326,7 +372,7 @@ def main(args=None):
     """Entry point for SLAM orchestrator."""
     rclpy.init(args=args)
     node = SLAMOrchestrator()
-    
+
     # Use SingleThreadedExecutor for lifecycle consistency
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)

@@ -6,8 +6,8 @@ build:
   # Parallel execution
   parallel-workers: 4  # Adjust based on CPU cores
 
-  # Incremental builds
-  continue-on-error: true
+  # Stop on first package failure (normal builds)
+  continue-on-error: false
   symlink-install: true
 
   # Build type optimizations
@@ -18,8 +18,9 @@ build:
 
   # Package selection
   packages-up-to: []  # Build all by default
+  # Skip a package by name if present in workspace (this repo has no package named urc-machiato-2026; harmless)
   packages-skip:
-    - urc-machiato-2026  # Skip our main package if needed
+    - urc-machiato-2026
 
 # Test settings
 test:

@@ -18,7 +18,7 @@ import os
 from typing import Dict, Any
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 
 def benchmark_startup(description: str, startup_function) -> Dict[str, Any]:
@@ -45,14 +45,14 @@ def benchmark_startup(description: str, startup_function) -> Dict[str, Any]:
     final_memory = process.memory_info().rss / 1024 / 1024
 
     return {
-        'description': description,
-        'success': success,
-        'startup_time': end_time - start_time,
-        'initial_memory_mb': initial_memory,
-        'final_memory_mb': final_memory,
-        'memory_delta_mb': final_memory - initial_memory,
-        'result': result,
-        'error': error
+        "description": description,
+        "success": success,
+        "startup_time": end_time - start_time,
+        "initial_memory_mb": initial_memory,
+        "final_memory_mb": final_memory,
+        "memory_delta_mb": final_memory - initial_memory,
+        "result": result,
+        "error": error,
     }
 
 
@@ -78,7 +78,7 @@ def test_configuration_loading():
 
     from src.infrastructure.config import load_system_config
 
-    config = load_system_config('development')
+    config = load_system_config("development")
 
     print(f"   Environment: {config.environment}")
     print(f"   Navigation Rate: {config.navigation.update_rate_hz} Hz")
@@ -96,7 +96,7 @@ def test_component_registry():
     registry = get_component_registry()
 
     # Register a test component
-    @registry.register_component('test_component', dict, singleton=False)
+    @registry.register_component("test_component", dict, singleton=False)
     def create_test_component():
         return {"status": "loaded", "timestamp": time.time()}
 
@@ -130,12 +130,14 @@ def test_lazy_loading():
 
     # Test with navigation node
     try:
-        from autonomy.core.navigation.autonomy_navigation.navigation_node import NavigationNode
+        from autonomy.core.navigation.autonomy_navigation.navigation_node import (
+            NavigationNode,
+        )
 
         # Create node (lazy components not loaded yet)
         node = NavigationNode()
 
-        initial_memory = node.get_memory_usage()['total_memory_mb']
+        initial_memory = node.get_memory_usage()["total_memory_mb"]
         loaded_components = node.get_loaded_components()
 
         print(f"   Initial Memory: {initial_memory:.1f}MB")
@@ -143,20 +145,22 @@ def test_lazy_loading():
 
         # Force load a component
         start_time = time.time()
-        gnss_proc = node.get_lazy_component('gnss_processor')
+        gnss_proc = node.get_lazy_component("gnss_processor")
         load_time = time.time() - start_time
 
-        final_memory = node.get_memory_usage()['total_memory_mb']
+        final_memory = node.get_memory_usage()["total_memory_mb"]
         loaded_components_after = node.get_loaded_components()
 
         print(f"   GNSS Processor Load Time: {load_time:.3f}s")
-        print(f"   Memory After Load: {final_memory:.1f}MB (+{final_memory - initial_memory:.1f}MB)")
+        print(
+            f"   Memory After Load: {final_memory:.1f}MB (+{final_memory - initial_memory:.1f}MB)"
+        )
         print(f"   Loaded Components: {len(loaded_components_after)}")
 
         return {
-            'load_time': load_time,
-            'memory_increase': final_memory - initial_memory,
-            'components_loaded': len(loaded_components_after) - len(loaded_components)
+            "load_time": load_time,
+            "memory_increase": final_memory - initial_memory,
+            "components_loaded": len(loaded_components_after) - len(loaded_components),
         }
 
     except Exception as e:
@@ -204,11 +208,11 @@ def run_optimization_comparison():
         result = benchmark_startup(description, test_func)
         results[description] = result
 
-        if result['success']:
+        if result["success"]:
             print("   ✅ PASSED")
             print(".3f")
             print(".1f")
-            if result['memory_delta_mb'] > 0:
+            if result["memory_delta_mb"] > 0:
                 print(".1f")
         else:
             print("   ❌ FAILED")
@@ -219,9 +223,13 @@ def run_optimization_comparison():
     print("=" * 40)
 
     total_tests = len(results)
-    passed_tests = len([r for r in results.values() if r['success']])
-    total_startup_time = sum(r['startup_time'] for r in results.values() if r['success'])
-    total_memory_delta = sum(r['memory_delta_mb'] for r in results.values() if r['success'])
+    passed_tests = len([r for r in results.values() if r["success"]])
+    total_startup_time = sum(
+        r["startup_time"] for r in results.values() if r["success"]
+    )
+    total_memory_delta = sum(
+        r["memory_delta_mb"] for r in results.values() if r["success"]
+    )
 
     print(f"Tests Passed: {passed_tests}/{total_tests}")
     print(".3f")
@@ -263,13 +271,15 @@ def main():
 
         # Save results
         import json
-        with open('optimization_results.json', 'w') as f:
+
+        with open("optimization_results.json", "w") as f:
             # Convert results to JSON-serializable format
             json_results = {}
             for key, value in results.items():
                 json_results[key] = {
-                    k: v for k, v in value.items()
-                    if k not in ['result']  # Skip non-serializable objects
+                    k: v
+                    for k, v in value.items()
+                    if k not in ["result"]  # Skip non-serializable objects
                 }
             json.dump(json_results, f, indent=2)
 
@@ -279,6 +289,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Optimization demo failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

@@ -21,6 +21,7 @@ from enum import Enum
 
 class SensorType(Enum):
     """Supported sensor types."""
+
     GPS = "gps"
     IMU = "imu"
     CAMERA = "camera"
@@ -31,6 +32,7 @@ class SensorType(Enum):
 @dataclass
 class SensorReading:
     """Realistic sensor reading with metadata."""
+
     sensor_type: SensorType
     timestamp: float
     value: Any
@@ -56,32 +58,32 @@ class RealisticSensorSimulator:
                 "update_rate_hz": 10,
                 "accuracy_m": 2.0,
                 "noise_std": 0.5,
-                "drift_rate": 0.01  # meters per second
+                "drift_rate": 0.01,  # meters per second
             },
             SensorType.IMU: {
                 "update_rate_hz": 100,
                 "accel_noise": 0.01,  # m/s²
                 "gyro_noise": 0.001,  # rad/s
-                "bias_drift": 0.0001
+                "bias_drift": 0.0001,
             },
             SensorType.CAMERA: {
                 "update_rate_hz": 30,
                 "resolution": (640, 480),
                 "noise_std": 5,  # pixel intensity
-                "motion_blur_factor": 0.1
+                "motion_blur_factor": 0.1,
             },
             SensorType.LIDAR: {
                 "update_rate_hz": 10,
                 "range_max_m": 30,
                 "angular_resolution_deg": 1.0,
-                "range_noise_std": 0.02
+                "range_noise_std": 0.02,
             },
             SensorType.BATTERY: {
                 "update_rate_hz": 1,
                 "capacity_wh": 100,
                 "voltage_nominal": 12.0,
-                "discharge_rate_w": 15
-            }
+                "discharge_rate_w": 15,
+            },
         }
 
         # State tracking
@@ -90,7 +92,7 @@ class RealisticSensorSimulator:
             "position": [0.0, 0.0, 0.0],  # x, y, z
             "velocity": [0.0, 0.0, 0.0],  # vx, vy, vz
             "orientation": [0.0, 0.0, 0.0],  # roll, pitch, yaw
-            "battery_level": 1.0  # 0.0 to 1.0
+            "battery_level": 1.0,  # 0.0 to 1.0
         }
 
     def get_sensor_reading(self, sensor_type: SensorType) -> SensorReading:
@@ -145,7 +147,7 @@ class RealisticSensorSimulator:
             "longitude": -120.0 + pos[0] / 111000,  # Rough lon conversion
             "altitude": pos[2],
             "hdop": 1.0 + abs(noise) * 0.5,
-            "satellites_visible": max(4, 12 - int(abs(noise) * 2))
+            "satellites_visible": max(4, 12 - int(abs(noise) * 2)),
         }
 
         return SensorReading(
@@ -154,7 +156,7 @@ class RealisticSensorSimulator:
             value=reading,
             accuracy=accuracy,
             noise_level=abs(noise),
-            calibration_offset=0.0
+            calibration_offset=0.0,
         )
 
     def _generate_imu_reading(self, timestamp: float) -> SensorReading:
@@ -172,19 +174,10 @@ class RealisticSensorSimulator:
             "linear_acceleration": {
                 "x": accel_noise,
                 "y": 0.0,
-                "z": 9.81 + accel_noise  # Gravity
+                "z": 9.81 + accel_noise,  # Gravity
             },
-            "angular_velocity": {
-                "x": gyro_noise,
-                "y": 0.0,
-                "z": gyro_noise
-            },
-            "orientation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
-            }
+            "angular_velocity": {"x": gyro_noise, "y": 0.0, "z": gyro_noise},
+            "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
         }
 
         return SensorReading(
@@ -193,7 +186,7 @@ class RealisticSensorSimulator:
             value=reading,
             accuracy=0.95,  # IMU typically very accurate
             noise_level=max(abs(accel_noise), abs(gyro_noise)),
-            calibration_offset=0.0
+            calibration_offset=0.0,
         )
 
     def _generate_camera_reading(self, timestamp: float) -> SensorReading:
@@ -201,7 +194,9 @@ class RealisticSensorSimulator:
         specs = self.sensor_specs[SensorType.CAMERA]
 
         # Simulate image capture with motion blur based on velocity
-        velocity_magnitude = math.sqrt(sum(v**2 for v in self.vehicle_state["velocity"]))
+        velocity_magnitude = math.sqrt(
+            sum(v**2 for v in self.vehicle_state["velocity"])
+        )
         motion_blur = velocity_magnitude * specs["motion_blur_factor"]
 
         reading = {
@@ -210,7 +205,7 @@ class RealisticSensorSimulator:
             "format": "RGB",
             "motion_blur_level": motion_blur,
             "brightness": 0.7 + self.random.gauss(0, 0.1),
-            "contrast": 1.0 + self.random.gauss(0, 0.05)
+            "contrast": 1.0 + self.random.gauss(0, 0.05),
         }
 
         return SensorReading(
@@ -219,7 +214,7 @@ class RealisticSensorSimulator:
             value=reading,
             accuracy=0.85,  # Cameras have some variability
             noise_level=motion_blur,
-            calibration_offset=0.0
+            calibration_offset=0.0,
         )
 
     def _generate_lidar_reading(self, timestamp: float) -> SensorReading:
@@ -243,7 +238,7 @@ class RealisticSensorSimulator:
             "angle_max": 2 * math.pi,
             "range_min": 0.1,
             "range_max": specs["range_max_m"],
-            "angle_increment": math.radians(specs["angular_resolution_deg"])
+            "angle_increment": math.radians(specs["angular_resolution_deg"]),
         }
 
         return SensorReading(
@@ -251,8 +246,9 @@ class RealisticSensorSimulator:
             timestamp=timestamp,
             value=reading,
             accuracy=0.9,  # LiDAR generally reliable
-            noise_level=sum(abs(r - specs["range_max_m"]/2) for r in ranges[:10]) / 10,
-            calibration_offset=0.0
+            noise_level=sum(abs(r - specs["range_max_m"] / 2) for r in ranges[:10])
+            / 10,
+            calibration_offset=0.0,
         )
 
     def _generate_battery_reading(self, timestamp: float) -> SensorReading:
@@ -263,17 +259,24 @@ class RealisticSensorSimulator:
         dt = 1.0  # 1Hz update
         power_consumption = specs["discharge_rate_w"] * dt / 3600  # Wh consumed
         energy_consumed = power_consumption
-        self.vehicle_state["battery_level"] = max(0.0, self.vehicle_state["battery_level"] - energy_consumed / specs["capacity_wh"])
+        self.vehicle_state["battery_level"] = max(
+            0.0,
+            self.vehicle_state["battery_level"]
+            - energy_consumed / specs["capacity_wh"],
+        )
 
         voltage_noise = self.random.gauss(0, 0.1)
-        voltage = specs["voltage_nominal"] * (0.8 + 0.4 * self.vehicle_state["battery_level"]) + voltage_noise
+        voltage = (
+            specs["voltage_nominal"] * (0.8 + 0.4 * self.vehicle_state["battery_level"])
+            + voltage_noise
+        )
 
         reading = {
             "voltage": voltage,
             "current": specs["discharge_rate_w"] / voltage,
             "percentage": self.vehicle_state["battery_level"] * 100,
             "capacity_wh": specs["capacity_wh"],
-            "temperature_c": 25.0 + self.random.gauss(0, 2)
+            "temperature_c": 25.0 + self.random.gauss(0, 2),
         }
 
         return SensorReading(
@@ -282,11 +285,14 @@ class RealisticSensorSimulator:
             value=reading,
             accuracy=0.98,  # Battery monitoring very accurate
             noise_level=abs(voltage_noise),
-            calibration_offset=0.0
+            calibration_offset=0.0,
         )
 
-    def update_vehicle_state(self, velocity: Optional[List[float]] = None,
-                           angular_velocity: Optional[List[float]] = None):
+    def update_vehicle_state(
+        self,
+        velocity: Optional[List[float]] = None,
+        angular_velocity: Optional[List[float]] = None,
+    ):
         """Update vehicle state for more realistic simulation."""
         if velocity:
             self.vehicle_state["velocity"] = velocity
@@ -313,7 +319,7 @@ class TimingValidator:
             "sensor_update": 0.1,  # 10Hz max latency
             "control_loop": 0.02,  # 50Hz max latency
             "navigation_compute": 0.05,  # 20Hz max latency
-            "communication": 0.01  # 100Hz max latency
+            "communication": 0.01,  # 100Hz max latency
         }
         self.measurements: Dict[str, List[float]] = {}
 
@@ -331,7 +337,9 @@ class TimingValidator:
         # Check constraint
         constraint = self.timing_constraints.get(operation_name)
         if constraint and duration > constraint:
-            print(f"⚠️  Timing violation: {operation_name} took {duration:.3f}s (limit: {constraint:.3f}s)")
+            print(
+                f"⚠️  Timing violation: {operation_name} took {duration:.3f}s (limit: {constraint:.3f}s)"
+            )
 
     def get_timing_stats(self) -> Dict[str, Dict[str, float]]:
         """Get timing statistics for all operations."""
@@ -342,7 +350,7 @@ class TimingValidator:
                     "count": len(times),
                     "avg": sum(times) / len(times),
                     "max": max(times),
-                    "constraint": self.timing_constraints.get(op_name, 0.0)
+                    "constraint": self.timing_constraints.get(op_name, 0.0),
                 }
         return stats
 
@@ -378,24 +386,28 @@ class EnvironmentalSimulator:
             "temperature_c": 20.0,
             "humidity_percent": 50.0,
             "wind_speed_ms": 0.0,
-            "atmospheric_pressure_pa": 101325
+            "atmospheric_pressure_pa": 101325,
         }
 
     def set_mars_conditions(self):
         """Set Mars-like environmental conditions."""
-        self.conditions.update({
-            "dust_level": 0.7,
-            "temperature_c": -60.0,
-            "humidity_percent": 0.1,
-            "wind_speed_ms": 5.0,
-            "atmospheric_pressure_pa": 600
-        })
+        self.conditions.update(
+            {
+                "dust_level": 0.7,
+                "temperature_c": -60.0,
+                "humidity_percent": 0.1,
+                "wind_speed_ms": 5.0,
+                "atmospheric_pressure_pa": 600,
+            }
+        )
 
     def get_environmental_factors(self) -> Dict[str, float]:
         """Get current environmental factors affecting sensors."""
         return self.conditions.copy()
 
-    def apply_environmental_effects(self, sensor_reading: SensorReading) -> SensorReading:
+    def apply_environmental_effects(
+        self, sensor_reading: SensorReading
+    ) -> SensorReading:
         """Apply environmental effects to sensor reading."""
         # Dust affects camera and LiDAR
         if sensor_reading.sensor_type in [SensorType.CAMERA, SensorType.LIDAR]:
@@ -419,17 +431,21 @@ _sensor_simulator = RealisticSensorSimulator()
 _timing_validator = TimingValidator()
 _environment_simulator = EnvironmentalSimulator()
 
+
 def get_sensor_simulator() -> RealisticSensorSimulator:
     """Get global sensor simulator."""
     return _sensor_simulator
+
 
 def get_timing_validator() -> TimingValidator:
     """Get global timing validator."""
     return _timing_validator
 
+
 def get_environment_simulator() -> EnvironmentalSimulator:
     """Get global environment simulator."""
     return _environment_simulator
+
 
 # Convenience functions
 def get_realistic_sensor_reading(sensor_type: SensorType) -> SensorReading:
@@ -437,29 +453,30 @@ def get_realistic_sensor_reading(sensor_type: SensorType) -> SensorReading:
     reading = _sensor_simulator.get_sensor_reading(sensor_type)
     return _environment_simulator.apply_environmental_effects(reading)
 
+
 def measure_operation_timing(operation_name: str):
     """Decorator for measuring operation timing."""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             with _timing_validator.measure_operation(operation_name):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 # Export key components
 __all__ = [
-    'RealisticSensorSimulator',
-    'TimingValidator',
-    'EnvironmentalSimulator',
-    'SensorType',
-    'SensorReading',
-    'get_sensor_simulator',
-    'get_timing_validator',
-    'get_environment_simulator',
-    'get_realistic_sensor_reading',
-    'measure_operation_timing'
+    "RealisticSensorSimulator",
+    "TimingValidator",
+    "EnvironmentalSimulator",
+    "SensorType",
+    "SensorReading",
+    "get_sensor_simulator",
+    "get_timing_validator",
+    "get_environment_simulator",
+    "get_realistic_sensor_reading",
+    "measure_operation_timing",
 ]
-
-
-
-

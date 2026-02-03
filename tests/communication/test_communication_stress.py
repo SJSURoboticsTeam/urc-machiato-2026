@@ -25,8 +25,9 @@ import statistics
 # Add source paths
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 pytest.importorskip("src.bridges", reason="src.bridges not available")
 
@@ -38,22 +39,25 @@ class TestCommunicationStress:
     def mock_websocket_bridge(self):
         """Create mock WebSocket bridge for stress testing."""
         from src.bridges.simple_bridge import SimpleBridge
+
         return SimpleBridge()
 
     @pytest.fixture
     def performance_metrics(self):
         """Collect performance metrics during tests."""
         return {
-            'message_count': 0,
-            'latencies': [],
-            'dropped_messages': 0,
-            'errors': [],
-            'start_time': None,
-            'end_time': None
+            "message_count": 0,
+            "latencies": [],
+            "dropped_messages": 0,
+            "errors": [],
+            "start_time": None,
+            "end_time": None,
         }
 
     @pytest.mark.critical
-    def test_websocket_high_frequency_commands(self, mock_websocket_bridge, performance_metrics):
+    def test_websocket_high_frequency_commands(
+        self, mock_websocket_bridge, performance_metrics
+    ):
         """Test WebSocket bridge with high-frequency command stream."""
         message_rate = 100  # Hz
         test_duration = 10.0  # seconds
@@ -61,6 +65,7 @@ class TestCommunicationStress:
 
         # Register test handler
         results = []
+
         def test_handler(data):
             results.append(data)
             return {"status": "success", "timestamp": time.time()}
@@ -68,25 +73,24 @@ class TestCommunicationStress:
         mock_websocket_bridge.register_command_handler("stress_test", test_handler)
 
         # Start performance monitoring
-        performance_metrics['start_time'] = time.time()
+        performance_metrics["start_time"] = time.time()
 
         # Generate high-frequency commands
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = []
-            
+
             for i in range(total_messages):
                 message = {
                     "command": "stress_test",
                     "data": {
                         "sequence": i,
                         "timestamp": time.time(),
-                        "payload": "x" * 100  # 100 byte payload
-                    }
+                        "payload": "x" * 100,  # 100 byte payload
+                    },
                 }
-                
+
                 future = executor.submit(
-                    asyncio.run, 
-                    mock_websocket_bridge._process_command(message)
+                    asyncio.run, mock_websocket_bridge._process_command(message)
                 )
                 futures.append(future)
 
@@ -101,22 +105,26 @@ class TestCommunicationStress:
                     result = future.result(timeout=1.0)
                     if result.get("status") == "success":
                         successful_results += 1
-                    performance_metrics['message_count'] += 1
+                    performance_metrics["message_count"] += 1
                 except Exception as e:
-                    performance_metrics['errors'].append(str(e))
-                    performance_metrics['dropped_messages'] += 1
+                    performance_metrics["errors"].append(str(e))
+                    performance_metrics["dropped_messages"] += 1
 
-        performance_metrics['end_time'] = time.time()
+        performance_metrics["end_time"] = time.time()
 
         # Calculate metrics
-        actual_duration = performance_metrics['end_time'] - performance_metrics['start_time']
-        actual_rate = performance_metrics['message_count'] / actual_duration
+        actual_duration = (
+            performance_metrics["end_time"] - performance_metrics["start_time"]
+        )
+        actual_rate = performance_metrics["message_count"] / actual_duration
         success_rate = successful_results / total_messages
 
         # Assertions
         assert success_rate >= 0.95, f"Success rate too low: {success_rate:.2%}"
         assert actual_rate >= 50, f"Actual message rate too low: {actual_rate:.1f} Hz"
-        assert len(performance_metrics['errors']) <= total_messages * 0.05, "Too many errors"
+        assert (
+            len(performance_metrics["errors"]) <= total_messages * 0.05
+        ), "Too many errors"
 
         print(f"WebSocket Stress Test Results:")
         print(f"  Messages sent: {total_messages}")
@@ -129,15 +137,15 @@ class TestCommunicationStress:
     def test_can_bus_message_saturation(self, performance_metrics):
         """Test CAN bus performance under message saturation."""
         from src.bridges.direct_can_bridge import DirectCANBridge
-        
+
         can_bridge = DirectCANBridge()
-        
+
         # Test parameters
         message_rate = 1000  # Hz (high for CAN)
         test_duration = 5.0  # seconds
         total_messages = int(message_rate * test_duration)
 
-        performance_metrics['start_time'] = time.time()
+        performance_metrics["start_time"] = time.time()
 
         # Generate CAN messages at high rate
         sent_messages = 0
@@ -148,26 +156,28 @@ class TestCommunicationStress:
                 # Simulate motor command
                 motor_id = i % 4  # 4 motors
                 speed = (i % 100) / 10.0  # Variable speeds
-                
+
                 success = can_bridge.send_motor_command(motor_id, speed)
                 if success:
                     sent_messages += 1
                 else:
                     failed_messages += 1
-                    
+
             except Exception as e:
-                performance_metrics['errors'].append(str(e))
+                performance_metrics["errors"].append(str(e))
                 failed_messages += 1
 
             # Rate limiting
             if i % 100 == 0:
                 time.sleep(0.001)  # 1ms batches
 
-        performance_metrics['end_time'] = time.time()
-        performance_metrics['message_count'] = sent_messages
-        performance_metrics['dropped_messages'] = failed_messages
+        performance_metrics["end_time"] = time.time()
+        performance_metrics["message_count"] = sent_messages
+        performance_metrics["dropped_messages"] = failed_messages
 
-        actual_duration = performance_metrics['end_time'] - performance_metrics['start_time']
+        actual_duration = (
+            performance_metrics["end_time"] - performance_metrics["start_time"]
+        )
         actual_rate = sent_messages / actual_duration
         success_rate = sent_messages / total_messages
 
@@ -193,6 +203,7 @@ class TestCommunicationStress:
         for scenario in range(5):
             # Normal operation baseline
             baseline_results = []
+
             def baseline_handler(data):
                 baseline_results.append(data)
                 return {"status": "success"}
@@ -201,17 +212,18 @@ class TestCommunicationStress:
 
             # Send normal messages
             for i in range(20):
-                result = asyncio.run(mock_websocket_bridge._process_command({
-                    "command": "baseline",
-                    "data": {"seq": i}
-                }))
+                result = asyncio.run(
+                    mock_websocket_bridge._process_command(
+                        {"command": "baseline", "data": {"seq": i}}
+                    )
+                )
                 assert result["status"] == "success"
 
             messages_before_failure.append(len(baseline_results))
 
             # Simulate message loss (network interruption)
             start_failure = time.time()
-            
+
             # Handler that fails
             def failing_handler(data):
                 raise ConnectionError("Simulated network failure")
@@ -221,15 +233,17 @@ class TestCommunicationStress:
             # Attempt messages during failure
             failure_count = 0
             for i in range(10):
-                result = asyncio.run(mock_websocket_bridge._process_command({
-                    "command": "test",
-                    "data": {"seq": i}
-                }))
+                result = asyncio.run(
+                    mock_websocket_bridge._process_command(
+                        {"command": "test", "data": {"seq": i}}
+                    )
+                )
                 if result.get("status") == "handler_error":
                     failure_count += 1
 
             # Recovery handler
             recovery_results = []
+
             def recovery_handler(data):
                 recovery_results.append(data)
                 return {"status": "recovered"}
@@ -239,10 +253,11 @@ class TestCommunicationStress:
             # Test recovery
             recovery_start = time.time()
             for i in range(20):
-                result = asyncio.run(mock_websocket_bridge._process_command({
-                    "command": "test",
-                    "data": {"seq": i}
-                }))
+                result = asyncio.run(
+                    mock_websocket_bridge._process_command(
+                        {"command": "test", "data": {"seq": i}}
+                    )
+                )
             recovery_end = time.time()
 
             recovery_times.append(recovery_end - recovery_start)
@@ -254,7 +269,9 @@ class TestCommunicationStress:
         avg_messages_after = statistics.mean(messages_after_recovery)
 
         assert avg_recovery_time < 1.0, f"Recovery too slow: {avg_recovery_time:.2f}s"
-        assert avg_messages_after >= avg_messages_before * 0.9, "Poor recovery performance"
+        assert (
+            avg_messages_after >= avg_messages_before * 0.9
+        ), "Poor recovery performance"
 
         print(f"Message Loss Recovery Test Results:")
         print(f"  Average recovery time: {avg_recovery_time:.3f}s")
@@ -280,10 +297,14 @@ class TestCommunicationStress:
         while time.time() - start_time < test_duration:
             # Send messages
             for i in range(message_rate):
-                result = asyncio.run(mock_websocket_bridge._process_command({
-                    "command": "test",
-                    "data": {"payload": "x" * 1000, "timestamp": time.time()}
-                }))
+                result = asyncio.run(
+                    mock_websocket_bridge._process_command(
+                        {
+                            "command": "test",
+                            "data": {"payload": "x" * 1000, "timestamp": time.time()},
+                        }
+                    )
+                )
 
             # Sample memory every second
             current_memory = process.memory_info().rss / 1024 / 1024
@@ -317,36 +338,41 @@ class TestCommunicationStress:
         """Test bridge with multiple concurrent clients."""
         num_clients = 10
         messages_per_client = 50
-        
+
         # Client simulation function
         def client_simulation(client_id):
             results = []
             errors = []
-            
+
             for i in range(messages_per_client):
                 try:
-                    result = asyncio.run(mock_websocket_bridge._process_command({
-                        "command": "client_test",
-                        "data": {
-                            "client_id": client_id,
-                            "message_id": i,
-                            "timestamp": time.time()
-                        }
-                    }))
+                    result = asyncio.run(
+                        mock_websocket_bridge._process_command(
+                            {
+                                "command": "client_test",
+                                "data": {
+                                    "client_id": client_id,
+                                    "message_id": i,
+                                    "timestamp": time.time(),
+                                },
+                            }
+                        )
+                    )
                     results.append(result)
                 except Exception as e:
                     errors.append(str(e))
-            
+
             return {
                 "client_id": client_id,
                 "results": results,
                 "errors": errors,
                 "success_count": len(results),
-                "error_count": len(errors)
+                "error_count": len(errors),
             }
 
         # Register handler
         handler_results = []
+
         def client_handler(data):
             handler_results.append(data)
             return {"status": "success", "client": data.get("client_id")}
@@ -356,10 +382,9 @@ class TestCommunicationStress:
         # Run concurrent clients
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_clients) as executor:
             futures = [
-                executor.submit(client_simulation, i) 
-                for i in range(num_clients)
+                executor.submit(client_simulation, i) for i in range(num_clients)
             ]
-            
+
             client_results = []
             for future in concurrent.futures.as_completed(futures):
                 result = future.result(timeout=30)
@@ -372,7 +397,9 @@ class TestCommunicationStress:
         success_rate = total_messages / expected_messages
 
         # Validate concurrent performance
-        assert success_rate >= 0.90, f"Concurrent success rate too low: {success_rate:.2%}"
+        assert (
+            success_rate >= 0.90
+        ), f"Concurrent success rate too low: {success_rate:.2%}"
         assert len(handler_results) == total_messages, "Handler results mismatch"
 
         print(f"Concurrent Client Test Results:")
@@ -392,7 +419,7 @@ class TestCommunicationStress:
 
         for load in load_levels:
             latencies = []
-            
+
             # Register latency tracking handler
             def latency_handler(data):
                 receive_time = time.time()
@@ -401,23 +428,22 @@ class TestCommunicationStress:
                 latencies.append(latency)
                 return {"status": "success", "latency_ms": latency}
 
-            mock_websocket_bridge.register_command_handler("latency_test", latency_handler)
+            mock_websocket_bridge.register_command_handler(
+                "latency_test", latency_handler
+            )
 
             # Send messages at specified load
             start_time = time.time()
             message_count = 0
-            
+
             while time.time() - start_time < test_duration_per_level:
                 # Send burst of messages
                 for _ in range(load):
                     message = {
                         "command": "latency_test",
-                        "data": {
-                            "send_time": time.time(),
-                            "message_id": message_count
-                        }
+                        "data": {"send_time": time.time(), "message_id": message_count},
                     }
-                    
+
                     asyncio.run(mock_websocket_bridge._process_command(message))
                     message_count += 1
 
@@ -435,18 +461,24 @@ class TestCommunicationStress:
                 "avg_latency_ms": avg_latency,
                 "max_latency_ms": max_latency,
                 "p95_latency_ms": p95_latency,
-                "message_count": len(latencies)
+                "message_count": len(latencies),
             }
 
         # Validate latency requirements
         for load, stats in latency_results.items():
-            assert stats["avg_latency_ms"] < 50, f"Avg latency too high at {load} Hz: {stats['avg_latency_ms']:.1f}ms"
-            assert stats["p95_latency_ms"] < 100, f"P95 latency too high at {load} Hz: {stats['p95_latency_ms']:.1f}ms"
+            assert (
+                stats["avg_latency_ms"] < 50
+            ), f"Avg latency too high at {load} Hz: {stats['avg_latency_ms']:.1f}ms"
+            assert (
+                stats["p95_latency_ms"] < 100
+            ), f"P95 latency too high at {load} Hz: {stats['p95_latency_ms']:.1f}ms"
 
         print(f"Latency Under Load Test Results:")
         for load, stats in latency_results.items():
-            print(f"  {load:3d} Hz: Avg={stats['avg_latency_ms']:6.1f}ms, "
-                  f"Max={stats['max_latency_ms']:6.1f}ms, P95={stats['p95_latency_ms']:6.1f}ms")
+            print(
+                f"  {load:3d} Hz: Avg={stats['avg_latency_ms']:6.1f}ms, "
+                f"Max={stats['max_latency_ms']:6.1f}ms, P95={stats['p95_latency_ms']:6.1f}ms"
+            )
 
 
 if __name__ == "__main__":

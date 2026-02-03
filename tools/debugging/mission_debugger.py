@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MissionExecutionTrace:
     """Mission execution trace record."""
+
     mission_id: str
     timestamp: float
     component: str
@@ -39,6 +40,7 @@ class MissionExecutionTrace:
 @dataclass
 class ComponentState:
     """Component state snapshot."""
+
     component_name: str
     timestamp: float
     state: Dict[str, Any]
@@ -92,8 +94,13 @@ class MissionDebugger:
         self.logger.info("Mission debugging stopped")
         return True
 
-    def trace_execution_start(self, mission_id: str, component: str,
-                            action: str, initial_state: Dict[str, Any]) -> str:
+    def trace_execution_start(
+        self,
+        mission_id: str,
+        component: str,
+        action: str,
+        initial_state: Dict[str, Any],
+    ) -> str:
         """
         Start tracing a mission execution step.
 
@@ -114,7 +121,7 @@ class MissionDebugger:
             component=component,
             action=action,
             state=initial_state.copy(),
-            metadata={'trace_id': trace_id}
+            metadata={"trace_id": trace_id},
         )
 
         self.active_traces[trace_id] = trace
@@ -124,8 +131,9 @@ class MissionDebugger:
 
         return trace_id
 
-    def trace_execution_end(self, trace_id: str, final_state: Dict[str, Any],
-                          error: str = None) -> bool:
+    def trace_execution_end(
+        self, trace_id: str, final_state: Dict[str, Any], error: str = None
+    ) -> bool:
         """
         Complete an execution trace.
 
@@ -153,16 +161,22 @@ class MissionDebugger:
 
         if self.debug_mode:
             status = "ERROR" if error else "SUCCESS"
-            self.logger.debug(f"Execution trace completed: {trace_id} ({status}, {trace.duration:.3f}s)")
+            self.logger.debug(
+                f"Execution trace completed: {trace_id} ({status}, {trace.duration:.3f}s)"
+            )
 
         # Check breakpoints
         self._check_breakpoints(trace)
 
         return True
 
-    def update_component_state(self, component_name: str, state: Dict[str, Any],
-                             health_status: str = "healthy",
-                             performance_metrics: Dict[str, float] = None):
+    def update_component_state(
+        self,
+        component_name: str,
+        state: Dict[str, Any],
+        health_status: str = "healthy",
+        performance_metrics: Dict[str, float] = None,
+    ):
         """
         Update component state for monitoring.
 
@@ -177,7 +191,7 @@ class MissionDebugger:
             timestamp=time.time(),
             state=state.copy(),
             health_status=health_status,
-            performance_metrics=performance_metrics or {}
+            performance_metrics=performance_metrics or {},
         )
 
         self.component_states[component_name] = component_state
@@ -192,8 +206,13 @@ class MissionDebugger:
             except Exception as e:
                 self.logger.error(f"State update callback error: {e}")
 
-    def log_error(self, component: str, error_type: str, error_message: str,
-                 context: Dict[str, Any] = None) -> str:
+    def log_error(
+        self,
+        component: str,
+        error_type: str,
+        error_message: str,
+        context: Dict[str, Any] = None,
+    ) -> str:
         """
         Log an error for debugging analysis.
 
@@ -207,12 +226,12 @@ class MissionDebugger:
             Error ID for tracking
         """
         error_record = {
-            'error_id': f"{component}_{error_type}_{time.time()}",
-            'timestamp': time.time(),
-            'component': component,
-            'error_type': error_type,
-            'message': error_message,
-            'context': context or {}
+            "error_id": f"{component}_{error_type}_{time.time()}",
+            "timestamp": time.time(),
+            "component": component,
+            "error_type": error_type,
+            "message": error_message,
+            "context": context or {},
         }
 
         self.error_history.append(error_record)
@@ -226,10 +245,14 @@ class MissionDebugger:
             except Exception as e:
                 self.logger.error(f"Error callback error: {e}")
 
-        return error_record['error_id']
+        return error_record["error_id"]
 
-    def set_breakpoint(self, component: str, condition: Callable[[MissionExecutionTrace], bool],
-                      action: Callable[[MissionExecutionTrace], None]):
+    def set_breakpoint(
+        self,
+        component: str,
+        condition: Callable[[MissionExecutionTrace], bool],
+        action: Callable[[MissionExecutionTrace], None],
+    ):
         """
         Set a debugging breakpoint.
 
@@ -241,10 +264,7 @@ class MissionDebugger:
         if component not in self.breakpoints:
             self.breakpoints[component] = []
 
-        self.breakpoints[component].append({
-            'condition': condition,
-            'action': action
-        })
+        self.breakpoints[component].append({"condition": condition, "action": action})
 
         self.logger.info(f"Breakpoint set for component: {component}")
 
@@ -257,9 +277,9 @@ class MissionDebugger:
             getter: Function to get current variable value
         """
         self.watch_variables[name] = {
-            'getter': getter,
-            'last_value': None,
-            'change_count': 0
+            "getter": getter,
+            "last_value": None,
+            "change_count": 0,
         }
 
         self.logger.debug(f"Variable watch set: {name}")
@@ -268,15 +288,17 @@ class MissionDebugger:
         """Check all variable watches for changes."""
         for name, watch in self.watch_variables.items():
             try:
-                current_value = watch['getter']()
-                last_value = watch['last_value']
+                current_value = watch["getter"]()
+                last_value = watch["last_value"]
 
                 if current_value != last_value:
-                    watch['change_count'] += 1
-                    watch['last_value'] = current_value
+                    watch["change_count"] += 1
+                    watch["last_value"] = current_value
 
                     if self.debug_mode:
-                        self.logger.debug(f"Variable changed: {name} = {current_value} (changes: {watch['change_count']})")
+                        self.logger.debug(
+                            f"Variable changed: {name} = {current_value} (changes: {watch['change_count']})"
+                        )
 
             except Exception as e:
                 self.logger.error(f"Error checking watch variable {name}: {e}")
@@ -288,9 +310,11 @@ class MissionDebugger:
 
         for breakpoint in self.breakpoints[trace.component]:
             try:
-                if breakpoint['condition'](trace):
-                    self.logger.warning(f"Breakpoint triggered: {trace.component} - {trace.action}")
-                    breakpoint['action'](trace)
+                if breakpoint["condition"](trace):
+                    self.logger.warning(
+                        f"Breakpoint triggered: {trace.component} - {trace.action}"
+                    )
+                    breakpoint["action"](trace)
             except Exception as e:
                 self.logger.error(f"Breakpoint check error: {e}")
 
@@ -304,7 +328,9 @@ class MissionDebugger:
         self.profiling_active = False
         self.logger.info("Performance profiling stopped")
 
-    def record_performance_metric(self, component: str, operation: str, duration: float):
+    def record_performance_metric(
+        self, component: str, operation: str, duration: float
+    ):
         """
         Record a performance metric.
 
@@ -326,8 +352,9 @@ class MissionDebugger:
         if len(self.performance_profiles[key]) > 100:
             self.performance_profiles[key] = self.performance_profiles[key][-50:]
 
-    def get_execution_report(self, mission_id: str = None,
-                           component: str = None) -> Dict[str, Any]:
+    def get_execution_report(
+        self, mission_id: str = None, component: str = None
+    ) -> Dict[str, Any]:
         """
         Get execution report for analysis.
 
@@ -362,38 +389,36 @@ class MissionDebugger:
         for trace in traces:
             comp = trace.component
             if comp not in component_stats:
-                component_stats[comp] = {
-                    'total': 0,
-                    'errors': 0,
-                    'avg_duration': 0.0
-                }
+                component_stats[comp] = {"total": 0, "errors": 0, "avg_duration": 0.0}
 
-            component_stats[comp]['total'] += 1
+            component_stats[comp]["total"] += 1
             if trace.error:
-                component_stats[comp]['errors'] += 1
+                component_stats[comp]["errors"] += 1
 
             if trace.duration is not None:
-                current_avg = component_stats[comp]['avg_duration']
-                count = component_stats[comp]['total']
-                component_stats[comp]['avg_duration'] = (current_avg * (count - 1) + trace.duration) / count
+                current_avg = component_stats[comp]["avg_duration"]
+                count = component_stats[comp]["total"]
+                component_stats[comp]["avg_duration"] = (
+                    current_avg * (count - 1) + trace.duration
+                ) / count
 
         return {
-            'total_traces': total_traces,
-            'successful_traces': successful_traces,
-            'error_traces': len(error_traces),
-            'average_duration': avg_duration,
-            'component_stats': component_stats,
-            'recent_traces': [
+            "total_traces": total_traces,
+            "successful_traces": successful_traces,
+            "error_traces": len(error_traces),
+            "average_duration": avg_duration,
+            "component_stats": component_stats,
+            "recent_traces": [
                 {
-                    'mission_id': t.mission_id,
-                    'component': t.component,
-                    'action': t.action,
-                    'duration': t.duration,
-                    'error': t.error,
-                    'timestamp': t.timestamp
+                    "mission_id": t.mission_id,
+                    "component": t.component,
+                    "action": t.action,
+                    "duration": t.duration,
+                    "error": t.error,
+                    "timestamp": t.timestamp,
                 }
                 for t in traces[-10:]  # Last 10 traces
-            ]
+            ],
         }
 
     def get_debug_snapshot(self) -> Dict[str, Any]:
@@ -404,30 +429,30 @@ class MissionDebugger:
             Comprehensive debug information
         """
         return {
-            'debug_mode': self.debug_mode,
-            'active_traces': len(self.active_traces),
-            'total_traces': len(self.execution_traces),
-            'component_states': {
+            "debug_mode": self.debug_mode,
+            "active_traces": len(self.active_traces),
+            "total_traces": len(self.execution_traces),
+            "component_states": {
                 name: {
-                    'health': state.health_status,
-                    'timestamp': state.timestamp,
-                    'metrics': state.performance_metrics
+                    "health": state.health_status,
+                    "timestamp": state.timestamp,
+                    "metrics": state.performance_metrics,
                 }
                 for name, state in self.component_states.items()
             },
-            'error_count': len(self.error_history),
-            'breakpoints': list(self.breakpoints.keys()),
-            'watched_variables': list(self.watch_variables.keys()),
-            'profiling_active': self.profiling_active,
-            'performance_profiles': {
+            "error_count": len(self.error_history),
+            "breakpoints": list(self.breakpoints.keys()),
+            "watched_variables": list(self.watch_variables.keys()),
+            "profiling_active": self.profiling_active,
+            "performance_profiles": {
                 key: {
-                    'count': len(values),
-                    'avg': sum(values) / len(values) if values else 0,
-                    'min': min(values) if values else 0,
-                    'max': max(values) if values else 0
+                    "count": len(values),
+                    "avg": sum(values) / len(values) if values else 0,
+                    "min": min(values) if values else 0,
+                    "max": max(values) if values else 0,
                 }
                 for key, values in self.performance_profiles.items()
-            }
+            },
         }
 
     def register_state_callback(self, callback: Callable):
@@ -450,35 +475,35 @@ class MissionDebugger:
         """
         try:
             debug_data = {
-                'execution_traces': [
+                "execution_traces": [
                     {
-                        'mission_id': t.mission_id,
-                        'timestamp': t.timestamp,
-                        'component': t.component,
-                        'action': t.action,
-                        'state': t.state,
-                        'duration': t.duration,
-                        'error': t.error,
-                        'metadata': t.metadata
+                        "mission_id": t.mission_id,
+                        "timestamp": t.timestamp,
+                        "component": t.component,
+                        "action": t.action,
+                        "state": t.state,
+                        "duration": t.duration,
+                        "error": t.error,
+                        "metadata": t.metadata,
                     }
                     for t in self.execution_traces
                 ],
-                'component_states': {
+                "component_states": {
                     name: {
-                        'component_name': state.component_name,
-                        'timestamp': state.timestamp,
-                        'state': state.state,
-                        'health_status': state.health_status,
-                        'performance_metrics': state.performance_metrics
+                        "component_name": state.component_name,
+                        "timestamp": state.timestamp,
+                        "state": state.state,
+                        "health_status": state.health_status,
+                        "performance_metrics": state.performance_metrics,
                     }
                     for name, state in self.component_states.items()
                 },
-                'error_history': list(self.error_history),
-                'performance_profiles': dict(self.performance_profiles),
-                'debug_snapshot': self.get_debug_snapshot()
+                "error_history": list(self.error_history),
+                "performance_profiles": dict(self.performance_profiles),
+                "debug_snapshot": self.get_debug_snapshot(),
             }
 
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 json.dump(debug_data, f, indent=2, default=str)
 
             self.logger.info(f"Debug data exported to {filename}")
@@ -492,13 +517,10 @@ class MissionDebugger:
 # Global debugger instance
 _debugger = None
 
+
 def get_mission_debugger() -> MissionDebugger:
     """Get global mission debugger instance."""
     global _debugger
     if _debugger is None:
         _debugger = MissionDebugger()
     return _debugger
-
-
-
-

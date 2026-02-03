@@ -178,9 +178,9 @@ class CANStressSimulator:
             "errors_total": self.error_count,
             "arbitration_collisions": self.collision_count,
             "bus_off_events": self.bus_off_events,
-            "avg_latency_ms": statistics.mean(self.latency_samples)
-            if self.latency_samples
-            else 0,
+            "avg_latency_ms": (
+                statistics.mean(self.latency_samples) if self.latency_samples else 0
+            ),
             "max_latency_ms": max(self.latency_samples) if self.latency_samples else 0,
             "error_rate_percent": (self.error_count / max(self.message_count, 1)) * 100,
             "collision_rate_percent": (

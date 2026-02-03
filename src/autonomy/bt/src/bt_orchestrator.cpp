@@ -12,6 +12,7 @@
 #include "behaviortree_cpp/loggers/bt_file_logger_v2.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/callback_group.hpp"
+#include "rclcpp/executors/multi_threaded_executor.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "rclcpp/qos.hpp"
 #include "rmw/qos_profiles.h"
@@ -1209,6 +1210,31 @@ private:
     rclcpp::Node::SharedPtr node_;
 };
 
+// CheckEmergencyStop: condition node; SUCCESS when emergency stop is active (so emergency branch runs)
+// In XML use emergency_stop="{system.emergency_stop}" or emergency_stop="{emergency_stop_active}"
+class CheckEmergencyStop : public SyncActionNode
+{
+public:
+    CheckEmergencyStop(const std::string& name, const NodeConfig& config)
+        : SyncActionNode(name, config), node_(rclcpp::Node::make_shared("bt_" + name))
+    {}
+
+    static PortsList providedPorts()
+    {
+        return { InputPort<bool>("emergency_stop", false, "True when emergency stop is active") };
+    }
+
+    NodeStatus tick() override
+    {
+        bool emergency = false;
+        getInput("emergency_stop", emergency);
+        return emergency ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
+    }
+
+private:
+    rclcpp::Node::SharedPtr node_;
+};
+
 // Emergency Stop Node
 class EmergencyStop : public SyncActionNode
 {
@@ -1228,7 +1254,8 @@ public:
         getInput("reason", reason);
 
         RCLCPP_ERROR(node_->get_logger(), "BT: EMERGENCY STOP triggered - %s", reason.c_str());
-        // TODO: Implement actual emergency stop procedure
+        // Execute emergency stop synchronously (e.g. stop commands would be published here).
+        // SyncActionNode must never return RUNNING; report success so tree can handle follow-up.
         return NodeStatus::SUCCESS;
     }
 
@@ -1259,18 +1286,23 @@ public:
     BTOrchestrator() : rclcpp_lifecycle::LifecycleNode("bt_orchestrator")
     {
         RCLCPP_INFO(get_logger(), "BT Orchestrator initialized (BT.CPP 4.x with LifecycleNode)");
-        
+        declare_parameter("run_bt_tick", true);
+        run_bt_tick_ = get_parameter("run_bt_tick").get_value<bool>();
+
         // Create callback groups for priority scheduling
         realtime_callback_group_ = create_callback_group(
             rclcpp::CallbackGroupType::MutuallyExclusive);
         
         telemetry_callback_group_ = create_callback_group(
             rclcpp::CallbackGroupType::MutuallyExclusive);
+
+        blackboard_callback_group_ = create_callback_group(
+            rclcpp::CallbackGroupType::Reentrant);
     }
     
     // Lifecycle callbacks
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-    on_configure(const rclcpp_lifecycle::State & state) override
+    on_configure(const rclcpp_lifecycle::State & /* state */) override
     {
         RCLCPP_INFO(get_logger(), "Configuring BT Orchestrator...");
         
@@ -1284,7 +1316,7 @@ public:
     }
     
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-    on_activate(const rclcpp_lifecycle::State & state) override
+    on_activate(const rclcpp_lifecycle::State & /* state */) override
     {
         RCLCPP_INFO(get_logger(), "Activating BT Orchestrator...");
         
@@ -1292,24 +1324,26 @@ public:
         if (telemetry_publisher_) {
             telemetry_publisher_->on_activate();
         }
-        
-        // Create and start timers with callback groups
-        execution_timer_ = create_wall_timer(
-            std::chrono::milliseconds(100),
-            std::bind(&BTOrchestrator::execute_tree, this),
-            realtime_callback_group_);
 
-        telemetry_timer_ = create_wall_timer(
-            std::chrono::seconds(1),
-            std::bind(&BTOrchestrator::publish_telemetry_status, this),
-            telemetry_callback_group_);
+        if (run_bt_tick_) {
+            execution_timer_ = create_wall_timer(
+                std::chrono::milliseconds(100),
+                std::bind(&BTOrchestrator::execute_tree, this),
+                realtime_callback_group_);
+            telemetry_timer_ = create_wall_timer(
+                std::chrono::seconds(1),
+                std::bind(&BTOrchestrator::publish_telemetry_status, this),
+                telemetry_callback_group_);
+        } else {
+            RCLCPP_INFO(get_logger(), "BT tick disabled (run_bt_tick:=false); blackboard services only");
+        }
 
         RCLCPP_INFO(get_logger(), "BT Orchestrator activated");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
     
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-    on_deactivate(const rclcpp_lifecycle::State & state) override
+    on_deactivate(const rclcpp_lifecycle::State & /* state */) override
     {
         RCLCPP_INFO(get_logger(), "Deactivating BT Orchestrator...");
         
@@ -1331,7 +1365,7 @@ public:
     }
     
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-    on_cleanup(const rclcpp_lifecycle::State & state) override
+    on_cleanup(const rclcpp_lifecycle::State & /* state */) override
     {
         RCLCPP_INFO(get_logger(), "Cleaning up BT Orchestrator...");
         
@@ -1396,12 +1430,22 @@ private:
         set_blackboard_value(BlackboardKeys::NAVIGATION_OK, true);
         set_blackboard_value(BlackboardKeys::LAST_ERROR, std::string(""));
 
+        // Hybrid / mode keys (dot notation)
+        set_blackboard_value(BlackboardKeys::Auto::MODE, std::string("idle"));
+        set_blackboard_value(BlackboardKeys::Auto::MODE_REQUEST, std::string(""));
+        set_blackboard_value(BlackboardKeys::Auto::HUMAN_OVERRIDE_ACTIVE, false);
+        set_blackboard_value(BlackboardKeys::Auto::ASSIST_ENABLED, true);
+        set_blackboard_value(BlackboardKeys::System::EMERGENCY_STOP, false);
+        set_blackboard_value(BlackboardKeys::System::BATTERY_PERCENT, 100.0);
+        set_blackboard_value(BlackboardKeys::System::LAST_ERROR, std::string(""));
+
         // Register standardized nodes
         factory_.registerNodeType<CallService>("CallService");
         factory_.registerNodeType<SensorCheck>("SensorCheck");
         factory_.registerNodeType<NavigateToWaypoint>("NavigateToWaypoint");
         factory_.registerNodeType<SampleCollection>("SampleCollection");
         factory_.registerNodeType<EmergencyStop>("EmergencyStop");
+        factory_.registerNodeType<CheckEmergencyStop>("CheckEmergencyStop");
 
         // Register URC 2026 mission-specific nodes
         // Autonomous Navigation Mission
@@ -1480,16 +1524,16 @@ private:
             std::bind(&BTOrchestrator::handle_execute_mission_accepted, this, std::placeholders::_1),
             rcl_action_server_get_default_options(), realtime_callback_group_);
 
-        // Set up blackboard services for unified access
+        // Set up blackboard services with dedicated callback group (avoids blocking telemetry)
         blackboard_get_srv_ = create_service<autonomy_interfaces::srv::GetBlackboardValue>(
             "/blackboard/get_value",
             std::bind(&BTOrchestrator::get_blackboard_value_callback, this, std::placeholders::_1, std::placeholders::_2),
-            rclcpp::QoS(10), telemetry_callback_group_);
+            rclcpp::ServicesQoS(), blackboard_callback_group_);
 
         blackboard_set_srv_ = create_service<autonomy_interfaces::srv::SetBlackboardValue>(
             "/blackboard/set_value",
             std::bind(&BTOrchestrator::set_blackboard_value_callback, this, std::placeholders::_1, std::placeholders::_2),
-            rclcpp::QoS(10), telemetry_callback_group_);
+            rclcpp::ServicesQoS(), blackboard_callback_group_);
 
         RCLCPP_INFO(get_logger(), "BT Orchestrator fully initialized with unified blackboard services");
         return true;
@@ -1504,6 +1548,7 @@ private:
     // Callback groups for priority scheduling
     rclcpp::CallbackGroup::SharedPtr realtime_callback_group_;
     rclcpp::CallbackGroup::SharedPtr telemetry_callback_group_;
+    rclcpp::CallbackGroup::SharedPtr blackboard_callback_group_;
 
     // ROS2 subscribers for blackboard updates
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
@@ -1525,6 +1570,7 @@ private:
     Tree tree_;
     std::unique_ptr<BT::FileLogger2> file_logger_;
     std::unique_ptr<BT::StdCoutLogger> console_logger_;
+    bool run_bt_tick_;
     rclcpp::TimerBase::SharedPtr execution_timer_;
     rclcpp::TimerBase::SharedPtr telemetry_timer_;
 
@@ -1652,7 +1698,7 @@ private:
             return true;
         } catch (const std::exception& e) {
             RCLCPP_ERROR(get_logger(), "Failed to set blackboard value for key '%s': %s", key.c_str(), e.what());
-            set_blackboard_value("last_error", std::string("Blackboard set failed: ") + e.what());
+            set_blackboard_value(BlackboardKeys::LAST_ERROR, std::string("Blackboard set failed: ") + e.what());
             return false;
         }
     }
@@ -1672,7 +1718,7 @@ private:
             }
         } catch (const std::exception& e) {
             RCLCPP_ERROR(get_logger(), "Failed to get blackboard value for key '%s': %s", key.c_str(), e.what());
-            set_blackboard_value("last_error", std::string("Blackboard get failed: ") + e.what());
+            set_blackboard_value(BlackboardKeys::LAST_ERROR, std::string("Blackboard get failed: ") + e.what());
             return default_value;
         }
     }
@@ -1721,62 +1767,54 @@ private:
         return true;
     }
 
-    // Blackboard service callbacks
+    // Blackboard service callbacks (dedicated callback group to avoid blocking telemetry)
     void get_blackboard_value_callback(
         const std::shared_ptr<autonomy_interfaces::srv::GetBlackboardValue::Request> request,
         std::shared_ptr<autonomy_interfaces::srv::GetBlackboardValue::Response> response)
     {
+        response->success = false;
+        response->error_message = "";
+        const std::string key = request->key;
+        const std::string value_type = request->value_type.empty() ? "string" : request->value_type;
+
         try {
-            std::string key = request->key;
-            std::string value_type = request->value_type;
-            
-            // Try to get value based on type hint
             if (value_type == "bool") {
-                bool value = get_blackboard_value<bool>(key, false);
+                bool value = blackboard_->get<bool>(key);
                 response->value = value ? "true" : "false";
                 response->value_type = "bool";
                 response->success = true;
+                return;
             }
-            else if (value_type == "int") {
-                int value = get_blackboard_value<int>(key, 0);
+            if (value_type == "int") {
+                int value = blackboard_->get<int>(key);
                 response->value = std::to_string(value);
                 response->value_type = "int";
                 response->success = true;
+                return;
             }
-            else if (value_type == "double") {
-                double value = get_blackboard_value<double>(key, 0.0);
+            if (value_type == "double") {
+                double value = blackboard_->get<double>(key);
                 response->value = std::to_string(value);
                 response->value_type = "double";
                 response->success = true;
+                return;
             }
-            else if (value_type == "string" || value_type.empty()) {
-                // Try string first, then fall back to other types
-                try {
-                    std::string value = get_blackboard_value<std::string>(key, "");
-                    response->value = value;
-                    response->value_type = "string";
-                    response->success = true;
-                } catch (...) {
-                    // Try double as fallback
-                    try {
-                        double value = get_blackboard_value<double>(key, 0.0);
-                        response->value = std::to_string(value);
-                        response->value_type = "double";
-                        response->success = true;
-                    } catch (...) {
-                        response->success = false;
-                        response->error_message = "Key not found or type mismatch: " + key;
-                    }
-                }
+            if (value_type == "string") {
+                std::string value = blackboard_->get<std::string>(key);
+                response->value = value;
+                response->value_type = "string";
+                response->success = true;
+                return;
             }
-            else {
-                response->success = false;
-                response->error_message = "Unsupported value type: " + value_type;
-            }
+            response->success = false;
+            response->error_message = "Unsupported value type: " + value_type;
+            RCLCPP_WARN(get_logger(), "GetBlackboardValue unsupported type '%s' for key '%s'",
+                value_type.c_str(), key.c_str());
         } catch (const std::exception& e) {
             response->success = false;
             response->error_message = std::string("Exception: ") + e.what();
-            RCLCPP_ERROR(get_logger(), "GetBlackboardValue service error: %s", e.what());
+            RCLCPP_ERROR(get_logger(), "GetBlackboardValue service error for key '%s': %s",
+                key.c_str(), e.what());
         }
     }
 
@@ -1784,42 +1822,47 @@ private:
         const std::shared_ptr<autonomy_interfaces::srv::SetBlackboardValue::Request> request,
         std::shared_ptr<autonomy_interfaces::srv::SetBlackboardValue::Response> response)
     {
+        response->success = false;
+        response->error_message = "";
+        const std::string key = request->key;
+        const std::string value_str = request->value;
+        const std::string value_type = request->value_type;
+
         try {
-            std::string key = request->key;
-            std::string value_str = request->value;
-            std::string value_type = request->value_type;
-            
-            bool success = false;
-            
+            bool ok = false;
             if (value_type == "bool") {
                 bool value = (value_str == "true" || value_str == "1");
-                success = set_blackboard_value(key, value);
-            }
-            else if (value_type == "int") {
+                ok = set_blackboard_value(key, value);
+            } else if (value_type == "int") {
                 int value = std::stoi(value_str);
-                success = set_blackboard_value(key, value);
-            }
-            else if (value_type == "double") {
+                ok = set_blackboard_value(key, value);
+            } else if (value_type == "double") {
                 double value = std::stod(value_str);
-                success = set_blackboard_value(key, value);
-            }
-            else if (value_type == "string") {
-                success = set_blackboard_value(key, value_str);
-            }
-            else {
+                ok = set_blackboard_value(key, value);
+            } else if (value_type == "string") {
+                ok = set_blackboard_value(key, value_str);
+            } else {
                 response->success = false;
                 response->error_message = "Unsupported value type: " + value_type;
+                RCLCPP_WARN(get_logger(), "SetBlackboardValue unsupported type '%s' for key '%s'",
+                    value_type.c_str(), key.c_str());
                 return;
             }
-            
-            response->success = success;
-            if (!success) {
+            response->success = ok;
+            if (!ok) {
                 response->error_message = "Failed to set blackboard value (validation may have failed)";
+                RCLCPP_WARN(get_logger(), "SetBlackboardValue validation failed for key '%s'", key.c_str());
             }
+        } catch (const std::invalid_argument& e) {
+            response->success = false;
+            response->error_message = std::string("Invalid value format: ") + e.what();
+            RCLCPP_ERROR(get_logger(), "SetBlackboardValue invalid argument for key '%s': %s",
+                key.c_str(), e.what());
         } catch (const std::exception& e) {
             response->success = false;
             response->error_message = std::string("Exception: ") + e.what();
-            RCLCPP_ERROR(get_logger(), "SetBlackboardValue service error: %s", e.what());
+            RCLCPP_ERROR(get_logger(), "SetBlackboardValue service error for key '%s': %s",
+                key.c_str(), e.what());
         }
     }
 
@@ -1844,7 +1887,7 @@ private:
 
     // Action server callback methods
     rclcpp_action::GoalResponse handle_navigate_to_pose_goal(
-        const rclcpp_action::GoalUUID & uuid,
+        const rclcpp_action::GoalUUID & /* uuid */,
         std::shared_ptr<const autonomy_interfaces::action::NavigateToPose::Goal> goal)
     {
         RCLCPP_INFO(get_logger(), "Received navigate to pose goal: (%.2f, %.2f)",
@@ -1853,7 +1896,7 @@ private:
     }
 
     rclcpp_action::CancelResponse handle_navigate_to_pose_cancel(
-        const std::shared_ptr<rclcpp_action::ServerGoalHandle<autonomy_interfaces::action::NavigateToPose>> goal_handle)
+        const std::shared_ptr<rclcpp_action::ServerGoalHandle<autonomy_interfaces::action::NavigateToPose>> /* goal_handle */)
     {
         RCLCPP_INFO(get_logger(), "Received request to cancel navigate to pose goal");
         return rclcpp_action::CancelResponse::ACCEPT;
@@ -1895,7 +1938,7 @@ private:
     }
 
     rclcpp_action::GoalResponse handle_execute_mission_goal(
-        const rclcpp_action::GoalUUID & uuid,
+        const rclcpp_action::GoalUUID & /* uuid */,
         std::shared_ptr<const autonomy_interfaces::action::ExecuteMission::Goal> goal)
     {
         RCLCPP_INFO(get_logger(), "Received execute mission goal: %s", goal->mission_type.c_str());
@@ -1903,7 +1946,7 @@ private:
     }
 
     rclcpp_action::CancelResponse handle_execute_mission_cancel(
-        const std::shared_ptr<rclcpp_action::ServerGoalHandle<autonomy_interfaces::action::ExecuteMission>> goal_handle)
+        const std::shared_ptr<rclcpp_action::ServerGoalHandle<autonomy_interfaces::action::ExecuteMission>> /* goal_handle */)
     {
         RCLCPP_INFO(get_logger(), "Received request to cancel mission execution");
         return rclcpp_action::CancelResponse::ACCEPT;
@@ -1949,7 +1992,12 @@ int main(int argc, char ** argv)
 {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<BTOrchestrator>();
-    rclcpp::spin(node->get_node_base_interface());
+    // MultiThreadedExecutor so blackboard service callbacks run alongside BT/telemetry timers
+    // (single-threaded spin was starving get_value/set_value, causing client timeouts)
+    rclcpp::executors::MultiThreadedExecutor executor(
+        rclcpp::ExecutorOptions(), 4);
+    executor.add_node(node->get_node_base_interface());
+    executor.spin();
     rclcpp::shutdown();
     return 0;
 }

@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class MotionControlCommand(Enum):
     """Motion control commands."""
+
     SET_VELOCITY = 1
     EMERGENCY_STOP = 2
     RESUME_OPERATION = 3
@@ -39,6 +40,7 @@ class MotionControlCommand(Enum):
 
 class MotionControlStatus(Enum):
     """Motion control status codes."""
+
     OK = 0
     EMERGENCY_STOP_ACTIVE = 1
     HARDWARE_FAULT = 2
@@ -50,6 +52,7 @@ class MotionControlStatus(Enum):
 @dataclass
 class VelocityCommand:
     """Velocity command structure."""
+
     linear_x: float = 0.0  # m/s forward/backward
     angular_z: float = 0.0  # rad/s rotation
     acceleration_limit: float = 1.0  # m/s² acceleration limit
@@ -59,6 +62,7 @@ class VelocityCommand:
 @dataclass
 class MotionControlState:
     """Current motion control state."""
+
     timestamp_ns: int
     sequence_number: int
     status: MotionControlStatus
@@ -79,16 +83,21 @@ class IpcMotionBridge:
     """
 
     # Shared memory layout (fixed size for determinism)
-    COMMAND_BUFFER_SIZE = 64    # Velocity commands
-    STATE_BUFFER_SIZE = 128     # Motion state feedback
+    COMMAND_BUFFER_SIZE = 64  # Velocity commands
+    STATE_BUFFER_SIZE = 128  # Motion state feedback
     TOTAL_BUFFER_SIZE = COMMAND_BUFFER_SIZE + STATE_BUFFER_SIZE
 
     # Binary format strings (fixed layout)
-    COMMAND_FORMAT = "=IIffff"  # seq, cmd_type, linear_x, angular_z, accel_limit, decel_limit
+    COMMAND_FORMAT = (
+        "=IIffff"  # seq, cmd_type, linear_x, angular_z, accel_limit, decel_limit
+    )
     STATE_FORMAT = "=QIIffff?ff"  # timestamp, seq, status, linear_x, angular_z, temp, battery, emergency_stop, motor_left_current, motor_right_current
 
-    def __init__(self, shared_memory_name: str = "motion_control_bridge",
-                 create_buffer: bool = False):
+    def __init__(
+        self,
+        shared_memory_name: str = "motion_control_bridge",
+        create_buffer: bool = False,
+    ):
         """
         Initialize IPC motion bridge.
 
@@ -116,7 +125,9 @@ class IpcMotionBridge:
         self.command_count = 0
         self.state_count = 0
 
-        logger.info(f"IPC Motion Bridge initialized (mode: {'server' if create_buffer else 'client'})")
+        logger.info(
+            f"IPC Motion Bridge initialized (mode: {'server' if create_buffer else 'client'})"
+        )
 
     def _initialize_shared_memory(self):
         """Initialize shared memory buffer."""
@@ -126,7 +137,7 @@ class IpcMotionBridge:
                 self.shm = shm.SharedMemory(
                     name=self.shared_memory_name,
                     create=True,
-                    size=self.TOTAL_BUFFER_SIZE
+                    size=self.TOTAL_BUFFER_SIZE,
                 )
                 # Initialize to zero
                 self.buffer = memoryview(self.shm.buf)
@@ -141,7 +152,9 @@ class IpcMotionBridge:
                 # Connect to existing shared memory (client/autonomy side)
                 self.shm = shm.SharedMemory(name=self.shared_memory_name)
                 self.buffer = memoryview(self.shm.buf)
-                logger.info(f"Connected to shared memory buffer: {self.shared_memory_name}")
+                logger.info(
+                    f"Connected to shared memory buffer: {self.shared_memory_name}"
+                )
 
                 # Client (autonomy) starts with 0 and increments before sending
                 self.last_command_sequence = 0
@@ -149,7 +162,9 @@ class IpcMotionBridge:
 
         except FileNotFoundError:
             if not self.create_buffer:
-                raise RuntimeError(f"Shared memory '{self.shared_memory_name}' not found. Start motion control first.")
+                raise RuntimeError(
+                    f"Shared memory '{self.shared_memory_name}' not found. Start motion control first."
+                )
             raise
         except Exception as e:
             logger.error(f"Failed to initialize shared memory: {e}")
@@ -178,12 +193,12 @@ class IpcMotionBridge:
                     command.linear_x,
                     command.angular_z,
                     command.acceleration_limit,
-                    command.deceleration_limit
+                    command.deceleration_limit,
                 )
 
                 # Write to command buffer (first part of shared memory)
-                command_buffer = self.buffer[:self.COMMAND_BUFFER_SIZE]
-                command_buffer[:len(command_data)] = command_data
+                command_buffer = self.buffer[: self.COMMAND_BUFFER_SIZE]
+                command_buffer[: len(command_data)] = command_data
 
                 # Update tracking
                 self.last_command_time = time.time()
@@ -211,12 +226,15 @@ class IpcMotionBridge:
                     self.COMMAND_FORMAT,
                     self.last_command_sequence,
                     MotionControlCommand.EMERGENCY_STOP.value,
-                    0.0, 0.0, 0.0, 0.0  # Dummy velocity values
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,  # Dummy velocity values
                 )
 
                 # Write to command buffer
-                command_buffer = self.buffer[:self.COMMAND_BUFFER_SIZE]
-                command_buffer[:len(command_data)] = command_data
+                command_buffer = self.buffer[: self.COMMAND_BUFFER_SIZE]
+                command_buffer[: len(command_data)] = command_data
 
                 self.last_command_time = time.time()
                 self.command_count += 1
@@ -238,14 +256,26 @@ class IpcMotionBridge:
         with self.lock:
             try:
                 # Read state buffer (second part of shared memory)
-                state_buffer = self.buffer[self.COMMAND_BUFFER_SIZE:self.TOTAL_BUFFER_SIZE]
+                state_buffer = self.buffer[
+                    self.COMMAND_BUFFER_SIZE : self.TOTAL_BUFFER_SIZE
+                ]
 
                 # Unpack state data
-                state_data = bytes(state_buffer[:struct.calcsize(self.STATE_FORMAT)])
+                state_data = bytes(state_buffer[: struct.calcsize(self.STATE_FORMAT)])
                 unpacked = struct.unpack(self.STATE_FORMAT, state_data)
 
-                timestamp_ns, sequence_number, status_value, current_linear_x, current_angular_z, \
-                temperature_c, battery_voltage, emergency_stop_active, motor_left_current, motor_right_current = unpacked
+                (
+                    timestamp_ns,
+                    sequence_number,
+                    status_value,
+                    current_linear_x,
+                    current_angular_z,
+                    temperature_c,
+                    battery_voltage,
+                    emergency_stop_active,
+                    motor_left_current,
+                    motor_right_current,
+                ) = unpacked
 
                 # Check for new data (sequence number changed)
                 if sequence_number == self.last_state_sequence:
@@ -264,8 +294,7 @@ class IpcMotionBridge:
 
                 # Build state object
                 current_velocity = VelocityCommand(
-                    linear_x=current_linear_x,
-                    angular_z=current_angular_z
+                    linear_x=current_linear_x, angular_z=current_angular_z
                 )
 
                 # Note: Target velocity would come from command buffer, but we use current for simplicity
@@ -281,7 +310,7 @@ class IpcMotionBridge:
                     hardware_ok=(status == MotionControlStatus.OK),
                     temperature_c=temperature_c,
                     battery_voltage=battery_voltage,
-                    motor_currents=(motor_left_current, motor_right_current)
+                    motor_currents=(motor_left_current, motor_right_current),
                 )
 
             except Exception as e:
@@ -312,12 +341,14 @@ class IpcMotionBridge:
                     state.battery_voltage,
                     state.emergency_stop_active,
                     state.motor_currents[0],  # Left motor
-                    state.motor_currents[1]   # Right motor
+                    state.motor_currents[1],  # Right motor
                 )
 
                 # Write to state buffer
-                state_buffer = self.buffer[self.COMMAND_BUFFER_SIZE:self.TOTAL_BUFFER_SIZE]
-                state_buffer[:len(state_data)] = state_data
+                state_buffer = self.buffer[
+                    self.COMMAND_BUFFER_SIZE : self.TOTAL_BUFFER_SIZE
+                ]
+                state_buffer[: len(state_data)] = state_data
 
                 return True
 
@@ -325,7 +356,9 @@ class IpcMotionBridge:
                 logger.error(f"Failed to update motion state: {e}")
                 return False
 
-    def read_pending_command(self) -> Optional[Tuple[MotionControlCommand, VelocityCommand]]:
+    def read_pending_command(
+        self,
+    ) -> Optional[Tuple[MotionControlCommand, VelocityCommand]]:
         """
         Read pending command (called by motion control side).
 
@@ -335,11 +368,20 @@ class IpcMotionBridge:
         with self.lock:
             try:
                 # Read command buffer
-                command_buffer = self.buffer[:self.COMMAND_BUFFER_SIZE]
-                command_data = bytes(command_buffer[:struct.calcsize(self.COMMAND_FORMAT)])
+                command_buffer = self.buffer[: self.COMMAND_BUFFER_SIZE]
+                command_data = bytes(
+                    command_buffer[: struct.calcsize(self.COMMAND_FORMAT)]
+                )
                 unpacked = struct.unpack(self.COMMAND_FORMAT, command_data)
 
-                sequence_number, command_value, linear_x, angular_z, accel_limit, decel_limit = unpacked
+                (
+                    sequence_number,
+                    command_value,
+                    linear_x,
+                    angular_z,
+                    accel_limit,
+                    decel_limit,
+                ) = unpacked
 
                 # Check if this is a new command
                 if sequence_number == self.last_command_sequence:
@@ -359,7 +401,7 @@ class IpcMotionBridge:
                     linear_x=linear_x,
                     angular_z=angular_z,
                     acceleration_limit=accel_limit,
-                    deceleration_limit=decel_limit
+                    deceleration_limit=decel_limit,
                 )
 
                 return (command, velocity_command)
@@ -371,33 +413,37 @@ class IpcMotionBridge:
     def get_bridge_stats(self) -> Dict[str, Any]:
         """Get bridge performance statistics."""
         return {
-            'commands_sent': self.command_count,
-            'states_received': self.state_count,
-            'last_command_time': self.last_command_time,
-            'last_state_time': self.last_state_time,
-            'time_since_last_command': time.time() - self.last_command_time,
-            'time_since_last_state': time.time() - self.last_state_time,
-            'shared_memory_name': self.shared_memory_name,
-            'buffer_size': self.TOTAL_BUFFER_SIZE
+            "commands_sent": self.command_count,
+            "states_received": self.state_count,
+            "last_command_time": self.last_command_time,
+            "last_state_time": self.last_state_time,
+            "time_since_last_command": time.time() - self.last_command_time,
+            "time_since_last_state": time.time() - self.last_state_time,
+            "shared_memory_name": self.shared_memory_name,
+            "buffer_size": self.TOTAL_BUFFER_SIZE,
         }
 
     def check_bridge_health(self) -> Dict[str, Any]:
         """Check bridge health and connectivity."""
         health = {
-            'shared_memory_ok': self.shm is not None and not self.shm._closed,
-            'buffer_accessible': self.buffer is not None,
-            'command_recent': (time.time() - self.last_command_time) < 1.0,  # <1s ago
-            'state_recent': (time.time() - self.last_state_time) < 1.0,     # <1s ago
-            'command_rate_hz': self.command_count / max(time.time() - self.last_command_time, 0.001),
-            'state_rate_hz': self.state_count / max(time.time() - self.last_state_time, 0.001)
+            "shared_memory_ok": self.shm is not None and not self.shm._closed,
+            "buffer_accessible": self.buffer is not None,
+            "command_recent": (time.time() - self.last_command_time) < 1.0,  # <1s ago
+            "state_recent": (time.time() - self.last_state_time) < 1.0,  # <1s ago
+            "command_rate_hz": self.command_count
+            / max(time.time() - self.last_command_time, 0.001),
+            "state_rate_hz": self.state_count
+            / max(time.time() - self.last_state_time, 0.001),
         }
 
-        health['overall_healthy'] = all([
-            health['shared_memory_ok'],
-            health['buffer_accessible'],
-            health['command_recent'],
-            health['state_recent']
-        ])
+        health["overall_healthy"] = all(
+            [
+                health["shared_memory_ok"],
+                health["buffer_accessible"],
+                health["command_recent"],
+                health["state_recent"],
+            ]
+        )
 
         return health
 
@@ -421,21 +467,29 @@ class IpcMotionBridge:
                         self.shm.close()
                         logger.debug(f"Closed shared memory: {self.shared_memory_name}")
                     except Exception as e:
-                        logger.warning(f"Error closing shared memory {self.shared_memory_name}: {e}")
+                        logger.warning(
+                            f"Error closing shared memory {self.shared_memory_name}: {e}"
+                        )
 
                     # Only unlink if we're the creator
                     if self.create_buffer:
                         try:
                             self.shm.unlink()
-                            logger.debug(f"Unlinked shared memory: {self.shared_memory_name}")
+                            logger.debug(
+                                f"Unlinked shared memory: {self.shared_memory_name}"
+                            )
                         except FileNotFoundError:
                             pass  # Already unlinked
                         except Exception as e:
-                            logger.warning(f"Error unlinking shared memory {self.shared_memory_name}: {e}")
+                            logger.warning(
+                                f"Error unlinking shared memory {self.shared_memory_name}: {e}"
+                            )
 
                     self.shm = None
 
-                logger.info(f"IPC Motion Bridge {self.shared_memory_name} cleaned up successfully")
+                logger.info(
+                    f"IPC Motion Bridge {self.shared_memory_name} cleaned up successfully"
+                )
 
             except Exception as e:
                 logger.error(f"Error during cleanup of {self.shared_memory_name}: {e}")
@@ -459,8 +513,9 @@ _motion_bridge_instances: Dict[str, IpcMotionBridge] = {}
 _motion_bridge_lock = threading.RLock()  # Reentrant lock for nested calls
 
 
-def get_motion_bridge(shared_memory_name: str = "motion_control_bridge",
-                     create_buffer: bool = False) -> IpcMotionBridge:
+def get_motion_bridge(
+    shared_memory_name: str = "motion_control_bridge", create_buffer: bool = False
+) -> IpcMotionBridge:
     """Get or create motion bridge instance with thread-safe singleton pattern."""
     # Use different cache keys for server vs client to avoid sharing instances
     cache_key = f"{shared_memory_name}_{'server' if create_buffer else 'client'}"
@@ -503,15 +558,20 @@ def cleanup_all_motion_bridges():
 
 # Register cleanup on exit
 import atexit
+
 atexit.register(cleanup_all_motion_bridges)
 
 
-def create_motion_bridge_server(shared_memory_name: str = "motion_control_bridge") -> IpcMotionBridge:
+def create_motion_bridge_server(
+    shared_memory_name: str = "motion_control_bridge",
+) -> IpcMotionBridge:
     """Create motion bridge server (motion control side)."""
     return get_motion_bridge(shared_memory_name, create_buffer=True)
 
 
-def create_motion_bridge_client(shared_memory_name: str = "motion_control_bridge") -> IpcMotionBridge:
+def create_motion_bridge_client(
+    shared_memory_name: str = "motion_control_bridge",
+) -> IpcMotionBridge:
     """Create motion bridge client (autonomy side)."""
     return get_motion_bridge(shared_memory_name, create_buffer=False)
 
@@ -552,17 +612,17 @@ class MotionBridgeBenchmark:
         client_bridge.cleanup()
 
         if not latencies:
-            return {'error': 'No successful measurements'}
+            return {"error": "No successful measurements"}
 
         latencies.sort()
         return {
-            'iterations': len(latencies),
-            'mean_latency_ms': sum(latencies) / len(latencies),
-            'median_latency_ms': latencies[len(latencies) // 2],
-            'p95_latency_ms': latencies[int(len(latencies) * 0.95)],
-            'p99_latency_ms': latencies[int(len(latencies) * 0.99)],
-            'max_latency_ms': max(latencies),
-            'min_latency_ms': min(latencies)
+            "iterations": len(latencies),
+            "mean_latency_ms": sum(latencies) / len(latencies),
+            "median_latency_ms": latencies[len(latencies) // 2],
+            "p95_latency_ms": latencies[int(len(latencies) * 0.95)],
+            "p99_latency_ms": latencies[int(len(latencies) * 0.99)],
+            "max_latency_ms": max(latencies),
+            "min_latency_ms": min(latencies),
         }
 
     @staticmethod
@@ -582,7 +642,7 @@ class MotionBridgeBenchmark:
             hardware_ok=True,
             temperature_c=35.0,
             battery_voltage=12.5,
-            motor_currents=(1.2, 1.1)
+            motor_currents=(1.2, 1.1),
         )
 
         latencies = []
@@ -608,15 +668,15 @@ class MotionBridgeBenchmark:
         client_bridge.cleanup()
 
         if not latencies:
-            return {'error': 'No successful measurements'}
+            return {"error": "No successful measurements"}
 
         latencies.sort()
         return {
-            'iterations': len(latencies),
-            'mean_latency_ms': sum(latencies) / len(latencies),
-            'median_latency_ms': latencies[len(latencies) // 2],
-            'p95_latency_ms': latencies[int(len(latencies) * 0.95)],
-            'p99_latency_ms': latencies[int(len(latencies) * 0.99)],
-            'max_latency_ms': max(latencies),
-            'min_latency_ms': min(latencies)
+            "iterations": len(latencies),
+            "mean_latency_ms": sum(latencies) / len(latencies),
+            "median_latency_ms": latencies[len(latencies) // 2],
+            "p95_latency_ms": latencies[int(len(latencies) * 0.95)],
+            "p99_latency_ms": latencies[int(len(latencies) * 0.99)],
+            "max_latency_ms": max(latencies),
+            "min_latency_ms": min(latencies),
         }

@@ -29,6 +29,22 @@ from typing import Dict, Any, Optional, Callable
 from dataclasses import dataclass
 import time
 
+try:
+    from core.network_resilience import (
+        CircuitBreaker,
+        CircuitBreakerConfig,
+        CircuitBreakerOpenError,
+        BridgeOutboundQueue,
+    )
+
+    NETWORK_RESILIENCE_AVAILABLE = True
+except ImportError:
+    NETWORK_RESILIENCE_AVAILABLE = False
+    CircuitBreaker = None
+    CircuitBreakerConfig = None
+    CircuitBreakerOpenError = Exception
+    BridgeOutboundQueue = None
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
@@ -40,6 +56,7 @@ from std_msgs.msg import Bool, String
 # Import autonomy interfaces for state machine
 try:
     from autonomy_interfaces.msg import SystemState
+
     AUTONOMY_INTERFACES_AVAILABLE = True
 except ImportError:
     AUTONOMY_INTERFACES_AVAILABLE = False
@@ -71,6 +88,7 @@ class TeleopConfig:
         Whether to automatically reconnect on disconnection.
         Default is True.
     """
+
     server_url: str = "http://localhost:5000"
     reconnect_delay: float = 2.0
     status_publish_rate: float = 10.0  # Hz
@@ -112,61 +130,67 @@ class TeleopWebSocketBridge(Node):
     teleoperation interface and ROS2 system. It handles command translation,
     status updates, and connection management.
     """
-    
+
     def __init__(self, config: Optional[TeleopConfig] = None):
-        super().__init__('teleop_websocket_bridge')
-        
+        super().__init__("teleop_websocket_bridge")
+
         self.config = config or TeleopConfig()
-        
+
         # Socket.IO client
         self.sio = socketio.AsyncClient(
             reconnection=self.config.enable_auto_reconnect,
-            reconnection_delay=self.config.reconnect_delay
+            reconnection_delay=self.config.reconnect_delay,
         )
-        
+
         # Connection state
         self.is_connected = False
         self.connection_attempts = 0
         self.last_command_time = 0.0
-        
+
         # Statistics
         self.commands_received = 0
         self.commands_published = 0
         self.status_sent = 0
         self.errors = 0
-        
+
         # Setup Socket.IO event handlers
         self._setup_socketio_handlers()
-        
+
         # Setup ROS2 publishers (for commands from frontend)
         self._setup_ros2_publishers()
-        
+
         # Setup ROS2 subscribers (for status to frontend)
         self._setup_ros2_subscribers()
-        
+
         # Create timers
         self.status_timer = self.create_timer(
-            1.0 / self.config.status_publish_rate,
-            self._publish_status_callback
+            1.0 / self.config.status_publish_rate, self._publish_status_callback
         )
-        
-        self.command_timeout_timer = self.create_timer(
-            0.1,
-            self._check_command_timeout
-        )
-        
+
+        self.command_timeout_timer = self.create_timer(0.1, self._check_command_timeout)
+
         # Latest data for status publishing
         self.latest_data = {
-            'velocity_feedback': None,
-            'battery': None,
-            'imu': None,
-            'diagnostics': None,
-            'emergency_stop': False,
-            'system_state': None  # CRITICAL: Added for state machine integration
+            "velocity_feedback": None,
+            "battery": None,
+            "imu": None,
+            "diagnostics": None,
+            "emergency_stop": False,
+            "system_state": None,  # CRITICAL: Added for state machine integration
         }
-        
+
+        if NETWORK_RESILIENCE_AVAILABLE:
+            self._circuit_breaker = CircuitBreaker(
+                "teleop_websocket",
+                CircuitBreakerConfig(failure_threshold=5, recovery_timeout=30.0),
+            )
+            self._outbound_status_queue = BridgeOutboundQueue(max_size=50)
+        else:
+            self._circuit_breaker = None
+            self._outbound_status_queue = None
+
         self.get_logger().info("Teleoperation WebSocket bridge initialized")
-    
+
     def _setup_socketio_handlers(self) -> None:
         """
         Setup Socket.IO event handlers.
@@ -181,7 +205,7 @@ class TeleopWebSocketBridge(Node):
         - `disconnect`: Handles disconnection from server
         - `driveCommands`: Handles drive commands from frontend
         """
-        
+
         @self.sio.event
         async def connect():
             """Handle connection to teleoperation server."""
@@ -190,24 +214,24 @@ class TeleopWebSocketBridge(Node):
             self.get_logger().info(
                 f"✓ Connected to teleoperation server: {self.config.server_url}"
             )
-        
+
         @self.sio.event
         async def disconnect():
             """Handle disconnection from server."""
             self.is_connected = False
             self.get_logger().warning("Disconnected from teleoperation server")
-        
+
         @self.sio.event
         async def connect_error(data):
             """Handle connection error."""
             self.errors += 1
             self.get_logger().error(f"Connection error: {data}")
-        
+
         @self.sio.event
         async def driveCommands(data):
             """
             Handle drive commands from frontend.
-            
+
             Expected format:
             {
                 'xVel': 0.5,      # m/s (linear x)
@@ -218,70 +242,70 @@ class TeleopWebSocketBridge(Node):
             try:
                 self.commands_received += 1
                 self.last_command_time = time.time()
-                
+
                 # Create ROS2 Twist message
                 twist = Twist()
-                twist.linear.x = float(data.get('xVel', 0.0))
-                twist.linear.y = float(data.get('yVel', 0.0))
-                
+                twist.linear.x = float(data.get("xVel", 0.0))
+                twist.linear.y = float(data.get("yVel", 0.0))
+
                 # Convert deg/s to rad/s
-                rot_deg = float(data.get('rotVel', 0.0))
+                rot_deg = float(data.get("rotVel", 0.0))
                 twist.angular.z = rot_deg * 0.0174533  # deg to rad
-                
+
                 # Publish to ROS2
                 self.teleop_cmd_pub.publish(twist)
                 self.commands_published += 1
-                
+
                 self.get_logger().debug(
                     f"Drive command: x={twist.linear.x:.3f} "
                     f"y={twist.linear.y:.3f} rot={twist.angular.z:.3f}"
                 )
-                
+
             except Exception as e:
                 self.errors += 1
                 self.get_logger().error(f"Error processing drive command: {e}")
-        
+
         @self.sio.event
         async def driveHoming(data):
             """Handle homing sequence request."""
             try:
                 self.get_logger().info("Homing sequence requested from frontend")
-                
+
                 # Publish homing request
                 homing_msg = Bool()
                 homing_msg.data = True
                 self.homing_pub.publish(homing_msg)
-                
+
             except Exception as e:
                 self.errors += 1
                 self.get_logger().error(f"Error processing homing request: {e}")
-        
+
         @self.sio.event
         async def emergencyStop(data):
             """Handle emergency stop from frontend."""
             try:
                 self.get_logger().warning("⚠️  EMERGENCY STOP from frontend")
-                
+
                 # Publish emergency stop
                 stop_msg = Bool()
                 stop_msg.data = True
                 self.emergency_stop_pub.publish(stop_msg)
-                
+
                 # Also publish zero velocity
                 zero_twist = Twist()
                 self.teleop_cmd_pub.publish(zero_twist)
-                
-                self.latest_data['emergency_stop'] = True
-                
+
+                self.latest_data["emergency_stop"] = True
+
             except Exception as e:
                 self.errors += 1
                 self.get_logger().error(f"Error processing emergency stop: {e}")
-        
+
         @self.sio.event
         async def requestStatus(data):
             """Handle status request from frontend."""
             await self._emit_status()
-    
+
     def _setup_ros2_publishers(self) -> None:
         """
         Setup ROS2 publishers for commands from frontend.
@@ -295,36 +319,24 @@ class TeleopWebSocketBridge(Node):
         -----
         All publishers use RELIABLE QoS policy for command delivery.
         """
-        
+
         qos = QoSProfile(
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=10,
         )
-        
+
         # Teleop velocity commands
-        self.teleop_cmd_pub = self.create_publisher(
-            Twist,
-            '/cmd_vel/teleop',
-            qos
-        )
-        
+        self.teleop_cmd_pub = self.create_publisher(Twist, "/cmd_vel/teleop", qos)
+
         # Homing requests
-        self.homing_pub = self.create_publisher(
-            Bool,
-            '/hardware/homing_request',
-            qos
-        )
-        
+        self.homing_pub = self.create_publisher(Bool, "/hardware/homing_request", qos)
+
         # Emergency stop
-        self.emergency_stop_pub = self.create_publisher(
-            Bool,
-            '/emergency_stop',
-            qos
-        )
-        
+        self.emergency_stop_pub = self.create_publisher(Bool, "/emergency_stop", qos)
+
         self.get_logger().info("ROS2 publishers created")
-    
+
     def _setup_ros2_subscribers(self) -> None:
         """
         Setup ROS2 subscribers for status to frontend.
@@ -341,191 +353,212 @@ class TeleopWebSocketBridge(Node):
         All subscribers use BEST_EFFORT QoS policy for status updates.
         Callbacks update `latest_data` dictionary for status publishing.
         """
-        
+
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
-            depth=10
+            depth=10,
         )
-        
+
         # Velocity feedback
         self.create_subscription(
             TwistStamped,
-            '/hardware/velocity_feedback',
+            "/hardware/velocity_feedback",
             self._velocity_feedback_callback,
-            qos
+            qos,
         )
-        
+
         # Battery status
         self.create_subscription(
-            BatteryState,
-            '/hardware/battery',
-            self._battery_callback,
-            qos
+            BatteryState, "/hardware/battery", self._battery_callback, qos
         )
-        
+
         # IMU data
-        self.create_subscription(
-            Imu,
-            '/hardware/imu',
-            self._imu_callback,
-            qos
-        )
-        
+        self.create_subscription(Imu, "/hardware/imu", self._imu_callback, qos)
+
         # Diagnostics
         self.create_subscription(
-            DiagnosticArray,
-            '/diagnostics',
-            self._diagnostics_callback,
-            qos
+            DiagnosticArray, "/diagnostics", self._diagnostics_callback, qos
         )
-        
+
         # Emergency stop status
         self.create_subscription(
-            Bool,
-            '/emergency_stop_active',
-            self._emergency_stop_status_callback,
-            qos
+            Bool, "/emergency_stop_active", self._emergency_stop_status_callback, qos
         )
-        
+
         self.get_logger().info("ROS2 subscribers created")
-    
+
     def _velocity_feedback_callback(self, msg: TwistStamped):
         """Handle velocity feedback from hardware."""
-        self.latest_data['velocity_feedback'] = {
-            'x': msg.twist.linear.x,
-            'y': msg.twist.linear.y,
-            'rot': msg.twist.angular.z * 57.2957795131  # rad/s to deg/s
+        self.latest_data["velocity_feedback"] = {
+            "x": msg.twist.linear.x,
+            "y": msg.twist.linear.y,
+            "rot": msg.twist.angular.z * 57.2957795131,  # rad/s to deg/s
         }
-    
+
     def _battery_callback(self, msg: BatteryState):
         """Handle battery status."""
-        self.latest_data['battery'] = {
-            'voltage': msg.voltage,
-            'current': msg.current,
-            'percentage': msg.percentage,
-            'temperature': msg.temperature
+        self.latest_data["battery"] = {
+            "voltage": msg.voltage,
+            "current": msg.current,
+            "percentage": msg.percentage,
+            "temperature": msg.temperature,
         }
-    
+
     def _imu_callback(self, msg: Imu):
         """Handle IMU data."""
-        self.latest_data['imu'] = {
-            'orientation': {
-                'x': msg.orientation.x,
-                'y': msg.orientation.y,
-                'z': msg.orientation.z,
-                'w': msg.orientation.w
+        self.latest_data["imu"] = {
+            "orientation": {
+                "x": msg.orientation.x,
+                "y": msg.orientation.y,
+                "z": msg.orientation.z,
+                "w": msg.orientation.w,
             },
-            'angular_velocity': {
-                'x': msg.angular_velocity.x,
-                'y': msg.angular_velocity.y,
-                'z': msg.angular_velocity.z
+            "angular_velocity": {
+                "x": msg.angular_velocity.x,
+                "y": msg.angular_velocity.y,
+                "z": msg.angular_velocity.z,
             },
-            'linear_acceleration': {
-                'x': msg.linear_acceleration.x,
-                'y': msg.linear_acceleration.y,
-                'z': msg.linear_acceleration.z
-            }
+            "linear_acceleration": {
+                "x": msg.linear_acceleration.x,
+                "y": msg.linear_acceleration.y,
+                "z": msg.linear_acceleration.z,
+            },
         }
-    
+
     def _diagnostics_callback(self, msg: DiagnosticArray):
         """Handle diagnostics."""
         diagnostics = []
         for status in msg.status:
-            diagnostics.append({
-                'name': status.name,
-                'level': status.level,
-                'message': status.message
-            })
-        self.latest_data['diagnostics'] = diagnostics
-    
+            diagnostics.append(
+                {"name": status.name, "level": status.level, "message": status.message}
+            )
+        self.latest_data["diagnostics"] = diagnostics
+
     def _emergency_stop_status_callback(self, msg: Bool):
         """Handle emergency stop status."""
-        self.latest_data['emergency_stop'] = msg.data
-    
+        self.latest_data["emergency_stop"] = msg.data
+
     def _state_machine_callback(self, msg: SystemState):
         """CRITICAL FIX: Handle state machine state updates."""
         if AUTONOMY_INTERFACES_AVAILABLE and SystemState is not None:
             # Map message fields (may vary by message definition)
-            self.latest_data['system_state'] = {
-                'current_state': msg.current_state if hasattr(msg, 'current_state') else None,
-                'current_substate': (
-                    msg.substate if hasattr(msg, 'substate') else 
-                    (msg.current_substate if hasattr(msg, 'current_substate') else None)
+            self.latest_data["system_state"] = {
+                "current_state": (
+                    msg.current_state if hasattr(msg, "current_state") else None
                 ),
-                'current_teleop_substate': (
-                    msg.sub_substate if hasattr(msg, 'sub_substate') else 
-                    (msg.current_teleop_substate if hasattr(msg, 'current_teleop_substate') else None)
+                "current_substate": (
+                    msg.substate
+                    if hasattr(msg, "substate")
+                    else (
+                        msg.current_substate
+                        if hasattr(msg, "current_substate")
+                        else None
+                    )
                 ),
-                'state_metadata': (
-                    msg.state_reason if hasattr(msg, 'state_reason') else 
-                    (msg.state_metadata if hasattr(msg, 'state_metadata') else None)
+                "current_teleop_substate": (
+                    msg.sub_substate
+                    if hasattr(msg, "sub_substate")
+                    else (
+                        msg.current_teleop_substate
+                        if hasattr(msg, "current_teleop_substate")
+                        else None
+                    )
                 ),
-                'last_transition_time': (
-                    msg.transition_timestamp if hasattr(msg, 'transition_timestamp') else 
-                    (msg.last_transition_time if hasattr(msg, 'last_transition_time') else None)
-                )
+                "state_metadata": (
+                    msg.state_reason
+                    if hasattr(msg, "state_reason")
+                    else (
+                        msg.state_metadata if hasattr(msg, "state_metadata") else None
+                    )
+                ),
+                "last_transition_time": (
+                    msg.transition_timestamp
+                    if hasattr(msg, "transition_timestamp")
+                    else (
+                        msg.last_transition_time
+                        if hasattr(msg, "last_transition_time")
+                        else None
+                    )
+                ),
             }
-            self.get_logger().debug(f"State machine state updated: {self.latest_data['system_state'].get('current_state')}")
-    
+            self.get_logger().debug(
+                f"State machine state updated: {self.latest_data['system_state'].get('current_state')}"
+            )
+
+    async def _do_emit_status(self, status_data: Dict[str, Any]) -> bool:
+        """Emit one status payload to frontend (used by circuit breaker and queue)."""
+        if not self.is_connected:
+            return False
+        await self.sio.emit("systemStatus", status_data)
+        self.status_sent += 1
+        return True
+
     async def _emit_status(self):
-        """Emit system status to frontend."""
+        """Emit system status to frontend with circuit breaker and queue on failure."""
         if not self.is_connected:
             return
-        
-        try:
-            status_data = {
-                'timestamp': time.time(),
-                'system_state': self.latest_data.get('system_state'),  # CRITICAL FIX: Added system state
-                'velocity': self.latest_data['velocity_feedback'],
-                'battery': self.latest_data['battery'],
-                'imu': self.latest_data['imu'],
-                'diagnostics': self.latest_data['diagnostics'],
-                'emergency_stop': self.latest_data['emergency_stop'],
-                'bridge_stats': {
-                    'commands_received': self.commands_received,
-                    'commands_published': self.commands_published,
-                    'status_sent': self.status_sent,
-                    'errors': self.errors
-                }
-            }
-            
-            await self.sio.emit('systemStatus', status_data)
-            self.status_sent += 1
-            
-        except Exception as e:
-            self.errors += 1
-            self.get_logger().error(f"Error emitting status: {e}")
-    
+        status_data = {
+            "timestamp": time.time(),
+            "system_state": self.latest_data.get("system_state"),
+            "velocity": self.latest_data["velocity_feedback"],
+            "battery": self.latest_data["battery"],
+            "imu": self.latest_data["imu"],
+            "diagnostics": self.latest_data["diagnostics"],
+            "emergency_stop": self.latest_data["emergency_stop"],
+            "bridge_stats": {
+                "commands_received": self.commands_received,
+                "commands_published": self.commands_published,
+                "status_sent": self.status_sent,
+                "errors": self.errors,
+            },
+        }
+        if self._circuit_breaker is not None:
+            try:
+                await self._circuit_breaker.call_async(
+                    self._do_emit_status, status_data
+                )
+            except (CircuitBreakerOpenError, Exception) as e:
+                self.errors += 1
+                self.get_logger().error("Error emitting status, queuing: %s", e)
+                if self._outbound_status_queue is not None:
+                    self._outbound_status_queue.put(status_data, self._do_emit_status)
+        else:
+            try:
+                await self._do_emit_status(status_data)
+            except Exception as e:
+                self.errors += 1
+                self.get_logger().error("Error emitting status: %s", e)
+
     def _publish_status_callback(self) -> None:
         """
         Timer callback to publish status to frontend.
 
         Called periodically based on `config.status_publish_rate`.
         Emits system status via Socket.IO if connected.
-
-        Notes
-        -----
-        Status includes velocity feedback, battery, IMU, diagnostics,
-        emergency stop state, and system state from state machine.
+        Drains outbound status queue when resilience is enabled.
         """
         if self.is_connected:
-            # Schedule async emit in event loop
             asyncio.create_task(self._emit_status())
-    
+            if (
+                self._outbound_status_queue is not None
+                and len(self._outbound_status_queue) > 0
+            ):
+                asyncio.create_task(self._outbound_status_queue.process_one())
+
     def _check_command_timeout(self):
         """Check if commands have timed out (safety feature)."""
         if self.last_command_time == 0.0:
             return
-        
+
         time_since_command = time.time() - self.last_command_time
-        
+
         if time_since_command > self.config.command_timeout:
             # Send zero velocity if no commands received
             zero_twist = Twist()
             self.teleop_cmd_pub.publish(zero_twist)
             self.last_command_time = 0.0  # Reset
-    
+
     async def connect(self):
         """Connect to teleoperation server."""
         try:
@@ -535,48 +568,48 @@ class TeleopWebSocketBridge(Node):
         except Exception as e:
             self.get_logger().error(f"Failed to connect: {e}")
             return False
-    
+
     async def disconnect(self):
         """Disconnect from server."""
         if self.is_connected:
             await self.sio.disconnect()
             self.get_logger().info("Disconnected from teleoperation server")
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get bridge statistics."""
         return {
-            'is_connected': self.is_connected,
-            'server_url': self.config.server_url,
-            'connection_attempts': self.connection_attempts,
-            'commands_received': self.commands_received,
-            'commands_published': self.commands_published,
-            'status_sent': self.status_sent,
-            'errors': self.errors,
-            'last_command_time': self.last_command_time
+            "is_connected": self.is_connected,
+            "server_url": self.config.server_url,
+            "connection_attempts": self.connection_attempts,
+            "commands_received": self.commands_received,
+            "commands_published": self.commands_published,
+            "status_sent": self.status_sent,
+            "errors": self.errors,
+            "last_command_time": self.last_command_time,
         }
 
 
 async def main():
     """Main entry point for running bridge standalone."""
     rclpy.init()
-    
+
     # Create config
     config = TeleopConfig(
         server_url="http://localhost:5000",
         status_publish_rate=10.0,
-        command_timeout=0.5
+        command_timeout=0.5,
     )
-    
+
     # Create bridge
     bridge = TeleopWebSocketBridge(config)
-    
+
     # Connect to server
     connected = await bridge.connect()
-    
+
     if not connected:
         bridge.get_logger().error("Failed to connect to teleoperation server")
         return
-    
+
     try:
         # Spin ROS2 node
         rclpy.spin(bridge)
@@ -588,5 +621,5 @@ async def main():
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

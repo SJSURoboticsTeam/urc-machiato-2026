@@ -23,6 +23,7 @@ except ImportError:
 
 class NodeRole(Enum):
     """Node role in distributed state (stub for test compatibility)."""
+
     MASTER = "master"
     SLAVE = "slave"
 
@@ -86,7 +87,9 @@ class DistributedStateManager:
         """Return system status dict expected by tests."""
         return {
             "node_id": self.node_id,
-            "role": self.role.value if isinstance(self.role, NodeRole) else str(self.role),
+            "role": (
+                self.role.value if isinstance(self.role, NodeRole) else str(self.role)
+            ),
             "master_node_id": self.master_node_id,
             "nodes_count": len(self.nodes),
         }

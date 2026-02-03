@@ -30,6 +30,7 @@ from std_msgs.msg import String
 
 class SystemState(Enum):
     """Simplified system states."""
+
     BOOT = "boot"
     IDLE = "idle"
     AUTONOMOUS = "autonomous"
@@ -42,6 +43,7 @@ class SystemState(Enum):
 @dataclass
 class StateTransition:
     """Simple state transition tracking."""
+
     from_state: SystemState
     to_state: SystemState
     timestamp: float
@@ -51,40 +53,32 @@ class StateTransition:
 class UnifiedStateManager(LifecycleNode):
     """
     Unified state management for both runtime ROS2 and dashboard needs.
-    
+
     Single source of truth for all system state with simple API.
     """
 
     def __init__(self):
         super().__init__("unified_state_manager")
-        
+
         # Core state
         self._current_state = SystemState.BOOT
         self._previous_state = None
         self._state_history = []
         self._emergency_stop_active = False
-        
+
         # State change listeners
         self._state_listeners = set()
-        
+
         # ROS2 interfaces
-        self._state_publisher = self.create_publisher(
-            String, "/system/state", 10
-        )
-        
-        self.create_service(
-            GetState, "/system/get_state", self._get_state_service
-        )
-        
-        self.create_service(
-            SetState, "/system/set_state", self._set_state_service
-        )
-        
+        self._state_publisher = self.create_publisher(String, "/system/state", 10)
+
+        self.create_service(GetState, "/system/get_state", self._get_state_service)
+
+        self.create_service(SetState, "/system/set_state", self._set_state_service)
+
         # State tracking timer
-        self._state_timer = self.create_timer(
-            1.0, self._publish_state
-        )
-        
+        self._state_timer = self.create_timer(1.0, self._publish_state)
+
         self.get_logger().info("Unified State Manager initialized")
 
     @property
@@ -108,11 +102,11 @@ class UnifiedStateManager(LifecycleNode):
     def transition_to(self, new_state: SystemState, reason: str = "") -> bool:
         """
         Transition to new state with validation.
-        
+
         Args:
             new_state: Target state
             reason: Reason for transition
-            
+
         Returns:
             True if transition successful, False otherwise
         """
@@ -121,35 +115,35 @@ class UnifiedStateManager(LifecycleNode):
                 f"Invalid state transition: {self._current_state.value} -> {new_state.value}"
             )
             return False
-        
+
         # Record transition
         transition = StateTransition(
             from_state=self._current_state,
             to_state=new_state,
             timestamp=time.time(),
-            reason=reason
+            reason=reason,
         )
-        
+
         # Update state
         self._previous_state = self._current_state
         self._current_state = new_state
         self._state_history.append(transition)
-        
+
         # Keep history manageable
         if len(self._state_history) > 100:
             self._state_history = self._state_history[-50:]
-        
+
         self.get_logger().info(
             f"State transition: {transition.from_state.value} -> {transition.to_state.value} ({reason})"
         )
-        
+
         # Notify listeners
         for listener in self._state_listeners:
             try:
                 listener(transition)
             except Exception as e:
                 self.get_logger().error(f"State listener error: {e}")
-        
+
         # Emergency state handling
         if new_state == SystemState.EMERGENCY_STOP:
             self._emergency_stop_active = True
@@ -157,50 +151,64 @@ class UnifiedStateManager(LifecycleNode):
         elif self._emergency_stop_active and new_state != SystemState.EMERGENCY_STOP:
             self._emergency_stop_active = False
             self._handle_emergency_stop_release()
-        
+
         return True
 
-    def _is_valid_transition(self, from_state: SystemState, to_state: SystemState) -> bool:
+    def _is_valid_transition(
+        self, from_state: SystemState, to_state: SystemState
+    ) -> bool:
         """Simple state transition validation."""
         # Emergency stop is always allowed
         if to_state == SystemState.EMERGENCY_STOP:
             return True
-        
+
         # From emergency, only allow idle or shutdown
         if from_state == SystemState.EMERGENCY_STOP:
             return to_state in [SystemState.IDLE, SystemState.SHUTDOWN]
-        
+
         # From boot, only allow idle
         if from_state == SystemState.BOOT:
             return to_state == SystemState.IDLE
-        
+
         # From error, allow idle or shutdown
         if from_state == SystemState.ERROR:
             return to_state in [SystemState.IDLE, SystemState.SHUTDOWN]
-        
+
         # Normal transitions
         valid_transitions = {
-            SystemState.IDLE: [SystemState.AUTONOMOUS, SystemState.TELEOPERATION, SystemState.SHUTDOWN],
-            SystemState.AUTONOMOUS: [SystemState.IDLE, SystemState.EMERGENCY_STOP, SystemState.ERROR],
-            SystemState.TELEOPERATION: [SystemState.IDLE, SystemState.EMERGENCY_STOP, SystemState.ERROR],
+            SystemState.IDLE: [
+                SystemState.AUTONOMOUS,
+                SystemState.TELEOPERATION,
+                SystemState.SHUTDOWN,
+            ],
+            SystemState.AUTONOMOUS: [
+                SystemState.IDLE,
+                SystemState.EMERGENCY_STOP,
+                SystemState.ERROR,
+            ],
+            SystemState.TELEOPERATION: [
+                SystemState.IDLE,
+                SystemState.EMERGENCY_STOP,
+                SystemState.ERROR,
+            ],
             SystemState.ERROR: [SystemState.IDLE, SystemState.SHUTDOWN],
         }
-        
+
         return to_state in valid_transitions.get(from_state, [])
 
     def _handle_emergency_stop(self):
         """Handle emergency stop activation."""
         self.get_logger().error("🚨 EMERGENCY STOP ACTIVATED")
-        
+
         # Stop all motors
         self._publish_emergency_stop_command(True)
-        
+
         # Could add more emergency handling here
 
     def _handle_emergency_stop_release(self):
         """Handle emergency stop release."""
         self.get_logger().info("✅ Emergency stop released")
-        
+
         # Re-enable motors
         self._publish_emergency_stop_command(False)
 
@@ -209,9 +217,7 @@ class UnifiedStateManager(LifecycleNode):
         try:
             msg = String()
             msg.data = json.dumps({"emergency_stop": active})
-            self.create_publisher(
-                String, "/hardware/emergency_stop", 10
-            ).publish(msg)
+            self.create_publisher(String, "/hardware/emergency_stop", 10).publish(msg)
         except Exception as e:
             self.get_logger().error(f"Failed to publish emergency stop: {e}")
 
@@ -221,9 +227,11 @@ class UnifiedStateManager(LifecycleNode):
             msg = String()
             state_data = {
                 "state": self._current_state.value,
-                "previous_state": self._previous_state.value if self._previous_state else None,
+                "previous_state": (
+                    self._previous_state.value if self._previous_state else None
+                ),
                 "timestamp": time.time(),
-                "emergency_stop_active": self._emergency_stop_active
+                "emergency_stop_active": self._emergency_stop_active,
             }
             msg.data = json.dumps(state_data)
             self._state_publisher.publish(msg)
@@ -234,7 +242,9 @@ class UnifiedStateManager(LifecycleNode):
         """Service handler for getting current state."""
         response.success = True
         response.state = self._current_state.value
-        response.previous_state = self._previous_state.value if self._previous_state else ""
+        response.previous_state = (
+            self._previous_state.value if self._previous_state else ""
+        )
         response.emergency_stop_active = self._emergency_stop_active
         return response
 
@@ -242,13 +252,17 @@ class UnifiedStateManager(LifecycleNode):
         """Service handler for setting state."""
         try:
             target_state = SystemState(request.state)
-            success = self.transition_to(target_state, request.reason or "External request")
+            success = self.transition_to(
+                target_state, request.reason or "External request"
+            )
             response.success = success
-            response.message = "State changed successfully" if success else "Invalid transition"
+            response.message = (
+                "State changed successfully" if success else "Invalid transition"
+            )
         except ValueError:
             response.success = False
             response.message = f"Unknown state: {request.state}"
-        
+
         return response
 
     def get_state_history(self, limit: int = 10) -> list:
@@ -259,7 +273,9 @@ class UnifiedStateManager(LifecycleNode):
         """Get complete state information for dashboard/UI."""
         return {
             "current_state": self._current_state.value,
-            "previous_state": self._previous_state.value if self._previous_state else None,
+            "previous_state": (
+                self._previous_state.value if self._previous_state else None
+            ),
             "emergency_stop_active": self._emergency_stop_active,
             "timestamp": time.time(),
             "recent_transitions": [
@@ -267,10 +283,10 @@ class UnifiedStateManager(LifecycleNode):
                     "from_state": t.from_state.value,
                     "to_state": t.to_state.value,
                     "timestamp": t.timestamp,
-                    "reason": t.reason
+                    "reason": t.reason,
                 }
                 for t in self._state_history[-5:]
-            ]
+            ],
         }
 
     def on_configure(self) -> TransitionCallbackReturn:
@@ -302,6 +318,7 @@ class UnifiedStateManager(LifecycleNode):
 # Global state manager instance for simple access
 _state_manager_instance = None
 
+
 def get_state_manager() -> UnifiedStateManager:
     """Get global state manager instance."""
     global _state_manager_instance
@@ -309,9 +326,11 @@ def get_state_manager() -> UnifiedStateManager:
         _state_manager_instance = UnifiedStateManager()
     return _state_manager_instance
 
+
 def get_current_state() -> SystemState:
     """Get current system state (convenience function)."""
     return get_state_manager().current_state
+
 
 def transition_to_state(state: SystemState, reason: str = "") -> bool:
     """Transition to new state (convenience function)."""
@@ -321,6 +340,7 @@ def transition_to_state(state: SystemState, reason: str = "") -> bool:
 # ROS2 service definitions (simplified)
 class GetState:
     """Service definition for getting current state."""
+
     def __init__(self):
         super().__init__("get_state")
         self.request = None
@@ -329,6 +349,7 @@ class GetState:
 
 class SetState:
     """Service definition for setting state."""
+
     def __init__(self):
         super().__init__("set_state")
         self.request = self.create_request_type()
@@ -338,7 +359,7 @@ class SetState:
 def main():
     """Main entry point for state manager node."""
     rclpy.init()
-    
+
     try:
         state_manager = UnifiedStateManager()
         rclpy.spin(state_manager)

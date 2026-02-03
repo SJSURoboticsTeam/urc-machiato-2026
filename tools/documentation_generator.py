@@ -22,12 +22,13 @@ from dataclasses import dataclass
 import sys
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 @dataclass
 class APIEndpoint:
     """API endpoint documentation."""
+
     path: str
     method: str
     description: str
@@ -40,6 +41,7 @@ class APIEndpoint:
 @dataclass
 class ComponentDoc:
     """Component documentation."""
+
     name: str
     type: str
     description: str
@@ -96,14 +98,14 @@ class DocumentationGenerator:
 
         # Core modules to analyze
         modules_to_analyze = [
-            'src.core.config_manager',
-            'src.core.monitoring_system',
-            'src.core.component_registry',
-            'src.bridges.simple_bridge',
-            'src.autonomy.core.navigation.autonomy_navigation.navigation_node',
-            'src.dashboard.interactive_dashboard',
-            'src.core.fastapi_server',
-            'src.core.database_manager'
+            "src.core.config_manager",
+            "src.core.monitoring_system",
+            "src.core.component_registry",
+            "src.bridges.simple_bridge",
+            "src.autonomy.core.navigation.autonomy_navigation.navigation_node",
+            "src.dashboard.interactive_dashboard",
+            "src.core.fastapi_server",
+            "src.core.database_manager",
         ]
 
         for module_path in modules_to_analyze:
@@ -115,8 +117,9 @@ class DocumentationGenerator:
         # Analyze component registry if available
         try:
             from src.core.simplified_component_registry import get_component_registry
+
             registry = get_component_registry()
-            self.architecture_data['component_registry'] = registry.get_system_status()
+            self.architecture_data["component_registry"] = registry.get_system_status()
         except ImportError:
             pass
 
@@ -127,48 +130,54 @@ class DocumentationGenerator:
         for name, obj in inspect.getmembers(module):
             if inspect.isclass(obj):
                 self._analyze_class(obj, module_path)
-            elif inspect.isfunction(obj) and not name.startswith('_'):
+            elif inspect.isfunction(obj) and not name.startswith("_"):
                 self._analyze_function(obj, module_path)
 
     def _analyze_class(self, cls: Type, module_path: str):
         """Analyze a class for documentation."""
-        if cls.__name__.startswith('_'):
+        if cls.__name__.startswith("_"):
             return
 
         # Extract class documentation
         doc = inspect.getdoc(cls) or "No documentation available"
-        description = doc.split('\n')[0] if doc else "No description"
+        description = doc.split("\n")[0] if doc else "No description"
 
         # Extract methods
         methods = []
-        for method_name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
-            if not method_name.startswith('_'):
+        for method_name, method in inspect.getmembers(
+            cls, predicate=inspect.isfunction
+        ):
+            if not method_name.startswith("_"):
                 method_doc = inspect.getdoc(method) or "No documentation"
-                methods.append({
-                    'name': method_name,
-                    'signature': str(inspect.signature(method)),
-                    'doc': method_doc
-                })
+                methods.append(
+                    {
+                        "name": method_name,
+                        "signature": str(inspect.signature(method)),
+                        "doc": method_doc,
+                    }
+                )
 
         # Extract attributes
         attributes = []
         for attr_name in dir(cls):
-            if not attr_name.startswith('_') and not callable(getattr(cls, attr_name)):
+            if not attr_name.startswith("_") and not callable(getattr(cls, attr_name)):
                 try:
                     attr_value = getattr(cls, attr_name)
                     if not callable(attr_value):
-                        attributes.append({
-                            'name': attr_name,
-                            'type': type(attr_value).__name__,
-                            'value': str(attr_value)[:100]  # Truncate long values
-                        })
+                        attributes.append(
+                            {
+                                "name": attr_name,
+                                "type": type(attr_value).__name__,
+                                "value": str(attr_value)[:100],  # Truncate long values
+                            }
+                        )
                 except:
                     pass
 
         # Extract dependencies (from class annotations or docstring)
         dependencies = []
-        if hasattr(cls, '__dependencies__'):
-            dependencies = getattr(cls, '__dependencies__', [])
+        if hasattr(cls, "__dependencies__"):
+            dependencies = getattr(cls, "__dependencies__", [])
 
         component_doc = ComponentDoc(
             name=cls.__name__,
@@ -176,14 +185,14 @@ class DocumentationGenerator:
             description=description,
             dependencies=dependencies,
             methods=methods,
-            attributes=attributes
+            attributes=attributes,
         )
 
         self.components[cls.__name__] = component_doc
 
     def _analyze_function(self, func, module_path: str):
         """Analyze a function for documentation."""
-        if func.__name__.startswith('_'):
+        if func.__name__.startswith("_"):
             return
 
         # This could be extended to document standalone functions
@@ -210,6 +219,7 @@ class DocumentationGenerator:
         """Analyze FastAPI endpoints."""
         try:
             from src.core.fastapi_server import URCFastAPIServer
+
             # This would analyze the FastAPI app routes
             # For now, add some example endpoints
             pass
@@ -220,6 +230,7 @@ class DocumentationGenerator:
         """Analyze bridge communication endpoints."""
         try:
             from src.bridges.simple_bridge import SimpleBridge
+
             # Analyze registered command handlers
             pass
         except ImportError:
@@ -228,28 +239,40 @@ class DocumentationGenerator:
     def _analyze_websocket_endpoints(self):
         """Analyze WebSocket endpoints."""
         # Add WebSocket endpoint documentation
-        self.api_endpoints.extend([
-            APIEndpoint(
-                path="/ws/urc_control",
-                method="WebSocket",
-                description="Main WebSocket endpoint for rover control and telemetry",
-                parameters=[
-                    {"name": "command", "type": "string", "description": "Command type"},
-                    {"name": "data", "type": "object", "description": "Command data"}
-                ],
-                responses={
-                    "200": {"description": "Command processed successfully"},
-                    "400": {"description": "Invalid command format"}
-                }
-            )
-        ])
+        self.api_endpoints.extend(
+            [
+                APIEndpoint(
+                    path="/ws/urc_control",
+                    method="WebSocket",
+                    description="Main WebSocket endpoint for rover control and telemetry",
+                    parameters=[
+                        {
+                            "name": "command",
+                            "type": "string",
+                            "description": "Command type",
+                        },
+                        {
+                            "name": "data",
+                            "type": "object",
+                            "description": "Command data",
+                        },
+                    ],
+                    responses={
+                        "200": {"description": "Command processed successfully"},
+                        "400": {"description": "Invalid command format"},
+                    },
+                )
+            ]
+        )
 
     def _generate_api_markdown(self) -> str:
         """Generate API documentation in Markdown format."""
         content = ["# URC 2026 API Reference\n\n"]
 
         content.append("## Overview\n\n")
-        content.append("The URC 2026 system provides RESTful APIs, WebSocket endpoints, ")
+        content.append(
+            "The URC 2026 system provides RESTful APIs, WebSocket endpoints, "
+        )
         content.append("and bridge interfaces for rover control and monitoring.\n\n")
 
         for endpoint in self.api_endpoints:
@@ -261,7 +284,9 @@ class DocumentationGenerator:
                 content.append("| Name | Type | Description |\n")
                 content.append("|------|------|-------------|\n")
                 for param in endpoint.parameters:
-                    content.append(f"| {param['name']} | {param['type']} | {param['description']} |\n")
+                    content.append(
+                        f"| {param['name']} | {param['type']} | {param['description']} |\n"
+                    )
                 content.append("\n")
 
             if endpoint.responses:
@@ -287,16 +312,14 @@ class DocumentationGenerator:
             "info": {
                 "title": "URC 2026 Mars Rover API",
                 "version": "1.0.0",
-                "description": "API for controlling and monitoring the URC 2026 Mars rover"
+                "description": "API for controlling and monitoring the URC 2026 Mars rover",
             },
             "servers": [
                 {"url": "http://localhost:8080", "description": "Development server"},
-                {"url": "ws://localhost:8765", "description": "WebSocket server"}
+                {"url": "ws://localhost:8765", "description": "WebSocket server"},
             ],
             "paths": {},
-            "components": {
-                "schemas": {}
-            }
+            "components": {"schemas": {}},
         }
 
     def generate_architecture_diagrams(self):
@@ -324,29 +347,29 @@ class DocumentationGenerator:
         content = ["# URC 2026 System Architecture Overview\n\n"]
         content.append("```mermaid\n")
         content.append("graph TB\n")
-        content.append("    subgraph \"User Interface\"\n")
+        content.append('    subgraph "User Interface"\n')
         content.append("        UI[Interactive Dashboard]\n")
         content.append("        CLI[Command Line Interface]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"API Layer\"\n")
+        content.append('    subgraph "API Layer"\n')
         content.append("        FastAPI[FastAPI Server]\n")
         content.append("        WS[WebSocket Bridge]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Core Systems\"\n")
+        content.append('    subgraph "Core Systems"\n')
         content.append("        Config[Configuration Manager]\n")
         content.append("        Monitor[Monitoring System]\n")
         content.append("        Registry[Component Registry]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Autonomy Stack\"\n")
+        content.append('    subgraph "Autonomy Stack"\n')
         content.append("        Nav[Navigation Node]\n")
         content.append("        BT[Behavior Trees]\n")
         content.append("        State[State Machine]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Hardware Interfaces\"\n")
+        content.append('    subgraph "Hardware Interfaces"\n')
         content.append("        CAN[CAN Bridge]\n")
         content.append("        Sensors[Sensor Interfaces]\n")
         content.append("        Motors[Motor Controllers]\n")
@@ -366,11 +389,19 @@ class DocumentationGenerator:
         content.append("    Monitor -.-> WS\n")
         content.append("```\n\n")
         content.append("## Architecture Description\n\n")
-        content.append("The URC 2026 system follows a layered architecture with clear separation of concerns:\n\n")
-        content.append("- **User Interface Layer**: Web dashboard and CLI for system interaction\n")
+        content.append(
+            "The URC 2026 system follows a layered architecture with clear separation of concerns:\n\n"
+        )
+        content.append(
+            "- **User Interface Layer**: Web dashboard and CLI for system interaction\n"
+        )
         content.append("- **API Layer**: RESTful APIs and WebSocket communication\n")
-        content.append("- **Core Systems Layer**: Configuration, monitoring, and component management\n")
-        content.append("- **Autonomy Stack**: Navigation, behavior trees, and state management\n")
+        content.append(
+            "- **Core Systems Layer**: Configuration, monitoring, and component management\n"
+        )
+        content.append(
+            "- **Autonomy Stack**: Navigation, behavior trees, and state management\n"
+        )
         content.append("- **Hardware Layer**: Direct interfaces to rover hardware\n")
 
         return "".join(content)
@@ -397,8 +428,12 @@ class DocumentationGenerator:
 
         content.append("```\n\n")
         content.append("## Dependency Analysis\n\n")
-        content.append("This diagram shows the dependency relationships between system components.\n")
-        content.append("Components with no dependencies are leaf nodes, while components with many\n")
+        content.append(
+            "This diagram shows the dependency relationships between system components.\n"
+        )
+        content.append(
+            "Components with no dependencies are leaf nodes, while components with many\n"
+        )
         content.append("dependencies are core infrastructure components.\n")
 
         return "".join(content)
@@ -408,27 +443,27 @@ class DocumentationGenerator:
         content = ["# Data Flow Architecture\n\n"]
         content.append("```mermaid\n")
         content.append("flowchart TD\n")
-        content.append("    subgraph \"Data Sources\"\n")
+        content.append('    subgraph "Data Sources"\n')
         content.append("        GPS[GPS Sensor]\n")
         content.append("        IMU[IMU Sensor]\n")
         content.append("        CAM[Stereo Camera]\n")
         content.append("        ENC[Motor Encoders]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Data Processing\"\n")
+        content.append('    subgraph "Data Processing"\n')
         content.append("        GNSS[GNSS Processor]\n")
         content.append("        Terrain[Terrain Analyzer]\n")
         content.append("        Vision[Computer Vision]\n")
         content.append("        StateEst[State Estimator]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Control Systems\"\n")
+        content.append('    subgraph "Control Systems"\n')
         content.append("        Nav[Navigation Controller]\n")
         content.append("        Path[Path Planner]\n")
         content.append("        Motion[Motion Controller]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Actuators\"\n")
+        content.append('    subgraph "Actuators"\n')
         content.append("        Motors[Motor Controllers]\n")
         content.append("        Servos[Servo Controllers]\n")
         content.append("    end\n")
@@ -447,8 +482,12 @@ class DocumentationGenerator:
         content.append("    Motion --> Servos\n")
         content.append("```\n\n")
         content.append("## Data Flow Description\n\n")
-        content.append("Sensor data flows from hardware through processing pipelines to control systems,\n")
-        content.append("culminating in actuator commands. This architecture ensures real-time performance\n")
+        content.append(
+            "Sensor data flows from hardware through processing pipelines to control systems,\n"
+        )
+        content.append(
+            "culminating in actuator commands. This architecture ensures real-time performance\n"
+        )
         content.append("and fault tolerance through parallel processing paths.\n")
 
         return "".join(content)
@@ -458,23 +497,23 @@ class DocumentationGenerator:
         content = ["# Communication Architecture\n\n"]
         content.append("```mermaid\n")
         content.append("graph LR\n")
-        content.append("    subgraph \"External Systems\"\n")
+        content.append('    subgraph "External Systems"\n')
         content.append("        Ground[Ground Station]\n")
         content.append("        Cloud[Cloud Services]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Network Layer\"\n")
+        content.append('    subgraph "Network Layer"\n')
         content.append("        WiFi[(WiFi 2.4GHz)]\n")
         content.append("        Ethernet[(Ethernet)]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"Protocol Bridges\"\n")
+        content.append('    subgraph "Protocol Bridges"\n')
         content.append("        WS[WebSocket Bridge]\n")
         content.append("        HTTP[HTTP Bridge]\n")
         content.append("        CAN[CAN Bridge]\n")
         content.append("    end\n")
         content.append("\n")
-        content.append("    subgraph \"ROS2 Ecosystem\"\n")
+        content.append('    subgraph "ROS2 Ecosystem"\n')
         content.append("        NavNode[Navigation Node]\n")
         content.append("        SensorNode[Sensor Nodes]\n")
         content.append("        ControlNode[Control Nodes]\n")
@@ -491,12 +530,20 @@ class DocumentationGenerator:
         content.append("    SensorNode -.-> CAN\n")
         content.append("```\n\n")
         content.append("## Communication Architecture\n\n")
-        content.append("The system uses multiple communication protocols to ensure reliability:\n\n")
-        content.append("- **WiFi (2.4GHz)**: Primary wireless communication with ground station\n")
-        content.append("- **Ethernet**: High-bandwidth connection for data-intensive operations\n")
+        content.append(
+            "The system uses multiple communication protocols to ensure reliability:\n\n"
+        )
+        content.append(
+            "- **WiFi (2.4GHz)**: Primary wireless communication with ground station\n"
+        )
+        content.append(
+            "- **Ethernet**: High-bandwidth connection for data-intensive operations\n"
+        )
         content.append("- **WebSocket**: Real-time bidirectional communication\n")
         content.append("- **HTTP/REST**: Standard API communication\n")
-        content.append("- **CAN Bus**: Deterministic real-time hardware communication\n")
+        content.append(
+            "- **CAN Bus**: Deterministic real-time hardware communication\n"
+        )
         content.append("- **ROS2**: Inter-process communication within the rover\n")
 
         return "".join(content)
@@ -513,7 +560,9 @@ class DocumentationGenerator:
         content = ["# Component Reference\n\n"]
 
         content.append("## Overview\n\n")
-        content.append("This document provides detailed information about all system components,\n")
+        content.append(
+            "This document provides detailed information about all system components,\n"
+        )
         content.append("their interfaces, dependencies, and usage patterns.\n\n")
 
         for comp_name, comp_doc in sorted(self.components.items()):
@@ -532,7 +581,9 @@ class DocumentationGenerator:
                 content.append("| Name | Type | Description |\n")
                 content.append("|------|------|-------------|\n")
                 for attr in comp_doc.attributes:
-                    content.append(f"| {attr['name']} | {attr['type']} | {attr.get('description', '')} |\n")
+                    content.append(
+                        f"| {attr['name']} | {attr['type']} | {attr.get('description', '')} |\n"
+                    )
                 content.append("\n")
 
             if comp_doc.methods:
@@ -565,7 +616,9 @@ class DocumentationGenerator:
         content = ["# Configuration Reference\n\n"]
 
         content.append("## Overview\n\n")
-        content.append("The URC 2026 system uses a hierarchical configuration system with\n")
+        content.append(
+            "The URC 2026 system uses a hierarchical configuration system with\n"
+        )
         content.append("environment-specific overrides and runtime validation.\n\n")
 
         content.append("## Configuration Sections\n\n")
@@ -576,17 +629,21 @@ class DocumentationGenerator:
             ("Network", "Network interfaces and communication settings"),
             ("Navigation", "Navigation system parameters"),
             ("Safety", "Safety system thresholds and timeouts"),
-            ("Monitoring", "Monitoring and observability settings")
+            ("Monitoring", "Monitoring and observability settings"),
         ]
 
         for section_name, description in sections:
             content.append(f"### {section_name} Configuration\n\n")
             content.append(f"{description}\n\n")
             content.append("**Location:** `config/{environment}.yaml`\n\n")
-            content.append("**Environment Variables:** `URC_CONFIG_{section_name.upper()}_*`\n\n")
+            content.append(
+                "**Environment Variables:** `URC_CONFIG_{section_name.upper()}_*`\n\n"
+            )
 
         content.append("## Environment Variables\n\n")
-        content.append("Configuration can be overridden using environment variables:\n\n")
+        content.append(
+            "Configuration can be overridden using environment variables:\n\n"
+        )
         content.append("```bash\n")
         content.append("export URC_CONFIG_NETWORK_WEBSOCKET_PORT=8766\n")
         content.append("export URC_CONFIG_NAVIGATION_UPDATE_RATE_HZ=15.0\n")
@@ -601,7 +658,10 @@ class DocumentationGenerator:
             "title": "URC 2026 Configuration Schema",
             "type": "object",
             "properties": {
-                "environment": {"type": "string", "enum": ["development", "testing", "staging", "production"]},
+                "environment": {
+                    "type": "string",
+                    "enum": ["development", "testing", "staging", "production"],
+                },
                 "version": {"type": "string"},
                 "ros2": {
                     "type": "object",
@@ -609,19 +669,23 @@ class DocumentationGenerator:
                         "namespace": {"type": "string"},
                         "domain_id": {"type": ["integer", "null"]},
                         "use_sim_time": {"type": "boolean"},
-                        "qos_preset": {"type": "string"}
-                    }
+                        "qos_preset": {"type": "string"},
+                    },
                 },
                 "database": {
                     "type": "object",
                     "properties": {
                         "type": {"type": "string", "enum": ["sqlite", "postgresql"]},
                         "path": {"type": "string"},
-                        "connection_pool_size": {"type": "integer", "minimum": 1, "maximum": 20}
-                    }
-                }
+                        "connection_pool_size": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 20,
+                        },
+                    },
+                },
             },
-            "required": ["environment"]
+            "required": ["environment"],
         }
 
     def generate_examples(self):
@@ -639,8 +703,12 @@ class DocumentationGenerator:
         content.append("### Basic System Startup\n\n")
         content.append("```python\n")
         content.append("from src.infrastructure.config import load_system_config\n")
-        content.append("from src.core.monitoring_system import start_system_monitoring\n")
-        content.append("from src.core.simplified_component_registry import get_component_registry\n\n")
+        content.append(
+            "from src.core.monitoring_system import start_system_monitoring\n"
+        )
+        content.append(
+            "from src.core.simplified_component_registry import get_component_registry\n\n"
+        )
         content.append("# Load configuration\n")
         content.append("config = load_system_config('development')\n\n")
         content.append("# Start monitoring\n")
@@ -651,7 +719,9 @@ class DocumentationGenerator:
 
         content.append("### Mission Execution\n\n")
         content.append("```python\n")
-        content.append("from missions.waypoint_navigation_mission import WaypointNavigationMission\n\n")
+        content.append(
+            "from missions.waypoint_navigation_mission import WaypointNavigationMission\n\n"
+        )
         content.append("# Create mission\n")
         content.append("waypoints = [\n")
         content.append("    {'latitude': 35.0, 'longitude': -120.0},\n")
@@ -665,7 +735,9 @@ class DocumentationGenerator:
         content.append("### Dashboard Usage\n\n")
         content.append("```python\n")
         content.append("import streamlit as st\n")
-        content.append("from src.dashboard.interactive_dashboard import create_dashboard_app\n\n")
+        content.append(
+            "from src.dashboard.interactive_dashboard import create_dashboard_app\n\n"
+        )
         content.append("# Create and run dashboard\n")
         content.append("dashboard = create_dashboard_app()\n")
         content.append("dashboard.run_dashboard()\n")
@@ -690,7 +762,7 @@ class DocumentationGenerator:
     def _write_file(self, filename: str, content: str):
         """Write content to file."""
         file_path = self.output_dir / filename
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"✅ Generated {filename}")
 
@@ -703,7 +775,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-

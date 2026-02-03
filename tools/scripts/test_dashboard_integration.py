@@ -314,9 +314,7 @@ class DashboardTester:
         health_status = (
             " GOOD"
             if success_rate >= 90
-            else " FAIR"
-            if success_rate >= 70
-            else " NEEDS WORK"
+            else " FAIR" if success_rate >= 70 else " NEEDS WORK"
         )
         print(f"\n DASHBOARD HEALTH: {health_status} ({success_rate:.1f}% pass rate)")
 

@@ -50,6 +50,7 @@ try:
     import autonomy_interfaces
     from autonomy_interfaces.srv import GetSystemState
     from autonomy_interfaces.msg import SystemState as SystemStateMsg
+
     AUTONOMY_INTERFACES_AVAILABLE = True
 except ImportError as e:
     AUTONOMY_INTERFACES_AVAILABLE = False
@@ -60,6 +61,7 @@ except ImportError as e:
 
 class SystemState(Enum):
     """System states matching URC requirements."""
+
     BOOT = "boot"
     IDLE = "idle"
     AUTONOMOUS = "autonomous"
@@ -70,6 +72,7 @@ class SystemState(Enum):
 
 class AutonomousSubstate(Enum):
     """Autonomous operation substates."""
+
     NONE = "none"
     WAYPOINT_NAVIGATION = "waypoint_navigation"
     SAMPLE_COLLECTION = "sample_collection"
@@ -80,6 +83,7 @@ class AutonomousSubstate(Enum):
 
 class TeleoperationSubstate(Enum):
     """Teleoperation substates."""
+
     NONE = "none"
     MANUAL_CONTROL = "manual_control"
     SEMI_AUTONOMOUS = "semi_autonomous"
@@ -111,7 +115,7 @@ class AdaptiveStateMachine(LifecycleNode):
     """
 
     def __init__(self):
-        super().__init__('adaptive_state_machine')
+        super().__init__("adaptive_state_machine")
 
         # State management
         self.current_state = SystemState.BOOT
@@ -120,6 +124,17 @@ class AdaptiveStateMachine(LifecycleNode):
         self.state_metadata = {}
         self.last_transition_time = time.time()
 
+        # Hybrid control: mode request and flags (cleared after handling)
+        self.mode_request: Optional[SystemState] = None
+        self.human_override_active = False
+        self.auto_assist_enabled = True
+        self._battery_low_threshold = (
+            15.0  # percent; do not switch to autonomous below this
+        )
+
+        # Optional blackboard client for syncing state and safety checks
+        self._blackboard = None
+
         # Service clients for system monitoring
         self.system_monitor_client = None
         self.navigation_status_client = None
@@ -127,21 +142,20 @@ class AdaptiveStateMachine(LifecycleNode):
         # Publishers for state changes
         if AUTONOMY_INTERFACES_AVAILABLE and SystemStateMsg is not None:
             self.state_publisher = self.create_publisher(
-                SystemStateMsg,
-                '/adaptive_state_machine/state',
-                10
+                SystemStateMsg, "/adaptive_state_machine/state", 10
             )
         else:
             # Fallback to String if interfaces not available
             from std_msgs.msg import String
-            self.state_publisher = self.create_publisher(
-                String,
-                '/adaptive_state_machine/state',
-                10
-            )
-            self.get_logger().warn("Using String message type as fallback for state publishing")
 
-        self.get_logger().info('Adaptive State Machine initialized')
+            self.state_publisher = self.create_publisher(
+                String, "/adaptive_state_machine/state", 10
+            )
+            self.get_logger().warn(
+                "Using String message type as fallback for state publishing"
+            )
+
+        self.get_logger().info("Adaptive State Machine initialized")
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         """
@@ -165,7 +179,7 @@ class AdaptiveStateMachine(LifecycleNode):
         Exception
             If service or subscription creation fails.
         """
-        self.get_logger().info('Configuring Adaptive State Machine...')
+        self.get_logger().info("Configuring Adaptive State Machine...")
 
         try:
             # Create service server
@@ -175,59 +189,90 @@ class AdaptiveStateMachine(LifecycleNode):
                     # If it exists, we'll skip creation but log a warning
                     self.state_service = self.create_service(
                         GetSystemState,
-                        '/adaptive_state_machine/get_state',
-                        self.get_state_callback
+                        "/adaptive_state_machine/get_state",
+                        self.get_state_callback,
                     )
-                    self.get_logger().info('State service created successfully')
+                    self.get_logger().info("State service created successfully")
                 except Exception as e:
                     error_msg = str(e)
-                    if 'existing' in error_msg.lower() or 'incompatible' in error_msg.lower():
+                    if (
+                        "existing" in error_msg.lower()
+                        or "incompatible" in error_msg.lower()
+                    ):
                         # Service might exist from previous run - try to continue
-                        self.get_logger().warn(f'Service may already exist: {e}. Continuing...')
+                        self.get_logger().warn(
+                            f"Service may already exist: {e}. Continuing..."
+                        )
                         self.state_service = None  # Will handle gracefully
                     else:
-                        self.get_logger().error(f'Failed to create state service: {e}')
+                        self.get_logger().error(f"Failed to create state service: {e}")
                         self.state_service = None
             else:
-                self.get_logger().warn("GetSystemState service not available (autonomy_interfaces missing)")
+                self.get_logger().warn(
+                    "GetSystemState service not available (autonomy_interfaces missing)"
+                )
                 self.state_service = None
 
             # Create subscription for state change commands
             try:
                 self.state_command_sub = self.create_subscription(
                     std_msgs.msg.String,
-                    '/adaptive_state_machine/commands',
+                    "/adaptive_state_machine/commands",
                     self.state_command_callback,
-                    10
+                    10,
                 )
             except Exception as e:
-                self.get_logger().error(f'Failed to create command subscription: {e}')
+                self.get_logger().error(f"Failed to create command subscription: {e}")
 
             # Create clients for system monitoring
             if AUTONOMY_INTERFACES_AVAILABLE:
                 try:
-                    from autonomy_interfaces.srv import GetSystemHealth, GetNavigationStatus
-                    self.system_monitor_client = self.create_client(
+                    from autonomy_interfaces.srv import (
                         GetSystemHealth,
-                        '/system_monitor/get_health'
+                        GetNavigationStatus,
+                    )
+
+                    self.system_monitor_client = self.create_client(
+                        GetSystemHealth, "/system_monitor/get_health"
                     )
                     self.navigation_status_client = self.create_client(
-                        GetNavigationStatus,
-                        '/navigation/get_status'
+                        GetNavigationStatus, "/navigation/get_status"
                     )
                 except (ImportError, Exception) as e:
                     self.system_monitor_client = None
                     self.navigation_status_client = None
-                    self.get_logger().warn(f"System monitoring services not available: {e}")
+                    self.get_logger().warn(
+                        f"System monitoring services not available: {e}"
+                    )
             else:
                 self.system_monitor_client = None
                 self.navigation_status_client = None
 
-            self.get_logger().info('Adaptive State Machine configured')
+            # Optional unified blackboard client for syncing mode and safety to BT
+            try:
+                import sys
+                import os
+
+                _src = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                if _src not in sys.path:
+                    sys.path.insert(0, _src)
+                from core.unified_blackboard_client import UnifiedBlackboardClient
+                from core.blackboard_keys import BlackboardKeys
+
+                self._blackboard = UnifiedBlackboardClient(self)
+                self._BlackboardKeys = BlackboardKeys
+                self.get_logger().info("Blackboard client initialized for state sync")
+            except Exception as e:
+                self._blackboard = None
+                self._BlackboardKeys = None
+                self.get_logger().debug(f"Blackboard not available for state sync: {e}")
+
+            self.get_logger().info("Adaptive State Machine configured")
             return TransitionCallbackReturn.SUCCESS
         except Exception as e:
-            self.get_logger().error(f'Error during configuration: {e}')
+            self.get_logger().error(f"Error during configuration: {e}")
             import traceback
+
             self.get_logger().error(traceback.format_exc())
             return TransitionCallbackReturn.FAILURE
 
@@ -248,33 +293,34 @@ class AdaptiveStateMachine(LifecycleNode):
         TransitionCallbackReturn
             SUCCESS if activation succeeded, FAILURE otherwise.
         """
-        self.get_logger().info('Activating Adaptive State Machine...')
+        self.get_logger().info("Activating Adaptive State Machine...")
 
         try:
             # Transition to IDLE state
             self.transition_to(SystemState.IDLE)
-            self.get_logger().info('Adaptive State Machine activated')
+            self.get_logger().info("Adaptive State Machine activated")
             return TransitionCallbackReturn.SUCCESS
         except Exception as e:
-            self.get_logger().error(f'Error during activation: {e}')
+            self.get_logger().error(f"Error during activation: {e}")
             import traceback
+
             self.get_logger().error(traceback.format_exc())
             return TransitionCallbackReturn.FAILURE
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Deactivate the state machine."""
-        self.get_logger().info('Deactivating Adaptive State Machine...')
+        self.get_logger().info("Deactivating Adaptive State Machine...")
         return TransitionCallbackReturn.SUCCESS
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
         """Clean up the state machine."""
-        self.get_logger().info('Cleaning up Adaptive State Machine...')
+        self.get_logger().info("Cleaning up Adaptive State Machine...")
 
         # Clean up service and subscriptions
-        if hasattr(self, 'state_service'):
+        if hasattr(self, "state_service"):
             self.destroy_service(self.state_service)
 
-        if hasattr(self, 'state_command_sub'):
+        if hasattr(self, "state_command_sub"):
             self.destroy_subscription(self.state_command_sub)
 
         return TransitionCallbackReturn.SUCCESS
@@ -282,13 +328,19 @@ class AdaptiveStateMachine(LifecycleNode):
     def get_state_callback(self, request, response):
         """Handle get state service requests from BT orchestrator."""
         if not AUTONOMY_INTERFACES_AVAILABLE or GetSystemState is None:
-            self.get_logger().error("GetSystemState service called but interfaces not available")
+            self.get_logger().error(
+                "GetSystemState service called but interfaces not available"
+            )
             return
-        
+
         response.current_state = self.current_state.value
         response.current_substate = self.current_substate.value
         response.current_teleop_substate = self.current_teleop_substate.value
-        response.state_metadata = json.dumps(self.state_metadata)
+        meta = dict(self.state_metadata)
+        meta["mode_request"] = self.mode_request.value if self.mode_request else None
+        meta["human_override_active"] = self.human_override_active
+        meta["auto_assist_enabled"] = self.auto_assist_enabled
+        response.state_metadata = json.dumps(meta)
         response.last_transition_time = self.last_transition_time
 
         # Add system health information if available
@@ -303,7 +355,7 @@ class AdaptiveStateMachine(LifecycleNode):
         except:
             response.system_healthy = True
 
-        self.get_logger().debug(f'State query response: {response.current_state}')
+        self.get_logger().debug(f"State query response: {response.current_state}")
         return response
 
     def state_command_callback(self, msg: std_msgs.msg.String) -> None:
@@ -332,30 +384,52 @@ class AdaptiveStateMachine(LifecycleNode):
         try:
             command = json.loads(msg.data)
 
-            if command.get('action') == 'transition':
-                target_state = command.get('target_state')
+            if command.get("action") == "transition":
+                target_state = command.get("target_state")
                 if target_state:
-                    self.handle_state_transition(target_state, command.get('metadata', {}))
+                    self.handle_state_transition(
+                        target_state, command.get("metadata", {})
+                    )
 
-            elif command.get('action') == 'set_substate':
-                substate_type = command.get('substate_type', 'autonomous')
-                substate = command.get('substate')
+            elif command.get("action") == "set_mode_request":
+                target_state = command.get("target_state")
+                if target_state:
+                    try:
+                        self.mode_request = SystemState(target_state)
+                    except ValueError:
+                        self.get_logger().warn(
+                            f"Invalid mode_request state: {target_state}"
+                        )
+                else:
+                    self.mode_request = None
 
-                if substate_type == 'autonomous':
+            elif command.get("action") == "set_human_override":
+                self.human_override_active = bool(command.get("value", False))
+
+            elif command.get("action") == "set_auto_assist":
+                self.auto_assist_enabled = bool(command.get("value", True))
+
+            elif command.get("action") == "set_substate":
+                substate_type = command.get("substate_type", "autonomous")
+                substate = command.get("substate")
+
+                if substate_type == "autonomous":
                     try:
                         self.current_substate = AutonomousSubstate(substate)
                     except ValueError:
-                        self.get_logger().warn(f'Invalid autonomous substate: {substate}')
-                elif substate_type == 'teleoperation':
+                        self.get_logger().warn(
+                            f"Invalid autonomous substate: {substate}"
+                        )
+                elif substate_type == "teleoperation":
                     try:
                         self.current_teleop_substate = TeleoperationSubstate(substate)
                     except ValueError:
-                        self.get_logger().warn(f'Invalid teleop substate: {substate}')
+                        self.get_logger().warn(f"Invalid teleop substate: {substate}")
 
         except json.JSONDecodeError as e:
-            self.get_logger().error(f'Invalid state command JSON: {e}')
+            self.get_logger().error(f"Invalid state command JSON: {e}")
         except Exception as e:
-            self.get_logger().error(f'Error processing state command: {e}')
+            self.get_logger().error(f"Error processing state command: {e}")
 
     def handle_state_transition(self, target_state_str: str, metadata: Dict[str, Any]):
         """Handle state transition requests."""
@@ -366,10 +440,26 @@ class AdaptiveStateMachine(LifecycleNode):
             if self.can_transition_to(target_state):
                 self.transition_to(target_state, metadata)
             else:
-                self.get_logger().warn(f'Invalid transition from {self.current_state.value} to {target_state_str}')
+                self.get_logger().warn(
+                    f"Invalid transition from {self.current_state.value} to {target_state_str}"
+                )
 
         except ValueError:
-            self.get_logger().error(f'Unknown target state: {target_state_str}')
+            self.get_logger().error(f"Unknown target state: {target_state_str}")
+
+    def _is_safe_to_switch_to_autonomous(self) -> bool:
+        """Return False if battery is low (do not switch to autonomous)."""
+        if not self._blackboard or not self._BlackboardKeys:
+            return True
+        try:
+            battery = self._blackboard.get(
+                self._BlackboardKeys.System.BATTERY_PERCENT, 100.0, "double"
+            )
+            if battery is None:
+                return True
+            return float(battery) >= self._battery_low_threshold
+        except Exception:
+            return True
 
     def can_transition_to(self, target_state: SystemState) -> bool:
         """Check if transition to target state is allowed."""
@@ -380,19 +470,53 @@ class AdaptiveStateMachine(LifecycleNode):
             SystemState.AUTONOMOUS: [SystemState.IDLE, SystemState.EMERGENCY_STOP],
             SystemState.TELEOPERATION: [SystemState.IDLE, SystemState.EMERGENCY_STOP],
             SystemState.EMERGENCY_STOP: [SystemState.IDLE],
-            SystemState.ERROR: [SystemState.BOOT, SystemState.IDLE]
+            SystemState.ERROR: [SystemState.BOOT, SystemState.IDLE],
         }
 
         # Emergency stop can be triggered from any state
         if target_state == SystemState.EMERGENCY_STOP:
             return True
 
+        # Do not switch to autonomous if battery is low
+        if (
+            target_state == SystemState.AUTONOMOUS
+            and not self._is_safe_to_switch_to_autonomous()
+        ):
+            self.get_logger().warn(
+                "Cannot switch to AUTONOMOUS: battery below threshold"
+            )
+            return False
+
         return target_state in valid_transitions.get(self.current_state, [])
 
+    def _sync_state_to_blackboard(self) -> None:
+        """Write current state and hybrid flags to blackboard for BT."""
+        if not self._blackboard or not self._BlackboardKeys:
+            return
+        try:
+            BK = self._BlackboardKeys
+            mode_str = {
+                SystemState.TELEOPERATION: "teleop",
+                SystemState.AUTONOMOUS: "autonomous",
+                SystemState.EMERGENCY_STOP: "emergency",
+                SystemState.IDLE: "idle",
+                SystemState.BOOT: "boot",
+                SystemState.ERROR: "error",
+            }.get(self.current_state, "idle")
+            self._blackboard.set(BK.Auto.MODE, mode_str)
+            self._blackboard.set(
+                BK.Auto.HUMAN_OVERRIDE_ACTIVE, self.human_override_active
+            )
+            self._blackboard.set(BK.Auto.ASSIST_ENABLED, self.auto_assist_enabled)
+            if self.current_state == SystemState.EMERGENCY_STOP:
+                self._blackboard.set(BK.System.EMERGENCY_STOP, True)
+            else:
+                self._blackboard.set(BK.System.EMERGENCY_STOP, False)
+        except Exception as e:
+            self.get_logger().debug(f"Blackboard sync failed: {e}")
+
     def transition_to(
-        self, 
-        new_state: SystemState, 
-        metadata: Optional[Dict[str, Any]] = None
+        self, new_state: SystemState, metadata: Optional[Dict[str, Any]] = None
     ) -> None:
         """Perform state transition."""
         old_state = self.current_state
@@ -400,6 +524,10 @@ class AdaptiveStateMachine(LifecycleNode):
         self.current_state = new_state
         self.last_transition_time = time.time()
         self.state_metadata.update(metadata or {})
+
+        # Clear mode_request if we transitioned to the requested state
+        if self.mode_request == new_state:
+            self.mode_request = None
 
         # Reset substates when entering certain states
         if new_state == SystemState.IDLE:
@@ -409,6 +537,9 @@ class AdaptiveStateMachine(LifecycleNode):
             self.current_substate = AutonomousSubstate.NONE
             self.current_teleop_substate = TeleoperationSubstate.NONE
 
+        # Sync mode and safety to blackboard so BT sees them
+        self._sync_state_to_blackboard()
+
         # Publish state change
         try:
             if AUTONOMY_INTERFACES_AVAILABLE and SystemStateMsg is not None:
@@ -416,20 +547,22 @@ class AdaptiveStateMachine(LifecycleNode):
                 # Map to actual message fields
                 state_msg.current_state = self.current_state.value
                 # Message uses 'substate' not 'current_substate'
-                if hasattr(state_msg, 'substate'):
+                if hasattr(state_msg, "substate"):
                     state_msg.substate = self.current_substate.value
-                elif hasattr(state_msg, 'current_substate'):
+                elif hasattr(state_msg, "current_substate"):
                     state_msg.current_substate = self.current_substate.value
                 # Message may use 'sub_substate' for teleop substate
-                if hasattr(state_msg, 'sub_substate'):
+                if hasattr(state_msg, "sub_substate"):
                     state_msg.sub_substate = self.current_teleop_substate.value
-                elif hasattr(state_msg, 'current_teleop_substate'):
-                    state_msg.current_teleop_substate = self.current_teleop_substate.value
+                elif hasattr(state_msg, "current_teleop_substate"):
+                    state_msg.current_teleop_substate = (
+                        self.current_teleop_substate.value
+                    )
                 # Store metadata in available fields
-                if hasattr(state_msg, 'state_reason'):
+                if hasattr(state_msg, "state_reason"):
                     state_msg.state_reason = json.dumps(self.state_metadata)
                 # Use time_in_state for timing
-                if hasattr(state_msg, 'time_in_state'):
+                if hasattr(state_msg, "time_in_state"):
                     state_msg.time_in_state = time.time() - self.last_transition_time
                 # transition_timestamp is a builtin_interfaces/Time, skip for now to avoid crash
                 # if hasattr(state_msg, 'transition_timestamp'):
@@ -439,24 +572,32 @@ class AdaptiveStateMachine(LifecycleNode):
             else:
                 # Fallback to String message
                 from std_msgs.msg import String
-                state_str = json.dumps({
-                    'current_state': self.current_state.value,
-                    'current_substate': self.current_substate.value,
-                    'current_teleop_substate': self.current_teleop_substate.value,
-                    'state_metadata': self.state_metadata,
-                    'last_transition_time': self.last_transition_time
-                })
+
+                state_str = json.dumps(
+                    {
+                        "current_state": self.current_state.value,
+                        "current_substate": self.current_substate.value,
+                        "current_teleop_substate": self.current_teleop_substate.value,
+                        "state_metadata": self.state_metadata,
+                        "last_transition_time": self.last_transition_time,
+                    }
+                )
                 state_msg = String()
                 state_msg.data = state_str
                 self.state_publisher.publish(state_msg)
         except Exception as e:
-            self.get_logger().error(f'Error publishing state: {e}')
+            self.get_logger().error(f"Error publishing state: {e}")
             import traceback
+
             self.get_logger().error(traceback.format_exc())
 
-        self.get_logger().info(f'State transition: {old_state.value} -> {new_state.value}')
+        self.get_logger().info(
+            f"State transition: {old_state.value} -> {new_state.value}"
+        )
 
-    def update_substate(self, substate: AutonomousSubstate, metadata: Optional[Dict[str, Any]] = None):
+    def update_substate(
+        self, substate: AutonomousSubstate, metadata: Optional[Dict[str, Any]] = None
+    ):
         """Update autonomous substate."""
         if self.current_state == SystemState.AUTONOMOUS:
             self.current_substate = substate
@@ -468,18 +609,22 @@ class AdaptiveStateMachine(LifecycleNode):
                     state_msg = SystemStateMsg()
                     state_msg.current_state = self.current_state.value
                     # Map to actual message fields
-                    if hasattr(state_msg, 'substate'):
+                    if hasattr(state_msg, "substate"):
                         state_msg.substate = self.current_substate.value
-                    elif hasattr(state_msg, 'current_substate'):
+                    elif hasattr(state_msg, "current_substate"):
                         state_msg.current_substate = self.current_substate.value
-                    if hasattr(state_msg, 'sub_substate'):
+                    if hasattr(state_msg, "sub_substate"):
                         state_msg.sub_substate = self.current_teleop_substate.value
-                    elif hasattr(state_msg, 'current_teleop_substate'):
-                        state_msg.current_teleop_substate = self.current_teleop_substate.value
-                    if hasattr(state_msg, 'state_reason'):
+                    elif hasattr(state_msg, "current_teleop_substate"):
+                        state_msg.current_teleop_substate = (
+                            self.current_teleop_substate.value
+                        )
+                    if hasattr(state_msg, "state_reason"):
                         state_msg.state_reason = json.dumps(self.state_metadata)
-                    if hasattr(state_msg, 'time_in_state'):
-                        state_msg.time_in_state = time.time() - self.last_transition_time
+                    if hasattr(state_msg, "time_in_state"):
+                        state_msg.time_in_state = (
+                            time.time() - self.last_transition_time
+                        )
                     # transition_timestamp is a builtin_interfaces/Time, skip for now
                     # if hasattr(state_msg, 'transition_timestamp'):
                     #     from builtin_interfaces.msg import Time
@@ -488,32 +633,36 @@ class AdaptiveStateMachine(LifecycleNode):
                 else:
                     # Fallback to String message
                     from std_msgs.msg import String
-                    state_str = json.dumps({
-                        'current_state': self.current_state.value,
-                        'current_substate': self.current_substate.value,
-                        'current_teleop_substate': self.current_teleop_substate.value,
-                        'state_metadata': self.state_metadata,
-                        'last_transition_time': self.last_transition_time
-                    })
+
+                    state_str = json.dumps(
+                        {
+                            "current_state": self.current_state.value,
+                            "current_substate": self.current_substate.value,
+                            "current_teleop_substate": self.current_teleop_substate.value,
+                            "state_metadata": self.state_metadata,
+                            "last_transition_time": self.last_transition_time,
+                        }
+                    )
                     state_msg = String()
                     state_msg.data = state_str
                     self.state_publisher.publish(state_msg)
             except Exception as e:
-                self.get_logger().error(f'Error publishing substate: {e}')
+                self.get_logger().error(f"Error publishing substate: {e}")
                 import traceback
+
                 self.get_logger().error(traceback.format_exc())
 
-            self.get_logger().info(f'Substate updated: {substate.value}')
+            self.get_logger().info(f"Substate updated: {substate.value}")
 
     def get_current_state_info(self) -> Dict[str, Any]:
         """Get comprehensive current state information."""
         return {
-            'state': self.current_state.value,
-            'substate': self.current_substate.value,
-            'teleop_substate': self.current_teleop_substate.value,
-            'metadata': self.state_metadata,
-            'last_transition': self.last_transition_time,
-            'time_in_state': time.time() - self.last_transition_time
+            "state": self.current_state.value,
+            "substate": self.current_substate.value,
+            "teleop_substate": self.current_teleop_substate.value,
+            "metadata": self.state_metadata,
+            "last_transition": self.last_transition_time,
+            "time_in_state": time.time() - self.last_transition_time,
         }
 
 
@@ -536,10 +685,13 @@ def main(args=None):
             if ret == TransitionCallbackReturn.SUCCESS:
                 executor.spin()
             else:
-                node.get_logger().error('Failed to activate node')
+                node.get_logger().error("Failed to activate node")
         else:
-            node.get_logger().error('Failed to configure node')
+            node.get_logger().error("Failed to configure node")
     except KeyboardInterrupt:
+        pass
+    except rclpy.executors.ExternalShutdownException:
+        # Context already shut down (e.g. SIGTERM); do not call rclpy.shutdown() again
         pass
     finally:
         # Clean shutdown - only if node was successfully configured
@@ -549,13 +701,14 @@ def main(args=None):
                 node.trigger_deactivate()
             if current_state.id >= 1:  # configured or above
                 node.trigger_cleanup()
-        except:
+        except Exception:
             pass
-        rclpy.shutdown()
+        if rclpy.ok():
+            try:
+                rclpy.shutdown()
+            except Exception:
+                pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
-

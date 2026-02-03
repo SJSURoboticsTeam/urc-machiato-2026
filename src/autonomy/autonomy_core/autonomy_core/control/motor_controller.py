@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class MotorInterface(Enum):
     """Motor controller interface types."""
+
     SERIAL = "serial"
     CAN = "can"
     MOCK = "mock"
@@ -32,8 +33,11 @@ class MotorController:
     Hardware motor controller interface supporting multiple communication protocols.
     """
 
-    def __init__(self, interface: MotorInterface = MotorInterface.MOCK,
-                 config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        interface: MotorInterface = MotorInterface.MOCK,
+        config: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize motor controller.
 
@@ -63,11 +67,7 @@ class MotorController:
         self.last_update = time.time()
 
         # PID control parameters
-        self.pid_params = {
-            'kp': 1.0,
-            'ki': 0.1,
-            'kd': 0.05
-        }
+        self.pid_params = {"kp": 1.0, "ki": 0.1, "kd": 0.05}
 
         # Initialize interface
         self._initialize_interface()
@@ -84,7 +84,9 @@ class MotorController:
             else:
                 raise ValueError(f"Unsupported interface: {self.interface}")
         except Exception as e:
-            self.logger.error(f"Failed to initialize {self.interface.value} interface: {e}")
+            self.logger.error(
+                f"Failed to initialize {self.interface.value} interface: {e}"
+            )
             # Fall back to mock interface
             self.interface = MotorInterface.MOCK
             self._initialize_mock()
@@ -96,14 +98,10 @@ class MotorController:
         except ImportError:
             raise ImportError("PySerial required for serial motor control")
 
-        port = self.config.get('port', '/dev/ttyACM0')
-        baudrate = self.config.get('baudrate', 115200)
+        port = self.config.get("port", "/dev/ttyACM0")
+        baudrate = self.config.get("baudrate", 115200)
 
-        self.serial_conn = serial.Serial(
-            port=port,
-            baudrate=baudrate,
-            timeout=1.0
-        )
+        self.serial_conn = serial.Serial(port=port, baudrate=baudrate, timeout=1.0)
 
         self.logger.info(f"Serial motor controller initialized on {port}")
         self.connected = True
@@ -115,13 +113,11 @@ class MotorController:
         except ImportError:
             raise ImportError("python-can required for CAN motor control")
 
-        interface = self.config.get('interface', 'can0')
-        bitrate = self.config.get('bitrate', 500000)
+        interface = self.config.get("interface", "can0")
+        bitrate = self.config.get("bitrate", 500000)
 
         self.can_bus = can.interface.Bus(
-            channel=interface,
-            bustype='socketcan',
-            bitrate=bitrate
+            channel=interface, bustype="socketcan", bitrate=bitrate
         )
 
         self.logger.info(f"CAN motor controller initialized on {interface}")
@@ -153,7 +149,9 @@ class MotorController:
                 self.connected = True
 
             if self.connected:
-                self.logger.info(f"{self.interface.value.upper()} motor controller connected")
+                self.logger.info(
+                    f"{self.interface.value.upper()} motor controller connected"
+                )
                 self.start_monitoring()
 
         except Exception as e:
@@ -238,7 +236,7 @@ class MotorController:
                 arbitration_id = 0x100 + i
 
                 # Pack speed as float (4 bytes)
-                data = struct.pack('>f', speed)
+                data = struct.pack(">f", speed)
 
                 msg = can.Message(arbitration_id=arbitration_id, data=data)
                 self.can_bus.send(msg)
@@ -322,14 +320,14 @@ class MotorController:
             Dictionary with motor status information
         """
         return {
-            'connected': self.connected,
-            'interface': self.interface.value,
-            'motor_count': self.motor_count,
-            'speeds': self.motor_speeds.copy(),
-            'encoders': self.get_encoder_counts(),
-            'temperatures': self.motor_temperatures.copy(),
-            'currents': self.motor_currents.copy(),
-            'last_update': self.last_update
+            "connected": self.connected,
+            "interface": self.interface.value,
+            "motor_count": self.motor_count,
+            "speeds": self.motor_speeds.copy(),
+            "encoders": self.get_encoder_counts(),
+            "temperatures": self.motor_temperatures.copy(),
+            "currents": self.motor_currents.copy(),
+            "last_update": self.last_update,
         }
 
     def calibrate_motors(self) -> bool:
@@ -399,7 +397,9 @@ class MotorController:
             return
 
         self.monitoring_active = True
-        self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True
+        )
         self.monitor_thread.start()
 
         self.logger.debug("Motor monitoring started")
@@ -445,8 +445,9 @@ class MotorController:
 
 
 # Factory function for creating motor controllers
-def create_motor_controller(interface_type: str = "mock",
-                           config: Optional[Dict[str, Any]] = None) -> MotorController:
+def create_motor_controller(
+    interface_type: str = "mock", config: Optional[Dict[str, Any]] = None
+) -> MotorController:
     """
     Create a motor controller instance.
 
@@ -460,13 +461,9 @@ def create_motor_controller(interface_type: str = "mock",
     interface_map = {
         "serial": MotorInterface.SERIAL,
         "can": MotorInterface.CAN,
-        "mock": MotorInterface.MOCK
+        "mock": MotorInterface.MOCK,
     }
 
     interface = interface_map.get(interface_type.lower(), MotorInterface.MOCK)
 
     return MotorController(interface=interface, config=config or {})
-
-
-
-

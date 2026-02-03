@@ -13,8 +13,8 @@ from .adaptive_circuit_breaker import AdaptiveCircuitBreaker
 from .binary_sensor_protocol import BinarySensorProtocol
 
 __all__ = [
-    'MessageLossDetector',
-    'NetworkPartitionDetector', 
-    'AdaptiveCircuitBreaker',
-    'BinarySensorProtocol',
+    "MessageLossDetector",
+    "NetworkPartitionDetector",
+    "AdaptiveCircuitBreaker",
+    "BinarySensorProtocol",
 ]

@@ -310,9 +310,9 @@ class AutomatedDeployment:
     def generate_deployment_report(self) -> Dict[str, Any]:
         """Generate comprehensive deployment report."""
         return {
-            "deployment_status": "completed"
-            if not self.deployment_active
-            else "in_progress",
+            "deployment_status": (
+                "completed" if not self.deployment_active else "in_progress"
+            ),
             "services_deployed": self.services_deployed,
             "deployment_duration": time.time()
             - (self.deployment_start_time or time.time()),

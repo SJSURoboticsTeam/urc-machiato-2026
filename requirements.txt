@@ -45,6 +45,9 @@ rich>=13.4.0
 jupyter>=1.0.0
 jupyterlab>=4.0.0
 
+# RealSense D435 driver (optional; for realsense_driver node)
+pyrealsense2>=2.54.0
+
 # Simulation dependencies (optional)
 gazebo>=11.0.0
 ros-humble-gazebo>=3.5.0
