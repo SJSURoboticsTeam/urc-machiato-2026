@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { createSubscriber, createServiceClient, callService } from '../utils/rosbridge';
+import {
+  parseAndValidate,
+  stateMachineCurrentStateSchema,
+  stateMachineTransitionSchema
+} from '../utils/validationSchemas';
 import { STATE_TOPICS, MESSAGE_TYPES, SERVICE_TYPES } from '../config/rosTopics';
 import {
   SystemState,
@@ -41,18 +46,14 @@ export const useStateMachine = (ros) => {
       '/state_machine/current_state',
       'std_msgs/String',
       (message) => {
-        try {
-          const data = JSON.parse(message.data);
-          console.log('Received real state machine state:', data);
-          setCurrentState(data.state || SystemState.BOOT);
-          setCurrentSubstate(data.substate || 'none');
-          setCurrentSubSubstate('none');
-          setCurrentCalibrationSubstate('none');
-          setStateMetadata(data.metadata || {});
-          setIsTransitioning(false);
-        } catch (e) {
-          console.warn('Failed to parse state machine message:', e);
-        }
+        const data = parseAndValidate(message?.data, stateMachineCurrentStateSchema);
+        if (!data) return;
+        setCurrentState(data.state || SystemState.BOOT);
+        setCurrentSubstate(data.substate || 'none');
+        setCurrentSubSubstate('none');
+        setCurrentCalibrationSubstate('none');
+        setStateMetadata(data.metadata || {});
+        setIsTransitioning(false);
       }
     );
 
@@ -62,37 +63,29 @@ export const useStateMachine = (ros) => {
       '/state_machine/state_transition',
       'std_msgs/String',
       (message) => {
-        try {
-          const data = JSON.parse(message.data);
-          console.log('Received state transition:', data);
-          setLastTransition({
-            fromState: data.from_state,
-            toState: data.to_state,
-            reason: data.reason,
-            initiatedBy: 'standalone_system',
-            timestamp: data.timestamp,
-            success: data.success
-          });
-
-        // Update transition history
-        setTransitionHistory(prev => {
+        const data = parseAndValidate(message?.data, stateMachineTransitionSchema);
+        if (!data) return;
+        setLastTransition({
+          fromState: data.from_state,
+          toState: data.to_state,
+          reason: data.reason,
+          initiatedBy: 'standalone_system',
+          timestamp: data.timestamp,
+          success: data.success
+        });
+        setTransitionHistory((prev) => {
           const newHistory = [{
             fromState: data.from_state,
             toState: data.to_state,
             reason: data.reason,
-            timestamp: new Date(data.timestamp * 1000).toISOString(),
+            timestamp: data.timestamp != null ? new Date(data.timestamp * 1000).toISOString() : '',
             success: data.success
-          }, ...prev].slice(0, 50); // Keep last 50 transitions
+          }, ...prev].slice(0, 50);
           return newHistory;
         });
-
-        // Update state if transition was successful
         if (data.success) {
           setCurrentState(data.to_state);
           setIsTransitioning(false);
-        }
-        } catch (e) {
-          console.warn('Failed to parse transition message:', e);
         }
       }
     );

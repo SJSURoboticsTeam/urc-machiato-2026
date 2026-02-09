@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { parseAndValidate, safetyPayloadSchema } from '../utils/validationSchemas';
 import { SAFETY_TOPICS, SERVICE_TYPES, MESSAGE_TYPES } from '../config/rosTopics';
 
 /**
@@ -78,16 +79,12 @@ export const useSafetySystem = (ros) => {
       );
       subscriptions.push(redundantSub);
 
-      // Dashboard status (JSON string)
+      // Dashboard status (JSON string) - validated to reject invalid payloads
       const dashboardSub = ros.subscribe(
         SAFETY_TOPICS.DASHBOARD_STATUS,
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-            setSafetyStatus(prev => ({ ...prev, dashboard: data }));
-          } catch (error) {
-            console.error('Error parsing dashboard status:', error);
-          }
+          const data = parseAndValidate(msg?.data, safetyPayloadSchema);
+          if (data) setSafetyStatus((prev) => ({ ...prev, dashboard: data }));
         },
         10
       );
@@ -97,11 +94,11 @@ export const useSafetySystem = (ros) => {
       const alertsSub = ros.subscribe(
         SAFETY_TOPICS.ACTIVE_ALERTS,
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
+          const data = parseAndValidate(msg?.data, safetyPayloadSchema);
+          if (data && Array.isArray(data.active_alerts)) {
+            setActiveAlerts(data.active_alerts);
+          } else if (data && typeof data === 'object') {
             setActiveAlerts(data.active_alerts || []);
-          } catch (error) {
-            console.error('Error parsing active alerts:', error);
           }
         },
         10
@@ -112,12 +109,8 @@ export const useSafetySystem = (ros) => {
       const healthSub = ros.subscribe(
         SAFETY_TOPICS.SYSTEM_HEALTH,
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-            setSystemHealth(data);
-          } catch (error) {
-            console.error('Error parsing system health:', error);
-          }
+          const data = parseAndValidate(msg?.data, safetyPayloadSchema);
+          if (data) setSystemHealth(data);
         },
         10
       );
@@ -127,12 +120,8 @@ export const useSafetySystem = (ros) => {
       const watchdogSub = ros.subscribe(
         SAFETY_TOPICS.WATCHDOG_STATUS,
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-            setWatchdogStatus(data);
-          } catch (error) {
-            console.error('Error parsing watchdog status:', error);
-          }
+          const data = parseAndValidate(msg?.data, safetyPayloadSchema);
+          if (data) setWatchdogStatus(data);
         },
         10
       );
@@ -142,12 +131,8 @@ export const useSafetySystem = (ros) => {
       const sensorSub = ros.subscribe(
         SAFETY_TOPICS.SENSOR_HEALTH,
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-            setSensorHealth(data);
-          } catch (error) {
-            console.error('Error parsing sensor health:', error);
-          }
+          const data = parseAndValidate(msg?.data, safetyPayloadSchema);
+          if (data) setSensorHealth(data);
         },
         10
       );
@@ -157,12 +142,8 @@ export const useSafetySystem = (ros) => {
       const emergencySub = ros.subscribe(
         SAFETY_TOPICS.EMERGENCY_STATUS,
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-            setEmergencyStatus(data);
-          } catch (error) {
-            console.error('Error parsing emergency status:', error);
-          }
+          const data = parseAndValidate(msg?.data, safetyPayloadSchema);
+          if (data) setEmergencyStatus(data);
         },
         10
       );

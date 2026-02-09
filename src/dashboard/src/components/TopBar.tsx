@@ -1,34 +1,48 @@
 import React from 'react';
-import { useSystemContext } from '../context/SystemContext';
+import { useROSContext } from '../context/ROSContext';
+import { useStateMachineContext } from '../context/StateMachineContext';
+import { useTelemetryContext } from '../context/TelemetryContext';
+import { useUIContext } from '../context/UIContext';
+import { getConnectionStateLabel } from '../utils/statusUtils';
 import { AlertTriangle } from 'lucide-react';
 
 /**
- * TopBar Component
- *
- * Always-visible top bar with system state, critical telemetry, and emergency stop.
- * Minimal, information-dense design.
+ * TopBar: system state, critical telemetry, emergency stop.
+ * Dashboard is for debugging/tracing; components may move to teleoperations frontend.
  */
-export const TopBar = () => {
-  const {
-    currentState,
-    getStateBadge,
-    telemetry,
-    isConnected,
-    errorCount,
-    runningTests,
-    activeMission,
-    handleEmergencyStop
-  } = useSystemContext();
+export const TopBar: React.FC = () => {
+  const { isConnected, connectionStatus, lastError, resetReconnection, connect } = useROSContext();
+  const { getStateBadge, handleEmergencyStop } = useStateMachineContext();
+  const { telemetry } = useTelemetryContext();
+  const { errorCount, activeMission } = useUIContext();
 
   const stateBadge = getStateBadge();
+  const connectionLabel = getConnectionStateLabel(isConnected ? 'connected' : connectionStatus);
+
+  const handleRetryConnection = () => {
+    resetReconnection();
+    connect();
+  };
 
   return (
+    <>
+      {lastError && (
+        <div className="bg-red-900/40 border-b border-red-800 px-4 py-2 flex items-center justify-between text-sm text-red-200">
+          <span className="truncate" title={lastError?.message ?? String(lastError)}>
+            ROS: {lastError?.message ?? String(lastError)}
+          </span>
+          <button
+            type="button"
+            onClick={handleRetryConnection}
+            className="ml-2 px-2 py-1 rounded bg-red-800 hover:bg-red-700 text-white text-xs font-medium shrink-0"
+          >
+            Retry
+          </button>
+        </div>
+      )}
     <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-2 flex items-center justify-between text-sm">
-      {/* Left: System info */}
       <div className="flex items-center gap-4">
         <span className="font-semibold text-zinc-100">URC 2026</span>
-
-        {/* System state badge */}
         <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${
           stateBadge.color === 'green' ? 'bg-green-900/30 text-green-400' :
           stateBadge.color === 'blue' ? 'bg-blue-900/30 text-blue-400' :
@@ -41,19 +55,12 @@ export const TopBar = () => {
           <span>{stateBadge.emoji}</span>
           <span className="font-medium">{stateBadge.label}</span>
         </div>
-
-        {/* Connection status */}
-        <div className={`flex items-center gap-1 ${
-          isConnected ? 'text-green-400' : 'text-red-400'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${
-            isConnected ? 'bg-green-400' : 'bg-red-400'
-          }`} />
-          <span className="text-xs">{isConnected ? 'Connected' : 'Disconnected'}</span>
+        <div className={`flex items-center gap-1 ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
+          <span className="text-xs">{connectionLabel}</span>
         </div>
       </div>
 
-      {/* Center: Critical telemetry */}
       <div className="flex items-center gap-4 text-zinc-300">
         <div className="flex items-center gap-1.5">
           <span className="text-zinc-500">Battery:</span>
@@ -65,25 +72,20 @@ export const TopBar = () => {
             {Math.round(telemetry.battery)}%
           </span>
         </div>
-
         <div className="flex items-center gap-1.5">
           <span className="text-zinc-500">GPS:</span>
-          <span className="font-medium text-zinc-200">
-            {telemetry.gps.satellites} sat
-          </span>
+          <span className="font-medium text-zinc-200">{telemetry.gps.satellites} sat</span>
         </div>
-
         {activeMission && (
           <div className="flex items-center gap-1.5">
             <span className="text-zinc-500">Mission:</span>
             <span className="font-medium text-cyan-400">
-              {activeMission.name} ({Math.round(activeMission.progress)}%)
+              {activeMission.name} ({Math.round(activeMission.progress ?? 0)}%)
             </span>
           </div>
         )}
       </div>
 
-      {/* Right: Emergency stop */}
       <div className="flex items-center gap-4">
         {errorCount > 0 && (
           <div className="flex items-center gap-1.5 text-yellow-400">
@@ -91,14 +93,15 @@ export const TopBar = () => {
             <span className="text-xs">{errorCount}</span>
           </div>
         )}
-
         <button
-          onClick={handleEmergencyStop}
+          type="button"
+          onClick={() => void handleEmergencyStop()}
           className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded transition-colors"
         >
           E-STOP
         </button>
       </div>
     </div>
+    </>
   );
 };

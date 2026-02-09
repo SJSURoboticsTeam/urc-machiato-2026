@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { useSystemContext } from '../../context/SystemContext';
+import { useROSContext } from '../../context/ROSContext';
+import { useStateMachineContext } from '../../context/StateMachineContext';
+import { useTelemetryContext } from '../../context/TelemetryContext';
 import { MessageTester } from './MessageTester';
 import { StateTransitionTester } from './StateTransitionTester';
 import { TopicDataViewer } from './TopicDataViewer';
@@ -16,13 +18,9 @@ import { UI_CONSTANTS } from '../../constants/uiConstants';
  * Provides human testing interface for system integration verification.
  */
 export const IntegratedTestingDashboard = () => {
-  const {
-    currentState,
-    systemStatus,
-    isConnected,
-    telemetry,
-    requestStateTransition
-  } = useSystemContext();
+  const { isConnected } = useROSContext();
+  const { currentState, requestStateTransition } = useStateMachineContext();
+  const { systemStatus, telemetry } = useTelemetryContext();
 
   // Shared state for message testing
   const [messageHistory, setMessageHistory] = useState([]);

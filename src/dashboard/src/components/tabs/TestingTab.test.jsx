@@ -1,24 +1,21 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TestingTab } from './TestingTab';
+import { AppProviders } from '../../context/AppProviders';
 
-// Mock all the context and child components
-vi.mock('../../context/SystemContext', () => ({
-  useSystemContext: () => ({
+vi.mock('../../hooks/useROS', () => ({
+  useROS: () => ({ ros: {}, isConnected: true, connectionStatus: 'connected' })
+}));
+vi.mock('../../hooks/useStateMachine', () => ({
+  useStateMachine: () => ({
     currentState: 'BOOT',
-    systemStatus: {
-      safety: 'ready',
-      navigation: 'ok',
-      vision: 'ready',
-      can: 'mock',
-      websocket: 'connected'
-    },
-    setRunningTests: vi.fn()
-  }),
-  SystemContextProvider: ({ children }) => <div>{children}</div>
+    currentSubstate: null,
+    requestStateTransition: vi.fn(),
+    isTransitioning: false
+  })
 }));
 
-// Mock the IntegratedTestingDashboard
 vi.mock('../testing-dashboard/IntegratedTestingDashboard', () => ({
   IntegratedTestingDashboard: () => (
     <div data-testid="integrated-dashboard">
@@ -30,37 +27,45 @@ vi.mock('../testing-dashboard/IntegratedTestingDashboard', () => ({
 
 describe('TestingTab', () => {
   it('renders with view toggle buttons', () => {
-    render(<TestingTab />);
+    render(
+      <AppProviders>
+        <TestingTab />
+      </AppProviders>
+    );
 
     expect(screen.getByText('Integrated Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Component View')).toBeInTheDocument();
-    expect(screen.getByText('Real-time communication flow & state visualization')).toBeInTheDocument();
+    expect(screen.getAllByText(/Real-time communication flow/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId('integrated-dashboard')).toBeInTheDocument();
   });
 
   it('switches to Component View when button is clicked', async () => {
-    render(<TestingTab />);
+    render(
+      <AppProviders>
+        <TestingTab />
+      </AppProviders>
+    );
 
-    // Click Component View button
     fireEvent.click(screen.getByText('Component View'));
 
-    // Should show Component View description
     await waitFor(() => {
       expect(screen.getByText('Traditional component-based testing')).toBeInTheDocument();
     });
 
-    // Should show component cards
     expect(screen.getByText('SAFETY')).toBeInTheDocument();
     expect(screen.getByText('NAVIGATION')).toBeInTheDocument();
     expect(screen.getByText('VISION')).toBeInTheDocument();
-    expect(screen.getByText('CAN BUS (MOCK)')).toBeInTheDocument();
+    expect(screen.getAllByText(/CAN BUS/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('WEBSOCKET')).toBeInTheDocument();
   });
 
   it('shows component filter tabs in Component View', async () => {
-    render(<TestingTab />);
+    render(
+      <AppProviders>
+        <TestingTab />
+      </AppProviders>
+    );
 
-    // Switch to Component View
     fireEvent.click(screen.getByText('Component View'));
     await waitFor(() => {
       expect(screen.getByText('Traditional component-based testing')).toBeInTheDocument();

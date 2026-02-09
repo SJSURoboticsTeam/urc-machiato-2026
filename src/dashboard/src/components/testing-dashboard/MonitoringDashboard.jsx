@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, Wifi, WifiOff, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { useROS } from '../../hooks/useROS';
+import { parseAndValidate, communicationHealthSchema } from '../../utils/validationSchemas';
+import { getStatusTextColor } from '../../utils/statusUtils';
+import { formatRelativeTime } from '../../utils/formatting';
 
 export const MonitoringDashboard = () => {
   const { ros, isConnected } = useROS();
@@ -23,12 +26,8 @@ export const MonitoringDashboard = () => {
     });
 
     healthSubscriber.subscribe((message) => {
-      try {
-        const healthData = JSON.parse(message.data);
-        updateSystemHealth(healthData);
-      } catch (error) {
-        console.error('Failed to parse health data:', error);
-      }
+      const healthData = parseAndValidate(message?.data, communicationHealthSchema);
+      if (healthData) updateSystemHealth(healthData);
     });
 
     return () => {
@@ -86,15 +85,6 @@ export const MonitoringDashboard = () => {
     setAlerts(newAlerts);
   }, [systemHealth, isConnected]);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'healthy': return 'text-green-400';
-      case 'degraded': return 'text-yellow-400';
-      case 'unhealthy': return 'text-red-400';
-      default: return 'text-gray-400';
-    }
-  };
-
   const getStatusIcon = (status) => {
     switch (status) {
       case 'healthy': return <CheckCircle className="w-5 h-5" />;
@@ -102,14 +92,6 @@ export const MonitoringDashboard = () => {
       case 'unhealthy': return <WifiOff className="w-5 h-5" />;
       default: return <Clock className="w-5 h-5" />;
     }
-  };
-
-  const formatTime = (timestamp) => {
-    if (!timestamp) return 'Never';
-    const age = Date.now() - timestamp;
-    if (age < 1000) return 'Just now';
-    if (age < 60000) return `${Math.floor(age / 1000)}s ago`;
-    return `${Math.floor(age / 60000)}m ago`;
   };
 
   return (
@@ -124,7 +106,7 @@ export const MonitoringDashboard = () => {
         <div className="bg-zinc-800 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-zinc-400">Communication</span>
-            <div className={`flex items-center gap-2 ${getStatusColor(systemHealth.communication.status)}`}>
+            <div className={`flex items-center gap-2 ${getStatusTextColor(systemHealth.communication.status)}`}>
               {getStatusIcon(systemHealth.communication.status)}
             </div>
           </div>
@@ -135,14 +117,14 @@ export const MonitoringDashboard = () => {
             )}
           </div>
           <div className="text-xs text-zinc-600 mt-1">
-            Updated: {formatTime(systemHealth.communication.lastUpdate)}
+            Updated: {formatRelativeTime(systemHealth.communication.lastUpdate)}
           </div>
         </div>
 
         <div className="bg-zinc-800 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-zinc-400">WebSocket Bridge</span>
-            <div className={`flex items-center gap-2 ${getStatusColor(systemHealth.websocket.status)}`}>
+            <div className={`flex items-center gap-2 ${getStatusTextColor(systemHealth.websocket.status)}`}>
               {getStatusIcon(systemHealth.websocket.status)}
             </div>
           </div>
@@ -150,14 +132,14 @@ export const MonitoringDashboard = () => {
             Age: {systemHealth.websocket.age ? `${systemHealth.websocket.age.toFixed(1)}s` : 'N/A'}
           </div>
           <div className="text-xs text-zinc-600 mt-1">
-            Updated: {formatTime(systemHealth.websocket.lastUpdate)}
+            Updated: {formatRelativeTime(systemHealth.websocket.lastUpdate)}
           </div>
         </div>
 
         <div className="bg-zinc-800 p-4 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-zinc-400">ROS2 Connection</span>
-            <div className={`flex items-center gap-2 ${getStatusColor(systemHealth.ros2.status)}`}>
+            <div className={`flex items-center gap-2 ${getStatusTextColor(systemHealth.ros2.status)}`}>
               {getStatusIcon(systemHealth.ros2.status)}
             </div>
           </div>
@@ -165,7 +147,7 @@ export const MonitoringDashboard = () => {
             Status: {isConnected ? 'Connected' : 'Disconnected'}
           </div>
           <div className="text-xs text-zinc-600 mt-1">
-            Updated: {formatTime(systemHealth.ros2.lastUpdate)}
+            Updated: {formatRelativeTime(systemHealth.ros2.lastUpdate)}
           </div>
         </div>
       </div>
@@ -192,7 +174,7 @@ export const MonitoringDashboard = () => {
                 <div className="flex-1">
                   <div className="text-sm text-zinc-200">{alert.message}</div>
                   <div className="text-xs text-zinc-500 mt-1">
-                    {formatTime(alert.timestamp)}
+                    {formatRelativeTime(alert.timestamp)}
                   </div>
                 </div>
               </div>

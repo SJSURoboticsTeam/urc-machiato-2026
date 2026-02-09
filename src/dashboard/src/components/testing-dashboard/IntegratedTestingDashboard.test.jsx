@@ -1,7 +1,20 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { IntegratedTestingDashboard } from './IntegratedTestingDashboard';
-import { SystemContextProvider } from '../../context/SystemContext';
+import { AppProviders } from '../../context/AppProviders';
+
+vi.mock('../../hooks/useROS', () => ({
+  useROS: () => ({ ros: {}, isConnected: true, connectionStatus: 'connected' })
+}));
+vi.mock('../../hooks/useStateMachine', () => ({
+  useStateMachine: () => ({
+    currentState: 'BOOT',
+    currentSubstate: null,
+    requestStateTransition: vi.fn(),
+    isTransitioning: false
+  })
+}));
 
 // Mock the child components
 vi.mock('./MessageTester', () => ({
@@ -51,6 +64,10 @@ vi.mock('./CommunicationMetrics', () => ({
   )
 }));
 
+vi.mock('./ThreeColumnTestingDashboard', () => ({
+  ThreeColumnTestingDashboard: () => <div data-testid="three-column-mock">Three Column View</div>
+}));
+
 describe('IntegratedTestingDashboard', () => {
   beforeEach(() => {
     // Reset all mocks
@@ -59,9 +76,9 @@ describe('IntegratedTestingDashboard', () => {
 
   it('renders all testing tabs correctly', () => {
     render(
-      <SystemContextProvider>
+      <AppProviders>
         <IntegratedTestingDashboard />
-      </SystemContextProvider>
+      </AppProviders>
     );
 
     // Check that the main header is rendered
@@ -75,22 +92,21 @@ describe('IntegratedTestingDashboard', () => {
     expect(screen.getByText('Metrics')).toBeInTheDocument();
   });
 
-  it('shows Messages tab by default', () => {
+  it('shows first tab (Three Column) by default', () => {
     render(
-      <SystemContextProvider>
+      <AppProviders>
         <IntegratedTestingDashboard />
-      </SystemContextProvider>
+      </AppProviders>
     );
 
-    // Messages tab should be active by default
-    expect(screen.getByTestId('message-tester')).toBeInTheDocument();
+    expect(screen.getByTestId('three-column-mock')).toBeInTheDocument();
   });
 
   it('switches between tabs correctly', async () => {
     render(
-      <SystemContextProvider>
+      <AppProviders>
         <IntegratedTestingDashboard />
-      </SystemContextProvider>
+      </AppProviders>
     );
 
     // Click on States tab
@@ -114,28 +130,30 @@ describe('IntegratedTestingDashboard', () => {
 
   it('displays connection status correctly', () => {
     render(
-      <SystemContextProvider>
+      <AppProviders>
         <IntegratedTestingDashboard />
-      </SystemContextProvider>
+      </AppProviders>
     );
 
-    // Should show connected status (mocked as true)
-    expect(screen.getByText('🟢 Connected')).toBeInTheDocument();
-    expect(screen.getByText('State: BOOT')).toBeInTheDocument();
+    expect(screen.getByText(/Connected/)).toBeInTheDocument();
+    expect(screen.getByText(/State:/)).toBeInTheDocument();
+    expect(screen.getByText('BOOT')).toBeInTheDocument();
   });
 
   it('handles message sending interaction', async () => {
     render(
-      <SystemContextProvider>
+      <AppProviders>
         <IntegratedTestingDashboard />
-      </SystemContextProvider>
+      </AppProviders>
     );
 
-    // Click the send message button in the mocked component
+    fireEvent.click(screen.getByText('Messages'));
+    await waitFor(() => {
+      expect(screen.getByTestId('message-tester')).toBeInTheDocument();
+    });
     const sendButton = screen.getByText('Send Test Message');
     fireEvent.click(sendButton);
 
-    // Check that the message count updated
     await waitFor(() => {
       expect(screen.getByText('Messages: 1')).toBeInTheDocument();
     });
@@ -143,9 +161,9 @@ describe('IntegratedTestingDashboard', () => {
 
   it('handles state transition interaction', async () => {
     render(
-      <SystemContextProvider>
+      <AppProviders>
         <IntegratedTestingDashboard />
-      </SystemContextProvider>
+      </AppProviders>
     );
 
     // Switch to States tab

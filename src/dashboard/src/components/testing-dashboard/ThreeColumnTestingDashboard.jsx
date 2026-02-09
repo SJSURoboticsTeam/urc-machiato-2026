@@ -1,31 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSystemContext } from '../../context/SystemContext';
+import { useROSContext } from '../../context/ROSContext';
+import { useStateMachineContext } from '../../context/StateMachineContext';
+import { useTelemetryContext } from '../../context/TelemetryContext';
 import { UI_CONSTANTS } from '../../constants/uiConstants';
+import { parseAndValidate, simulationMessageSchema } from '../../utils/validationSchemas';
 import ROSLIB from '../../utils/rosbridge';
 
 /**
  * Three-Column Testing Dashboard
  *
- * Visualizes the complete data flow: CAN → WebSocket → ROS2
- * Shows real-time data from simulation system through all layers
+ * Visualizes the complete data flow: CAN → WebSocket → ROS2.
+ * Uses shared ROS connection from context (debugging/tracing; may move to teleop frontend).
  */
 export const ThreeColumnTestingDashboard = () => {
-  const { currentState, systemStatus } = useSystemContext();
+  const { ros, isConnected, connectionStatus } = useROSContext();
+  const { currentState } = useStateMachineContext();
+  const { systemStatus } = useTelemetryContext();
 
   // Real-time data from different sources
   const [canData, setCanData] = useState(null);
   const [websocketData, setWebsocketData] = useState(null);
   const [rosData, setRosData] = useState({});
 
-  // Connection status
+  // Connection status (ros2 synced from context; websocket local)
   const [connections, setConnections] = useState({
     websocket: 'disconnected',
     ros2: 'disconnected'
   });
-
-  // ROS connection refs
-  const rosRef = useRef(null);
   const rosSubscribersRef = useRef({});
+
+  useEffect(() => {
+    setConnections((prev) => ({
+      ...prev,
+      ros2: isConnected ? 'operational' : (connectionStatus === 'error' ? 'error' : 'disconnected')
+    }));
+  }, [isConnected, connectionStatus]);
 
   // WebSocket connection for simulation data
   useEffect(() => {
@@ -48,14 +57,11 @@ export const ThreeColumnTestingDashboard = () => {
       };
 
       ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'simulation_update') {
-            setCanData(message.simulation_data);
-            setWebsocketData(message.simulation_data);
-          }
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+        const raw = typeof event.data === 'string' ? event.data : null;
+        const message = raw ? parseAndValidate(raw, simulationMessageSchema) : null;
+        if (message?.simulation_data) {
+          setCanData(message.simulation_data);
+          setWebsocketData(message.simulation_data);
         }
       };
 
@@ -93,85 +99,58 @@ export const ThreeColumnTestingDashboard = () => {
     };
   }, []);
 
-  // ROS2 connection for real-time ROS topic data
+  // ROS2 topics via shared context connection (do not close ros; context owns it)
   useEffect(() => {
-    const ros = new ROSLIB.Ros({
-      url: 'ws://localhost:9090'
+    if (!ros || !isConnected) return;
+
+    const imuTopic = new ROSLIB.Topic({
+      ros,
+      name: '/imu/data',
+      messageType: 'sensor_msgs/Imu'
     });
-    rosRef.current = ros;
-
-    ros.on('connection', () => {
-      console.log('Connected to ROS Bridge.');
-      setConnections(prev => ({ ...prev, ros2: 'operational' }));
-
-      // Subscribe to ROS topics
-      const imuTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/imu/data',
-        messageType: 'sensor_msgs/Imu'
-      });
-      imuTopic.subscribe((message) => {
-        console.log('Received IMU data from ROS:', message);
-        setRosData(prev => ({ ...prev, imu: message }));
-      });
-      rosSubscribersRef.current.imu = imuTopic;
-
-      const gpsTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/gps/fix',
-        messageType: 'sensor_msgs/NavSatFix'
-      });
-      gpsTopic.subscribe((message) => {
-        console.log('Received GPS data from ROS:', message);
-        setRosData(prev => ({ ...prev, gps: message }));
-      });
-      rosSubscribersRef.current.gps = gpsTopic;
-
-      const batteryTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/battery/state',
-        messageType: 'sensor_msgs/BatteryState'
-      });
-      batteryTopic.subscribe((message) => {
-        console.log('Received Battery data from ROS:', message);
-        setRosData(prev => ({ ...prev, battery: message }));
-      });
-      rosSubscribersRef.current.battery = batteryTopic;
-
-      const odomTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/odom',
-        messageType: 'nav_msgs/Odometry'
-      });
-      odomTopic.subscribe((message) => {
-        console.log('Received Odometry data from ROS:', message);
-        setRosData(prev => ({ ...prev, odom: message }));
-      });
-      rosSubscribersRef.current.odom = odomTopic;
-
+    imuTopic.subscribe((message) => {
+      setRosData((prev) => ({ ...prev, imu: message }));
     });
+    rosSubscribersRef.current.imu = imuTopic;
 
-    ros.on('error', (error) => {
-      console.error('Error connecting to ROS Bridge:', error);
-      setConnections(prev => ({ ...prev, ros2: 'error' }));
+    const gpsTopic = new ROSLIB.Topic({
+      ros,
+      name: '/gps/fix',
+      messageType: 'sensor_msgs/NavSatFix'
     });
+    gpsTopic.subscribe((message) => {
+      setRosData((prev) => ({ ...prev, gps: message }));
+    });
+    rosSubscribersRef.current.gps = gpsTopic;
 
-    ros.on('close', () => {
-      console.log('Disconnected from ROS Bridge.');
-      setConnections(prev => ({ ...prev, ros2: 'disconnected' }));
+    const batteryTopic = new ROSLIB.Topic({
+      ros,
+      name: '/battery/state',
+      messageType: 'sensor_msgs/BatteryState'
     });
+    batteryTopic.subscribe((message) => {
+      setRosData((prev) => ({ ...prev, battery: message }));
+    });
+    rosSubscribersRef.current.battery = batteryTopic;
+
+    const odomTopic = new ROSLIB.Topic({
+      ros,
+      name: '/odom',
+      messageType: 'nav_msgs/Odometry'
+    });
+    odomTopic.subscribe((message) => {
+      setRosData((prev) => ({ ...prev, odom: message }));
+    });
+    rosSubscribersRef.current.odom = odomTopic;
 
     return () => {
-      if (rosRef.current) {
-        rosRef.current.close();
-      }
-      for (const topicName in rosSubscribersRef.current) {
-        if (rosSubscribersRef.current[topicName]) {
-          rosSubscribersRef.current[topicName].unsubscribe();
-        }
-      }
+      Object.keys(rosSubscribersRef.current).forEach((key) => {
+        const sub = rosSubscribersRef.current[key];
+        if (sub && typeof sub.unsubscribe === 'function') sub.unsubscribe();
+      });
+      rosSubscribersRef.current = {};
     };
-  }, []);
+  }, [ros, isConnected]);
 
   return (
     <div className="w-full bg-gray-950 text-white p-6">

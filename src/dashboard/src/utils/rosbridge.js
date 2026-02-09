@@ -1,9 +1,9 @@
 // Using real ROSLIB implementation for ROS communication
 
-// Import the real ROSLIB library
-import ROSLIB from 'roslib';
+// Import the real ROSLIB library (named exports only in roslib 2.x)
+import * as ROSLIB from 'roslib';
 
-// Export ROSLIB as default for compatibility
+// Export as default for compatibility with useROS and other consumers
 export default ROSLIB;
 
 /**

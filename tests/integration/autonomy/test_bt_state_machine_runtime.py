@@ -32,6 +32,23 @@ except ImportError:
     rclpy = None
 
 
+def _bt_orchestrator_available() -> bool:
+    """True if autonomy_bt/bt_orchestrator is built and on PATH (for runtime tests)."""
+    try:
+        result = subprocess.run(
+            ["ros2", "pkg", "executables", "autonomy_bt"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return result.returncode == 0 and "bt_orchestrator" in (result.stdout or "")
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+BT_ORCHESTRATOR_AVAILABLE = ROS2_AVAILABLE and _bt_orchestrator_available()
+
+
 class TestBTStateMachineRuntime:
     """Runtime tests for BT-State Machine integration.
     No __init__ so pytest can collect the class (pytest ignores classes with __init__).
@@ -156,11 +173,14 @@ class TestBTStateMachineRuntime:
             self.test_node.get_logger().error(f"Failed to start BT orchestrator: {e}")
             return False
 
-    @pytest.mark.skipif(not ROS2_AVAILABLE, reason="ROS2 not available")
+    @pytest.mark.skipif(
+        not BT_ORCHESTRATOR_AVAILABLE,
+        reason="autonomy_bt not built or not on PATH; run ./scripts/build_ros_for_bt_tests.sh and source install/setup.bash",
+    )
     def test_state_machine_service_call(self):
         """Test that BT can call state machine service."""
         # Start both nodes
-        state_machine_started = self.start_state_machine()
+        self.start_state_machine()
         assert self.start_bt_orchestrator(), "BT orchestrator failed to start"
         time.sleep(2)
 
@@ -178,7 +198,10 @@ class TestBTStateMachineRuntime:
         else:
             self.test_node.get_logger().warn("State machine service not found")
 
-    @pytest.mark.skipif(not ROS2_AVAILABLE, reason="ROS2 not available")
+    @pytest.mark.skipif(
+        not BT_ORCHESTRATOR_AVAILABLE,
+        reason="autonomy_bt not built or not on PATH; run ./scripts/build_ros_for_bt_tests.sh and source install/setup.bash",
+    )
     def test_state_topic_communication(self):
         """Test state topic communication."""
         assert self.start_bt_orchestrator(), "BT orchestrator failed to start"

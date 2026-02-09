@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSystemContext } from '../../context/SystemContext';
+import { useTelemetryContext } from '../../context/TelemetryContext';
 import { Save, RefreshCw } from 'lucide-react';
 
 /**
@@ -9,10 +9,7 @@ import { Save, RefreshCw } from 'lucide-react';
  * Simple, clean configuration management.
  */
 export const ConfigTab = () => {
-  const {
-    systemStatus,
-    telemetry
-  } = useSystemContext();
+  const { systemStatus, telemetry } = useTelemetryContext();
 
   const [config, setConfig] = useState({
     rosBridgeUrl: 'ws://localhost:9090',

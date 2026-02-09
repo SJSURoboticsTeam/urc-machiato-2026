@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SystemContextProvider, useSystemContext } from './context/SystemContext';
+import { AppProviders, useUIContext } from './context';
 import { OfflineBanner } from './components/ui/OfflineBanner';
 import { TopBar } from './components/TopBar';
 import { TabNavigation } from './components/TabNavigation';
@@ -8,9 +8,11 @@ import { MissionTab } from './components/tabs/MissionTab';
 import { NetworkTab } from './components/tabs/NetworkTab';
 import { TestingTab } from './components/tabs/TestingTab';
 import { DebugTab } from './components/tabs/DebugTab';
+import { DebuggingDashboard } from './components/debugging';
 import { AnalyticsTab } from './components/tabs/AnalyticsTab';
 import { ConfigTab } from './components/tabs/ConfigTab';
 import { MonitoringDashboard } from './components/testing-dashboard/MonitoringDashboard';
+import { SectionErrorBoundary } from './components/debugging/UnifiedDebugging/SectionErrorBoundary';
 
 /**
  * Main App Component
@@ -24,28 +26,64 @@ import { MonitoringDashboard } from './components/testing-dashboard/MonitoringDa
  */
 function AppContent() {
   const [activeTab, setActiveTab] = useState('overview');
-  const { isOnline } = useSystemContext();
+  const { isOnline } = useUIContext();
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewTab />;
+        return (
+          <SectionErrorBoundary>
+            <OverviewTab />
+          </SectionErrorBoundary>
+        );
       case 'mission':
-        return <MissionTab />;
+        return (
+          <SectionErrorBoundary>
+            <MissionTab />
+          </SectionErrorBoundary>
+        );
       case 'network':
-        return <NetworkTab />;
+        return (
+          <SectionErrorBoundary>
+            <NetworkTab />
+          </SectionErrorBoundary>
+        );
       case 'monitoring':
-        return <MonitoringDashboard />;
+        return (
+          <SectionErrorBoundary>
+            <MonitoringDashboard />
+          </SectionErrorBoundary>
+        );
       case 'testing':
-        return <TestingTab />;
+        return (
+          <SectionErrorBoundary>
+            <TestingTab />
+          </SectionErrorBoundary>
+        );
       case 'debug':
-        return <DebugTab />;
+        return (
+          <SectionErrorBoundary>
+            <DebuggingDashboard />
+          </SectionErrorBoundary>
+        );
       case 'analytics':
-        return <AnalyticsTab />;
+        return (
+          <SectionErrorBoundary>
+            <AnalyticsTab />
+          </SectionErrorBoundary>
+        );
       case 'config':
-        return <ConfigTab />;
+        return (
+          <SectionErrorBoundary>
+            <ConfigTab />
+          </SectionErrorBoundary>
+        );
       default:
-        return <OverviewTab />;
+        return (
+          <SectionErrorBoundary>
+            <OverviewTab />
+          </SectionErrorBoundary>
+        );
     }
   };
 
@@ -64,10 +102,9 @@ function AppContent() {
       {/* Tab navigation */}
       <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* Tab content - scrollable */}
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {renderTabContent()}
-        </div>
+      {/* Tab content - scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {renderTabContent()}
       </div>
     </div>
   );
@@ -75,9 +112,9 @@ function AppContent() {
 
 function App() {
   return (
-    <SystemContextProvider>
+    <AppProviders>
       <AppContent />
-    </SystemContextProvider>
+    </AppProviders>
   );
 }
 

@@ -1,50 +1,35 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { getStatusTextColor } from '../../utils/statusUtils';
 
 /**
  * SystemStatusCard Component
  *
- * Displays system status with color-coded indicators.
- * Context-aware: shows relevant systems based on current state.
+ * Displays system status with color-coded indicators. Memoized for stable props.
  */
-export const SystemStatusCard = ({ systems, title = 'System Status', showDetails = false }) => {
+export const SystemStatusCard = memo(function SystemStatusCard({
+  systems,
+  title = 'System Status',
+  showDetails = false
+}) {
   const getStatusIcon = (status) => {
-    switch (status) {
+    const colorClass = getStatusTextColor(status);
+    switch (String(status).toLowerCase()) {
       case 'ok':
       case 'ready':
       case 'operational':
-        return <CheckCircle2 className="w-4 h-4 text-green-400" />;
+        return <CheckCircle2 className={`w-4 h-4 ${colorClass}`} />;
       case 'degraded':
       case 'warning':
-        return <AlertCircle className="w-4 h-4 text-yellow-400" />;
+        return <AlertCircle className={`w-4 h-4 ${colorClass}`} />;
       case 'error':
       case 'failed':
-        return <XCircle className="w-4 h-4 text-red-400" />;
+        return <XCircle className={`w-4 h-4 ${colorClass}`} />;
       case 'busy':
       case 'active':
-        return <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />;
+        return <Loader2 className={`w-4 h-4 ${colorClass} animate-spin`} />;
       default:
-        return <AlertCircle className="w-4 h-4 text-zinc-400" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'ok':
-      case 'ready':
-      case 'operational':
-        return 'text-green-400';
-      case 'degraded':
-      case 'warning':
-        return 'text-yellow-400';
-      case 'error':
-      case 'failed':
-        return 'text-red-400';
-      case 'busy':
-      case 'active':
-        return 'text-blue-400';
-      default:
-        return 'text-zinc-400';
+        return <AlertCircle className={`w-4 h-4 ${colorClass}`} />;
     }
   };
 
@@ -56,9 +41,9 @@ export const SystemStatusCard = ({ systems, title = 'System Status', showDetails
           <div key={key} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {getStatusIcon(status)}
-              <span className="text-sm text-zinc-300 capitalize">{key}</span>
+              <span className={`text-sm capitalize ${getStatusTextColor(status)}`}>{key}</span>
             </div>
-            <span className={`text-xs font-medium ${getStatusColor(status)}`}>
+            <span className={`text-xs font-medium ${getStatusTextColor(status)}`}>
               {status.toUpperCase()}
             </span>
           </div>
@@ -66,4 +51,4 @@ export const SystemStatusCard = ({ systems, title = 'System Status', showDetails
       </div>
     </div>
   );
-};
+});

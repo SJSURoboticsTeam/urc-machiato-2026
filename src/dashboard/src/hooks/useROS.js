@@ -105,7 +105,7 @@ export const useROS = (config = {}) => {
       setConnectionStatus('connected');
       setReconnectAttempts(0);
       reconnectAttemptsRef.current = 0;
-      // Clear any pending reconnection timeout since we're now connected
+      setLastError(null);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -124,15 +124,18 @@ export const useROS = (config = {}) => {
         reconnectTimeoutRef.current = null;
       }
 
-      // Attempt reconnection if under max attempts
+      // Attempt reconnection with exponential backoff (Phase 3: error recovery)
       if (reconnectAttemptsRef.current < maxReconnectAttempts) {
         reconnectAttemptsRef.current += 1;
         setReconnectAttempts(reconnectAttemptsRef.current);
-
+        const delay = Math.min(
+          reconnectInterval * Math.pow(2, reconnectAttemptsRef.current - 1),
+          30000
+        );
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log(`Attempting reconnection (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+          console.log(`Attempting reconnection (${reconnectAttemptsRef.current}/${maxReconnectAttempts}) in ${delay}ms`);
           connect();
-        }, reconnectInterval);
+        }, delay);
       } else {
         setConnectionStatus('failed');
         console.error('Max reconnection attempts reached');
@@ -144,15 +147,17 @@ export const useROS = (config = {}) => {
       setIsConnected(false);
       setConnectionStatus('disconnected');
 
-      // Only attempt reconnection if we haven't already scheduled one from an error
-      // and we're still under the max attempts
       if (!reconnectTimeoutRef.current && reconnectAttemptsRef.current < maxReconnectAttempts) {
+        reconnectAttemptsRef.current += 1;
+        setReconnectAttempts(reconnectAttemptsRef.current);
+        const delay = Math.min(
+          reconnectInterval * Math.pow(2, reconnectAttemptsRef.current - 1),
+          30000
+        );
         reconnectTimeoutRef.current = setTimeout(() => {
-          reconnectAttemptsRef.current += 1;
-          setReconnectAttempts(reconnectAttemptsRef.current);
           console.log(`Attempting reconnection (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
           connect();
-        }, reconnectInterval);
+        }, delay);
       }
     });
 

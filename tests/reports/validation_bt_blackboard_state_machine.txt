@@ -1,4 +1,4 @@
-BT / Blackboard / State Machine validation - 2026-02-01T10:50:38-08:00
+BT / Blackboard / State Machine validation - 2026-02-08T18:27:28-08:00
 ================================================================
 
 [Step 1] Unit tests (blackboard keys, persistence, hybrid logic, state machine contract)
@@ -32,12 +32,12 @@ tests/unit/core/test_adaptive_state_machine_hybrid.py::TestAdaptiveStateMachineH
 0.02s setup    unit/core/test_hybrid_controller_logic.py::TestHybridControllerLogic::test_emergency_wins
 0.00s call     unit/core/test_blackboard_persistence.py::TestBlackboardPersistenceLogic::test_save_format_json
 0.00s setup    unit/core/test_hybrid_controller_logic.py::TestHybridControllerLogic::test_override_over_mode
-0.00s teardown unit/core/test_hybrid_controller_logic.py::TestHybridControllerLogic::test_emergency_wins
+0.00s call     unit/core/test_adaptive_state_machine_hybrid.py::TestAdaptiveStateMachineHybrid::test_battery_threshold_contract
 0.00s call     unit/core/test_hybrid_controller_logic.py::TestHybridControllerLogic::test_emergency_wins
-0.00s setup    unit/core/test_blackboard_persistence.py::TestBlackboardPersistenceLogic::test_persisted_keys_include_mission_and_mode
-0.00s call     unit/core/test_blackboard_persistence.py::TestBlackboardPersistenceLogic::test_load_skips_emergency_stop
-0.00s setup    unit/core/test_blackboard_persistence.py::TestBlackboardPersistenceLogic::test_save_format_json
-0.00s setup    unit/core/test_blackboard_keys_schema.py::TestBlackboardKeysSchema::test_dot_keys_system_namespace
+0.00s setup    unit/core/test_blackboard_persistence.py::TestBlackboardPersistenceLogic::test_load_skips_emergency_stop
+0.00s teardown unit/core/test_hybrid_controller_logic.py::TestHybridControllerLogic::test_emergency_wins
+0.00s setup    unit/core/test_blackboard_keys_schema.py::TestBlackboardKeysSchema::test_flat_keys_exist
+0.00s setup    unit/core/test_blackboard_keys_schema.py::TestBlackboardKeysSchema::test_dot_keys_auto_namespace
 0.00s call     unit/core/test_blackboard_persistence.py::TestBlackboardPersistenceLogic::test_persisted_keys_include_mission_and_mode
 ======================== 13 passed, 1 skipped in 0.05s =========================
 Step 1: PASSED
@@ -80,17 +80,17 @@ tests/integration/autonomy/test_complete_bt_state_machine_flow.py::TestCompleteB
 tests/integration/autonomy/test_complete_bt_state_machine_flow.py::TestCompleteBTStateMachineIntegration::test_integration_test_completeness PASSED [100%]
 
 ============================= slowest 10 durations =============================
+0.03s call     integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_missing_state_machine_service
 0.02s setup    integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_bt_queries_state_machine
-0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_missing_state_machine_service
 0.00s setup    integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_state_transition_from_bt
-0.00s call     integration/autonomy/test_complete_bt_state_machine_flow.py::TestCompleteBTStateMachineIntegration::test_blackboard_integration_complete
-0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBlackboardCommunication::test_blackboard_data_types
-0.00s setup    integration/autonomy/test_complete_bt_state_machine_flow.py::TestCompleteBTStateMachineIntegration::test_service_call_response_flow
 0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_bt_queries_state_machine
+0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBlackboardCommunication::test_blackboard_data_types
+0.00s call     integration/autonomy/test_complete_bt_state_machine_flow.py::TestCompleteBTStateMachineIntegration::test_blackboard_integration_complete
+0.00s setup    integration/autonomy/test_complete_bt_state_machine_flow.py::TestCompleteBTStateMachineIntegration::test_service_call_response_flow
+0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBlackboardCommunication::test_blackboard_thread_safety
 0.00s teardown integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_state_transition_from_bt
 0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_blackboard_input_sources
-0.00s call     integration/autonomy/test_bt_state_machine_integration.py::TestBTStateMachineIntegration::test_bt_telemetry_integration
-============================== 25 passed in 0.05s ==============================
+============================== 25 passed in 0.07s ==============================
 Step 2: PASSED
 
 [Step 3] Live blackboard - Prereqs: ROS built (./scripts/build_ros_for_bt_tests.sh), source install/setup.bash, ros2 run autonomy_bt bt_orchestrator (lifecycle configure/activate if needed)

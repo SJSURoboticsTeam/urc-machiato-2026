@@ -88,6 +88,20 @@ export const MISSION_TOPICS = {
   SERVICING_PROGRESS: '/servicing/progress'
 };
 
+// Debugging Interface Topics (sensor analytics, BT performance, blackboard history)
+export const DEBUGGING_TOPICS = {
+  SENSOR_ANALYTICS: '/debugging/sensor_analytics',
+  BT_PERFORMANCE: '/debugging/bt_performance',
+  BLACKBOARD_HISTORY: '/blackboard/history',
+  SYSTEM_ANALYTICS: '/debugging/system_analytics'
+};
+
+// Blackboard services (existing BT.CPP blackboard)
+export const BLACKBOARD_SERVICES = {
+  GET_VALUE: '/blackboard/get_value',
+  SET_VALUE: '/blackboard/set_value'
+};
+
 // Safety System Topics
 export const SAFETY_TOPICS = {
   // Safety status and monitoring
@@ -173,7 +187,9 @@ export const SERVICE_TYPES = {
   RECOVER_FROM_SAFETY: 'autonomy_interfaces/srv/RecoverFromSafety',
   SAFESTOP_CONTROL: 'autonomy_interfaces/srv/SafestopControl',
   GET_AOI_STATUS: 'autonomy_interfaces/srv/GetAOIStatus',
-  CHANGE_STATE: 'autonomy_interfaces/srv/ChangeState'
+  CHANGE_STATE: 'autonomy_interfaces/srv/ChangeState',
+  GET_BLACKBOARD_VALUE: 'autonomy_interfaces/srv/GetBlackboardValue',
+  SET_BLACKBOARD_VALUE: 'autonomy_interfaces/srv/SetBlackboardValue'
 };
 
 // Quality of Service (QoS) profiles for different data types

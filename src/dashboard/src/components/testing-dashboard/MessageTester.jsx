@@ -1,12 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import { Send, Radio } from 'lucide-react';
+import { useROSContext } from '../../context/ROSContext';
 import { UI_CONSTANTS } from '../../constants/uiConstants';
 import { generateMessageDelay } from '../../utils/mockDataUtils';
 import ROSLIB from '../../utils/rosbridge';
+import { VirtualizedList } from '../ui/VirtualizedList';
 
 /**
  * Message Tester Component
- * Handles sending test messages through different communication channels
+ * Handles sending test messages through different communication channels.
+ * Uses shared ROS connection from context (debugging; may move to teleop frontend).
  */
 export const MessageTester = ({
   messageHistory,
@@ -16,6 +19,7 @@ export const MessageTester = ({
   commMetrics,
   setCommMetrics
 }) => {
+  const { ros, isConnected } = useROSContext();
   const [testMessage, setTestMessage] = useState('');
   const [messageTarget, setMessageTarget] = useState(UI_CONSTANTS.MESSAGE_TARGETS[0]);
   const [canMessageType, setCanMessageType] = useState(UI_CONSTANTS.CAN_MESSAGE_TYPES[0]);
@@ -33,37 +37,25 @@ export const MessageTester = ({
 
     try {
       if (messageTarget === 'can') {
-        // Send CAN message to ROS2
-        const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
-
-        // Wait for connection
-        await new Promise((resolve, reject) => {
-          ros.on('connection', () => resolve());
-          ros.on('error', (error) => reject(error));
-          ros.connect();
-
-          // Timeout after 5 seconds
-          setTimeout(() => reject(new Error('Connection timeout')), 5000);
-        });
-
+        if (!ros || !isConnected) {
+          setSendError('Connect to ROS to send CAN messages');
+          setIsSending(false);
+          return;
+        }
         const canTopic = new ROSLIB.Topic({
-          ros: ros,
+          ros,
           name: '/can/data_request',
           messageType: 'std_msgs/String'
         });
-
         const canMessage = {
           type: canMessageType,
           data: testMessage || 'test_data',
-          timestamp: timestamp,
+          timestamp,
           source: 'dashboard_test'
         };
-
         canTopic.publish(new ROSLIB.Message({
           data: JSON.stringify(canMessage)
         }));
-
-        ros.close();
       }
 
       const message = {
@@ -227,33 +219,38 @@ export const MessageTester = ({
         )}
       </div>
 
-      {/* Message history */}
+      {/* Message history - virtualized for 60fps with large history */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium text-zinc-400">Recent Messages</h4>
-        <div className="max-h-48 overflow-y-auto space-y-1">
-          {messageHistory.slice(0, UI_CONSTANTS.MESSAGE_HISTORY_LIMIT).map(msg => (
-            <div key={msg.id || Math.random()} className="text-xs bg-zinc-800 p-2 rounded flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className={getChannelColor(msg.target || 'unknown')}>
-                  {(msg.target || 'UNKNOWN').toUpperCase()}
+        <div className="max-h-48 overflow-hidden">
+          <VirtualizedList
+            items={messageHistory.slice(0, UI_CONSTANTS.MESSAGE_HISTORY_LIMIT)}
+            height={192}
+            itemHeight={40}
+            emptyMessage="No messages sent yet"
+            className="text-xs"
+          >
+            {(_, msg) => (
+              <div className="text-xs bg-zinc-800 p-2 rounded flex justify-between items-center mx-0.5 mb-0.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`shrink-0 ${getChannelColor(msg.target || 'unknown')}`}>
+                    {(msg.target || 'UNKNOWN').toUpperCase()}
+                  </span>
+                  <span className="text-zinc-300 truncate max-w-32">{msg.content || 'No content'}</span>
+                </div>
+                <span
+                  className={`shrink-0 text-xs px-1 rounded ${
+                    msg.status === 'sent' ? 'bg-yellow-900 text-yellow-300' :
+                    msg.status === 'delivered' ? 'bg-green-900 text-green-300' :
+                    msg.status === 'received' ? 'bg-blue-900 text-blue-300' :
+                    'bg-zinc-700 text-zinc-400'
+                  }`}
+                >
+                  {msg.status || 'unknown'}
                 </span>
-                <span className="text-zinc-300 truncate max-w-32">{msg.content || 'No content'}</span>
               </div>
-              <span className={`text-xs px-1 rounded ${
-                msg.status === 'sent' ? 'bg-yellow-900 text-yellow-300' :
-                msg.status === 'delivered' ? 'bg-green-900 text-green-300' :
-                msg.status === 'received' ? 'bg-blue-900 text-blue-300' :
-                'bg-zinc-700 text-zinc-400'
-              }`}>
-                {msg.status || 'unknown'}
-              </span>
-            </div>
-          ))}
-          {messageHistory.length === 0 && (
-            <div className="text-xs text-zinc-500 text-center py-4">
-              No messages sent yet
-            </div>
-          )}
+            )}
+          </VirtualizedList>
         </div>
       </div>
     </div>

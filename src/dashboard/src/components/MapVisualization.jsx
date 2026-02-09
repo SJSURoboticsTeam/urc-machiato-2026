@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { parseAndValidate, mapPathSchema, waypointsSchema } from '../utils/validationSchemas';
 // Mock ROSLIB for testing dashboard - real ROS integration can be added later
 const ROSLIB = {
   Ros: class MockRos {
@@ -66,24 +67,16 @@ const MapVisualization = ({ ros }) => {
     });
 
     const mapCallback = (message) => {
-      try {
-        const data = JSON.parse(message.data);
+      const data = parseAndValidate(message?.data, mapPathSchema);
+      if (data) {
         setMapData(data);
-        if (data.path) {
-          setRobotPath(data.path);
-        }
-      } catch (error) {
-        console.error('Error parsing map data:', error);
+        if (data.path) setRobotPath(data.path);
       }
     };
 
     const waypointCallback = (message) => {
-      try {
-        const data = JSON.parse(message.data);
-        setWaypoints(data.waypoints || []);
-      } catch (error) {
-        console.error('Error parsing waypoints:', error);
-      }
+      const data = parseAndValidate(message?.data, waypointsSchema);
+      if (data) setWaypoints(data.waypoints || []);
     };
 
     mapTopic.subscribe(mapCallback);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useSystemContext } from '../../context/SystemContext';
+import { useTelemetryContext } from '../../context/TelemetryContext';
+import { useUIContext } from '../../context/UIContext';
 import { BarChart3, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 /**
@@ -9,11 +10,8 @@ import { BarChart3, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react
  * Shows real-time and historical data.
  */
 export const AnalyticsTab = () => {
-  const {
-    systemStatus,
-    telemetry,
-    alerts
-  } = useSystemContext();
+  const { systemStatus, telemetry } = useTelemetryContext();
+  const { alerts } = useUIContext();
 
   const [activeView, setActiveView] = useState('realtime');
 

@@ -1,4 +1,13 @@
-import rosbridge from '../rosbridge';
+import rosbridge, {
+  createSubscriber,
+  createPublisher,
+  createServiceClient,
+  callService,
+  createParam,
+  createMessage,
+  connectionStatus,
+  getStatusText
+} from '../rosbridge';
 
 // Mock ROSLIB
 jest.mock('roslib', () => ({
@@ -16,8 +25,11 @@ jest.mock('roslib', () => ({
     unadvertise: jest.fn(),
   })),
   Service: jest.fn().mockImplementation(() => ({
-    callService: jest.fn(),
+    callService: jest.fn((request, onSuccess, onError) => {
+      if (onSuccess) onSuccess({ success: true });
+    }),
   })),
+  Param: jest.fn().mockImplementation(() => ({ get: jest.fn(), set: jest.fn() })),
   Message: jest.fn(),
 }));
 
@@ -213,5 +225,140 @@ describe('ROS Bridge Utility', () => {
 
     topic.unadvertise();
     expect(topic.unadvertise).toHaveBeenCalled();
+  });
+
+  describe('createSubscriber', () => {
+    test('creates topic and subscribes callback', () => {
+      const ros = {};
+      const callback = jest.fn();
+      const topic = createSubscriber(ros, '/test', 'std_msgs/String', callback);
+      expect(rosbridge.Topic).toHaveBeenCalledWith({
+        ros,
+        name: '/test',
+        messageType: 'std_msgs/String'
+      });
+      expect(topic.subscribe).toHaveBeenCalledWith(callback);
+    });
+  });
+
+  describe('createPublisher', () => {
+    test('returns Topic configured as publisher', () => {
+      const ros = {};
+      const topic = createPublisher(ros, '/cmd_vel', 'geometry_msgs/Twist');
+      expect(rosbridge.Topic).toHaveBeenCalledWith({
+        ros,
+        name: '/cmd_vel',
+        messageType: 'geometry_msgs/Twist'
+      });
+      expect(topic).toBeDefined();
+    });
+  });
+
+  describe('createServiceClient', () => {
+    test('returns Service client', () => {
+      const ros = {};
+      const client = createServiceClient(ros, '/trigger', 'std_srvs/Trigger');
+      expect(rosbridge.Service).toHaveBeenCalledWith({
+        ros,
+        name: '/trigger',
+        serviceType: 'std_srvs/Trigger'
+      });
+      expect(client).toBeDefined();
+    });
+  });
+
+  describe('callService', () => {
+    test('resolves with response on success', async () => {
+      const client = {
+        callService: jest.fn((req, onSuccess) => onSuccess({ success: true }))
+      };
+      const result = await callService(client, {});
+      expect(result).toEqual({ success: true });
+    });
+
+    test('rejects on error', async () => {
+      const client = {
+        callService: jest.fn((req, onSuccess, onError) => onError(new Error('service failed')))
+      };
+      await expect(callService(client, {})).rejects.toThrow('service failed');
+    });
+  });
+
+  describe('createParam', () => {
+    test('returns Param instance', () => {
+      const ros = {};
+      const param = createParam(ros, '/rover/max_speed');
+      expect(rosbridge.Param).toHaveBeenCalledWith({ ros, name: '/rover/max_speed' });
+      expect(param).toBeDefined();
+    });
+  });
+
+  describe('createMessage', () => {
+    test('string returns { data }', () => {
+      expect(createMessage.string('hello')).toEqual({ data: 'hello' });
+    });
+    test('poseStamped uses default frameId', () => {
+      const pose = { position: { x: 1, y: 2, z: 3 } };
+      const msg = createMessage.poseStamped(pose);
+      expect(msg.pose).toEqual(pose);
+      expect(msg.header.frame_id).toBe('map');
+      expect(msg.header.stamp).toBeDefined();
+    });
+    test('poseStamped uses custom frameId', () => {
+      const msg = createMessage.poseStamped({}, 'odom');
+      expect(msg.header.frame_id).toBe('odom');
+    });
+    test('point returns x,y,z', () => {
+      expect(createMessage.point(1, 2, 3)).toEqual({ x: 1, y: 2, z: 3 });
+    });
+    test('quaternion defaults', () => {
+      expect(createMessage.quaternion()).toEqual({ x: 0, y: 0, z: 0, w: 1 });
+    });
+    test('quaternion custom', () => {
+      expect(createMessage.quaternion(0, 0, 0.7, 0.7)).toEqual({ x: 0, y: 0, z: 0.7, w: 0.7 });
+    });
+    test('twist defaults', () => {
+      expect(createMessage.twist()).toEqual({
+        linear: { x: 0, y: 0, z: 0 },
+        angular: { x: 0, y: 0, z: 0 }
+      });
+    });
+    test('twist custom', () => {
+      expect(createMessage.twist(1.0, 0.5)).toEqual({
+        linear: { x: 1, y: 0, z: 0 },
+        angular: { x: 0, y: 0, z: 0.5 }
+      });
+    });
+  });
+
+  describe('connectionStatus', () => {
+    test('has expected constants', () => {
+      expect(connectionStatus.CONNECTED).toBe('connected');
+      expect(connectionStatus.CONNECTING).toBe('connecting');
+      expect(connectionStatus.DISCONNECTED).toBe('disconnected');
+      expect(connectionStatus.ERROR).toBe('error');
+      expect(connectionStatus.FAILED).toBe('failed');
+    });
+  });
+
+  describe('getStatusText', () => {
+    test('CONNECTED', () => {
+      expect(getStatusText(connectionStatus.CONNECTED)).toBe('Connected to ROS');
+    });
+    test('CONNECTING', () => {
+      expect(getStatusText(connectionStatus.CONNECTING)).toBe('Connecting to ROS...');
+    });
+    test('DISCONNECTED', () => {
+      expect(getStatusText(connectionStatus.DISCONNECTED)).toBe('Disconnected from ROS');
+    });
+    test('ERROR', () => {
+      expect(getStatusText(connectionStatus.ERROR)).toBe('Connection error');
+    });
+    test('FAILED', () => {
+      expect(getStatusText(connectionStatus.FAILED)).toBe('Failed to connect');
+    });
+    test('default/unknown', () => {
+      expect(getStatusText('unknown')).toBe('Unknown status');
+    });
   });
 });

@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Target, Pause, Square } from 'lucide-react';
 
 /**
  * MissionProgressCard Component
  *
- * Displays active mission progress with controls.
- * Only shows when a mission is active.
+ * Displays active mission progress with controls. Memoized for stable props.
  */
-export const MissionProgressCard = ({ mission, onPause, onAbort, onViewDetails }) => {
+export const MissionProgressCard = memo(function MissionProgressCard({
+  mission,
+  onPause,
+  onAbort,
+  onViewDetails
+}) {
   if (!mission) return null;
 
   return (
@@ -79,4 +83,4 @@ export const MissionProgressCard = ({ mission, onPause, onAbort, onViewDetails }
       )}
     </div>
   );
-};
+});

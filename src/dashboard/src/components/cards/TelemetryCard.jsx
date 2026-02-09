@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 /**
  * TelemetryCard Component
  *
- * Displays critical telemetry data in a compact format.
+ * Displays critical telemetry data in a compact format. Memoized for stable props.
  */
-export const TelemetryCard = ({ telemetry, title = 'Telemetry' }) => {
+export const TelemetryCard = memo(function TelemetryCard({ telemetry, title = 'Telemetry' }) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded p-4">
       <h3 className="text-sm font-semibold text-zinc-200 mb-3">{title}</h3>
@@ -51,4 +51,4 @@ export const TelemetryCard = ({ telemetry, title = 'Telemetry' }) => {
       </div>
     </div>
   );
-};
+});

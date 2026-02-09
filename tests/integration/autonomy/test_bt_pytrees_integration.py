@@ -12,6 +12,7 @@ Tests verify:
 import pytest
 import sys
 import os
+import time
 from typing import Dict, Any
 
 # Add project paths
@@ -54,7 +55,7 @@ class TestPyTreesBlackboard:
         """Test that blackboard is created properly."""
         from missions.robust_behavior_tree import BTExecutionContext
 
-        context = BTExecutionContext()
+        context = BTExecutionContext(node_id="test", start_time=time.time())
 
         # Check blackboard type
         if PY_TREES_AVAILABLE:
@@ -73,7 +74,7 @@ class TestPyTreesBlackboard:
         """Test blackboard set/get operations."""
         from missions.robust_behavior_tree import BTExecutionContext
 
-        context = BTExecutionContext()
+        context = BTExecutionContext(node_id="test", start_time=time.time())
 
         # Test setting and getting values
         if hasattr(context.blackboard, "set"):
@@ -96,8 +97,8 @@ class TestPyTreesBlackboard:
 
         action = EnhancedActionNode("test_action", test_action)
 
-        # Create tree with blackboard
-        tree = BehaviorTree("test_tree", action)
+        # Create tree with blackboard (BehaviorTree(root, name))
+        tree = BehaviorTree(action, "test_tree")
 
         # Execute with blackboard
         result = tree.execute()
@@ -170,7 +171,7 @@ class TestPyTreesBehaviorTree:
             return True
 
         action = EnhancedActionNode("test_action", success_action)
-        tree = BehaviorTree("test_tree", action)
+        tree = BehaviorTree(action, "test_tree")
 
         assert tree.name == "test_tree", "Tree should have correct name"
         assert tree.root is not None, "Tree should have root node"
@@ -185,7 +186,7 @@ class TestPyTreesBehaviorTree:
             return True
 
         action = EnhancedActionNode("success", success_action)
-        tree = BehaviorTree("test", action)
+        tree = BehaviorTree(action, "test")
 
         result = tree.execute()
 

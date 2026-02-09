@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { parseAndValidate, aoiStatusSchema, aoiMetricsSchema } from '../utils/validationSchemas';
 
 /**
  * Minimal AOI Testing Interface
@@ -23,34 +24,31 @@ export const AOITesting = ({ isConnected, ros }) => {
     const subscriptions = [];
 
     try {
-      // AOI Status subscription
+      // AOI Status subscription - validated to reject invalid payloads
       const aoiStatusSub = ros.subscribe(
         '/system/aoi_status',
         (msg) => {
-          try {
-            const data = JSON.parse(msg.data);
-        setAoiData(prev => ({
-          ...prev,
-          sensors: {
-            ...prev.sensors,
-            [data.sensor_name]: {
-              name: data.sensor_name,
-              aoi: data.current_aoi,
-              status: data.freshness_status,
-              quality: data.quality_score,
-              transport: data.transport_type || getTransportType(data.sensor_name),
-              networkLatency: data.network_latency || 0,
-              transportLatency: data.transport_latency || 0,
-              congestionDetected: data.congestion_detected || false,
-              congestionFactor: data.congestion_factor || 1.0,
-              predictedAoi: data.predicted_aoi || data.current_aoi,
-              aoiTrend: data.aoi_trend || 0
+          const data = parseAndValidate(msg?.data, aoiStatusSchema);
+          if (!data) return;
+          setAoiData((prev) => ({
+            ...prev,
+            sensors: {
+              ...prev.sensors,
+              [data.sensor_name]: {
+                name: data.sensor_name,
+                aoi: data.current_aoi,
+                status: data.freshness_status,
+                quality: data.quality_score,
+                transport: data.transport_type || getTransportType(data.sensor_name),
+                networkLatency: data.network_latency || 0,
+                transportLatency: data.transport_latency || 0,
+                congestionDetected: data.congestion_detected || false,
+                congestionFactor: data.congestion_factor || 1.0,
+                predictedAoi: data.predicted_aoi ?? data.current_aoi,
+                aoiTrend: data.aoi_trend || 0
+              }
             }
-          }
-        }));
-          } catch (e) {
-            console.warn('Failed to parse AOI status:', e);
-          }
+          }));
         },
         10
       );
@@ -60,30 +58,26 @@ export const AOITesting = ({ isConnected, ros }) => {
       const aoiMetricsSub = ros.subscribe(
         '/system/aoi_metrics',
         (msg) => {
-          try {
-        const data = JSON.parse(msg.data);
-        setAoiData(prev => ({
-          ...prev,
-          metrics: {
-            systemAoi: data.system_average_aoi,
-            freshSensors: data.fresh_sensors,
-            totalSensors: data.total_sensors,
-            health: data.health_status,
-            // Network health metrics
-            serialSensors: data.serial_sensors || 0,
-            canSensors: data.can_sensors || 0,
-            ethernetSensors: data.ethernet_sensors || 0,
-            localSensors: data.local_sensors || 0,
-            avgNetworkLatency: data.avg_network_latency || 0,
-            maxNetworkLatency: data.max_network_latency || 0,
-            congestedLinks: data.congested_links || 0,
-            networkHealthScore: data.network_health_score || 1.0,
-            networkRecommendations: data.network_recommendations || []
-          }
-        }));
-          } catch (e) {
-            console.warn('Failed to parse AOI metrics:', e);
-          }
+          const data = parseAndValidate(msg?.data, aoiMetricsSchema);
+          if (!data) return;
+          setAoiData((prev) => ({
+            ...prev,
+            metrics: {
+              systemAoi: data.system_average_aoi,
+              freshSensors: data.fresh_sensors,
+              totalSensors: data.total_sensors,
+              health: data.health_status,
+              serialSensors: data.serial_sensors || 0,
+              canSensors: data.can_sensors || 0,
+              ethernetSensors: data.ethernet_sensors || 0,
+              localSensors: data.local_sensors || 0,
+              avgNetworkLatency: data.avg_network_latency || 0,
+              maxNetworkLatency: data.max_network_latency || 0,
+              congestedLinks: data.congested_links || 0,
+              networkHealthScore: data.network_health_score || 1.0,
+              networkRecommendations: data.network_recommendations || []
+            }
+          }));
         },
         10
       );

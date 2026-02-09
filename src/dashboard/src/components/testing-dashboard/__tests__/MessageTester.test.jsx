@@ -4,15 +4,32 @@ import { MessageTester } from '../MessageTester';
 import { UI_CONSTANTS } from '../../../constants/uiConstants';
 import { vi, describe, test, expect, beforeEach } from 'vitest';
 
-// Mock the useROS hook
-vi.mock('../../../hooks/useROS', () => ({
-  useROS: () => ({
-    ros: { isConnected: true },
+// Mock VirtualizedList so we don't depend on react-window in jsdom
+vi.mock('../../ui/VirtualizedList', () => ({
+  VirtualizedList: ({ items = [], children: renderRow, emptyMessage }) => {
+    if (!items || items.length === 0) {
+      return <div data-testid="virtualized-list-empty">{emptyMessage}</div>;
+    }
+    return (
+      <div data-testid="virtualized-list">
+        {items.map((item, index) => (
+          <div key={item?.id ?? index}>{renderRow(index, item)}</div>
+        ))}
+      </div>
+    );
+  }
+}));
+
+// Mock ROS context (MessageTester uses shared connection for CAN)
+vi.mock('../../../context/ROSContext', () => ({
+  useROSContext: () => ({
+    ros: {},
     isConnected: true,
-    subscribe: vi.fn(),
-    publish: vi.fn(),
-    callService: vi.fn(),
-    error: null,
+    connectionStatus: 'connected',
+    lastError: null,
+    reconnectAttempts: 0,
+    resetReconnection: vi.fn(),
+    connect: vi.fn(),
   }),
 }));
 

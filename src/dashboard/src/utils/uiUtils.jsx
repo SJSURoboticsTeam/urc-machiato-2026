@@ -3,6 +3,7 @@
  * Simplifies complex conditionals and status handling
  */
 
+import { CheckCircle2, XCircle, Clock, AlertTriangle, WifiOff } from 'lucide-react';
 import { STATUS_STYLES, PRIORITY_STYLES } from '../constants/uiConstants';
 
 /**

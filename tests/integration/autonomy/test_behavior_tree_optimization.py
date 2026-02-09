@@ -610,6 +610,21 @@ class BehaviorTreeOptimizationTester:
         return recommendations
 
 
+def test_bt_optimization_run():
+    """Pytest entry point: run BT optimization suite; skip if dependencies missing."""
+    import pytest
+
+    try:
+        from src.infrastructure.config import get_config  # noqa: F401
+        from missions.robust_behavior_tree import RobustBehaviorTree  # noqa: F401
+    except ImportError as e:
+        pytest.skip(f"BT optimization dependencies not available: {e}")
+
+    tester = BehaviorTreeOptimizationTester()
+    report = tester.run_comprehensive_bt_tests()
+    assert "performance_analysis" in report or "recommendations" in report
+
+
 def run_behavior_tree_optimization_tests():
     """Run comprehensive behavior tree optimization tests."""
     tester = BehaviorTreeOptimizationTester()
