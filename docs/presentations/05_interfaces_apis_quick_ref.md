@@ -6,7 +6,7 @@
 **Module**: `src/infrastructure/config`
 
 ```python
-from src.infrastructure.config import get_urc_config
+from shared.infrastructure.config import get_urc_config
 
 # Get system configuration (single source of truth)
 config = get_urc_config()
@@ -122,7 +122,7 @@ pose = slam.get_current_pose()  # (x, y, yaw)
 **Module**: `src/infrastructure/bridges`
 
 ```python
-from src.infrastructure.bridges import WebSocketBridge
+from shared.infrastructure.bridges import WebSocketBridge
 
 # Initialize bridge (connects to dashboard)
 bridge = WebSocketBridge(host="localhost", port=8000)
@@ -149,7 +149,7 @@ if command.type == "navigate":
 **Module**: `src/infrastructure/bridges`
 
 ```python
-from src.infrastructure.bridges import CANBridge
+from shared.infrastructure.bridges import CANBridge
 
 # Initialize CAN communication
 can = CANBridge(interface="CAN0", bitrate=1000000)
@@ -174,7 +174,7 @@ if msg:
 **Module**: `src/infrastructure/monitoring`
 
 ```python
-from src.infrastructure.monitoring import HealthMonitor, MetricsCollector
+from shared.infrastructure.monitoring import HealthMonitor, MetricsCollector
 
 # Health monitoring
 monitor = HealthMonitor()
@@ -229,7 +229,7 @@ else:
 ```python
 from src.autonomy.autonomy_core.navigation import PathPlanner
 from src.autonomy.autonomy_core.safety import EmergencyStop
-from src.infrastructure.config import get_urc_config
+from shared.infrastructure.config import get_urc_config
 
 config = get_urc_config()
 planner = PathPlanner(config=config.navigation)
@@ -265,8 +265,8 @@ use_sensor_data(data)
 
 ### Pattern 3: Dashboard Communication
 ```python
-from src.infrastructure.bridges import WebSocketBridge
-from src.infrastructure.monitoring import HealthMonitor
+from shared.infrastructure.bridges import WebSocketBridge
+from shared.infrastructure.monitoring import HealthMonitor
 
 bridge = WebSocketBridge()
 monitor = HealthMonitor()
@@ -388,7 +388,7 @@ network:
 
 ```bash
 # Check configuration
-python -c "from src.infrastructure.config import get_urc_config; print(get_urc_config())"
+python -c "from shared.infrastructure.config import get_urc_config; print(get_urc_config())"
 
 # Run specific test
 python -m pytest tests/unit/test_navigation.py::test_path_planning -v
@@ -426,7 +426,7 @@ python -m pytest tests/ -v --log-cli-level=DEBUG
 - [ ] Check `AGENTS.md` for commands
 - [ ] Run `./scripts/build.sh dev`
 - [ ] Run tests: `python -m pytest tests/unit/ -v`
-- [ ] Try an example: `python -c "from src.infrastructure.config import get_urc_config; print(get_urc_config())"`
+- [ ] Try an example: `python -c "from shared.infrastructure.config import get_urc_config; print(get_urc_config())"`
 - [ ] Read module docstrings: `help(get_urc_config)`
 - [ ] Ask questions!
 

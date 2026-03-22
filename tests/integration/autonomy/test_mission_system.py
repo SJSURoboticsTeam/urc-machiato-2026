@@ -18,8 +18,11 @@ from unittest.mock import MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "missions"))
 sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "..", "autonomy", "code")
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "autonomy", "autonomy_core")
 )
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared", "infrastructure", "bridges"))
+# Fallback paths for backward compatibility
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "autonomy", "autonomy_core"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "bridges"))
 
 

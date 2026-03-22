@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_c/autonomy_interfaces/srv/detail/load_calibration_parameters__functions.h

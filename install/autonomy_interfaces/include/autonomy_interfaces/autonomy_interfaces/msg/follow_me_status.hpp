@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_cpp/autonomy_interfaces/msg/follow_me_status.hpp

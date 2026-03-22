@@ -421,7 +421,9 @@ class TestTimingRaceConditionsFailures:
 
             # Check 50ms deadline for state transitions
             deadline_met = timing_analyzer.check_deadline(timing['execution_time_ms'], 50.0)
-            assert deadline_met, ".1f"
+            assert deadline_met, (
+                f"State transition exceeded 50ms deadline: {timing['execution_time_ms']:.1f}ms"
+            )
 
         stats = timing_analyzer.get_timing_statistics()
 
@@ -454,9 +456,10 @@ class TestTimingRaceConditionsFailures:
             operations_per_thread=50
         )
 
-        print("🏁 State Machine Race Condition Analysis:")
+        print("State Machine Race Condition Analysis:")
         print(f"   Total Operations: {race_results['total_operations']}")
-        print(".1f"        print(f"   Final Counter: {race_results['final_counter_value']}")
+        print(f"   Operations/sec: {race_results['operations_per_second']:.1f}")
+        print(f"   Final Counter: {race_results['final_counter_value']}")
         print(f"   Expected Counter: {race_results['expected_counter_value']}")
         print(f"   Race Conditions: {race_results['race_conditions_detected']}")
 
@@ -498,12 +501,16 @@ class TestTimingRaceConditionsFailures:
 
             # Check 100ms deadline for BT ticks
             deadline_met = timing_analyzer.check_deadline(timing['execution_time_ms'], 100.0)
-            assert deadline_met, ".1f"
+            assert deadline_met, (
+                f"BT tick exceeded 100ms deadline: {timing['execution_time_ms']:.1f}ms"
+            )
 
         stats = timing_analyzer.get_timing_statistics()
 
-        print("🌳 Behavior Tree Timing Analysis:")
-        print(".1f"        print(".1f"        print(f"   Deadline Violations: {stats['deadline_violations']}")
+        print("Behavior Tree Timing Analysis:")
+        print(f"   Avg execution: {stats['avg_execution_time_ms']:.1f}ms")
+        print(f"   99th percentile: {stats['99th_percentile_ms']:.1f}ms")
+        print(f"   Deadline Violations: {stats['deadline_violations']}")
 
         # Behavior tree must meet real-time requirements
         assert stats['avg_execution_time_ms'] < 50.0   # Average < 50ms
@@ -564,9 +571,12 @@ class TestTimingRaceConditionsFailures:
         avg_cpu_usage = sum(cpu_usage_samples) / len(cpu_usage_samples) if cpu_usage_samples else 0
         max_cpu_usage = max(cpu_usage_samples) if cpu_usage_samples else 0
 
-        print("⚡ CPU Bottleneck Analysis:")
+        print("CPU Bottleneck Analysis:")
         print(f"   Total Operations: {total_operations}")
-        print(".1f"        print(".1f"        print(".1f"        print(f"   CPU Samples: {len(cpu_usage_samples)}")
+        print(f"   Operations/sec: {operations_per_second:.1f}")
+        print(f"   Avg CPU usage: {avg_cpu_usage:.1f}%")
+        print(f"   Max CPU usage: {max_cpu_usage:.1f}%")
+        print(f"   CPU Samples: {len(cpu_usage_samples)}")
 
         # System should not be CPU-bound for typical operations
         assert operations_per_second > 10000, "Operations per second too low - possible CPU bottleneck"
@@ -612,9 +622,13 @@ class TestTimingRaceConditionsFailures:
             max_latency = max(message_latencies)
             percentile_95 = sorted(message_latencies)[94]  # 95th percentile
 
-            print(".1f"
+            print(
+                f"   Latency ms: avg={avg_latency:.1f} p95={percentile_95:.1f} max={max_latency:.1f}"
+            )
             # Under congestion, system should still be responsive
-            assert avg_latency < 100, ".1f"            assert percentile_95 < 300, ".1f"            assert max_latency < 1000, ".1f"
+            assert avg_latency < 100, f"Average latency too high: {avg_latency:.1f}ms"
+            assert percentile_95 < 300, f"P95 latency too high: {percentile_95:.1f}ms"
+            assert max_latency < 1000, f"Max latency too high: {max_latency:.1f}ms"
 
     def test_sensor_dropouts_and_anomalies(self, hardware_failure_sim):
         """Test sensor dropouts and anomalous readings handling."""
@@ -699,10 +713,13 @@ class TestTimingRaceConditionsFailures:
         final_performance = degradation_readings[-1]
         degradation_amount = initial_performance - final_performance
 
-        print(".1f"        print(".1f"        print(".1f"
+        print(f"   Initial performance: {initial_performance:.3f}")
+        print(f"   Final performance: {final_performance:.3f}")
+        print(f"   Degradation amount: {degradation_amount:.3f}")
         # System should handle gradual degradation
         assert degradation_amount > 0, "No degradation detected"
-        assert final_performance > 0.5, "Degradation too severe"        assert len(degradation_readings) == 20
+        assert final_performance > 0.5, "Degradation too severe"
+        assert len(degradation_readings) == 20
 
     @pytest.mark.asyncio
     async def test_timing_under_resource_contention(self, timing_analyzer):
@@ -741,11 +758,13 @@ class TestTimingRaceConditionsFailures:
         total_time = end_time - start_time
         throughput = num_concurrent / total_time
 
-        print("🏭 Resource Contention Analysis:")
+        print("Resource Contention Analysis:")
         print(f"   Concurrent Operations: {num_concurrent}")
-        print(".1f"        print(".1f"
+        print(f"   Throughput: {throughput:.1f} ops/s")
+        print(f"   Total time: {total_time:.1f}s")
         # System should handle resource contention
-        assert throughput > 5, "Throughput too low under contention"        assert total_time < 30, "Contention caused excessive delays"
+        assert throughput > 5, "Throughput too low under contention"
+        assert total_time < 30, "Contention caused excessive delays"
 
     def test_memory_pressure_and_leaks(self):
         """Test memory pressure and potential memory leaks."""
@@ -795,11 +814,15 @@ class TestTimingRaceConditionsFailures:
         memory_increase = final_memory - initial_memory
         max_memory = max(memory_samples)
 
-        print("💾 Memory Pressure Analysis:")
-        print(".1f"        print(".1f"        print(".1f"        print(f"   Memory Samples: {len(memory_samples)}")
+        print("Memory Pressure Analysis:")
+        print(f"   Initial memory %: {initial_memory:.1f}")
+        print(f"   Final memory %: {final_memory:.1f}")
+        print(f"   Increase %: {memory_increase:.1f}")
+        print(f"   Memory Samples: {len(memory_samples)}")
 
         # System should not have significant memory leaks
-        assert memory_increase < 10, ".1f"        assert max_memory < 90, ".1f"
+        assert memory_increase < 10, f"Memory leak suspected: +{memory_increase:.1f}%"
+        assert max_memory < 90, f"Peak memory too high: {max_memory:.1f}%"
 
     @pytest.mark.asyncio
     async def test_deadlock_prevention(self):
@@ -852,7 +875,7 @@ class TestTimingRaceConditionsFailures:
         print(f"   Total Operations: {len(results)}")
         print(f"   Successful: {successful_operations}")
         print(f"   Failed: {failed_operations}")
-        print(".1f"
+        print(f"   Total duration: {end_time - start_time:.1f}s")
         # System should prevent deadlocks
         assert successful_operations == len(results), f"Deadlock detected: {failed_operations} operations failed"
         assert end_time - start_time < 5.0, "Operations took too long - possible deadlock"
@@ -881,11 +904,15 @@ class TestTimingRaceConditionsFailures:
         p95 = sorted_times[94]  # 95th percentile
         p99 = sorted_times[98]  # 99th percentile
 
-        print("📊 Timing Variability Analysis:")
-        print(".2f"        print(".2f"        print(".3f"        print(".2f"        print(".2f"        print(".2f"
+        print("Timing Variability Analysis:")
+        print(f"   Mean time: {mean_time:.2f}ms")
+        print(f"   Std dev: {std_dev:.2f}ms")
+        print(f"   CoV: {coefficient_of_variation:.3f}")
+        print(f"   P95: {p95:.2f}ms")
+        print(f"   P99: {p99:.2f}ms")
         # Timing should be reasonably consistent
-        assert coefficient_of_variation < 0.5, ".3f"
-        assert p99 / mean_time < 3.0, ".2f"
+        assert coefficient_of_variation < 0.5, f"Timing too variable: CoV={coefficient_of_variation:.3f}"
+        assert p99 / mean_time < 3.0, f"P99/mean ratio too high: {p99 / mean_time:.2f}"
 
     async def _consistent_operation(self) -> str:
         """A consistent operation for timing measurements."""

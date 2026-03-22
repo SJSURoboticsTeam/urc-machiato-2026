@@ -32,6 +32,7 @@ This comprehensive autonomous robotics system features:
    :caption: Onboarding by Specialization
 
    onboarding/README
+   onboarding/ros2_workspace_and_bridges
    onboarding/PILLAR_1_PERCEPTION
    onboarding/PILLAR_2_COGNITION
    onboarding/PILLAR_3_MOTION_CONTROL
@@ -60,9 +61,11 @@ This comprehensive autonomous robotics system features:
    :caption: Development
 
    development/workflow
+   development/ros2_python_environment
    development/testing
    development/code_quality
    simulation_testing_guide
+   simulation/ISAAC_SIM_SETUP
    code_review_process
 
 .. toctree::
@@ -71,6 +74,8 @@ This comprehensive autonomous robotics system features:
 
    hardware/calibration
    hardware/interfaces
+   hardware/l2_lidar_blackboard_e2e
+   hardware/skeletal_hil_checklist
    calibration/camera_calibration
    hardware_integration
 

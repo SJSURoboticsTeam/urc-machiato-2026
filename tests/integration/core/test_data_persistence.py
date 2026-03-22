@@ -24,10 +24,10 @@ from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any, Optional, List
 
 # Import data management components (DataCache/BackupManager not in data_manager yet)
-from src.core.data_manager import DataManager
+from shared.core.data_manager import DataManager
 
 try:
-    from src.core.data_manager import DataCache, BackupManager
+    from shared.core.data_manager import DataCache, BackupManager
 except ImportError:
     DataCache = None  # type: ignore[misc, assignment]
     BackupManager = None  # type: ignore[misc, assignment]

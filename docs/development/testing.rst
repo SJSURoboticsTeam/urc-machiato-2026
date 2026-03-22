@@ -4,6 +4,12 @@
 Testing Team Guide
 ================
 
+.. note::
+
+   For a **layered view of what to test**, **upstream vs downstream dependencies**
+   (ROS, Docker pip plugins, mocks), and how to interpret CI failures, see
+   ``docs/development/TESTING_SYSTEMS_AND_DEPENDENCIES.md`` in the repository.
+
 Welcome to the Testing Team! You are the **quality gatekeepers** for the entire rover system. While other teams build features, you ensure nothing breaks, performance is maintained, and the rover is safe to operate. Testing is not just about finding bugs - it's about proving the system works reliably under all conditions.
 
 .. image:: _static/test_state.png

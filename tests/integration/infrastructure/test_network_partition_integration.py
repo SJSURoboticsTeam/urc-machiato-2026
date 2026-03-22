@@ -12,7 +12,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 try:
-    from src.infrastructure.monitoring.network_partition_detector import (
+    from shared.infrastructure.monitoring.network_partition_detector import (
         NetworkPartitionDetector,
         NetworkState,
         AutonomyMode,

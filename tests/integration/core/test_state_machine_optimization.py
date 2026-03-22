@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import pytest
 
 try:
-    from src.core.simplified_state_manager import (
+    from shared.core.simplified_state_manager import (
         UnifiedStateManager,
         get_state_manager,
         SystemState,

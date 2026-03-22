@@ -6,6 +6,7 @@ Tests the actual ROS2 state machine bridge implementation with real ROS2 topics 
 This replaces mock-based testing with tests of the working implementation.
 """
 
+import multiprocessing
 import os
 import sys
 import time
@@ -14,7 +15,6 @@ import unittest
 # Add project paths for imports
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "src"))
 
 import pytest
 import rclpy
@@ -22,8 +22,26 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
 
-pytest.importorskip("src.infrastructure.bridges.ros2_state_machine_bridge")
-from src.infrastructure.bridges.ros2_state_machine_bridge import SystemState
+pytest.importorskip("shared.infrastructure.bridges.ros2_state_machine_bridge")
+from shared.infrastructure.bridges.ros2_state_machine_bridge import SystemState
+
+
+def _spin_bridge_subprocess() -> None:
+    """Run bridge in a child process (separate rclpy context)."""
+    import rclpy as _rclpy
+    from shared.infrastructure.bridges.ros2_state_machine_bridge import (
+        ROS2StateMachineBridge,
+    )
+
+    _rclpy.init()
+    node = ROS2StateMachineBridge()
+    try:
+        _rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        _rclpy.shutdown()
 
 
 class StateMachineBridgeTester(Node):
@@ -143,16 +161,24 @@ class TestROS2StateMachineBridge(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment."""
-        rclpy.init()
+        self._bridge_proc = multiprocessing.Process(target=_spin_bridge_subprocess, daemon=True)
+        self._bridge_proc.start()
+        time.sleep(0.8)
+        self._did_init_rclpy = not rclpy.utilities.ok()
+        if self._did_init_rclpy:
+            rclpy.init()
         self.node = StateMachineBridgeTester()
-        # Give some time for subscriptions to connect
         time.sleep(0.5)
 
     def tearDown(self):
         """Clean up test environment."""
         if hasattr(self, "node"):
             self.node.destroy_node()
-        rclpy.shutdown()
+        if getattr(self, "_bridge_proc", None) is not None and self._bridge_proc.is_alive():
+            self._bridge_proc.terminate()
+            self._bridge_proc.join(timeout=3.0)
+        if getattr(self, "_did_init_rclpy", False) and rclpy.utilities.ok():
+            rclpy.shutdown()
 
     def test_bridge_initialization(self):
         """Test that the bridge initializes properly."""

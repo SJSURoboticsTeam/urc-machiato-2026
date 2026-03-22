@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_generator_cpp/autonomy_interfaces/action/detail/navigate_to_pose__traits.hpp

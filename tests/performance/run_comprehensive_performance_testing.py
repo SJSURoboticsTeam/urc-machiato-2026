@@ -36,7 +36,7 @@ import statistics
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.testing.performance_profiling import PerformanceProfiler
-from src.core.network_resilience import CircuitBreaker, NetworkHealthMonitor
+from shared.core.network_resilience import CircuitBreaker, NetworkHealthMonitor
 from tests.performance.test_performance_baseline import PerformanceBaselineTester
 
 

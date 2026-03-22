@@ -32,12 +32,12 @@ These reference **archived or wrong** modules and will fail on import or at runt
 | Test file | Issue | Action |
 |-----------|--------|--------|
 | `tests/unit/test_component_registry.py` | Uses `register_component(name, comp, deps)`, `.components`, `.dependencies`, `.health_status`, async `start_component`/`stop_component`. `SimplifiedComponentRegistry` has `register(name, class, priority)`, `get_component` (returns `ComponentInfo`), no dependencies dict, no async lifecycle. | Update tests to simplified API or mark as legacy and skip. |
-| `tests/integration/test_state_machine_optimization.py` | Imports `AdaptiveStateMachine` from `src.core.simplified_state_manager`; only `UnifiedStateManager` and `get_state_manager()` exist there. | Change to `UnifiedStateManager`/`get_state_manager()` or skip. |
+| `tests/integration/test_state_machine_optimization.py` | Imports `AdaptiveStateMachine` from `shared.core.simplified_state_manager`; only `UnifiedStateManager` and `get_state_manager()` exist there. | Change to `UnifiedStateManager`/`get_state_manager()` or skip. |
 | `tests/performance/test_performance_regression.py` | Imports `core.state_synchronization_manager.Distributedget_state_manager()` (typo and archived). | Remove or rewrite to use current APIs. |
 | `tests/performance/test_memory_leak_detection.py` | Imports `autonomy.code.state_management.autonomy_state_machine.states` (path may not exist). | Fix path or skip. |
 | `tests/integration/test_advanced_systems_*.py` (several) | Import `core.state_synchronization_manager` / `Distributedget_state_manager()`. | Switch to simplified state/blackboard or skip. |
 | `tests/integration/test_competition_bridge_advanced_systems.py` | Same `state_synchronization_manager` import. | Same as above. |
-| `tests/integration/test_deployment_readiness.py` | Uses `src.core.component_registry` (old). Should use `src.core.simplified_component_registry`. | Update imports and API usage. |
+| `tests/integration/test_deployment_readiness.py` | Uses `shared.core.component_registry` (old). Should use `shared.core.simplified_component_registry`. | Update imports and API usage. |
 | `tests/integration/test_redundancy_failover.py` | Imports `autonomy.code.state_management.autonomy_state_machine.states`. | Fix path or skip. |
 | `tests/integration/test_basic_integration.py` | Imports from `src.autonomy.core.state_management` / `autonomy.code.state_management`. | Fix paths to current packages. |
 

@@ -39,8 +39,8 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "tests", "simulation"))
 
 try:
-    from simulation.environments.environment_factory import EnvironmentFactory
-    from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
+    from services.simulation.python.environments.environment_factory import EnvironmentFactory
+    from services.simulation.python.network.network_emulator import NetworkEmulator, NetworkProfile
 except ImportError:
     EnvironmentFactory = None
     NetworkEmulator = None

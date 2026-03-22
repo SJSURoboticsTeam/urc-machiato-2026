@@ -262,7 +262,7 @@ export CONTROLLER_TYPE="stm32"       # STM32 controller
 
 # Test CAN bridge with hardware
 python -c "
-from src.infrastructure.bridges.can_bridge import CANBridge
+from shared.infrastructure.bridges.can_bridge import CANBridge
 bridge = CANBridge({'device': '$CAN_DEVICE'})
 print('CAN Bridge initialized for hardware')
 print('Testing motor command encoding...')

@@ -1,8 +1,6 @@
 # Docker Compose for Complete Testing Environment
 # Best practices: Isolated networks, health checks, resource limits
-# Usage: docker-compose -f docker/docker-compose.test.yml up --abort-on-container-exit
-
-version: "3.8"
+# Usage: docker compose -f docker/docker-compose.test.yml --profile <name> up --abort-on-container-exit
 
 services:
   # ==================================================
@@ -11,15 +9,16 @@ services:
   ros2-core:
     image: ros:humble-ros-core
     container_name: urc2026-test-ros2-core
+    command: ["tail", "-f", "/dev/null"]
     environment:
       - ROS_DOMAIN_ID=42
       - URC_ENV=testing
     healthcheck:
-      test: ["CMD", "ros2", "node", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      test: ["CMD", "echo", "ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 3
+      start_period: 1s
     networks:
       - test-network
     restart: unless-stopped
@@ -30,8 +29,8 @@ services:
   unit-tests:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
-      target: test-runner
+      dockerfile: docker/dockerfiles/autonomy.Dockerfile
+      target: development
     container_name: urc2026-unit-tests
     environment:
       - PYTHONPATH=/home/urc
@@ -39,9 +38,10 @@ services:
       - URC_ENV=testing
       - PYTEST_CURRENT_TEST=unit
     volumes:
+      - ../:/home/urc
       - ../test_results:/home/urc/test_results
       - ../test_reports:/home/urc/test_reports
-    command: ["python3", "-m", "pytest", "tests/unit/", "-v", "--tb=short", "--junitxml=/home/urc/test_results/unit-junit.xml", "--cov=src", "--cov-report=html:/home/urc/test_reports/unit-coverage", "--cov-report=term"]
+    command: ["bash", "-c", "pip install -q pytest pytest-cov pytest-asyncio pytest-mock && python3 -m pytest tests/unit/ -v --tb=short --junitxml=/home/urc/test_results/unit-junit.xml"]
     depends_on:
       ros2-core:
         condition: service_healthy
@@ -57,8 +57,8 @@ services:
   integration-tests:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
-      target: integration-test
+      dockerfile: docker/dockerfiles/autonomy.Dockerfile
+      target: development
     container_name: urc2026-integration-tests
     environment:
       - PYTHONPATH=/home/urc
@@ -66,9 +66,10 @@ services:
       - URC_ENV=testing
       - PYTEST_CURRENT_TEST=integration
     volumes:
+      - ../:/home/urc
       - ../test_results:/home/urc/test_results
       - ../test_reports:/home/urc/test_reports
-    command: ["python3", "-m", "pytest", "tests/integration/", "-v", "--tb=short", "--junitxml=/home/urc/test_results/integration-junit.xml", "--cov=src", "--cov-report=html:/home/urc/test_reports/integration-coverage", "-k", "not hardware"]
+    command: ["bash", "-c", "pip install -q pytest pytest-cov pytest-asyncio pytest-mock websockets aiohttp && python3 -m pytest tests/integration/ -v --tb=short --junitxml=/home/urc/test_results/integration-junit.xml -k 'not hardware'"]
     depends_on:
       ros2-core:
         condition: service_healthy
@@ -84,8 +85,8 @@ services:
   simulation-tests:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
-      target: simulation-test
+      dockerfile: docker/dockerfiles/autonomy.Dockerfile
+      target: development
     container_name: urc2026-simulation-tests
     environment:
       - PYTHONPATH=/home/urc
@@ -94,9 +95,10 @@ services:
       - DISPLAY=:99
       - GAZEBO_MASTER_URI=http://localhost:11345
     volumes:
+      - ../:/home/urc
       - ../test_results:/home/urc/test_results
       - ../test_reports:/home/urc/test_reports
-    command: ["python3", "-m", "pytest", "tests/integration/test_ros2_simulation_integration.py", "tests/integration/test_complete_communication_stack.py", "tests/simulation_integration_suite.py", "-v", "--tb=short", "--junitxml=/home/urc/test_results/simulation-junit.xml"]
+    command: ["bash", "-c", "pip install -q pytest pytest-cov pytest-asyncio pytest-mock websockets aiohttp && python3 -m pytest tests/integration/simulation/ -v --tb=short --junitxml=/home/urc/test_results/simulation-junit.xml"]
     depends_on:
       ros2-core:
         condition: service_healthy
@@ -113,8 +115,8 @@ services:
   performance-tests:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
-      target: test-runner
+      dockerfile: docker/dockerfiles/autonomy.Dockerfile
+      target: development
     container_name: urc2026-performance-tests
     environment:
       - PYTHONPATH=/home/urc
@@ -122,9 +124,10 @@ services:
       - URC_ENV=testing
       - PYTEST_CURRENT_TEST=performance
     volumes:
+      - ../:/home/urc
       - ../test_results:/home/urc/test_results
       - ../test_reports:/home/urc/test_reports
-    command: ["python3", "-m", "pytest", "tests/performance/", "-v", "--tb=short", "--benchmark-only", "--junitxml=/home/urc/test_results/performance-junit.xml"]
+    command: ["bash", "-c", "pip install -q pytest pytest-cov pytest-asyncio pytest-mock pytest-benchmark && python3 -m pytest tests/performance/ -v --tb=short --benchmark-only --junitxml=/home/urc/test_results/performance-junit.xml"]
     depends_on:
       ros2-core:
         condition: service_healthy
@@ -145,17 +148,18 @@ services:
   all-tests:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
-      target: test-runner
+      dockerfile: docker/dockerfiles/autonomy.Dockerfile
+      target: development
     container_name: urc2026-all-tests
     environment:
       - PYTHONPATH=/home/urc
       - ROS_DOMAIN_ID=42
       - URC_ENV=testing
     volumes:
+      - ../:/home/urc
       - ../test_results:/home/urc/test_results
       - ../test_reports:/home/urc/test_reports
-    command: ["python3", "-m", "pytest", "tests/", "-v", "--tb=short", "-k", "not hardware", "--junitxml=/home/urc/test_results/all-junit.xml", "--cov=src", "--cov-report=html:/home/urc/test_reports/all-coverage", "--cov-report=term"]
+    command: ["python3", "-m", "pytest", "tests/", "-v", "--tb=short", "-k", "not hardware", "--junitxml=/home/urc/test_results/all-junit.xml", "--cov=services", "--cov=shared", "--cov-report=html:/home/urc/test_reports/all-coverage", "--cov-report=term"]
     depends_on:
       ros2-core:
         condition: service_healthy

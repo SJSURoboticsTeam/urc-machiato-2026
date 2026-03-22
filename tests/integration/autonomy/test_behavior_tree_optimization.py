@@ -23,7 +23,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.infrastructure.config import get_config
+from shared.infrastructure.config import get_config
 
 
 class BehaviorTreeOptimizationTester:
@@ -615,7 +615,7 @@ def test_bt_optimization_run():
     import pytest
 
     try:
-        from src.infrastructure.config import get_config  # noqa: F401
+        from shared.infrastructure.config import get_config  # noqa: F401
         from missions.robust_behavior_tree import RobustBehaviorTree  # noqa: F401
     except ImportError as e:
         pytest.skip(f"BT optimization dependencies not available: {e}")

@@ -28,7 +28,7 @@ import statistics
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from src.core.synchronization_engine import (
+from shared.core.synchronization_engine import (
     SynchronizationEngine,
     CameraSyncConfig,
     SyncMode,

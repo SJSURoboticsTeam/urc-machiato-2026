@@ -40,7 +40,7 @@ Python modules and utilities used throughout the autonomy stack.
 
    # Note: Update these when corresponding modules are available
    # scripts.extract_todos_to_issues
-   # src.core.adaptive_state_machine
+   # shared.core.adaptive_state_machine
 
 JavaScript/TypeScript API
 =========================

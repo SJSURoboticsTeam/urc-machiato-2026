@@ -370,13 +370,13 @@ class TestDeploymentReadiness:
 
         try:
             # Test configuration recovery
-            import src.infrastructure.config
+            import shared.infrastructure.config
 
-            config_manager = src.core.config_manager.get_config_manager()
+            config_manager = shared.core.config_manager.get_config_manager()
             recovery_successful &= config_manager is not None
 
             # Test component registry recovery
-            from src.core.simplified_component_registry import get_component_registry
+            from shared.core.simplified_component_registry import get_component_registry
 
             registry = get_component_registry()
             recovery_successful &= registry is not None
@@ -487,11 +487,11 @@ class TestDeploymentReadiness:
         start_time = time.time()
 
         try:
-            import src.infrastructure.config
-            from src.core.simplified_component_registry import get_component_registry
+            import shared.infrastructure.config
+            from shared.core.simplified_component_registry import get_component_registry
 
             get_component_registry()
-            import src.core.observability
+            import shared.core.observability
 
             load_time = time.time() - start_time
             performance_ok = load_time < 5.0  # Should load in under 5 seconds

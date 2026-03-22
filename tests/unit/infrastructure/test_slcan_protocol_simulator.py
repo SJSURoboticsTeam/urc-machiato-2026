@@ -17,7 +17,7 @@ from typing import Optional
 # Add simulation to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from simulation.can.slcan_protocol_simulator import (
+from services.simulation.python.can.slcan_protocol_simulator import (
     SLCANProtocolSimulator,
     SLCANFrame,
     SLCANMessageType,

@@ -38,8 +38,8 @@ if _PROJECT_ROOT not in __import__("sys").path:
 
 pytest.importorskip("simulation.network.network_emulator")
 # Import simulation components
-from simulation.network.network_emulator import NetworkEmulator, NetworkProfile
-from simulation.network.network_factory import NetworkFactory
+from services.simulation.python.network.network_emulator import NetworkEmulator, NetworkProfile
+from services.simulation.python.network.network_factory import NetworkFactory
 
 
 class NetworkIntegrationTest(unittest.TestCase):

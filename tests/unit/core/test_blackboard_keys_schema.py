@@ -11,12 +11,11 @@ import pytest
 
 # Load core.blackboard_keys from repo src (cwd-independent)
 _here = os.path.dirname(os.path.abspath(__file__))
-_src = os.path.abspath(os.path.join(_here, "..", "..", "..", "src"))
-if _src not in sys.path:
-    sys.path.insert(0, _src)
+_root = os.path.dirname(os.path.dirname(os.path.dirname(_here)))
+sys.path.insert(0, _root)
 _spec = importlib.util.spec_from_file_location(
     "blackboard_keys",
-    os.path.join(_src, "core", "blackboard_keys.py"),
+    os.path.join(_root, "shared", "core", "blackboard_keys.py")
 )
 _bb_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_bb_module)

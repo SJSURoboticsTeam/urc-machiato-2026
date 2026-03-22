@@ -117,8 +117,8 @@ infrastructure/
 
 **Usage**: Import from this package for system-wide configuration and bridging
 ```python
-from src.infrastructure.config import get_urc_config
-from src.infrastructure.bridges import WebSocketBridge
+from shared.infrastructure.config import get_urc_config
+from shared.infrastructure.bridges import WebSocketBridge
 ```
 
 ### `src/autonomy/autonomy_core/` - Core Robotics
@@ -291,9 +291,9 @@ config/
 
 ```python
 # Infrastructure (unified systems)
-from src.infrastructure.config import get_urc_config
-from src.infrastructure.bridges import WebSocketBridge
-from src.infrastructure.monitoring import HealthMonitor
+from shared.infrastructure.config import get_urc_config
+from shared.infrastructure.bridges import WebSocketBridge
+from shared.infrastructure.monitoring import HealthMonitor
 
 # Autonomy core
 from src.autonomy.autonomy_core.navigation import PathPlanner

@@ -27,7 +27,10 @@ except ImportError:
 
 # Add project paths for imports
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-AUTONOMY_CODE_ROOT = os.path.join(PROJECT_ROOT, "autonomy", "code")
+# Updated path for restructured microservice architecture
+AUTONOMY_CODE_ROOT = os.path.join(PROJECT_ROOT, "services", "autonomy", "autonomy_core")
+if not os.path.exists(AUTONOMY_CODE_ROOT):
+    AUTONOMY_CODE_ROOT = os.path.join(PROJECT_ROOT, "services", "autonomy", "autonomy_core")  # Fallback
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, AUTONOMY_CODE_ROOT)
 
@@ -37,9 +40,14 @@ def setup_ros2_environment():
     """Setup ROS2 environment if available."""
     try:
         # Try to source ROS2 and autonomy workspace
-        env_setup = """
+        # Updated path for restructured microservice architecture
+        autonomy_path = "/home/ubuntu/urc-machiato-2026/services/autonomy"
+        if not os.path.exists(autonomy_path):
+            autonomy_path = "/home/ubuntu/urc-machiato-2026/autonomy"  # Fallback
+
+        env_setup = f"""
 source /opt/ros/humble/setup.bash
-cd /home/ubuntu/urc-machiato-2026/autonomy
+cd {autonomy_path}
 source install/setup.bash
 export ROS_DOMAIN_ID=42
 """
@@ -83,7 +91,7 @@ class TestBasicIntegration(unittest.TestCase):
             self.assertEqual(len(list(SystemState)), 7)  # All states defined
 
             # Test valid transitions (basic validation)
-            from src.autonomy.core.state_management.autonomy_state_machine.states import (
+            from autonomy.autonomy_core.core.state_management.autonomy_state_machine.states import (
                 RoverState,
                 can_transition,
             )
@@ -156,7 +164,7 @@ class TestBasicIntegration(unittest.TestCase):
     def test_safety_system_integration(self):
         """Test safety system integrates with other components."""
         try:
-            from src.autonomy.core.state_management.autonomy_state_machine.safety_manager import (
+            from autonomy.autonomy_core.core.state_management.autonomy_state_machine.safety_manager import (
                 SafetyManager,
                 SafetySeverity,
                 SafetyTriggerType,

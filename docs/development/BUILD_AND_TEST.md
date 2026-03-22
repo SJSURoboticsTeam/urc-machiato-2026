@@ -1,20 +1,35 @@
 # ROS2 Build and Test - Quick Start
 
+## Python and ROS 2 (read first)
+
+**Use the same Python as your ROS distro** for `colcon build` and for any `rclpy` / message scripts (Jazzy: 3.12, Humble: 3.10). If `install/autonomy_interfaces/lib/python3.13` exists but `python3` is 3.12, you will get `UnsupportedTypeSupport` / `libpython3.N.so` errors.
+
+- Deactivate **conda** and **venv** before building; pin CMake: `export PYTHON_EXECUTABLE="$(command -v python3)"` and pass `--cmake-args "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"`.
+- Full checklist: **`docs/development/ros2_python_environment.rst`** (Sphinx) or the same content in onboarding **`docs/onboarding/ros2_workspace_and_bridges.md`**.
+
 ## Build ROS2 Packages
 
-The workspace root contains `COLCON_IGNORE`, so packages are built using explicit `--base-paths`. From the project root:
+The workspace root contains `COLCON_IGNORE`, so packages are built using explicit `--base-paths`. **Canonical layout** in this repository uses `shared/interfaces/` and `services/autonomy/` (not `src/autonomy/...`).
+
+From the project root:
 
 ```bash
 cd /path/to/urc-machiato-2026
-source /opt/ros/jazzy/setup.bash   # or /opt/ros/humble/setup.bash
+conda deactivate 2>/dev/null || true
+deactivate 2>/dev/null || true
+export PATH="/usr/bin:/bin:/usr/local/bin:$PATH"
+unset VIRTUAL_ENV
 
-colcon build --base-paths \
-  src/autonomy/interfaces/autonomy_interfaces \
-  src/autonomy/autonomy_core \
-  src/autonomy/bt \
-  src/simulation/gazebo_simulation \
-  src/vision_processing \
-  --symlink-install
+source /opt/ros/jazzy/setup.bash   # or /opt/ros/humble/setup.bash
+export PYTHON_EXECUTABLE="$(command -v python3)"
+
+colcon build --symlink-install \
+  --base-paths \
+    shared/interfaces/autonomy_interfaces \
+    services/autonomy/autonomy_core \
+    services/autonomy/bt \
+  --cmake-args "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+
 source install/setup.bash
 ```
 
@@ -63,12 +78,10 @@ source install/setup.bash
 # Check packages are available
 ros2 pkg list | grep -E 'autonomy|gazebo|vision'
 
-# Should show (depending on what you built):
+# Should show:
 # autonomy_bt
 # autonomy_core
 # autonomy_interfaces
-# gazebo_simulation   (if built)
-# vision_processing  (if built)
 ```
 
 ## Testing plan order
@@ -180,6 +193,31 @@ In the hardware_interface terminal, look for:
 [INFO] [hardware_interface]: Blackboard client initialized - direct CAN->blackboard writes enabled
 ```
 
+## Running Dashboard with Mock Data
+
+You can run the dashboard and all relevant tests without ROS or the simulation WebSocket by using mock data.
+
+**Quick start:**
+
+```bash
+cd services/dashboard
+VITE_USE_MOCK=1 npm run dev
+```
+
+Open http://localhost:5173. The dashboard will show deterministic data from the `idle` scenario (state IDLE, battery 85%, fixed GPS). No connection to `ws://localhost:9090` or `ws://localhost:8766` is required.
+
+**Switch scenario via URL:** Add `?mock=<scenario>` (e.g. `?mock=mission_active`, `?mock=sensor_degraded`). See [mock_test_scenarios.md](mock_test_scenarios.md) for scenario descriptions and expected dashboard state.
+
+**Run full mock test suite (from project root):**
+
+```bash
+./scripts/run_full_mock_test.sh
+```
+
+This runs frontend tests with `VITE_USE_MOCK=1`, scenario and data-source unit tests, and the mock data flow integration test.
+
+**Without mock:** Run `npm run dev` (no env var). The dashboard will attempt ROS (ws://localhost:9090) and the simulation WebSocket (ws://localhost:8766) as before.
+
 ## Build Issues
 
 If colcon can't find packages, ensure you are in the repo root and use the explicit `--base-paths` above (workspace root has `COLCON_IGNORE`).
@@ -191,7 +229,7 @@ If autonomy_bt fails with "behaviortree_cpp not found", install it: `sudo apt in
 ## Testing Checklist
 
 - [ ] ROS2 packages built successfully
-- [ ] `ros2 pkg list` shows autonomy_core, autonomy_interfaces, autonomy_bt (and optionally gazebo_simulation, vision_processing)
+- [ ] `ros2 pkg list` shows autonomy_core, autonomy_interfaces, autonomy_bt
 - [ ] hardware_interface starts without errors
 - [ ] Dashboard shows messages at 10 Hz
 - [ ] "Blackboard client initialized" appears in logs

@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: JavaScript",
     "Topic :: Scientific/Engineering :: Robotics",
 ]
+# Native ROS 2: use the distro system Python for colcon + rclpy (see docs/development/ros2_python_environment.rst).
 requires-python = ">=3.8"
 dependencies = [
     # Core documentation
@@ -203,14 +204,13 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["scripts", "src", "simulation"]
+known-first-party = ["scripts", "services", "shared"]
 force-sort-within-sections = true
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # Allow unused imports in __init__.py
 "test_*.py" = ["E501"]  # Allow longer lines in tests
 "docs/**/*.py" = ["INP001"]  # Allow implicit namespace packages in docs
-"simulation/**/*.py" = ["INP001"]  # Allow implicit namespace packages in simulation
 
 [tool.black]
 line-length = 88
@@ -258,7 +258,9 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --cov=src --cov=simulation --cov=missions --cov-report=html --cov-report=term-missing"
+addopts = "-ra -q --cov=services --cov=shared --cov-report=html --cov-report=term-missing"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
@@ -293,7 +295,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src", "simulation", "missions"]
+source = ["services", "shared"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -307,9 +309,9 @@ exclude_lines = [
     "if self.debug:",
     "if settings.DEBUG",
     "raise AssertionError",
-    "raise NotImplementedError", 
+    "raise NotImplementedError",
     "if 0:",
     "if __name__ == .__main__.:",
-    "class .*\\\\bProtocol\\\\):",  # Exclude Protocol classes from coverage
+    "class .*\\bProtocol\\b.*:",
     "@(abc\\.)?abstractmethod",
 ]

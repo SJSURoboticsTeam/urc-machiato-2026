@@ -19,8 +19,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 pytest.importorskip("geometry_msgs")
 from geometry_msgs.msg import Twist
 
-from bridges import can_bridge
-from bridges.can_bridge import CANBridge
+from shared.infrastructure.bridges import can_bridge
+from shared.infrastructure.bridges.can_bridge import CANBridge
 
 
 class TestCanBridgeScaling:

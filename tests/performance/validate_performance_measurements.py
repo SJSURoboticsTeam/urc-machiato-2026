@@ -29,7 +29,7 @@ _repo = Path(__file__).resolve().parents[2]
 if str(_repo) not in sys.path:
     sys.path.insert(0, str(_repo))
 
-from src.infrastructure.monitoring.binary_sensor_protocol import (
+from shared.infrastructure.monitoring.binary_sensor_protocol import (
     BinarySensorProtocol,
     IMUData,
 )

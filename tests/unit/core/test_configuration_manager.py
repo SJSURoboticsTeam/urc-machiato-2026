@@ -14,7 +14,7 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from src.infrastructure.config import (
+from shared.infrastructure.config import (
     ConfigurationManager,
     get_config,
     get_config_manager,
@@ -128,8 +128,8 @@ class TestConfigManagerExports:
     """Test that config_manager exports work (canonical module)."""
 
     def test_config_manager_imports(self):
-        """from src.infrastructure.config import ... works."""
-        from src.infrastructure.config import (
+        """from shared.infrastructure.config import ... works."""
+        from shared.infrastructure.config import (
             ConfigurationManager,
             RoverConfig,
             get_config_manager,
@@ -145,7 +145,7 @@ class TestConfigManagerExports:
 
     def test_config_manager_wrapper(self):
         """get_config_manager().get_config() returns same as get_config()."""
-        from src.infrastructure.config import (
+        from shared.infrastructure.config import (
             get_config_manager,
             get_config,
             load_system_config,

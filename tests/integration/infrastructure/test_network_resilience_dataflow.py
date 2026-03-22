@@ -29,9 +29,9 @@ from geometry_msgs.msg import Twist, PoseStamped
 
 # Import network components
 try:
-    from src.bridges.websocket_manager import WebSocketManager
-    from src.bridges.telemetry_manager import TelemetryManager
-    from src.core.network_resilience import NetworkResilienceManager
+    from shared.infrastructure.bridges.websocket_manager import WebSocketManager
+    from shared.infrastructure.bridges.telemetry_manager import TelemetryManager
+    from shared.core.network_resilience import NetworkResilienceManager
 except ImportError as e:
     pytest.skip(
         f"Skipping network resilience tests due to import error: {e}",

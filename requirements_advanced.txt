@@ -1,5 +1,7 @@
 # Advanced Libraries for URC 2026 - Production-Ready Implementation
 # These libraries replace custom implementations with battle-tested solutions
+#
+# For native ROS 2 + colcon, prefer apt + system Python; see docs/development/ros2_python_environment.rst
 
 # HIGH PRIORITY REPLACEMENTS
 py-trees>=2.1.0           # Replace custom BT implementation

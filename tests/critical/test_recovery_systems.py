@@ -422,41 +422,36 @@ class TestRecoverySystems:
 
         assert valid_backups >= 2, "Too many backup integrity failures"
 
-    def test_recovery_under_load(self, recovery_simulator):
+    @pytest.mark.asyncio
+    async def test_recovery_under_load(self, recovery_simulator):
         """Test recovery procedures under system load."""
-        print("🏋️ Testing recovery under load...")
+        print("Testing recovery under load...")
 
-        # Simulate system under load (multiple concurrent operations)
-        async def simulate_load():
-            tasks = []
-            for i in range(10):
-                task = asyncio.create_task(self._simulate_heavy_operation(i))
-                tasks.append(task)
-            await asyncio.gather(*tasks)
-
-        async def _simulate_heavy_operation(task_id):
-            # Simulate CPU/memory intensive operation
-            data = [i ** 2 for i in range(10000)]
+        async def _simulate_heavy_operation(task_id: int) -> int:
+            data = [i**2 for i in range(10000)]
             await asyncio.sleep(0.1)
             return sum(data)
 
-        # Start load simulation in background
+        async def simulate_load() -> None:
+            tasks = [
+                asyncio.create_task(_simulate_heavy_operation(i)) for i in range(10)
+            ]
+            await asyncio.gather(*tasks)
+
         load_task = asyncio.create_task(simulate_load())
 
-        # Perform recovery under load
-        crash_recovery = recovery_simulator.simulate_system_crash()
+        recovery_simulator.simulate_system_crash()
         recovery_start = time.time()
         recovery_result = recovery_simulator.initiate_recovery("system_restart")
         recovery_time = time.time() - recovery_start
 
-        # Wait for load to complete
-        asyncio.run(load_task)
+        await load_task
 
-        # Recovery should still work under load
         assert recovery_result["status"] == "completed"
-        assert recovery_time < 10.0  # Should complete within 10 seconds even under load
+        assert recovery_time < 10.0
 
-        print(".1f"
+        print(f"Recovery completed in {recovery_time:.1f}s")
+
     def test_recovery_metrics_and_monitoring(self, recovery_simulator):
         """Test recovery system metrics and monitoring."""
         print("📊 Testing recovery metrics...")
@@ -481,8 +476,9 @@ class TestRecoverySystems:
         assert metrics["average_recovery_time"] > 0
         assert metrics["max_recovery_time"] > 0
 
-        print(f"📊 Recovery metrics: {metrics['successful_recoveries']}/{metrics['total_recoveries']} successful")
-        print(".1f"
+        print(f"Recovery metrics: {metrics['successful_recoveries']}/{metrics['total_recoveries']} successful")
+        print(f"Average recovery time: {metrics['average_recovery_time']:.1f}s")
+
     def test_cascading_failure_recovery(self, recovery_simulator):
         """Test recovery from cascading component failures."""
         print("🔗 Testing cascading failure recovery...")
@@ -510,7 +506,7 @@ class TestRecoverySystems:
             assert recovery["result"]["success"] is True
 
         total_recovery_time = sum(recovery_times)
-        print(".1f"
+        print(f"Total cascading recovery time: {total_recovery_time:.1f}s")
         # Cascading recovery should complete within reasonable time
         assert total_recovery_time < 15.0
 
@@ -544,7 +540,7 @@ class TestRecoverySystems:
                 pass  # Recovery system failure
 
         success_rate = success_count / total_attempts
-        print(".1f"
+        print(f"Recovery success rate: {success_rate:.1%}")
         # Recovery system should be resilient (at least 80% success)
         assert success_rate >= 0.8
 
@@ -603,9 +599,12 @@ class TestRecoverySystems:
         cpu_increase = cpu_after - cpu_before
         memory_increase = memory_after - memory_before
 
-        print(".1f"        print(".1f"
+        print(f"CPU increase during recovery: {cpu_increase:.1f}%")
+        print(f"Memory increase during recovery: {memory_increase:.1f} MB")
         # Recovery should not cause excessive resource usage
-        assert cpu_increase < 50, ".1f"        assert memory_increase < 100, ".1f"        assert recovery_result["result"]["success"] is True
+        assert cpu_increase < 50, f"CPU spike too high: {cpu_increase:.1f}%"
+        assert memory_increase < 100, f"Memory spike too high: {memory_increase:.1f} MB"
+        assert recovery_result["result"]["success"] is True
 
         print("✅ Recovery resource usage acceptable")
 

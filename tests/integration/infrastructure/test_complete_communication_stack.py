@@ -28,7 +28,7 @@ from typing import Dict, Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 pytest.importorskip("simulation.network.websocket_server_simulator")
-from simulation.integration.full_stack_simulator import (
+from services.simulation.python.integration.full_stack_simulator import (
     FullStackSimulator,
     ScenarioType,
     create_full_stack_simulator,

@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_typesupport_introspection_cpp/autonomy_interfaces/srv/detail/change_state__rosidl_typesupport_introspection_cpp.hpp

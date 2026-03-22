@@ -12,6 +12,8 @@
 #   simulation  - Deploy in simulation mode (default)
 #   hardware    - Deploy with real hardware
 #   competition - Deploy in competition mode
+#   cognitive   - Deploy cognitive stack only
+#   slam_only   - Deploy SLAM stack only
 #
 # Author: URC 2026 Deployment Team
 # =============================================================================
@@ -58,8 +60,8 @@ setup_environment() {
     
     # Simulation-specific setup
     if [[ "$MODE" == "simulation" ]]; then
-        export GAZEBO_MODEL_PATH="$GAZEBO_MODEL_PATH:$PROJECT_ROOT/src/simulation/models"
-        export GAZEBO_RESOURCE_PATH="$GAZEBO_RESOURCE_PATH:$PROJECT_ROOT/src/simulation"
+        export GAZEBO_MODEL_PATH="$GAZEBO_MODEL_PATH:$PROJECT_ROOT/services/simulation/models"
+        export GAZEBO_RESOURCE_PATH="$GAZEBO_RESOURCE_PATH:$PROJECT_ROOT/services/simulation"
     fi
 }
 
@@ -78,7 +80,7 @@ pre_deployment_checks() {
     fi
     
     # Check config system
-    if python3 -c "from src.infrastructure.config import get_urc_config; get_urc_config()" 2>/dev/null; then
+    if python3 -c "from shared.infrastructure.config import get_urc_config; get_urc_config()" 2>/dev/null; then
         log_success "Configuration system: OK"
     else
         log_warning "Configuration system: Issues detected (may use fallback)"
@@ -96,7 +98,7 @@ pre_deployment_checks() {
         log_info "Running competition pre-checks..."
         
         # Check safety systems
-        if python3 -c "from src.infrastructure.config import get_urc_config; c = get_urc_config(); assert c.safety.emergency_stop_enabled" 2>/dev/null; then
+        if python3 -c "from shared.infrastructure.config import get_urc_config; c = get_urc_config(); assert c.safety.emergency_stop_enabled" 2>/dev/null; then
             log_success "Safety system: Emergency stop enabled"
         else
             log_error "Safety system: Emergency stop MUST be enabled for competition"
@@ -124,12 +126,11 @@ start_system() {
     case $MODE in
         simulation)
             log_info "Launching simulation..."
-            # Start simulation launch file
             if command -v ros2 &> /dev/null; then
                 ros2 launch autonomy_core unified.launch.py mode:=simulation &
             else
                 log_warning "ros2 command not found, starting Python components only"
-                python3 -c "from src.infrastructure.config import get_urc_config; print('Simulation mode ready')"
+                python3 -c "from shared.infrastructure.config import get_urc_config; print('Simulation mode ready')"
             fi
             ;;
         hardware)
@@ -142,6 +143,18 @@ start_system() {
             log_info "Launching competition mode..."
             if command -v ros2 &> /dev/null; then
                 ros2 launch autonomy_core unified.launch.py mode:=competition &
+            fi
+            ;;
+        cognitive)
+            log_info "Launching cognitive system (SLAM + nav + missions + safety + bridge)..."
+            if command -v ros2 &> /dev/null; then
+                ros2 launch autonomy_core competition_system.launch.py &
+            fi
+            ;;
+        slam_only)
+            log_info "Launching SLAM pipeline only..."
+            if command -v ros2 &> /dev/null; then
+                ros2 launch autonomy_core slam.launch.py &
             fi
             ;;
     esac

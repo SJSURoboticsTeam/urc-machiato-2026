@@ -27,8 +27,8 @@ _REPO = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(_REPO))
 
 pytest.importorskip("simulation.environments.environment_factory")
-from simulation.environments.environment_factory import EnvironmentFactory
-from simulation.network.network_factory import NetworkFactory
+from services.simulation.python.environments.environment_factory import EnvironmentFactory
+from services.simulation.python.network.network_factory import NetworkFactory
 
 
 class ROSTopicIntegrationTest(unittest.TestCase):

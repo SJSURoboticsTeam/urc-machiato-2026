@@ -24,9 +24,9 @@ from geometry_msgs.msg import Twist
 
 # Import state management components
 try:
-    from src.core.state_management import StateMachine, SystemState
-    from src.core.blackboard import Blackboard
-    from src.autonomy.bt.bt_orchestrator import BTOrchestrator
+    from shared.core.state_management import StateMachine, SystemState
+    from shared.core.blackboard import Blackboard
+    from autonomy.autonomy_core.bt.bt_orchestrator import BTOrchestrator
 except ImportError as e:
     pytest.skip(
         f"Skipping state machine tests due to import error: {e}",

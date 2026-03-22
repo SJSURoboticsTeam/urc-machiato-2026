@@ -26,7 +26,7 @@ _REPO_ROOT = os.path.abspath(
 )
 if _REPO_ROOT not in __import__("sys").path:
     __import__("sys").path.insert(0, _REPO_ROOT)
-_SENSOR_BRIDGE = os.path.join(_REPO_ROOT, "autonomy", "code", "sensor_bridge")
+_SENSOR_BRIDGE = os.path.join(_REPO_ROOT, "services", "autonomy", "autonomy_core", "sensor_bridge")
 if os.path.isdir(_SENSOR_BRIDGE) and _SENSOR_BRIDGE not in __import__("sys").path:
     __import__("sys").path.insert(0, _SENSOR_BRIDGE)
 

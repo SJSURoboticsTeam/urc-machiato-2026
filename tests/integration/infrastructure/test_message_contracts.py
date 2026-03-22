@@ -25,7 +25,7 @@ import pytest
 
 # Add project paths
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-AUTONOMY_ROOT = os.path.join(PROJECT_ROOT, "autonomy", "code")
+AUTONOMY_ROOT = os.path.join(PROJECT_ROOT, "services", "autonomy", "autonomy_core")
 sys.path.insert(0, AUTONOMY_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "missions"))
 

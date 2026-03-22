@@ -6,6 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# Prefer system Python (same as ROS distro) — see docs/development/ros2_python_environment.rst
+export PATH="/usr/bin:/bin:/usr/local/bin:$PATH"
+unset VIRTUAL_ENV
+export PYTHON_EXECUTABLE="$(command -v python3)"
+
 # 1. Check ROS is sourced
 if [ -z "${ROS_DISTRO:-}" ]; then
     echo "Error: ROS2 is not sourced. Run: source /opt/ros/jazzy/setup.bash (or humble)"
@@ -20,16 +25,16 @@ if ! ros2 pkg list 2>/dev/null | grep -q behaviortree_cpp; then
     exit 1
 fi
 
-# 3. Colcon build with canonical package paths (autonomy_bt requires behaviortree_cpp)
-echo "Building ROS2 packages (autonomy_interfaces, autonomy_core, autonomy_bt, gazebo_simulation, vision_processing)..."
+# 3. Colcon build with canonical package paths (this repository layout)
+echo "Building ROS2 packages (autonomy_interfaces, autonomy_core, autonomy_bt)..."
+echo "Using PYTHON_EXECUTABLE=$PYTHON_EXECUTABLE ($("$PYTHON_EXECUTABLE" --version))"
 colcon build \
+    --symlink-install \
     --base-paths \
-        src/autonomy/interfaces/autonomy_interfaces \
-        src/autonomy/autonomy_core \
-        src/autonomy/bt \
-        src/simulation/gazebo_simulation \
-        src/vision_processing \
-    --symlink-install
+        shared/interfaces/autonomy_interfaces \
+        services/autonomy/autonomy_core \
+        services/autonomy/bt \
+    --cmake-args "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
 
 # 4. Post-build instructions
 echo ""
@@ -38,6 +43,6 @@ echo "  1. source install/setup.bash"
 echo "  2. Start bt_orchestrator: ros2 run autonomy_bt bt_orchestrator"
 echo "     (If it is a lifecycle node: ros2 lifecycle set /bt_orchestrator configure; ros2 lifecycle set /bt_orchestrator activate)"
 echo "  3. In another terminal (with source install/setup.bash and PYTHONPATH=src):"
-echo "     python3 -m pytest tests/integration/test_unified_blackboard.py -v --tb=short"
-echo "  4. For BT+state machine runtime: also start adaptive_state_machine, then run:"
-echo "     python3 -m pytest tests/integration/test_bt_state_machine_runtime.py -v --tb=short"
+echo "     python3 -m pytest tests/integration/core/test_unified_blackboard.py -v --tb=short"
+echo "  4. For BT+ state machine runtime: also start adaptive_state_machine, then run:"
+echo "     python3 -m pytest tests/integration/autonomy/test_bt_state_machine_runtime.py -v --tb=short"

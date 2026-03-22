@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_typesupport_fastrtps_c/autonomy_interfaces/srv/detail/get_context__rosidl_typesupport_fastrtps_c.h

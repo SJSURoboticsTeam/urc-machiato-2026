@@ -19,17 +19,20 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from std_msgs.msg import Header
-from sensor_msgs.msg import Imu, NavSatFix, LaserScan
+try:
+    from sensor_msgs.msg import Imu, NavSatFix, LaserScan
+except ImportError:
+    pytest.skip("sensor_msgs not fully available", allow_module_level=True)
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance, TwistWithCovariance
 
 
 # Import sensor fusion components
 try:
-    from src.autonomy.perception.sensor_fusion import SensorFusion
-    from src.autonomy.perception.gps_processor import GPSProcessor
-    from src.autonomy.perception.imu_processor import IMUProcessor
-    from src.autonomy.perception.odometry_processor import OdometryProcessor
+    from autonomy.autonomy_core.perception.sensor_fusion import SensorFusion
+    from autonomy.autonomy_core.perception.gps_processor import GPSProcessor
+    from autonomy.autonomy_core.perception.imu_processor import IMUProcessor
+    from autonomy.autonomy_core.perception.odometry_processor import OdometryProcessor
 except ImportError as e:
     pytest.skip(
         f"Skipping sensor fusion tests due to import error: {e}",

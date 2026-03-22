@@ -35,7 +35,7 @@ def main():
     # Test 1: Lightweight Core Startup
     print("\n1. Testing Lightweight Core Startup...")
     start_time = time.time()
-    from src.core.lightweight_core import get_lightweight_core
+    from shared.core.lightweight_core import get_lightweight_core
     core = get_lightweight_core()
     startup_time = time.time() - start_time
     print(".3f")

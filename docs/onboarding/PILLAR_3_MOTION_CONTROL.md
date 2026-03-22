@@ -334,7 +334,7 @@ print(f"Actual: {actual.linear} m/s forward, {actual.angular} rad/s rotation")
 ### CAN Bridge API
 
 ```python
-from src.infrastructure.bridges import CANBridge
+from shared.infrastructure.bridges import CANBridge
 
 # Initialize CAN
 can = CANBridge(interface="CAN0", bitrate=1000000)  # 1 Mbps

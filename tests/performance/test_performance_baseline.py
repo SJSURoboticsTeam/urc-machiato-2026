@@ -21,7 +21,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 try:
-    from src.infrastructure.monitoring.binary_sensor_protocol import (
+    from shared.infrastructure.monitoring.binary_sensor_protocol import (
         BinarySensorProtocol,
         IMUData,
     )
@@ -31,10 +31,10 @@ try:
         create_motion_bridge_client,
         VelocityCommand,
     )
-    from src.infrastructure.monitoring.network_partition_detector import (
+    from shared.infrastructure.monitoring.network_partition_detector import (
         NetworkPartitionDetector,
     )
-    from src.infrastructure.monitoring.adaptive_circuit_breaker import (
+    from shared.infrastructure.monitoring.adaptive_circuit_breaker import (
         get_adaptive_circuit_breaker,
     )
     from src.testing.performance_profiling import (

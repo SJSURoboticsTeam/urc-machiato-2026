@@ -404,7 +404,8 @@ class TestSpinCycles:
         # Should be faster than cold start
         assert restart_result["total_time"] < 15.0  # Less than 15 seconds
 
-        print(".1f"        print("✅ Warm restart procedure working")
+        print(f"Warm restart time: {restart_result['total_time']:.1f}s")
+        print("Warm restart procedure working")
 
     @pytest.mark.asyncio
     async def test_graceful_shutdown_sequence(self, lifecycle_manager):
@@ -429,8 +430,9 @@ class TestSpinCycles:
         # Should complete within reasonable time
         assert shutdown_result["total_time"] < 20.0
 
-        print(".1f"        print(f"   Phases completed: {len(shutdown_result['phases'])}")
-        print("✅ Graceful shutdown sequence successful")
+        print(f"Shutdown time: {shutdown_result['total_time']:.1f}s")
+        print(f"   Phases completed: {len(shutdown_result['phases'])}")
+        print("Graceful shutdown sequence successful")
 
     @pytest.mark.asyncio
     async def test_emergency_shutdown_handling(self, lifecycle_manager):
@@ -453,7 +455,8 @@ class TestSpinCycles:
         # System should still be in shutdown state
         assert lifecycle_manager.system_state == "shutdown"
 
-        print(".1f"        print("✅ Emergency shutdown handling working")
+        print(f"Emergency shutdown time: {emergency_result['total_time']:.1f}s")
+        print("Emergency shutdown handling working")
 
     def test_startup_dependency_validation(self, lifecycle_manager):
         """Test startup dependency validation."""
@@ -564,7 +567,9 @@ class TestSpinCycles:
         min_cycle_time = min(cycle_times)
         max_cycle_time = max(cycle_times)
 
-        print(".1f"        print(".1f"        print(".1f"
+        print(f"Average cycle time: {avg_cycle_time:.1f}s")
+        print(f"Min cycle time: {min_cycle_time:.1f}s")
+        print(f"Max cycle time: {max_cycle_time:.1f}s")
         # Cycles should be reasonably fast
         assert avg_cycle_time < 25.0  # Average under 25 seconds
         assert max_cycle_time < 35.0  # Max under 35 seconds
@@ -630,9 +635,11 @@ class TestSpinCycles:
         cpu_increase = final_cpu - baseline_cpu
         memory_increase = final_memory - baseline_memory
 
-        print(".1f"        print(".1f"
+        print(f"CPU increase: {cpu_increase:.1f}%")
+        print(f"Memory increase: {memory_increase:.1f} MB")
         # Resource usage should be reasonable
-        assert cpu_increase < 20, ".1f"        assert memory_increase < 50, ".1f"
+        assert cpu_increase < 20, f"CPU increase too high: {cpu_increase:.1f}%"
+        assert memory_increase < 50, f"Memory increase too high: {memory_increase:.1f} MB"
 
         print("✅ Spin cycle resource usage acceptable")
 
@@ -662,7 +669,7 @@ class TestSpinCycles:
         # Wait for load to complete
         await load_task
 
-        print(".1f"
+        print(f"Spin cycle under load: {cycle_time:.1f}s")
         # Should complete under load (though possibly slower)
         assert cycle_time < 45.0  # Allow more time under load
 

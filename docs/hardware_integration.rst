@@ -18,7 +18,7 @@ Configuration
 
 Use unified config for hardware settings::
 
-    from src.infrastructure.config import get_urc_config
+    from shared.infrastructure.config import get_urc_config
     config = get_urc_config()
     config.hardware.use_mock
     config.network.can_interface

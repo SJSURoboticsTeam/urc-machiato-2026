@@ -12,25 +12,32 @@ import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-from unittest.mock import Mock, patch, AsyncMock
-import pytest
+from unittest.mock import AsyncMock, Mock, patch
+
 import numpy as np
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
-from std_msgs.msg import Header
-from sensor_msgs.msg import Image, LaserScan, Imu
-from nav_msgs.msg import Odometry, Path
-from geometry_msgs.msg import Twist, PoseStamped, Point, Quaternion
+import pytest
 
-
-# Import navigation components
 try:
-    from src.autonomy.perception.camera_processor import CameraProcessor
-    from src.autonomy.perception.lidar_processor import LidarProcessor
+    import rclpy
+    from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist
+    from nav_msgs.msg import Odometry, Path
+    from rclpy.node import Node
+    from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+    from sensor_msgs.msg import Image, Imu, LaserScan
+    from std_msgs.msg import Header
+except (ImportError, ModuleNotFoundError) as e:
+    pytest.skip(
+        f"Skipping navigation loop tests: ROS 2 Python bindings not loadable ({e})",
+        allow_module_level=True,
+    )
+
+# Import navigation components (legacy src.* paths; skip until migrated to services tree)
+try:
+    from src.autonomy.control.motion_controller import MotionController
     from src.autonomy.core.navigation.navigation_node import NavigationNode
     from src.autonomy.core.navigation.slam_processor import SLAMProcessor
-    from src.autonomy.control.motion_controller import MotionController
+    from src.autonomy.perception.camera_processor import CameraProcessor
+    from src.autonomy.perception.lidar_processor import LidarProcessor
 except ImportError as e:
     pytest.skip(
         f"Skipping navigation loop tests due to import error: {e}",

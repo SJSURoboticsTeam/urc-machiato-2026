@@ -21,7 +21,7 @@ import pytest
 from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any, Optional
 
-from src.core.security_manager import SecurityManager, AccessControl, AuditLogger
+from shared.core.security_manager import SecurityManager, AccessControl, AuditLogger
 
 
 class TestSecurityManager:

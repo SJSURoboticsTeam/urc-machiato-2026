@@ -43,7 +43,7 @@ class TestSystemArchitecture:
 
     def test_component_registry_architecture(self, system_config):
         """Test component registry system architecture."""
-        from src.core.simplified_component_registry import get_component_registry
+        from shared.core.simplified_component_registry import get_component_registry
 
         registry = get_component_registry()
 
@@ -196,7 +196,7 @@ class TestSystemArchitecture:
     @pytest.mark.asyncio
     async def test_system_health_monitoring(self, system_config):
         """Test system-wide health monitoring architecture."""
-        from src.core.monitoring_system import get_monitoring_system
+        from shared.core.monitoring_system import get_monitoring_system
 
         monitor = get_monitoring_system()
 
@@ -217,7 +217,7 @@ class TestSystemArchitecture:
 
     def test_configuration_management_architecture(self, system_config):
         """Test configuration management system architecture."""
-        from src.infrastructure.config import get_config_manager
+        from shared.infrastructure.config import get_config_manager
 
         config_mgr = get_config_manager()
 
@@ -233,7 +233,7 @@ class TestSystemArchitecture:
     def test_logging_architecture(self, system_config):
         """Test logging architecture and message routing."""
         import logging
-        from src.core.observability import get_observability_system
+        from shared.core.observability import get_observability_system
 
         obs_system = get_observability_system()
 
@@ -252,7 +252,7 @@ class TestSystemArchitecture:
 
     def test_network_architecture(self, system_config):
         """Test network communication architecture."""
-        from src.core.network_resilience import get_network_resilience_manager
+        from shared.core.network_resilience import get_network_resilience_manager
 
         network_mgr = get_network_resilience_manager()
 

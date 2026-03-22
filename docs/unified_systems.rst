@@ -59,7 +59,7 @@ Features
 
 .. code-block:: python
 
-    from src.core.observability import get_observability_manager
+    from shared.core.observability import get_observability_manager
 
     obs = get_observability_manager()
     correlation_id = obs.info("User login", user_id="123", component="auth")
@@ -93,7 +93,7 @@ Features
 API Reference
 -------------
 
-.. autoclass:: src.core.observability.ObservabilityManager
+.. autoclass:: shared.core.observability.ObservabilityManager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -120,7 +120,7 @@ Features
 
 .. code-block:: python
 
-    from src.core.state_management import get_state_manager
+    from shared.core.state_management import get_state_manager
 
     state_mgr = get_state_manager()
     sm = state_mgr.create_state_machine("robot_control", "idle")
@@ -154,7 +154,7 @@ Features
 API Reference
 -------------
 
-.. autoclass:: src.core.state_management.StateManager
+.. autoclass:: shared.core.state_management.StateManager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -183,7 +183,7 @@ Features
 
 .. code-block:: python
 
-    from src.core.data_manager import get_data_manager, validate_data
+    from shared.core.data_manager import get_data_manager, validate_data
 
     data_mgr = get_data_manager()
     is_valid, errors = validate_data(sensor_data, 'telemetry')
@@ -221,7 +221,7 @@ Features
 API Reference
 -------------
 
-.. autoclass:: src.core.data_manager.DataManager
+.. autoclass:: shared.core.data_manager.DataManager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -249,7 +249,7 @@ Features
 
 .. code-block:: python
 
-    from src.core.utilities import get_safety_manager
+    from shared.core.utilities import get_safety_manager
 
     safety_mgr = get_safety_manager()
     check = safety_mgr.perform_safety_check('motor_temp', 'thermal', check_temperature)
@@ -283,7 +283,7 @@ Features
 
 .. code-block:: python
 
-    from src.core.utilities import SystemUtilities
+    from shared.core.utilities import SystemUtilities
 
     mem_mb = SystemUtilities.format_bytes(1048576)  # "1.0MB"
     sys_info = SystemUtilities.get_system_info()
@@ -291,7 +291,7 @@ Features
 API Reference
 -------------
 
-.. autoclass:: src.core.utilities.SafetyManager
+.. autoclass:: shared.core.utilities.SafetyManager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -319,7 +319,7 @@ Features
 
 .. code-block:: python
 
-    from src.core.test_suite import get_test_suite, create_test_suite, TestType
+    from shared.core.test_suite import get_test_suite, create_test_suite, TestType
 
     test_suite = get_test_suite()
     unit_suite = create_test_suite('unit', 'Unit tests', TestType.UNIT)
@@ -360,7 +360,7 @@ Features
 API Reference
 -------------
 
-.. autoclass:: src.core.test_suite.UnifiedTestSuite
+.. autoclass:: shared.core.test_suite.UnifiedTestSuite
    :members:
    :undoc-members:
    :show-inheritance:
@@ -378,8 +378,8 @@ Integration Patterns
 
 .. code-block:: python
 
-    from src.core.configuration import get_config_manager
-    from src.core.observability import get_observability_manager
+    from shared.core.configuration import get_config_manager
+    from shared.core.observability import get_observability_manager
 
     config = get_config_manager().load_config('development')
     obs = get_observability_manager()
@@ -457,12 +457,12 @@ From Legacy Monitoring
 .. code-block:: python
 
     # Old
-    from src.core.monitoring_system import get_monitoring_system
+    from shared.core.monitoring_system import get_monitoring_system
     monitoring = get_monitoring_system()
     monitoring.record_metric('cpu', 85)
 
     # New
-    from src.core.observability import get_observability_manager
+    from shared.core.observability import get_observability_manager
     obs = get_observability_manager()
     obs.record_metric('cpu_usage', 85.0, {'component': 'system'})
 
@@ -472,12 +472,12 @@ From Legacy Data Processing
 .. code-block:: python
 
     # Old
-    from src.core.data_processor import TelemetryDataProcessor
+    from shared.core.data_processor import TelemetryDataProcessor
     processor = TelemetryDataProcessor()
     processed = processor.process_data(raw_data)
 
     # New
-    from src.core.data_manager import get_data_manager
+    from shared.core.data_manager import get_data_manager
     data_mgr = get_data_manager()
     processed, quality = data_mgr.process_telemetry(raw_data)
 
@@ -487,11 +487,11 @@ From Legacy State Management
 .. code-block:: python
 
     # Old
-    from src.core.state_machine import URCStateMachine
+    from shared.core.state_machine import URCStateMachine
     sm = URCStateMachine()
 
     # New
-    from src.core.state_management import get_state_manager
+    from shared.core.state_management import get_state_manager
     state_mgr = get_state_manager()
     sm = state_mgr.create_state_machine('urc_states', 'idle')
 
@@ -590,7 +590,7 @@ Integration Issues
 
     # Run integration diagnostics
     python -c "
-    from src.core.observability import get_observability_manager
+    from shared.core.observability import get_observability_manager
     obs = get_observability_manager()
     status = obs.get_system_status()
     print('System Status:', status)

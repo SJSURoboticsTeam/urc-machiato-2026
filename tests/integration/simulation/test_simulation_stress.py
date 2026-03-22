@@ -20,7 +20,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
 pytest.importorskip("simulation.network.websocket_server_simulator")
-from simulation.integration.full_stack_simulator import create_full_stack_simulator
+from services.simulation.python.integration.full_stack_simulator import create_full_stack_simulator
 
 
 @pytest.mark.stress

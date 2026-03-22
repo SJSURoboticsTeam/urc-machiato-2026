@@ -125,7 +125,7 @@ class SystemIntegrationTester:
 
         try:
             # Import and initialize component registry
-            from src.core.simplified_component_registry import get_component_registry
+            from shared.core.simplified_component_registry import get_component_registry
 
             registry = get_component_registry()
 
@@ -191,12 +191,12 @@ class SystemIntegrationTester:
 
         try:
             # Load configuration
-            from src.infrastructure.config import load_system_config
+            from shared.infrastructure.config import load_system_config
 
             config = load_system_config("development")
 
             # Start monitoring system
-            from src.core.observability import get_observability_system
+            from shared.core.observability import get_observability_system
 
             monitor = get_observability_system()
 
@@ -235,17 +235,17 @@ class SystemIntegrationTester:
 
         try:
             # Test configuration manager communication
-            from src.infrastructure.config import get_config_manager
+            from shared.infrastructure.config import get_config_manager
 
             config_mgr = get_config_manager()
 
             # Test monitoring system
-            from src.core.observability import get_observability_system
+            from shared.core.observability import get_observability_system
 
             monitor = get_observability_system()
 
             # Test bridge communication
-            from src.bridges.simple_bridge import SimpleBridge
+            from shared.infrastructure.bridges.simple_bridge import SimpleBridge
 
             bridge = SimpleBridge()
 
@@ -331,7 +331,7 @@ class SystemIntegrationTester:
 
         try:
             # Test configuration validation
-            from src.infrastructure.config import get_config_manager
+            from shared.infrastructure.config import get_config_manager
 
             config_mgr = get_config_manager()
 
@@ -340,7 +340,7 @@ class SystemIntegrationTester:
             errors = config_mgr.validate_config(invalid_config)
 
             # Test component error recovery
-            from src.core.simplified_component_registry import get_component_registry
+            from shared.core.simplified_component_registry import get_component_registry
 
             registry = get_component_registry()
 
@@ -352,7 +352,7 @@ class SystemIntegrationTester:
                 component_error_handled = True
 
             # Test monitoring error logging
-            from src.core.observability import get_observability_system
+            from shared.core.observability import get_observability_system
 
             monitor = get_observability_system()
 
@@ -392,7 +392,7 @@ class SystemIntegrationTester:
 
             # Configuration operations
             async def config_operations():
-                from src.infrastructure.config import get_config_manager
+                from shared.infrastructure.config import get_config_manager
 
                 config_mgr = get_config_manager()
 
@@ -404,7 +404,7 @@ class SystemIntegrationTester:
 
             # Monitoring operations
             async def monitoring_operations():
-                from src.core.observability import get_observability_system
+                from shared.core.observability import get_observability_system
 
                 monitor = get_observability_system()
 
@@ -416,7 +416,7 @@ class SystemIntegrationTester:
 
             # Bridge operations
             async def bridge_operations():
-                from src.bridges.simple_bridge import SimpleBridge
+                from shared.infrastructure.bridges.simple_bridge import SimpleBridge
 
                 bridge = SimpleBridge()
 
@@ -470,8 +470,8 @@ class SystemIntegrationTester:
 
         try:
             # Test bridge resilience
-            from src.bridges.simple_bridge import SimpleBridge
-            from src.core.network_resilience import NetworkResilienceManager
+            from shared.infrastructure.bridges.simple_bridge import SimpleBridge
+            from shared.core.network_resilience import NetworkResilienceManager
 
             bridge = SimpleBridge()
             network_mgr = NetworkResilienceManager()
@@ -526,13 +526,13 @@ class SystemIntegrationTester:
 
         try:
             # Shutdown monitoring
-            from src.core.observability import get_observability_system
+            from shared.core.observability import get_observability_system
 
             monitor = get_observability_system()
             monitor.stop_monitoring()
 
             # Shutdown components
-            from src.core.simplified_component_registry import get_component_registry
+            from shared.core.simplified_component_registry import get_component_registry
 
             registry = get_component_registry()
             shutdown_components = registry.shutdown_all_components()
@@ -678,7 +678,7 @@ if HYPOTHESIS_AVAILABLE:
     async def test_configuration_resilience(config_updates):
         """Test configuration system resilience with random updates."""
         try:
-            from src.infrastructure.config import get_config_manager
+            from shared.infrastructure.config import get_config_manager
 
             config_mgr = get_config_manager()
 

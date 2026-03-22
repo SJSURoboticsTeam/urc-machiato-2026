@@ -547,21 +547,21 @@ config.network:
 
 ```python
 # CAN Communication
-from src.infrastructure.bridges import CANBridge
+from shared.infrastructure.bridges import CANBridge
 
 can = CANBridge(interface="CAN0")
 can.send_message(arbitration_id=0x120, data=[...])
 msg = can.receive_message(timeout=1.0)
 
 # WebSocket Communication
-from src.infrastructure.bridges import WebSocketBridge
+from shared.infrastructure.bridges import WebSocketBridge
 
 ws = WebSocketBridge(host="localhost", port=8000)
 ws.emit("robot_status", {"position": [1.0, 2.0]})
 cmd = ws.receive_command(timeout=0.1)
 
 # Resilience
-from src.infrastructure.bridges import get_adaptive_circuit_breaker
+from shared.infrastructure.bridges import get_adaptive_circuit_breaker
 
 breaker = get_adaptive_circuit_breaker("motor_control")
 result = breaker.call(send_motor_command, speed=1500)

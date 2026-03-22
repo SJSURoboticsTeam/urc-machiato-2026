@@ -37,8 +37,8 @@ class IntegrationTests(unittest.TestCase):
         print("Testing MissionResourceManager + FeatureFlags integration...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
-            from src.core.feature_flags import get_feature_flag_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.feature_flags import get_feature_flag_manager
 
             # Initialize both systems
             resource_manager = get_mission_resource_manager()
@@ -104,7 +104,7 @@ class IntegrationTests(unittest.TestCase):
 
         try:
             from missions.robust_behavior_tree import PyTreesBehaviorTree
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             # Initialize systems
             bt = PyTreesBehaviorTree(name="IntegrationTestBT")
@@ -170,8 +170,8 @@ class IntegrationTests(unittest.TestCase):
         print("Testing Monitoring + ResourceManager integration...")
 
         try:
-            from simulation.tools.monitoring_dashboard import SimulationMonitor
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from services.simulation.python.tools.monitoring_dashboard import SimulationMonitor
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             # Initialize systems
             monitor = SimulationMonitor()
@@ -221,10 +221,10 @@ class IntegrationTests(unittest.TestCase):
 
         try:
             # Initialize all systems
-            from src.core.mission_resource_manager import get_mission_resource_manager
-            from src.core.feature_flags import get_feature_flag_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.feature_flags import get_feature_flag_manager
             from missions.robust_behavior_tree import PyTreesBehaviorTree
-            from simulation.tools.monitoring_dashboard import SimulationMonitor
+            from services.simulation.python.tools.monitoring_dashboard import SimulationMonitor
 
             systems = {
                 "resource_manager": get_mission_resource_manager(),
@@ -327,8 +327,8 @@ class IntegrationTests(unittest.TestCase):
         print("Testing cross-component state consistency...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
-            from src.core.feature_flags import get_feature_flag_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.feature_flags import get_feature_flag_manager
             from missions.robust_behavior_tree import PyTreesBehaviorTree
 
             systems = {
@@ -414,8 +414,8 @@ class IntegrationTests(unittest.TestCase):
         print("Testing system stability during transitions...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
-            from src.core.feature_flags import get_feature_flag_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.feature_flags import get_feature_flag_manager
 
             rm = get_mission_resource_manager()
             ff = get_feature_flag_manager()
@@ -496,8 +496,8 @@ class IntegrationTests(unittest.TestCase):
         print("Testing concurrent access safety...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
-            from src.core.feature_flags import get_feature_flag_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.feature_flags import get_feature_flag_manager
 
             rm = get_mission_resource_manager()
             ff = get_feature_flag_manager()

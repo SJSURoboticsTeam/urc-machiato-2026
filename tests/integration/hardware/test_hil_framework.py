@@ -16,8 +16,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 pytest.importorskip("simulation.network.websocket_server_simulator")
-from simulation.hil.hil_manager import HILManager, ComponentMode
-from simulation.hil.device_discovery import DeviceDiscovery
+from services.simulation.python.hil.hil_manager import HILManager, ComponentMode
+from services.simulation.python.hil.device_discovery import DeviceDiscovery
 
 
 class TestDeviceDiscovery:

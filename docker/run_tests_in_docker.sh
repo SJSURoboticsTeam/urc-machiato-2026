@@ -40,11 +40,11 @@ run_tests() {
     
     # Build images if needed
     echo -e "${BLUE}Building test images...${NC}"
-    docker-compose -f docker-compose.test.yml build --quiet
+    docker compose -f docker-compose.test.yml build --quiet
     
     # Run tests
     echo -e "${BLUE}Starting test execution...${NC}"
-    if docker-compose -f docker-compose.test.yml --profile "$profile" up --abort-on-container-exit --exit-code-from "$(get_service_name $profile)"; then
+    if docker compose -f docker-compose.test.yml --profile "$profile" up --abort-on-container-exit --exit-code-from "$(get_service_name $profile)"; then
         echo -e "${GREEN}✅ $description passed!${NC}"
         return 0
     else
@@ -122,7 +122,7 @@ case $TEST_TYPE in
             echo -e "${RED}❌ Some tests failed!${NC}"
             echo ""
             echo -e "${BLUE}Check logs:${NC}"
-            echo "  docker-compose -f docker/docker-compose.test.yml logs"
+            echo "  docker compose -f docker/docker-compose.test.yml logs"
             exit 1
         fi
         ;;

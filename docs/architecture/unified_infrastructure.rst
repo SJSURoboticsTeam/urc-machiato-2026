@@ -9,7 +9,7 @@ Configuration
 
 Single source of truth::
 
-    from src.infrastructure.config import get_urc_config
+    from shared.infrastructure.config import get_urc_config
 
     config = get_urc_config()
     config.navigation.max_linear_velocity_ms
@@ -33,7 +33,7 @@ Circuit Breaker
 
 Use for unreliable or external calls::
 
-    from src.infrastructure.bridges import get_adaptive_circuit_breaker
+    from shared.infrastructure.bridges import get_adaptive_circuit_breaker
 
     breaker = get_adaptive_circuit_breaker("motion_control")
     result = breaker.call(my_function, arg1, arg2)

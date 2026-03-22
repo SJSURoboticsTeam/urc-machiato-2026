@@ -1,3 +1,0 @@
-# COLCON_IGNORE - Exclude this directory from colcon package discovery.
-# With this at workspace root, use explicit --base-paths to build ROS packages.
-# See docs/development/BUILD_AND_TEST.md and scripts/clean_ros_build.sh.

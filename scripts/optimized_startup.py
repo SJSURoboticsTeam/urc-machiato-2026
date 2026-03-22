@@ -60,7 +60,7 @@ def test_ros2_environment_detection():
     """Test ROS2 environment detection."""
     print("🔍 Testing ROS2 Environment Detection...")
 
-    from src.core.ros2_environment import get_ros2_environment_manager
+    from shared.core.ros2_environment import get_ros2_environment_manager
 
     env_manager = get_ros2_environment_manager()
     env_info = env_manager.get_environment_info()
@@ -76,7 +76,7 @@ def test_configuration_loading():
     """Test optimized configuration loading."""
     print("⚙️ Testing Optimized Configuration Loading...")
 
-    from src.infrastructure.config import load_system_config
+    from shared.infrastructure.config import load_system_config
 
     config = load_system_config("development")
 
@@ -91,7 +91,7 @@ def test_component_registry():
     """Test optimized component registry."""
     print("🔧 Testing Optimized Component Registry...")
 
-    from src.core.component_registry import get_component_registry
+    from shared.core.component_registry import get_component_registry
 
     registry = get_component_registry()
 
@@ -113,7 +113,7 @@ def test_monitoring_system():
     """Test optimized monitoring system."""
     print("📊 Testing Optimized Monitoring System...")
 
-    from src.core.monitoring_system import get_monitoring_system
+    from shared.core.monitoring_system import get_monitoring_system
 
     monitor = get_monitoring_system()
     status = monitor.get_system_status()
@@ -172,7 +172,7 @@ def test_lightweight_core():
     """Test optimized lightweight core."""
     print("🎯 Testing Optimized Lightweight Core...")
 
-    from src.core.lightweight_core import get_lightweight_core
+    from shared.core.lightweight_core import get_lightweight_core
 
     core = get_lightweight_core()
     core_status = core.get_status()

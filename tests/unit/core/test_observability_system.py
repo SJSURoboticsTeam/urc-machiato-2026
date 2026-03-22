@@ -18,7 +18,7 @@ import pytest
 from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any, Optional
 
-from src.core.observability import ObservabilitySystem
+from shared.core.observability import ObservabilitySystem
 
 # Skip entire module: tests register Prometheus metrics and conflict (Duplicated timeseries)
 # when run in same process. Requires isolated registry per test to fix.
@@ -323,8 +323,8 @@ class TestObservabilitySystemIntegration:
     @pytest.fixture
     def integrated_system(self):
         """Create integrated system with observability."""
-        from src.core.monitoring_system import MonitoringSystem
-        from src.core.network_resilience import NetworkResilienceManager
+        from shared.core.monitoring_system import MonitoringSystem
+        from shared.core.network_resilience import NetworkResilienceManager
 
         observability = ObservabilitySystem()
         monitoring = MonitoringSystem(observability)

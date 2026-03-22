@@ -44,10 +44,10 @@ Class Inheritance Diagrams
 State Management Classes
 -------------------------
 
-.. inheritance-diagram:: src.core.adaptive_state_machine.AdaptiveStateMachine
+.. inheritance-diagram:: shared.core.adaptive_state_machine.AdaptiveStateMachine
    :parts: 1
 
-.. inheritance-diagram:: src.core.adaptive_state_machine.SystemState
+.. inheritance-diagram:: shared.core.adaptive_state_machine.SystemState
    :parts: 1
 
 # Note: Update these when corresponding modules are available
@@ -88,7 +88,7 @@ Exception Classes
 =================
 
 # Note: Update these when corresponding modules are available
-# .. autoexception:: src.core.state_management.exceptions.StateTransitionError
+# .. autoexception:: shared.core.state_management.exceptions.StateTransitionError
 # .. autoexception:: src.autonomy.calibration.camera.CalibrationError
 
 Indices and Tables

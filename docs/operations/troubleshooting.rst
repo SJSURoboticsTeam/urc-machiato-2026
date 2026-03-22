@@ -19,7 +19,7 @@ Build Issues
 
 **Configuration not loading**
 
-- Single source of truth: ``from src.infrastructure.config import get_urc_config``
+- Single source of truth: ``from shared.infrastructure.config import get_urc_config``
 - Check ``config/rover.yaml`` and ``URC_ENV`` (development/simulation/competition).
 
 ROS2 Issues
@@ -40,7 +40,7 @@ Testing
 
 **Tests fail with config errors**
 
-- Unified config uses fallback when Dynaconf is not installed; ensure ``src.infrastructure.config`` is importable.
+- Unified config uses fallback when Dynaconf is not installed; ensure ``shared.infrastructure.config`` is importable.
 
 **Hardware tests**
 

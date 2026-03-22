@@ -27,7 +27,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from src.autonomy.autonomy_core.autonomy_core.safety.safety_monitor import (
+from autonomy.autonomy_core.autonomy_core.safety.safety_monitor import (
     SafetyMonitor,
     SafetyTrigger,
     SafetySeverity,

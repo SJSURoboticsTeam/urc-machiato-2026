@@ -58,7 +58,7 @@ class RecoveryMechanismsTests(unittest.TestCase):
         print("Testing CPU pressure recovery...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             # Initialize resource manager
             resource_manager = get_mission_resource_manager()
@@ -143,7 +143,7 @@ class RecoveryMechanismsTests(unittest.TestCase):
         print("Testing memory pressure recovery...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
             resource_manager.switch_mission_profile("sample_collection")
@@ -219,7 +219,7 @@ class RecoveryMechanismsTests(unittest.TestCase):
         print("Testing combined resource pressure recovery...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
             resource_manager.switch_mission_profile("sample_collection")
@@ -309,7 +309,7 @@ class RecoveryMechanismsTests(unittest.TestCase):
         print("Testing recovery performance overhead...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
 
@@ -360,7 +360,7 @@ class RecoveryMechanismsTests(unittest.TestCase):
         print("Testing recovery stability...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
 

@@ -22,12 +22,12 @@ from typing import Dict, List, Tuple
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.simplified_state_manager import SystemState
-from src.core.simplified_component_registry import (
+from shared.core.simplified_state_manager import SystemState
+from shared.core.simplified_component_registry import (
     SimplifiedComponentRegistry,
     ComponentInfo,
 )
-from src.infrastructure.config import get_urc_config
+from shared.infrastructure.config import get_urc_config
 
 
 class HardwareTestSuite:

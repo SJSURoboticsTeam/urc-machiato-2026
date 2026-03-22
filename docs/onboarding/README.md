@@ -2,6 +2,13 @@
 
 This section provides standalone onboarding guides for different development areas. Choose the document that matches your role or area of focus.
 
+## First-time ROS 2 + dashboard bridge setup
+
+| Document | Audience | Contents |
+|----------|----------|----------|
+| [ros2_workspace_and_bridges](ros2_workspace_and_bridges.md) | All developers using ROS 2 + dashboard | **Complete** `colcon` build (this repo’s `shared/` + `services/` paths), **system Python / CMake** alignment, **`bt_orchestrator`** lifecycle, **`rosbridge_stack`**, verification commands |
+| [ROS 2 + Python](../development/ros2_python_environment.rst) | Anyone hitting `UnsupportedTypeSupport` / wrong `libpython` | Distro Python versions, conda/venv, `PYTHON_EXECUTABLE`, clean rebuild |
+
 ## Pillar Documents
 
 | Document | Audience | Contents |

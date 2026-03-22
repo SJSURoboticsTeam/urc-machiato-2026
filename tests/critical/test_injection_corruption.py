@@ -550,8 +550,9 @@ class TestInjectionCorruption:
         successful_handling = sum(1 for r in boundary_results.values() if r['handling_success'])
         success_rate = successful_handling / len(boundary_results)
 
-        print(".1f"        assert success_rate >= 0.8
-        print("✅ Boundary condition handling working")
+        print(f"Boundary handling success rate: {success_rate:.1%}")
+        assert success_rate >= 0.8
+        print("Boundary condition handling working")
 
     @pytest.mark.asyncio
     async def test_injection_attack_prevention(self, corruption_injector):
@@ -596,9 +597,9 @@ class TestInjectionCorruption:
         prevented_attacks = sum(1 for r in injection_results.values() if r.get('secure', False))
         prevention_rate = prevented_attacks / len(injection_results)
 
-        print(".1f"        # Should prevent most injection attacks
+        print(f"Injection prevention rate: {prevention_rate:.1%}")
         assert prevention_rate >= 0.8
-        print("✅ Injection attack prevention working")
+        print("Injection attack prevention working")
 
     async def _test_attack_prevention(self, injected_data: Any, attack_name: str) -> bool:
         """Test if an injection attack would be prevented."""
@@ -693,8 +694,9 @@ class TestInjectionCorruption:
         handled_cases = sum(1 for r in serialization_results.values() if r.get('corruption_handled', False))
         handling_rate = handled_cases / len(serialization_results)
 
-        print(".1f"        assert handling_rate >= 0.6  # Should handle most serialization edge cases
-        print("✅ Data serialization edge cases handled")
+        print(f"Serialization edge-case handling rate: {handling_rate:.1%}")
+        assert handling_rate >= 0.6  # Should handle most serialization edge cases
+        print("Data serialization edge cases handled")
 
     def _create_circular_ref(self):
         """Create circular reference for testing."""
@@ -752,13 +754,14 @@ class TestInjectionCorruption:
 
         success_rate = successful_operations / total_operations if total_operations > 0 else 0
 
-        print("🔄 Concurrent corruption handling:")
+        print("Concurrent corruption handling:")
         print(f"   Total operations: {total_operations}")
-        print(".1f"        print(f"   Workers: {len(worker_results)}")
+        print(f"   Success rate: {success_rate:.1%}")
+        print(f"   Workers: {len(worker_results)}")
 
         # Should handle concurrent corruption well
         assert success_rate >= 0.8
-        print("✅ Concurrent corruption handling working")
+        print("Concurrent corruption handling working")
 
     def test_corruption_detection_accuracy(self, corruption_injector):
         """Test accuracy of corruption detection mechanisms."""
@@ -792,9 +795,9 @@ class TestInjectionCorruption:
         correct_detections = sum(1 for r in detection_results.values() if r['correct_detection'])
         accuracy = correct_detections / len(detection_results)
 
-        print(".1f"        # Should have good detection accuracy
+        print(f"Corruption detection accuracy: {accuracy:.1%}")
         assert accuracy >= 0.7
-        print("✅ Corruption detection accuracy validated")
+        print("Corruption detection accuracy validated")
 
     def _detect_corruption(self, data: Any) -> bool:
         """Simple corruption detection (would be more sophisticated in real system)."""

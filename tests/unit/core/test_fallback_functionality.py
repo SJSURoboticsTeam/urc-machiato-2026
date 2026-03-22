@@ -222,7 +222,7 @@ class FallbackFunctionalityTests(unittest.TestCase):
 
         try:
             # Test feature flag manager creation
-            from src.core.feature_flags import get_feature_flag_manager
+            from shared.core.feature_flags import get_feature_flag_manager
 
             manager = get_feature_flag_manager()
             self.assertIsNotNone(manager)
@@ -256,7 +256,7 @@ class FallbackFunctionalityTests(unittest.TestCase):
         print("Testing resource manager fallback behavior...")
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             manager = get_mission_resource_manager()
             self.assertIsNotNone(manager)
@@ -392,8 +392,8 @@ class FallbackFunctionalityTests(unittest.TestCase):
 
         # Test most critical integration points
         critical_modules = [
-            "src.core.mission_resource_manager",
-            "src.core.feature_flags",
+            "shared.core.mission_resource_manager",
+            "shared.core.feature_flags",
             "missions.robust_behavior_tree",
         ]
 

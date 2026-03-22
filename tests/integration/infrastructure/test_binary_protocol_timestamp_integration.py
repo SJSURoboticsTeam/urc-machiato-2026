@@ -11,7 +11,7 @@ import pytest
 
 # Try to import, skip test if module not available
 try:
-    from src.infrastructure.monitoring.binary_sensor_protocol import (
+    from shared.infrastructure.monitoring.binary_sensor_protocol import (
         BinarySensorProtocol,
         IMUData,
         SensorMessageType,

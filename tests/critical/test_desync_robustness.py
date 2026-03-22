@@ -27,7 +27,7 @@ import os
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from src.core.synchronization_engine import (
+from shared.core.synchronization_engine import (
     SynchronizationEngine,
     CameraSyncConfig,
     SyncMode,
@@ -163,7 +163,7 @@ class TestDesyncRobustness:
 
     def test_buffer_overflow_protection(self):
         """Test buffer overflow handling under high load."""
-        from src.core.synchronization_engine import SyncBuffer
+        from shared.core.synchronization_engine import SyncBuffer
 
         # Create a test buffer with drop_newest policy
         test_buffer = SyncBuffer(max_size=5, overflow_policy="drop_newest")

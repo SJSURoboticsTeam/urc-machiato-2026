@@ -47,7 +47,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 # Import simulation framework
 try:
-    from simulation.environments.environment_factory import EnvironmentFactory
+    from services.simulation.python.environments.environment_factory import EnvironmentFactory
 except ImportError:
     EnvironmentFactory = None
 

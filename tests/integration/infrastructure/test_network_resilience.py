@@ -99,7 +99,7 @@ class TestNetworkResilience:
     @pytest.fixture
     def resilience_manager(self):
         """Create network resilience manager."""
-        from src.core.network_resilience import NetworkResilienceManager
+        from shared.core.network_resilience import NetworkResilienceManager
 
         return NetworkResilienceManager()
 

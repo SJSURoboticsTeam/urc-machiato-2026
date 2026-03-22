@@ -65,7 +65,7 @@ class StressTester:
         """Test high-frequency message throughput."""
         print("\n📨 Testing Message Throughput...")
 
-        from src.core.lightweight_core import get_lightweight_core
+        from shared.core.lightweight_core import get_lightweight_core
 
         core = get_lightweight_core()
         db = core.get_database()
@@ -109,7 +109,7 @@ class StressTester:
         """Test for memory leaks under sustained load."""
         print("\n💧 Testing Memory Leak Detection...")
 
-        from src.core.lightweight_core import get_lightweight_core
+        from shared.core.lightweight_core import get_lightweight_core
 
         core = get_lightweight_core()
 
@@ -216,7 +216,7 @@ class StressTester:
         """Test concurrent operations stress."""
         print("\n🔄 Testing Concurrent Operations...")
 
-        from src.core.lightweight_core import get_lightweight_core
+        from shared.core.lightweight_core import get_lightweight_core
 
         core = get_lightweight_core()
 

@@ -20,7 +20,7 @@ from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any, Optional, List
 
 try:
-    from src.core.simplified_component_registry import (
+    from shared.core.simplified_component_registry import (
         SimplifiedComponentRegistry as ComponentRegistry,
     )
 except ImportError:
@@ -403,7 +403,7 @@ class TestComponentRegistryIntegration:
     @pytest.fixture
     def integrated_registry(self):
         """Create registry with integrated components."""
-        from src.core.observability import ObservabilitySystem
+        from shared.core.observability import ObservabilitySystem
 
         registry = ComponentRegistry()
         observability = ObservabilitySystem()

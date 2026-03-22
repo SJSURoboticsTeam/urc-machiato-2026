@@ -13,19 +13,18 @@ from pathlib import Path
 
 import pytest
 
-# Repo root and src so simulation and core are importable
+# Repo root so services.* and shared.* are importable (matches Docker PYTHONPATH)
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
-sys.path.insert(0, str(_REPO_ROOT / "src"))
 
 pytest.importorskip("core.ros2_mock")
-from simulation.ros2.ros2_message_adapter import (
+from services.simulation.python.ros2.ros2_message_adapter import (
     ROS2MessageAdapter,
     ROS2TopicBridge,
     STANDARD_TOPICS,
 )
-from simulation.integration.full_stack_simulator import create_full_stack_simulator
-from src.core.ros2_mock import Twist
+from services.simulation.python.integration.full_stack_simulator import create_full_stack_simulator
+from shared.core.ros2_mock import Twist
 
 
 class TestROS2MessageAdapter:

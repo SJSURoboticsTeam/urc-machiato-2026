@@ -20,7 +20,10 @@ import time
 
 import pytest
 import rclpy
-from geometry_msgs.msg import PoseWithCovarianceStamped
+try:
+    from geometry_msgs.msg import PoseWithCovarianceStamped
+except ImportError:
+    pytest.skip("geometry_msgs not fully available", allow_module_level=True)
 from rclpy.node import Node
 
 # Optional: blackboard client for assertions

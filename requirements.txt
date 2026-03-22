@@ -1,4 +1,15 @@
 # URC 2026 Critical Systems Dependencies
+#
+# ROS 2 / rclpy workflows
+# -----------------------
+# For colcon-built packages (autonomy_interfaces, etc.), use the **ROS distro system Python**
+# only: Jazzy -> 3.12, Humble -> 3.10. Build with that interpreter and avoid conda/venv during
+# `colcon build`, or Python bindings under install/ will not load (UnsupportedTypeSupport,
+# missing libpython3.N.so). See docs/development/ros2_python_environment.rst.
+#
+# Do not rely on pip `rclpy` / `std-msgs` lines below for a native ROS workspace; install
+# ROS via apt and `source /opt/ros/$ROS_DISTRO/setup.bash`. Pip entries are for CI or non-ROS
+# tooling where applicable.
 
 # Core dependencies
 numpy>=1.24.0
@@ -52,6 +63,15 @@ pyrealsense2>=2.54.0
 gazebo>=11.0.0
 ros-humble-gazebo>=3.5.0
 pybullet>=3.2.0
+
+# Isaac Sim dependencies (optional)
+# Note: Isaac Sim requires separate installation via Omniverse
+# These are Python bridge dependencies
+isaac-ros-common>=2.0.0
+isaac-ros-glfw>=2.0.0
+isaac-ros-usd>=2.0.0
+omni-client-lib>=2.0.0
+pxr>=2.0.0  # Universal Scene Description SDK
 
 # Code quality
 black>=22.10.0

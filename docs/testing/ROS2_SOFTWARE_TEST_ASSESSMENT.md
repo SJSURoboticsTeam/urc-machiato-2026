@@ -77,7 +77,7 @@ Full pytest run (excluding `tests/factories` and `tests/performance` due to coll
 
 ### 5. Other import/API mismatches
 
-- **test_integration.py::test_behavior_tree_resource_manager_integration** – `cannot import name 'circuitbreaker' from 'src.core.error_handling'`.
+- **test_integration.py::test_behavior_tree_resource_manager_integration** – `cannot import name 'circuitbreaker' from 'shared.core.error_handling'`.
 - **test_integration.py::test_monitoring_resource_manager_integration** – `No module named 'simulation.tools.monitoring_dashboard'`.
 
 **Action:** Fix exports in `src/core/error_handling.py` and add or stub `simulation.tools.monitoring_dashboard` (or skip if not implemented).

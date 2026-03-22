@@ -26,17 +26,17 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from src.autonomy.autonomy_core.autonomy_core.navigation.path_planner import (
+from autonomy.autonomy_core.autonomy_core.navigation.path_planner import (
     PathPlanner,
     DStarLite,
 )
-from src.autonomy.autonomy_core.autonomy_core.navigation.motion_controller import (
+from autonomy.autonomy_core.autonomy_core.navigation.motion_controller import (
     MotionController,
 )
-from src.autonomy.autonomy_core.autonomy_core.navigation.gnss_processor import (
+from autonomy.autonomy_core.autonomy_core.navigation.gnss_processor import (
     GNSSProcessor,
 )
-from src.core.synchronization_engine import SynchronizationEngine
+from shared.core.synchronization_engine import SynchronizationEngine
 
 
 class TestPathPlanningFailures:
@@ -48,7 +48,7 @@ class TestPathPlanningFailures:
         planner = PathPlanner()
         # Mock NetworkX to avoid import issues in testing
         with patch(
-            "src.autonomy.autonomy_core.autonomy_core.navigation.path_planner.nx"
+            "autonomy.autonomy_core.autonomy_core.navigation.path_planner.nx"
         ) as mock_nx:
             mock_graph = Mock()
             mock_graph.nodes = ["0.0,0.0", "1.0,0.0", "1.0,1.0"]
@@ -61,7 +61,7 @@ class TestPathPlanningFailures:
     @pytest.fixture
     def sync_engine(self):
         """Create synchronization engine for testing."""
-        from src.core.synchronization_engine import SynchronizationEngine
+        from shared.core.synchronization_engine import SynchronizationEngine
 
         return SynchronizationEngine()
 
@@ -318,7 +318,7 @@ class TestWaypointValidationFailures:
     @pytest.mark.critical
     def test_invalid_coordinates_rejection(self, navigation_node):
         """Test rejection of invalid geographic coordinates."""
-        from src.autonomy.autonomy_core.autonomy_core.navigation.navigation_node import (
+        from autonomy.autonomy_core.autonomy_core.navigation.navigation_node import (
             NavigationNode,
         )
 
@@ -485,7 +485,7 @@ class TestEmergencyStopFailures:
     @pytest.fixture
     def safety_monitor(self):
         """Create safety monitor mock."""
-        from src.autonomy.autonomy_core.autonomy_core.safety.safety_monitor import (
+        from autonomy.autonomy_core.autonomy_core.safety.safety_monitor import (
             SafetyMonitor,
         )
 

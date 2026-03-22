@@ -202,7 +202,7 @@ class StatisticalPerformanceTester:
 
         try:
             # Import and initialize components
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
 
@@ -383,7 +383,7 @@ class StatisticalPerformanceTester:
         start_time = time.time()
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
 
@@ -537,7 +537,7 @@ class StatisticalPerformanceTester:
 
             if "resource_manager" in scenario["components"]:
                 try:
-                    from src.core.mission_resource_manager import (
+                    from shared.core.mission_resource_manager import (
                         get_mission_resource_manager,
                     )
 
@@ -549,7 +549,7 @@ class StatisticalPerformanceTester:
 
             if "feature_flags" in scenario["components"]:
                 try:
-                    from src.core.feature_flags import get_feature_flag_manager
+                    from shared.core.feature_flags import get_feature_flag_manager
 
                     fm = get_feature_flag_manager()
                     fm.set_mission_profile("sample_collection")
@@ -636,7 +636,7 @@ class StatisticalPerformanceTester:
         start_time = time.time()
 
         try:
-            from src.core.mission_resource_manager import get_mission_resource_manager
+            from shared.core.mission_resource_manager import get_mission_resource_manager
 
             resource_manager = get_mission_resource_manager()
 

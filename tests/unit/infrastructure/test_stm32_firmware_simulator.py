@@ -16,7 +16,7 @@ from pathlib import Path
 # Add simulation to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from simulation.firmware.stm32_firmware_simulator import (
+from services.simulation.python.firmware.stm32_firmware_simulator import (
     STM32FirmwareSimulator,
     MotorState,
     MotorFaultType,

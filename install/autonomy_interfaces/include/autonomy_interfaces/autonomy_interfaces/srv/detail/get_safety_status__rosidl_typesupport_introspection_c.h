@@ -1,1 +1,0 @@
-/home/durian/urc-machiato-2026/build/autonomy_interfaces/rosidl_typesupport_introspection_c/autonomy_interfaces/srv/detail/get_safety_status__rosidl_typesupport_introspection_c.h

@@ -90,7 +90,7 @@ get_urc_config() (available everywhere)
 
 **How to Access**:
 ```python
-from src.infrastructure.config import get_urc_config
+from shared.infrastructure.config import get_urc_config
 
 config = get_urc_config()
 print(config.navigation.max_linear_velocity_ms)  # 2.0
@@ -136,7 +136,7 @@ Flow:
 
 **Usage**:
 ```python
-from src.infrastructure.bridges import WebSocketBridge
+from shared.infrastructure.bridges import WebSocketBridge
 
 bridge = WebSocketBridge(host="0.0.0.0", port=8000)
 
@@ -167,7 +167,7 @@ Example - Set motor velocity:
 
 **Usage**:
 ```python
-from src.infrastructure.bridges import CANBridge
+from shared.infrastructure.bridges import CANBridge
 
 can = CANBridge(interface="CAN0", bitrate=1000000)
 
@@ -198,7 +198,7 @@ States:
 
 **Usage**:
 ```python
-from src.infrastructure.bridges import get_adaptive_circuit_breaker
+from shared.infrastructure.bridges import get_adaptive_circuit_breaker
 
 breaker = get_adaptive_circuit_breaker("motor_control")
 try:
@@ -226,7 +226,7 @@ except CircuitBreakerOpen:
 
 **HealthMonitor**:
 ```python
-from src.infrastructure.monitoring import HealthMonitor
+from shared.infrastructure.monitoring import HealthMonitor
 
 monitor = HealthMonitor()
 
@@ -243,7 +243,7 @@ print(status.components["navigation"])  # Individual system status
 
 **MetricsCollector**:
 ```python
-from src.infrastructure.monitoring import MetricsCollector
+from shared.infrastructure.monitoring import MetricsCollector
 
 metrics = MetricsCollector()
 

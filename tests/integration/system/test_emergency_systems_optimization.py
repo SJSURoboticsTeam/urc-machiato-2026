@@ -26,11 +26,11 @@ sys.path.insert(0, str(_REPO))
 sys.path.insert(0, str(_REPO / "src"))
 
 try:
-    from src.core.safety_system import SafetySystem
+    from shared.core.safety_system import SafetySystem
 except ImportError:
     import pytest
 
-    pytest.skip("src.core.safety_system not available", allow_module_level=True)
+    pytest.skip("shared.core.safety_system not available", allow_module_level=True)
 
 
 class EmergencySystemsOptimizationTester:

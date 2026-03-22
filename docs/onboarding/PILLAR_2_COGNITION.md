@@ -395,7 +395,7 @@ src/core/
 ### State Management API
 
 ```python
-from src.core.state_management import StateManager
+from shared.core.state_management import StateManager
 
 # Create state machine
 sm = StateManager()
@@ -461,7 +461,7 @@ def mission_loop():
 ### Configuration
 
 ```python
-from src.infrastructure.config import get_urc_config
+from shared.infrastructure.config import get_urc_config
 
 config = get_urc_config()
 

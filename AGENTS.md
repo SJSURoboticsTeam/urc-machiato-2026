@@ -1,8 +1,21 @@
 # AGENTS.md - URC Machiato 2026 Development Guide
 
-Development guidelines and commands for agentic coding assistants on URC 2026 robotics platform.
+Essential commands and code style guidelines for agentic coding assistants.
 
 ## Essential Commands
+
+### ROS 2 workspace (autonomy packages)
+
+Build with **system Python** (same major.minor as ROS: Jazzy/3.12, Humble/3.10). Deactivate conda/venv first, then:
+
+```bash
+source /opt/ros/jazzy/setup.bash   # or humble
+export PYTHON_EXECUTABLE="$(command -v python3)"
+./scripts/build_ros_for_bt_tests.sh   # or ./scripts/clean_ros_build.sh
+source install/setup.bash
+```
+
+If Python imports of `autonomy_interfaces` fail with `UnsupportedTypeSupport` or `libpython3.N.so`, see `docs/development/ros2_python_environment.rst` and clean-rebuild.
 
 ### Build System
 ```bash
@@ -16,13 +29,21 @@ Development guidelines and commands for agentic coding assistants on URC 2026 ro
 
 ### Testing (pytest + markers)
 ```bash
+# Run specific test types
 python -m pytest tests/unit/ -v                    # Unit tests only
 python -m pytest tests/integration/ -v             # Integration tests  
-python -m pytest tests/ --cov=src --cov-report=html # Full suite + coverage
+
+# Run single test (KEY COMMAND)
 python -m pytest path/to/test_file.py::test_name    # Run single test
+python -m pytest tests/unit/test_example.py::test_function -v
+
+# Pattern matching and markers
 python -m pytest -k "test_pattern"                 # Name pattern match
 python -m pytest -m "unit"                         # By marker
 python -m pytest -m "not slow"                     # Exclude slow tests
+
+# Coverage reporting
+python -m pytest tests/ --cov=src --cov-report=html # Full suite + coverage
 ```
 
 ### Code Quality (Primary: ruff)
@@ -34,7 +55,7 @@ ruff check --fix .           # Auto-fix linting issues
 mypy .                        # Type checking
 ```
 
-### Frontend (src/dashboard/)
+### Frontend (services/dashboard/)
 ```bash
 npm run dev                   # Development server
 npm run build                 # Production build  
@@ -55,13 +76,16 @@ npm run test:coverage        # Coverage report
 
 ### Python Code Style
 
-#### Imports (Strict Order)
+#### Import Order (Strict)
+1. Standard library imports (alphabetical)
+2. Third-party imports (alphabetical)  
+3. Local imports with intelligent fallbacks
+
 ```python
-# Standard library imports (alphabetical)
+# Standard library imports
 import asyncio
 import math
 import os
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 # Third-party imports
@@ -69,7 +93,7 @@ import numpy as np
 import rclpy
 from std_msgs.msg import String
 
-# Local imports with intelligent fallbacks
+# Local imports
 try:
     from autonomy_navigation.gnss_processor import GNSSProcessor
 except ImportError:
@@ -82,23 +106,6 @@ except ImportError:
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `TOAST_LIMIT`, `MAX_RETRIES`)
 - **Private methods**: `_snake_case` with underscore prefix
 - **ROS2 nodes**: `PascalCase` ending in `Node` (e.g., `PerceptionNode`)
-
-#### Error Handling Pattern
-```python
-from .exceptions import NavigationError, ProcessingError
-
-try:
-    result = some_operation()
-    if isinstance(result, Failure):
-        self.logger.error("Operation failed", error=result.error)
-        return failure(ProcessingError("operation", result.error))
-except NavigationError as e:
-    self.logger.error(f"Navigation failed: {e}")
-    return failure(e)
-except Exception as e:
-    self.logger.error(f"Unexpected error: {e}")
-    return failure(ProcessingError("unexpected", str(e)))
-```
 
 #### Type Hints (Required)
 ```python
@@ -116,6 +123,23 @@ def process_sensor_data(
         Tuple of (success, processed_data)
     """
     pass
+```
+
+#### Error Handling Pattern
+```python
+from .exceptions import NavigationError, ProcessingError
+
+try:
+    result = some_operation()
+    if isinstance(result, Failure):
+        self.logger.error("Operation failed", error=result.error)
+        return failure(ProcessingError("operation", result.error))
+except NavigationError as e:
+    self.logger.error(f"Navigation failed: {e}")
+    return failure(e)
+except Exception as e:
+    self.logger.error(f"Unexpected error: {e}")
+    return failure(ProcessingError("unexpected", str(e)))
 ```
 
 ### TypeScript/React Code Style
@@ -160,107 +184,59 @@ export function SensorDashboard({ data, onAction, timeout = 5000 }: ComponentPro
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `UI_CONSTANTS`, `MAX_RETRIES`)
 - **React Hooks**: `camelCase` with `use` prefix (e.g., `useROS`, `useToast`)
 
-## Architecture Patterns
+## Cursor Rules Reference
 
-### ROS2 Node Structure
-```python
-class NavigationNode(rclpy.lifecycle.LifecycleNode):
-    """ROS2 lifecycle node for navigation."""
-    
-    def __init__(self):
-        super().__init__('navigation_node')
-        self.logger = self.get_logger()
-        
-    def on_configure(self, state: rclpy.lifecycle.State) -> rclpy.lifecycle.CallbackReturn:
-        """Configuration phase - setup publishers/subscribers."""
-        self.cmd_pub = self.create_publisher(
-            Twist, '/cmd_vel', 
-            qos_profile=QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RELIABLE)
-        )
-        return rclpy.lifecycle.CallbackReturn.SUCCESS
-```
+Based on `.cursorrules` for project-specific AI assistant guidelines:
 
-### Safety Systems (Critical)
-All safety-critical code must:
-1. Use redundant safety layers (primary, secondary, tertiary)
-2. Implement comprehensive health monitoring
-3. Provide emergency response coordination
-4. Include structured logging with context
+### Project Context
+- **URC 2026 University Rover Challenge**: ROS2-based autonomous Mars rover system
+- **Core Components**: Autonomy Stack, Mission System, Web Dashboard, Simulation, Hardware
+- **Key Technologies**: Python 3.10+, ROS2 Humble, React 18+, TypeScript, Gazebo, Behavior Trees
 
-```python
-class SafetyMonitor:
-    """Multi-layer safety monitoring system."""
-    
-    def check_system_health(self) -> SafetyStatus:
-        """Comprehensive safety check."""
-        primary_result = self.primary_safety.check()
-        if not primary_result.is_safe:
-            return self.emergency_handler.handle(primary_result)
-        return SafetyStatus.from_results(primary_result, self.secondary_safety.check())
-```
+### Code Organization Principles
+- ROS2 packages follow functional organization (not layered architecture)
+- Missions are separate from core autonomy for modularity
+- Hardware interfaces are abstracted for testing
+- Configuration is centralized in `config/rover.yaml`
 
-## Testing Guidelines
+### Development Guidelines
+- **Testing First**: Write tests before implementation
+- **Documentation**: Update docs for any API changes
+- **Code Style**: Black formatting, type hints, comprehensive error handling
+- **ROS2 Best Practices**: Proper package.xml, launch files, and message definitions
 
-### Python Test Structure
-```python
-import pytest
-from unittest.mock import Mock
-from autonomy.navigation import NavigationNode
+### Common Tasks
+- Adding new missions: Create in `missions/`, add BT in `src/autonomy/bt/`
+- Modifying autonomy: Update ROS2 packages in `src/autonomy/`
+- Changing UI: Modify React components in `src/frontend/`
+- Adding hardware: Create interfaces in `src/autonomy/control/`
 
-class TestNavigationNode:
-    @pytest.fixture
-    def navigation_node(self):
-        return NavigationNode()
-        
-    def test_navigation_success(self, navigation_node):
-        mock_twist = Twist()
-        mock_twist.linear.x = 1.0
-        result = navigation_node.process_command(mock_twist)
-        assert result.success is True
-```
+### File Locations Reference
+- ROS2 messages: `src/autonomy/interfaces/msg/`
+- Mission logic: `missions/*.py`
+- Navigation code: `src/autonomy/core/navigation/`
+- Web components: `src/frontend/src/components/`
+- Configuration: `config/rover.yaml`
+- Tests: `tests/` directory
+- Documentation: `docs/` directory
 
-### Frontend Test Structure
-```typescript
-import { render, screen } from '@testing-library/react';
-import { SensorDashboard } from './SensorDashboard';
-
-describe('SensorDashboard', () => {
-  it('renders sensor data correctly', async () => {
-    const mockData = [{ id: 1, value: 100 }];
-    render(<SensorDashboard data={mockData} />);
-    expect(screen.getByText('100')).toBeInTheDocument();
-  });
-});
-```
+### Quality Standards
+- Test coverage >80% for new code
+- ROS2 linting passes
+- Documentation updated for public APIs
+- Code reviewed before merging
+- Works in simulation before hardware testing
 
 ## Development Workflow
 
 ### Before Committing
-1. **Run quality check**: `./scripts/check_quality.sh`
-2. **Run tests**: `python -m pytest tests/unit/ -v`
-3. **Format code**: `black . && ruff check --fix .`
-4. **Type check**: `mypy .`
-
-### File Organization
-- **ROS2 packages**: `src/autonomy/` (functional organization)
-- **Mission logic**: `missions/` (separate from core autonomy)
-- **Web dashboard**: `src/dashboard/` (React/TypeScript)
-- **Configuration**: `config/rover.yaml` (centralized config)
-- **Tests**: `tests/unit/`, `tests/integration/`, `tests/performance/`
+1. Run quality check: `./scripts/check_quality.sh`
+2. Run tests: `python -m pytest tests/unit/ -v`
+3. Format code: `black . && ruff check --fix .`
+4. Type check: `mypy .`
 
 ### Key Requirements
-- **Test coverage**: >80% for new code
-- **Documentation**: Update docs for API changes
-- **Safety**: All robotics code must have safety checks
-- **Performance**: Consider resource constraints in robotics environment
-
-## Project Context
-
-University Rover Challenge autonomous Mars rover system with:
-- **ROS2 Humble/Jazzy** backend for robotics
-- **React 18 + TypeScript** frontend for dashboard
-- **Gazebo** simulation environment
-- **STM32** hardware interfaces (via submodules)
-- **Behavior Trees** for mission logic
-
-Emphasizes safety, reliability, and comprehensive testing for competition robotics.
+- Test coverage: >80% for new code
+- Documentation: Update docs for API changes
+- Safety: All robotics code must have safety checks
+- Performance: Consider resource constraints in robotics environment

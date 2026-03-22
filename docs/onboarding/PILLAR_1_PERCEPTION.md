@@ -305,7 +305,7 @@ src/autonomy/autonomy_core/
 ### Configuration
 
 ```python
-from src.infrastructure.config import get_urc_config
+from shared.infrastructure.config import get_urc_config
 
 config = get_urc_config()
 
@@ -469,7 +469,7 @@ for detection in detections:
 ### Get Sensor Status
 
 ```python
-from src.infrastructure.monitoring import HealthMonitor
+from shared.infrastructure.monitoring import HealthMonitor
 
 monitor = HealthMonitor()
 status = monitor.get_sensor_status()
