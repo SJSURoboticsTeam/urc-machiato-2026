@@ -1,1 +1,0 @@
-"""Core simulation engine components."""

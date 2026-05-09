@@ -1,1 +1,0 @@
-"""Gazebo simulation integration components."""
